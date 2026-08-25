@@ -1,23 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.controller.standard;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinbooks.common.Message;
@@ -26,11 +12,8 @@ import com.jinbooks.domain.standard.Standard;
 import com.jinbooks.dto.standard.StandardChangeDto;
 import com.jinbooks.dto.standard.StandardPageDto;
 import com.jinbooks.service.standard.StandardService;
-import com.jinbooks.validate.AddGroup;
-import com.jinbooks.validate.EditGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.jinbooks.validation.AddGroup;
+import com.jinbooks.validation.EditGroup;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,13 +26,13 @@ import java.util.Objects;
  * @time: 2024/12/26 17:32
  */
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping("/standard")
+@RequestMapping("/api/standard")
 public class StandardController {
-    private static final Logger logger = LoggerFactory.getLogger(StandardController.class);
 
-    @Autowired
-    StandardService standardService;
+    private final StandardService standardService;
 
     @GetMapping("/get/{id}")
     public Message<Standard> getById(@PathVariable(name="id") String id) {
@@ -59,7 +42,7 @@ public class StandardController {
     @GetMapping(value = { "/fetch" })
     public Message<Page<Standard>> fetch(StandardPageDto dto) {
 
-        logger.debug("fetch {}",dto);
+        log.debug("fetch {}",dto);
 
         return standardService.pageList(dto);
     }
@@ -78,7 +61,7 @@ public class StandardController {
     @PostMapping(value = { "/save" })
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody StandardChangeDto dto) {
 
-        logger.debug("save {}",dto);
+        log.debug("save {}",dto);
 
         return standardService.save(dto);
     }
@@ -86,7 +69,7 @@ public class StandardController {
     @PutMapping(value = { "/update" })
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody StandardChangeDto dto) {
 
-        logger.debug("update {}",dto);
+        log.debug("update {}",dto);
 
         return standardService.update(dto);
     }
@@ -94,7 +77,7 @@ public class StandardController {
     @DeleteMapping(value = { "/delete" })
     public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
 
-        logger.debug("delete {}",dto);
+        log.debug("delete {}",dto);
 
         return standardService.delete(dto);
     }

@@ -1,24 +1,7 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
- 
 package com.jinbooks.context;
 
+
+import lombok.extern.slf4j.Slf4j;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Enumeration;
@@ -31,8 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -59,8 +40,8 @@ import com.jinbooks.util.IdGenerator;
  * @author shimi
  *
  */
+@Slf4j
 public final class WebContext {
-	static final Logger logger = LoggerFactory.getLogger(WebContext.class);
     
     static StandardEnvironment properties;
     
@@ -82,7 +63,7 @@ public final class WebContext {
     public static void init(ApplicationContext applicationContext){
     	context = applicationContext;
 		if (context.containsBean("propertySourcesPlaceholderConfigurer")) {
-			logger.trace("init Context properties");
+			log.trace("init Context properties");
             PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer = 
                     ((PropertySourcesPlaceholderConfigurer) applicationContext
                     .getBean("propertySourcesPlaceholderConfigurer"));
@@ -173,7 +154,7 @@ public final class WebContext {
         if(isContextPath) {
         	url.append(request.getContextPath());
         }
-        logger.trace("http ContextPath {}" , url);
+        log.trace("http ContextPath {}" , url);
         return url.toString();
 
     }
@@ -185,23 +166,23 @@ public final class WebContext {
      */
     public static void printRequest(final HttpServletRequest request) {
     	String url = request.getRequestURI().substring(request.getContextPath().length());
-		logger.trace("getContextPath : {}"  , request.getContextPath());
-    	logger.trace("getRequestURL : {} " , request.getRequestURL());
-		logger.trace("URL : {}" , url);
-    	logger.trace("getMethod : {} " , request.getMethod());
+		log.trace("getContextPath : {}"  , request.getContextPath());
+    	log.trace("getRequestURL : {} " , request.getRequestURL());
+		log.trace("URL : {}" , url);
+    	log.trace("getMethod : {} " , request.getMethod());
     	
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
           String key = headerNames.nextElement();
           String value = request.getHeader(key);
-          logger.debug("Header key {} , value {}" , key, value);
+          log.debug("Header key {} , value {}" , key, value);
         }
         
         Enumeration<String> parameterNames = request.getParameterNames();
         while (parameterNames.hasMoreElements()) {
           String key = parameterNames.nextElement();
           String value = request.getParameter(key);
-          logger.info("Parameter {} , value {}",key , value);
+          log.info("Parameter {} , value {}",key , value);
         }
     }
 
@@ -220,7 +201,7 @@ public final class WebContext {
      * @return HttpSession
      */
     public static HttpSession getSession(boolean create) {
-    	logger.debug("new Session created");
+    	log.debug("new Session created");
         return getRequest().getSession(create)  ;
     }
 
@@ -279,7 +260,7 @@ public final class WebContext {
             CookieLocaleResolver cookieLocaleResolver = getBean("localeResolver",CookieLocaleResolver.class);
             locale = cookieLocaleResolver.resolveLocale(getRequest());
         } catch (Exception e) {
-        	logger.debug("getLocale() error . ");
+        	log.debug("getLocale() error . ");
             locale = RequestContextUtils.getLocale(getRequest());
         }
         return locale;
@@ -410,7 +391,7 @@ public final class WebContext {
         	String[] ipAddress = requestIpAddress.split(",");
         	requestIpAddress = ipAddress[0];
         }
-        logger.trace("RequestIpAddress: {}" , requestIpAddress);
+        log.trace("RequestIpAddress: {}" , requestIpAddress);
         return requestIpAddress;
     }
     
@@ -437,7 +418,7 @@ public final class WebContext {
                 null,
                 getLocale());
         } catch (Exception e) {
-        	logger.error("Exception" , e);
+        	log.error("Exception" , e);
         }
         return message;
     }
@@ -456,7 +437,7 @@ public final class WebContext {
                 filedValues,
                 getLocale());
         } catch (Exception e) {
-        	logger.error("Exception" , e);
+        	log.error("Exception" , e);
         }
         return message;
     }
@@ -490,9 +471,6 @@ public final class WebContext {
 		version.append("+                           Version %s".formatted(
                         WebContext.getProperty("application.formatted-version")));
 		version.append("+");
-		version.append("+                 %sCopyright 2018 - %s https://www.maxkey.top/".formatted(
-        			    (char)0xA9 , java.time.Year.now().getValue()));
-		version.append("+                 .         All rights reserved         . ");
 		version.append("-----------------------------------------------------------");
 		return version.toString();
     }

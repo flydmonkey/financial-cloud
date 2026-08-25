@@ -1,25 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
 package com.jinbooks.controller.permissions;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +17,6 @@ import com.jinbooks.dto.permissions.PermissionDto;
 import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.permissions.PermissionService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -45,25 +26,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/permissions/permission"})
+@RequestMapping(value={"/api/permissions/permission"})
 public class PermissionController {
-	static final Logger logger = LoggerFactory.getLogger(PermissionController.class);
 
-	@Autowired
-	PermissionService permissionService;
+	private final PermissionService permissionService;
 
-	@Autowired
-	HistorySystemLogsService historySystemLogsService;
+	private final HistorySystemLogsService historySystemLogsService;
 
-	@Autowired
-	IdentifierGenerator identifierGenerator;
+	private final IdentifierGenerator identifierGenerator;
 
 	@PutMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Permission> update(
 			@RequestBody PermissionDto dto,
 			@CurrentUser UserInfo currentUser) {
-		logger.debug("-update  : {}" , dto);
+		log.debug("-update  : {}" , dto);
 		//have
 		Permission queryPermission =
 				new Permission(
@@ -102,12 +81,12 @@ public class PermissionController {
            }
         }
 		if (!deletePermissionsList.isEmpty()) {
-			logger.debug("-remove  : {}" , deletePermissionsList);
+			log.debug("-remove  : {}" , deletePermissionsList);
 			permissionService.deleteGroupPrivileges(deletePermissionsList);
 		}
 
 		if (!newPermissionsList.isEmpty() && permissionService.insertGroupPrivileges(newPermissionsList)) {
-			logger.debug("-insert  : {}" , newPermissionsList);
+			log.debug("-insert  : {}" , newPermissionsList);
 			return new Message<>(Message.SUCCESS);
 
 		} else {
@@ -120,7 +99,7 @@ public class PermissionController {
     public Message<List<Permission>> get(
     		@ModelAttribute Permission permission,
     		@CurrentUser UserInfo currentUser) {
-        logger.debug("-get  : {}" , permission);
+        log.debug("-get  : {}" , permission);
         //have
         Permission queryPermission =
         		new Permission(

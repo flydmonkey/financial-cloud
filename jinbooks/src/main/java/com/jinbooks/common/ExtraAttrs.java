@@ -1,27 +1,7 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.common;
 
+
+import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,16 +9,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jinbooks.util.JsonUtils;
 
 import lombok.Data;
 
+@Slf4j
 @Data
 public class ExtraAttrs {
-	static final  Logger logger = LoggerFactory.getLogger(ExtraAttrs.class);
 
 	List <ExtraAttr> attrs ;
 
@@ -87,7 +64,7 @@ public class ExtraAttrs {
 		for(ExtraAttr extraAttr : attrs){
 			extraAttrsHashMap.put(extraAttr.getAttr(), extraAttr);
 		}
-		logger.debug("extraAttrs HashMap {}" , extraAttrsHashMap);
+		log.debug("extraAttrs HashMap {}" , extraAttrsHashMap);
 		return extraAttrsHashMap;
 	}
 
@@ -96,19 +73,19 @@ public class ExtraAttrs {
 		for(ExtraAttr extraAttr :attrs){
 			properties.put(extraAttr.getAttr(), extraAttr.getValue());
 		}
-		logger.debug("extraAttrs Properties {}" ,properties);
+		log.debug("extraAttrs Properties {}" ,properties);
 		return properties;
 	}
 	
 	public String serialize(){
 		String jsonString = JsonUtils.toString(attrs);
-		logger.debug("jsonString {}" , jsonString);
+		log.debug("jsonString {}" , jsonString);
 		return jsonString;
 	}
 	
 	public void deserialize(String arrayJsonString) {
 		String extraAttrsJsonString = "{\"attrs\":" + arrayJsonString + "}";
-		logger.debug("Extra Attrs Json String {}" , extraAttrsJsonString);
+		log.debug("Extra Attrs Json String {}" , extraAttrsJsonString);
 		ExtraAttrs jsonAttrs = JsonUtils.stringToObject(extraAttrsJsonString, ExtraAttrs.class);
 		this.attrs = jsonAttrs.getAttrs();
 	}

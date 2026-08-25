@@ -1,35 +1,10 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.authn.provider;
 
+
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
-import com.jinbooks.ip2location.IpLocationParser;
-import com.jinbooks.ip2location.Region;
-
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -59,8 +34,8 @@ import com.jinbooks.context.WebContext;
  * @author Crystal.Sea
  *
  */
+@Slf4j
 public abstract class AbstractAuthenticationProvider {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractAuthenticationProvider.class);
 
     public static final String PROVIDER_SUFFIX = "AuthenticationProvider";
 
@@ -85,8 +60,6 @@ public abstract class AbstractAuthenticationProvider {
     protected SessionManager sessionManager;
     //登录校验服务
     protected LoginService loginService;
-    //IP地址转换服务
-    protected IpLocationParser ipLocationParser;
 
     protected boolean supported = true;
 
@@ -100,7 +73,7 @@ public abstract class AbstractAuthenticationProvider {
     }
 
     public Authentication authenticate(LoginCredential credential){
-    	logger.debug("credential {}",credential);
+    	log.debug("credential {}",credential);
     	return null;
     }
 
@@ -126,10 +99,10 @@ public abstract class AbstractAuthenticationProvider {
         for(GrantedAuthority adminAuthority : ConstsRoles.grantedAdminAuthoritys) {
             if(grantedAuthoritys.contains(adminAuthority)) {
             	principal.setRoleAdministrators(true);
-                logger.trace("ROLE ADMINISTRATORS Authentication .");
+                log.trace("ROLE ADMINISTRATORS Authentication .");
             }
         }
-        logger.debug("Granted Authority {}" , grantedAuthoritys);
+        log.debug("Granted Authority {}" , grantedAuthoritys);
 
         //创建认证token
         UsernamePasswordAuthenticationToken authenticationToken =
@@ -207,7 +180,7 @@ public abstract class AbstractAuthenticationProvider {
     protected boolean statusValid(LoginCredential loginCredential , UserInfo userInfo,ClientResolve client) {
         if (null == userInfo) {
             String i18nMessage = WebContext.getI18nValue("login.error.username");
-            logger.debug("login user {} not in this System {}." ,loginCredential.getUsername(), i18nMessage);
+            log.debug("login user {} not in this System {}." ,loginCredential.getUsername(), i18nMessage);
             UserInfo loginUser = new UserInfo(loginCredential.getUsername());
             loginUser.setId(WebContext.genId());
             loginUser.setUsername(loginCredential.getUsername());
@@ -246,17 +219,9 @@ public abstract class AbstractAuthenticationProvider {
     }
 
     public ClientResolve parserClientResolve() {
-    	//客户端浏览器和系统平台解析
-    	ClientUserAgent  clientUserAgent  = UserAgentParser.resolveUserAgent(WebContext.getRequest());
-    	//ip address to region
-    	String requestIpAddress = WebContext.getRequestIpAddress();
-        Region  region = ipLocationParser.region(requestIpAddress);
+    	ClientUserAgent clientUserAgent = UserAgentParser.resolveUserAgent(WebContext.getRequest());
         ClientResolve clientResolve = new ClientResolve(clientUserAgent);
-        clientResolve.setIpAddr(requestIpAddress);
-        clientResolve.setCountry(region.getCountry());
-        clientResolve.setProvince(region.getProvince());
-        clientResolve.setCity(region.getCity());
-        clientResolve.setLocation(region.getAddr());
+        clientResolve.setIpAddr(WebContext.getRequestIpAddress());
     	return clientResolve;
     }
 

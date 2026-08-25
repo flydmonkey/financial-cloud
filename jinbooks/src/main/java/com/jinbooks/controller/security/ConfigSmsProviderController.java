@@ -1,31 +1,10 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.controller.security;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,13 +20,13 @@ import com.jinbooks.domain.security.ConfigSmsProvider;
 import com.jinbooks.domain.idm.UserInfo;
 import com.jinbooks.service.security.ConfigSmsProviderService;
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/security/smsprovider"})
+@RequestMapping(value={"/api/security/smsprovider"})
 public class ConfigSmsProviderController {
-	static final  Logger logger = LoggerFactory.getLogger(ConfigSmsProviderController.class);
 
-	@Autowired
-	ConfigSmsProviderService configSmsProviderService;
+	private final ConfigSmsProviderService configSmsProviderService;
 
 	@GetMapping(value={"/get"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<ConfigSmsProvider> get(@CurrentUser UserInfo currentUser){
@@ -60,7 +39,7 @@ public class ConfigSmsProviderController {
 
 	@PutMapping(value={"/update"})
 	public Message<ConfigSmsProvider> update( @RequestBody ConfigSmsProvider smsProvider,@CurrentUser UserInfo currentUser,BindingResult result) {
-		logger.debug("update smsProvider : {}" ,smsProvider);
+		log.debug("update smsProvider : {}" ,smsProvider);
 		smsProvider.setAppSecret(LegacySecretCodec.getInstance().encode(smsProvider.getAppSecret()));
 		smsProvider.setBookId(currentUser.getBookId());
 		boolean updateResult = false;

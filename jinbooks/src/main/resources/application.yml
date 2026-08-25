@@ -35,24 +35,19 @@ spring:
 
 server:
   port: ${SERVER_PORT:2154}
-  servlet:
-    context-path: /jinbooks-api
 
 jinbooks:
   server:
     default:
       uri: /main
-  login.iplocation: ${LOGIN_IPLOCATION:true}
-  login.iplocation.offline.provider: ${LOGIN_IPLOCATION_PROVIDER:Ip2Region}
   job:
     cron:
       schedule: 0 0 0/1 * * ?
       enable: true
 
 mybatis-plus:
-  dialect: mysql
   type-aliases-package: com.jinbooks.domain.voucher,com.jinbooks.domain.book,com.jinbooks.domain.journal,com.jinbooks.domain.statement,com.jinbooks.domain.idm,com.jinbooks.domain.permissions,com.jinbooks.domain.security,com.jinbooks.domain.config,com.jinbooks.domain.hr,com.jinbooks.domain.standard,com.jinbooks.domain.history,com.jinbooks.domain.auth,com.jinbooks.common
-  mapper-locations: classpath*:com/jinbooks/repository/**/xml/${mybatis-plus.dialect}/*.xml
+  mapper-locations: classpath*:com/jinbooks/repository/**/*.xml
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl

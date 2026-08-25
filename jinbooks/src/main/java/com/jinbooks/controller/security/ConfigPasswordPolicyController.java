@@ -1,35 +1,14 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-
-
-
-
-
 package com.jinbooks.controller.security;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.annotation.OrderBy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.validation.Valid;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -43,13 +22,13 @@ import com.jinbooks.service.security.ConfigPasswordPolicyService;
 
 import java.util.List;
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/security/passwordpolicy"})
+@RequestMapping(value={"/api/security/passwordpolicy"})
 public class ConfigPasswordPolicyController {
-	static final  Logger logger = LoggerFactory.getLogger(ConfigPasswordPolicyController.class);
 
-	@Autowired
-	ConfigPasswordPolicyService configPasswordPolicyService;
+	private final ConfigPasswordPolicyService configPasswordPolicyService;
 
 	@GetMapping(value={"/get"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<ConfigPasswordPolicy> get(@CurrentUser UserInfo currentUser){
@@ -58,7 +37,7 @@ public class ConfigPasswordPolicyController {
 
 	@PutMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<ConfigPasswordPolicy> update(@Valid @RequestBody ConfigPasswordPolicy passwordPolicy,@CurrentUser UserInfo currentUser,BindingResult result) {
-		logger.debug("updateRole passwordPolicy : {}" ,passwordPolicy);
+		log.debug("updateRole passwordPolicy : {}" ,passwordPolicy);
 		//Message message = this.validate(result, passwordPolicy);
 
 		if(configPasswordPolicyService.updateById(passwordPolicy)) {

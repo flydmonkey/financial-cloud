@@ -1,27 +1,51 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.service.history;
 
-import com.jinbooks.service.history.HistoryLoginService;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.jinbooks.domain.history.HistoryLogin;
 
-public interface HistoryLoginService  extends IService<HistoryLogin> {
-	public void insertHistory(HistoryLogin historyLogin) ;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import java.util.Date;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jinbooks.domain.history.HistoryLogin;
+import com.jinbooks.repository.history.HistoryLoginMapper;
+import com.jinbooks.service.history.HistoryLoginService;
+import com.jinbooks.context.WebContext;
+
+import org.springframework.stereotype.Service;
+
+@RequiredArgsConstructor
+@Slf4j
+@Service
+public class HistoryLoginService  extends ServiceImpl<HistoryLoginMapper,HistoryLogin>{
+
+	private final HistoryLoginMapper historyLoginMapper;
+
+	public HistoryLoginMapper getMapper() {
+		return historyLoginMapper;
+	}
+    public void insertHistory(HistoryLogin historyLogin) {
+        historyLogin.setId(WebContext.genId());
+        //Thread insert HistoryLogin
+        new Thread(new HistoryLoginRunnable(this,historyLogin)).start();
+    }
+
+	public class HistoryLoginRunnable implements Runnable{
+
+		HistoryLoginService service;
+
+		HistoryLogin historyLogin;
+
+		public HistoryLoginRunnable(HistoryLoginService historyLoginService, HistoryLogin historyLogin) {
+			super();
+			this.service = historyLoginService;
+			this.historyLogin = historyLogin;
+		}
+	    public void run() {
+			log.debug(" historyLogin {}" , historyLogin);
+			historyLogin.setOperateTime(new Date());
+			service.save(historyLogin);
+		}
+	}
+
 }

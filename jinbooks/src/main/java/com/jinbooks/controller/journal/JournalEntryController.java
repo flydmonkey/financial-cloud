@@ -1,23 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.controller.journal;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinbooks.authn.annotation.CurrentUser;
 import com.jinbooks.authn.support.AuthorizationUtils;
@@ -29,28 +15,25 @@ import com.jinbooks.dto.journal.JournalEntryDto;
 import com.jinbooks.dto.journal.JournalEntryPageDto;
 import com.jinbooks.dto.voucher.GenerateVoucherDto;
 import com.jinbooks.service.journal.JournalEntryService;
-import com.jinbooks.validate.AddGroup;
-import com.jinbooks.validate.EditGroup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.jinbooks.validation.AddGroup;
+import com.jinbooks.validation.EditGroup;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping("/journal/entry")
+@RequestMapping("/api/journal/entry")
 public class JournalEntryController {
-    private static final Logger logger = LoggerFactory.getLogger(JournalEntryController.class);
 
-    @Autowired
-    JournalEntryService journalEntryService;
+    private final JournalEntryService journalEntryService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<JournalEntry>> fetch(JournalEntryPageDto dto) {
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
-        logger.debug("fetch {}", dto);
+        log.debug("fetch {}", dto);
 
         return journalEntryService.pageList(dto);
     }

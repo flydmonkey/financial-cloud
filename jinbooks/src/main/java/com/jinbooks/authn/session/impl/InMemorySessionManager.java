@@ -1,35 +1,12 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
- 
-
- 
-
 package com.jinbooks.authn.session.impl;
 
+
+import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -44,8 +21,8 @@ import com.jinbooks.domain.permissions.SessionList;
  * @author Crystal.Sea
  *
  */
+@Slf4j
 public class InMemorySessionManager implements SessionManager{
-    private static final Logger logger = LoggerFactory.getLogger(InMemorySessionManager.class);
 
     static final 	long 	CACHE_MAXIMUM_SIZE 		= 2000000;//200W
     static final 	int 	CACHE_DEFAULT_SECONDS 	= 60 * 30; //default 30 minutes.
@@ -100,7 +77,7 @@ public class InMemorySessionManager implements SessionManager{
     public Session refresh(String sessionId,LocalDateTime refreshTime) {
         Session session = get(sessionId);
         if(session != null) {
-        	logger.debug("refresh session Id {} at refreshTime {}",sessionId,refreshTime);
+        	log.debug("refresh session Id {} at refreshTime {}",sessionId,refreshTime);
 	        session.setLastAccessTime(refreshTime);
 	        //renew one
 	        create(sessionId , session);
@@ -114,7 +91,7 @@ public class InMemorySessionManager implements SessionManager{
         
         if(session != null) {
         	LocalDateTime currentTime = LocalDateTime.now();
-        	logger.debug("refresh session Id {} at time {}",sessionId,currentTime);
+        	log.debug("refresh session Id {} at time {}",sessionId,currentTime);
         	session.setLastAccessTime(currentTime);
         	//put renew session
 	        create(sessionId , session);
@@ -130,7 +107,7 @@ public class InMemorySessionManager implements SessionManager{
 	public List<SessionList> sessionList(String style) {
 		ConcurrentMap<String, Session> sessions = sessionStore.asMap();
 		for (Map.Entry<String, Session> entry: sessions.entrySet()) {
-			logger.debug("session id = {}, Value = {} Start at {} , Expired at {}" , 
+			log.debug("session id = {}, Value = {} Start at {} , Expired at {}" , 
 					entry.getKey(),entry.getValue(), entry.getValue().getStartTimestamp(),entry.getValue().getExpiredTime());
 		}
 		return null;

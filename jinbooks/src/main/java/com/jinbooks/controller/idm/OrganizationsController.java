@@ -1,25 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
 package com.jinbooks.controller.idm;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -39,13 +23,10 @@ import com.jinbooks.dto.idm.OrgPageDto;
 import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.idm.OrganizationsExcelService;
 import com.jinbooks.service.idm.OrganizationsService;
-import com.jinbooks.validate.AddGroup;
-import com.jinbooks.validate.EditGroup;
+import com.jinbooks.validation.AddGroup;
+import com.jinbooks.validation.EditGroup;
 
 import org.dromara.hutool.core.tree.MapTree;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -62,22 +43,19 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletResponse;
 
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping({"/orgs"})
+@RequestMapping({"/api/orgs"})
 public class OrganizationsController {
-    static final Logger logger = LoggerFactory.getLogger(OrganizationsController.class);
 
-    @Autowired
-    OrganizationsService organizationsService;
+    private final OrganizationsService organizationsService;
 
-    @Autowired
-    OrganizationsExcelService organizationsExcelService;
+    private final OrganizationsExcelService organizationsExcelService;
 
-    @Autowired
-    HistorySystemLogsService historySystemLogsService;
+    private final HistorySystemLogsService historySystemLogsService;
 
-    @Autowired
-    IdentifierGenerator identifierGenerator;
+    private final IdentifierGenerator identifierGenerator;
 
     @GetMapping(value = {"/fetch"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Page<Organizations>> fetch(OrgPageDto dto, @CurrentUser UserInfo currentUser) {
@@ -87,7 +65,7 @@ public class OrganizationsController {
 
     @GetMapping(value = {"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<List<Organizations>> query(@ModelAttribute Organizations org, @CurrentUser UserInfo currentUser) {
-        logger.debug("-query  {}", org);
+        log.debug("-query  {}", org);
         LambdaQueryWrapper<Organizations> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Organizations::getBookId, currentUser.getBookId());
         List<Organizations> orgList = organizationsService.list(wrapper);
@@ -107,7 +85,7 @@ public class OrganizationsController {
     @PostMapping(value = {"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Organizations> insert(@Validated(value = AddGroup.class)
                                          @RequestBody Organizations org, @CurrentUser UserInfo currentUser) {
-        logger.debug("-Add  : {}", org);
+        log.debug("-Add  : {}", org);
         org.setBookId(currentUser.getBookId());
         if (organizationsService.saveOneOrg(org)) {
             historySystemLogsService.log(
@@ -126,7 +104,7 @@ public class OrganizationsController {
     public Message<Organizations> update(@Validated(value = EditGroup.class)
                                          @RequestBody Organizations org,
                                          @CurrentUser UserInfo currentUser) {
-        logger.debug("-update  : {}", org);
+        log.debug("-update  : {}", org);
         org.setBookId(currentUser.getBookId());
         if (organizationsService.updateOneOrg(org)) {
             historySystemLogsService.log(
@@ -143,7 +121,7 @@ public class OrganizationsController {
 
     @DeleteMapping(value = {"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Organizations> delete(@RequestParam("ids") List<String> ids, @CurrentUser UserInfo currentUser) {
-        logger.debug("-delete  ids : {} ", ids);
+        log.debug("-delete  ids : {} ", ids);
         if (organizationsService.removeByIds(ids)) {
             historySystemLogsService.log(
                     ConstsEntryType.ORGANIZATION,
@@ -159,11 +137,11 @@ public class OrganizationsController {
 
     @GetMapping(value = {"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<List<MapTree<String>>> tree(@ModelAttribute Organizations organization, @CurrentUser UserInfo currentUser) {
-        logger.debug("-query  {}", organization);
+        log.debug("-query  {}", organization);
         organization.setBookId(currentUser.getBookId());
 
         if (AuthorizationUtils.getAuthentication().getAuthorities().contains(ConstsRoles.ROLE_MANAGER)) {
-            logger.debug("Has ROLE_MANAGERS {}", currentUser.getId());
+            log.debug("Has ROLE_MANAGERS {}", currentUser.getId());
             organization.setGradingUserId(currentUser.getId());
         }
 
@@ -172,7 +150,7 @@ public class OrganizationsController {
 
     }
 
-    @RequestMapping(value = "/import")
+    @RequestMapping(value = "/api/import")
     public Message<Organizations> importingOrganizations(
             @ModelAttribute("excelImportFile") ExcelImport excelImportFile,
             @CurrentUser UserInfo currentUser) {

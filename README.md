@@ -93,7 +93,7 @@ docker-compose up -d
 
 默认连接 `127.0.0.1:3307`（避免与本机 3306 冲突），库名 `jinbooks`，用户/密码见 `docker-compose.yml`。
 
-默认端口 `2154`，上下文路径 `/jinbooks-api`。数据库等配置见 `jinbooks/src/main/resources/application-jinbooks.properties`，可通过环境变量 `DATABASE_HOST`、`DATABASE_PORT`、`DATABASE_NAME` 等覆盖。
+默认端口 `2154`，API 前缀 `/api`。数据库等配置见 `jinbooks/src/main/resources/application.yml`，可通过环境变量 `DATABASE_HOST`、`DATABASE_PORT`、`DATABASE_NAME` 等覆盖。
 
 ## 前端技术
 
@@ -103,8 +103,4 @@ docker-compose up -d
 | vite         | 构建工具      |5.3.2 |
 | element-plus | 组件库        |2.9.9 |
 | echarts      | 报表库        |5.6.0 |
-
-# 许可证
-
-JinBooks 遵循 <b>Apache License, Version 2.0 </b>开源免费
 

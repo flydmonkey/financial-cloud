@@ -1,33 +1,31 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.service.permissions;
 
-import com.jinbooks.service.permissions.PermissionBookService;
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Repository;
+
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinbooks.domain.book.Book;
 import com.jinbooks.domain.permissions.PermissionBook;
 import com.jinbooks.dto.permissions.PermissionBookPageDto;
+import com.jinbooks.repository.permissions.PermissionBookMapper;
+import com.jinbooks.service.permissions.PermissionBookService;
 
-public interface PermissionBookService  extends IService<PermissionBook> {
-	Page<Book> userAccessBook(Page page, PermissionBookPageDto dto);
+@RequiredArgsConstructor
+@Slf4j
+@Repository
+public class PermissionBookService  extends ServiceImpl<PermissionBookMapper,PermissionBook>{
 
-	Page<Book> userNotAccessBook(Page page, PermissionBookPageDto dto);
+	private final PermissionBookMapper permissionBookMapper;
+	public Page<Book> userAccessBook(Page page, PermissionBookPageDto dto) {
+		return permissionBookMapper.userAccessBook(page, dto);
+	}
+	public Page<Book> userNotAccessBook(Page page, PermissionBookPageDto dto) {
+		return permissionBookMapper.userNotAccessBook(page, dto);
+	}
+
 
 }

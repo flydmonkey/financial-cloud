@@ -1,23 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.controller.standard;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinbooks.common.Message;
@@ -27,12 +13,9 @@ import com.jinbooks.dto.book.BookSubjectTreeDto;
 import com.jinbooks.dto.common.ListIdsDto;
 import com.jinbooks.domain.standard.StandardSubject;
 import com.jinbooks.service.standard.StandardSubjectService;
-import com.jinbooks.validate.AddGroup;
-import com.jinbooks.validate.EditGroup;
+import com.jinbooks.validation.AddGroup;
+import com.jinbooks.validation.EditGroup;
 import org.dromara.hutool.core.tree.MapTree;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,18 +28,18 @@ import java.util.List;
  * @time: 2024/12/19 15:43
  */
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping("/standardsubject")
+@RequestMapping("/api/standardsubject")
 public class StandardSubjectController {
-    private static final Logger logger = LoggerFactory.getLogger(StandardSubjectController.class);
 
-    @Autowired
-    StandardSubjectService standardSubjectService;
+    private final StandardSubjectService standardSubjectService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<StandardSubject>> fetch(SubjectPageDto dto) {
 
-        logger.debug("fetch {}", dto);
+        log.debug("fetch {}", dto);
 
         return standardSubjectService.pageList(dto);
     }

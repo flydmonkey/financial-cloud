@@ -1,26 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
 package com.jinbooks.controller.auth;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.util.List;
 
@@ -28,9 +11,6 @@ import com.jinbooks.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,22 +36,22 @@ import com.jinbooks.context.WebContext;
  * @author Crystal.Sea
  *
  */
+@RequiredArgsConstructor
+@Slf4j
 @Controller
-@RequestMapping(value = { "/filestorage" })
+@RequestMapping(value = { "/api/filestorage" })
 public class FileStorageController {
 
-	private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
 
-	@Autowired
-	FileStorageService fileUploadService;
+	private final FileStorageService fileUploadService;
 
- 	@RequestMapping(value={"/upload/"})
+ 	@RequestMapping(value={"/api/upload/"})
  	@ResponseBody
  	public Message<Object> upload( HttpServletRequest request,
  	                            HttpServletResponse response,
  	                           @ModelAttribute FileStorage fileStorage,
  	                           @CurrentUser UserInfo currentUser){
- 		logger.debug("FileUpload");
+ 		log.debug("FileUpload");
  		fileStorage.setId(WebContext.genId());
  		fileStorage.setContentType(fileStorage.getUploadFile().getContentType());
  		fileStorage.setFileName(fileStorage.getUploadFile().getOriginalFilename());
@@ -84,9 +64,9 @@ public class FileStorageController {
 			try {
 				fileStorage.setDataStored(fileStorage.getUploadFile().getBytes());
 				fileUploadService.save(fileStorage);
-				logger.trace("FileUpload SUCCESS");
+				log.trace("FileUpload SUCCESS");
 			} catch (IOException e) {
-				logger.error("FileUpload IOException",e);
+				log.error("FileUpload IOException",e);
 			}
 		}
  		return new Message<>(Message.SUCCESS,(Object)fileStorage.getId());

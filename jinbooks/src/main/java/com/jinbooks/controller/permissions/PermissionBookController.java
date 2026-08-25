@@ -1,25 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
 package com.jinbooks.controller.permissions;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
@@ -34,9 +18,6 @@ import com.jinbooks.dto.permissions.PermissionBookDto;
 import com.jinbooks.dto.permissions.PermissionBookPageDto;
 import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.permissions.PermissionBookService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -48,31 +29,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/permissions/permissionBook"})
+@RequestMapping(value={"/api/permissions/permissionBook"})
 public class PermissionBookController {
-	static final Logger logger = LoggerFactory.getLogger(PermissionBookController.class);
 
-	@Autowired
-	PermissionBookService permissionBookService;
+	private final PermissionBookService permissionBookService;
 
-	@Autowired
-	HistorySystemLogsService historySystemLogsService;
+	private final HistorySystemLogsService historySystemLogsService;
 
-	@Autowired
-	IdentifierGenerator identifierGenerator;
+	private final IdentifierGenerator identifierGenerator;
 
 	@GetMapping(value = { "/userAccessBook" })
 	public Message<Page<Book>> userAccessBook(PermissionBookPageDto dto,
 													@CurrentUser UserInfo currentUser) {
-		logger.debug("userAccessBook : {}",dto);
+		log.debug("userAccessBook : {}",dto);
 		return Message.ok(permissionBookService.userAccessBook(dto.build(), dto));
 	}
 
 	@GetMapping(value = { "/userNotAccessBook" })
 	public Message<Page<Book>> userNotAccessBook(PermissionBookPageDto dto,
 													   @CurrentUser UserInfo currentUser) {
-		logger.debug("userNotAccessBook : {}",dto);
+		log.debug("userNotAccessBook : {}",dto);
 		return Message.ok(permissionBookService.userNotAccessBook(dto.build(), dto));
 	}
 	
@@ -100,7 +79,7 @@ public class PermissionBookController {
 	
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<RoleMember> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
-		logger.debug("-delete ids : {}" , ids);
+		log.debug("-delete ids : {}" , ids);
 		if (permissionBookService.removeBatchByIds(ids)) {
 			 return new Message<>(Message.SUCCESS);
 		} else {

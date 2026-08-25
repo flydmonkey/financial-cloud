@@ -1,27 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.controller.permissions;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinbooks.authn.annotation.CurrentUser;
@@ -34,9 +16,6 @@ import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.permissions.SessionListService;
 import com.jinbooks.util.StrUtils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,19 +29,17 @@ import org.springframework.web.bind.annotation.RestController;
  *
  */
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value = { "/access/session" })
+@RequestMapping(value = { "/api/access/session" })
 public class SessionController {
-    static final Logger logger = LoggerFactory.getLogger(SessionController.class);
 
-    @Autowired
-    SessionListService sessionListService;
+    private final SessionListService sessionListService;
 
-    @Autowired
-    SessionManager sessionManager;
+    private final SessionManager sessionManager;
 
-    @Autowired
-	HistorySystemLogsService historySystemLogsService;
+    private final HistorySystemLogsService historySystemLogsService;
 
     /**
      * 查询登录日志.
@@ -74,7 +51,7 @@ public class SessionController {
     public Message<Page<SessionList>> fetch(
     		SessionListPageDto dto,
     			@CurrentUser UserInfo currentUser) {
-        logger.debug("history/session/fetch {}" , dto);
+        log.debug("history/session/fetch {}" , dto);
 
         LambdaQueryWrapper<SessionList> wrapper = new LambdaQueryWrapper<>();
         wrapper.orderByDesc(SessionList::getOperateTime);
@@ -83,19 +60,19 @@ public class SessionController {
 
     @DeleteMapping(value="/terminate")
     public Message<SessionList> terminate(@RequestParam("ids") String ids,@CurrentUser UserInfo currentUser) {
-        logger.debug(ids);
+        log.debug(ids);
         boolean isTerminated = false;
         try {
             for(String sessionId : StrUtils.string2List(ids, ",")) {
                 if(currentUser.getSessionId().contains(sessionId)) {
                     continue;//skip current session
                 }
-                logger.trace("terminate session Id {} ",sessionId);
+                log.trace("terminate session Id {} ",sessionId);
                 sessionManager.terminate(sessionId,currentUser.getId(),currentUser.getUsername());
             }
             isTerminated = true;
         }catch(Exception e) {
-            logger.debug("terminate Exception .",e);
+            log.debug("terminate Exception .",e);
         }
 
         if(isTerminated) {

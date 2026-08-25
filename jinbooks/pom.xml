@@ -24,7 +24,6 @@
         <dromara-hutool.version>6.0.0-M18</dromara-hutool.version>
         <justauth.version>1.16.6</justauth.version>
         <cas-client.version>4.0.4</cas-client.version>
-        <ip2region.version>2.7.0</ip2region.version>
         <bouncycastle.version>1.71</bouncycastle.version>
         <esapi.version>2.2.0.0</esapi.version>
         <passay.version>1.6.6</passay.version>
@@ -103,11 +102,6 @@
                 <groupId>org.apereo.cas.client</groupId>
                 <artifactId>cas-client-core</artifactId>
                 <version>${cas-client.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.lionsoul</groupId>
-                <artifactId>ip2region</artifactId>
-                <version>${ip2region.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
@@ -497,10 +491,6 @@
         <dependency>
             <groupId>eu.tekul</groupId>
             <artifactId>szxcvbn_2.9.2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.lionsoul</groupId>
-            <artifactId>ip2region</artifactId>
         </dependency>
         <!-- Cloud SDKs -->
         <dependency>

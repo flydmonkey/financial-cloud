@@ -1,41 +1,217 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.service.journal;
 
+
+import lombok.RequiredArgsConstructor;
+import cn.hutool.core.bean.BeanUtil;
+import lombok.extern.slf4j.Slf4j;
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinbooks.common.Message;
+import com.jinbooks.domain.book.Book;
 import com.jinbooks.dto.common.ListIdsDto;
+import com.jinbooks.domain.journal.JournalAccount;
 import com.jinbooks.domain.journal.JournalEntry;
 import com.jinbooks.dto.journal.JournalEntryDto;
 import com.jinbooks.dto.journal.JournalEntryPageDto;
 import com.jinbooks.dto.voucher.GenerateVoucherDto;
+import com.jinbooks.dto.voucher.VoucherChangeDto;
+import com.jinbooks.dto.voucher.VoucherItemChangeDto;
+import com.jinbooks.enums.VoucherStatusEnum;
+import com.jinbooks.exception.BusinessException;
+import com.jinbooks.repository.book.BookMapper;
+import com.jinbooks.repository.journal.JournalEntryMapper;
+import com.jinbooks.service.journal.JournalAccountService;
+import com.jinbooks.service.journal.JournalEntryService;
+import com.jinbooks.service.book.SettlementService;
+import com.jinbooks.service.voucher.VoucherService;
+import com.jinbooks.util.DateUtils;
 
-public interface JournalEntryService extends IService<JournalEntry> {
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+@RequiredArgsConstructor
+@Slf4j
+@Service
+public class JournalEntryService extends ServiceImpl<JournalEntryMapper, JournalEntry>{
+
+	private final JournalAccountService journalAccountService;
 	
-    Message<Page<JournalEntry>> pageList(JournalEntryPageDto dto);
+	private final BookMapper bookMapper;
+	
+	private final VoucherService voucherService;
+	
+	private final SettlementService settlementService;
+    public Message<Page<JournalEntry>> pageList(JournalEntryPageDto dto) {
+        Page<JournalEntry> page = this.getBaseMapper().pageList(dto.build(), dto);
 
-    Message<String> save(JournalEntryDto dto);
+        return new Message<>(Message.SUCCESS, page);
+    }
+    @Transactional
+    public Message<String> save(JournalEntryDto dto) {
 
-    Message<String> update(JournalEntryDto dto);
+    	JournalEntry journalEntry = new JournalEntry();
+        BeanUtil.copyProperties(dto, journalEntry);
+        if(dto.getTradeDate() == null) {
+        	journalEntry.setTradeDate(new Date());
+        }
+        //判断账期是否结账
+        String period = DateUtils.format(journalEntry.getTradeDate(),DateUtils.FORMAT_DATE_YYYY_MM);
+        Message<String> check = settlementService.check(dto.getBookId(), period);
+        if(check.getCode() != 0) {
+        	return check;
+        }
+        
+        JournalAccount  journalAccount  = journalAccountService.getById(journalEntry.getAccId());
+        
+        if(journalEntry.getDirection().equalsIgnoreCase("i") 
+        		|| journalEntry.getDirection().equalsIgnoreCase("o")) {
+        	//i收入和o期初
+        	journalEntry.setExpenditure(null);
+        	if(journalEntry.getDirection().equalsIgnoreCase("o")&&journalAccount.getOpeningBalance().equals(BigDecimal.ZERO)) {
+        		journalAccount.setOpeningBalance(journalEntry.getIncome());
+        	}
+        	journalAccountService.income(journalEntry.getAccId(), journalEntry.getIncome());
+        	
+        }else if(journalEntry.getDirection().equalsIgnoreCase("e")){
+        	journalEntry.setIncome(null);
+        	//支出
+        	if(journalAccount.getBalance().subtract(journalEntry.getExpenditure()).doubleValue() < 0 ) {
+        		throw new BusinessException(10001,"余额不足！");
+        	}
+        	journalAccountService.expenditure(journalEntry.getAccId(), journalEntry.getExpenditure());
+        }
+        
+        if(journalAccount != null) {
+        	JournalAccount journalAccountBalance  = journalAccountService.getById(journalEntry.getAccId());
+        	//设置余额
+        	journalEntry.setBalance(journalAccountBalance.getBalance());
+        }
+        boolean saveResult = super.save(journalEntry);
 
-    Message<String> delete(ListIdsDto dto);
-    
-    Message<String> generateVoucher(GenerateVoucherDto dto);
+        return saveResult ? new Message<>(Message.SUCCESS, "新增成功") : new Message<>(Message.FAIL, "新增失败");
+    }
+    @Transactional
+    public Message<String> update(JournalEntryDto dto) {
+        String id = dto.getId();
+        JournalEntry journalEntry = super.getById(id);
+        //判断账期是否结账
+        String period = DateUtils.format(journalEntry.getTradeDate(),DateUtils.FORMAT_DATE_YYYY_MM);
+        Message<String> check = settlementService.check(dto.getBookId(), period);
+        if(check.getCode() != 0) {
+        	return check;
+        }
+        
+        BeanUtil.copyProperties(dto, journalEntry);
+        boolean result = super.updateById(journalEntry);
+        return result ? new Message<>(Message.SUCCESS, "修改成功") : new Message<>(Message.FAIL, "修改失败");
+    }
+    @Transactional
+    public Message<String> delete(ListIdsDto dto) {
+        List<String> listIds = dto.getListIds();
+        List<String> removeableListIds = new ArrayList<>();
+        boolean result = false;
+        for(String id : listIds) {
+	        JournalEntry journalEntry = super.getById(id);
+	        //判断账期是否结账
+	        String period = DateUtils.format(journalEntry.getTradeDate(),DateUtils.FORMAT_DATE_YYYY_MM);
+	        Message<String> check = settlementService.check(journalEntry.getBookId(), period);
+	        if(check.getCode() == 0) {
+	        	removeableListIds.add(id);
+		        if(journalEntry.getDirection().equalsIgnoreCase("i")
+		        		||journalEntry.getDirection().equalsIgnoreCase("o")) {
+		        	//支出退回
+		        	journalAccountService.expenditure(journalEntry.getAccId(), journalEntry.getIncome());
+		        }else {
+		        	//收入减去
+		        	journalAccountService.income(journalEntry.getAccId(), journalEntry.getExpenditure());
+		        }
+	        }
+        }
+        result = super.removeBatchByIds(removeableListIds);
+
+        return result ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
+    }
+	public Message<String> generateVoucher(GenerateVoucherDto dto) {
+		String bookId = dto.getBookId();
+		Book book = bookMapper.selectById(bookId);
+		JournalEntry journalEntry = super.getById(dto.getId());
+		
+	     // 格式化日期
+        Date formattedDate = DateUtils.getCurrentDate();
+        
+        //判断账期是否结账
+        String period = DateUtils.format(formattedDate,DateUtils.FORMAT_DATE_YYYY_MM);
+        Message<String> check = settlementService.check(bookId, period);
+        if(check.getCode() != 0) {
+        	return check;
+        }
+        
+        BigDecimal amount = null;
+		if(journalEntry.getDirection().equalsIgnoreCase("i")) {
+			amount = journalEntry.getIncome();
+		}else {
+			amount = journalEntry.getExpenditure();
+		}
+		
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(formattedDate);
+        Integer year = calendar.get(Calendar.YEAR);
+        Integer month = calendar.get(Calendar.MONTH) + 1;
+
+        // 封装凭证入参数据
+        Integer wordNum = voucherService.getAbleWordNum(bookId,"记", null, null).getData();
+
+        VoucherChangeDto voucherDto = new VoucherChangeDto();
+        voucherDto.setWordHead("记");
+        voucherDto.setWordNum(wordNum);
+        voucherDto.setBookId(bookId);
+        voucherDto.setCompanyName(book.getCompanyName());
+        voucherDto.setVoucherDate(formattedDate);
+        voucherDto.setVoucherYear(year);
+        voucherDto.setVoucherMonth(month);
+        voucherDto.setDebitAmount(amount);
+        voucherDto.setCreditAmount(amount);
+        
+	     // 创建凭证项
+        List<VoucherItemChangeDto> voucherItems = new ArrayList<>();
+        //
+        VoucherItemChangeDto debitItemDto = new VoucherItemChangeDto();
+        debitItemDto.setSummary(journalEntry.getRemark());
+        debitItemDto.setSubjectId(bookId);
+        debitItemDto.setSubjectName(bookId);
+        debitItemDto.setSubjectCode(bookId);
+        debitItemDto.setDebitAmount(amount);
+        debitItemDto.setAuxiliary(List.of());
+        debitItemDto.setDetailedAccounts("");
+        voucherItems.add(debitItemDto);
+        //
+        VoucherItemChangeDto creditItemDto = new VoucherItemChangeDto();
+        creditItemDto.setSummary(journalEntry.getRemark());
+        creditItemDto.setCreditAmount(amount);
+        creditItemDto.setSubjectId(bookId);
+        creditItemDto.setSubjectName(bookId);
+        creditItemDto.setSubjectCode(bookId);
+        creditItemDto.setAuxiliary(List.of());
+        creditItemDto.setDetailedAccounts("");
+        voucherItems.add(creditItemDto);
+        
+        voucherDto.setRemark(journalEntry.getRemark());
+        // 暂存凭证
+        voucherDto.setItems(voucherItems);
+        //设置状态为暂存
+        voucherDto.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        voucherService.save(voucherDto);
+        
+    	LambdaUpdateWrapper<JournalEntry> updateWrapper = new LambdaUpdateWrapper<>();
+    	updateWrapper.set(JournalEntry::getVoucherId, voucherDto.getId());
+    	updateWrapper.eq(JournalEntry::getId, dto.getId());
+    	super.update(updateWrapper);
+    	
+		return Message.ok(voucherDto.getId());
+	}
 }

@@ -1,27 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-
-
-
-
-
 package com.jinbooks.controller.idm;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.jinbooks.service.auth.FileStorageService;
 import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.security.ConfigPasswordPolicyService;
@@ -51,16 +33,13 @@ import com.jinbooks.domain.security.ConfigPasswordPolicy;
 import com.jinbooks.domain.idm.UserInfo;
 import com.jinbooks.dto.idm.UserInfoPageDto;
 import com.jinbooks.service.auth.LoginService;
-import com.jinbooks.service.security.impl.PasswordPolicyValidatorServiceImpl;
-import com.jinbooks.validate.AddGroup;
-import com.jinbooks.validate.EditGroup;
+import com.jinbooks.service.security.PasswordPolicyValidatorService;
+import com.jinbooks.validation.AddGroup;
+import com.jinbooks.validation.EditGroup;
 import com.jinbooks.context.WebContext;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -84,42 +63,36 @@ import jakarta.servlet.http.HttpServletResponse;
  * @author Crystal.Sea
  *
  */
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value = { "/users" })
+@RequestMapping(value = { "/api/users" })
 public class UserInfoController {
-	static final Logger logger = LoggerFactory.getLogger(UserInfoController.class);
 
-	@Autowired
-	UserInfoService userInfoService;
+	private final UserInfoService userInfoService;
 
-	@Autowired
-	UserInfoExcelService userInfoExcelService;
+	private final UserInfoExcelService userInfoExcelService;
 
-	@Autowired
-	FileStorageService fileStorageService;
+	private final FileStorageService fileStorageService;
 
-	@Autowired
-	LoginService loginService;
+	private final LoginService loginService;
 
-	@Autowired
-	HistorySystemLogsService historySystemLogsService;
+	private final HistorySystemLogsService historySystemLogsService;
 
-	@Autowired
-	ConfigPasswordPolicyService configPasswordPolicyService;
+	private final ConfigPasswordPolicyService configPasswordPolicyService;
 
-	@Autowired
-	SessionManager sessionManager;
+	private final SessionManager sessionManager;
 
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<UserInfo>> fetch(UserInfoPageDto dto, @CurrentUser UserInfo currentUser) {
-		logger.debug("fetch {}",dto);
+		log.debug("fetch {}",dto);
 		dto.setBookId(currentUser.getBookId());
 		return userInfoService.fetchPageResults(dto);
 	}
 
 	@GetMapping(value={"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> query(UserInfoPageDto dto, @CurrentUser UserInfo currentUser) {
-		logger.debug("-query  : {}" , dto);
+		log.debug("-query  : {}" , dto);
 
 		LambdaQueryWrapper<UserInfo> wrapper = new LambdaQueryWrapper<>();
 		if (ObjectUtils.isNotEmpty(userInfoService.list(wrapper))) {
@@ -199,7 +172,7 @@ public class UserInfoController {
 
 	@PostMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> insert(@Validated(value = AddGroup.class) @RequestBody UserInfo userInfo,@CurrentUser UserInfo currentUser) {
-		logger.debug("-Add  : {}" , userInfo);
+		log.debug("-Add  : {}" , userInfo);
 		userInfo.setId(WebContext.genId());
 		userInfo.setBookId(currentUser.getBookId());
 		userInfo.setCreatedBy(currentUser.getId());
@@ -219,7 +192,7 @@ public class UserInfoController {
 
 	@PutMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> update(@Validated(value = EditGroup.class) @RequestBody  UserInfo userInfo, @CurrentUser UserInfo currentUser) {
-		logger.debug("-update  : {}" , userInfo);
+		log.debug("-update  : {}" , userInfo);
 
 		userInfo.setBookId(currentUser.getBookId());
 
@@ -238,7 +211,7 @@ public class UserInfoController {
 
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
-		logger.debug("-delete  ids : {} " , ids);
+		log.debug("-delete  ids : {} " , ids);
 
 		if (userInfoService.removeByIds(ids)) {
 			historySystemLogsService.log(
@@ -264,7 +237,7 @@ public class UserInfoController {
 			@Validated(value = EditGroup.class)
 			@RequestBody ChangePassword changePassword,
 			@CurrentUser UserInfo currentUser) {
-		logger.debug("UserId {}",changePassword.getUserId());
+		log.debug("UserId {}",changePassword.getUserId());
 		changePassword.setPasswordSetType(ConstsPasswordSetType.PASSWORD_NORMAL);
 		if(userInfoService.changePassword(changePassword,true)) {
 			historySystemLogsService.log(
@@ -281,7 +254,7 @@ public class UserInfoController {
 
 	@GetMapping(value = { "/updateStatus" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> updateStatus(@ModelAttribute UserInfo userInfo,@CurrentUser UserInfo currentUser) {
-		logger.debug("updateStatus {}",userInfo);
+		log.debug("updateStatus {}",userInfo);
 		UserInfo loadUserInfo = userInfoService.getById(userInfo.getId());
 		userInfo.setBookId(currentUser.getBookId());
 		userInfo.setUsername(loadUserInfo.getUsername());
@@ -317,13 +290,13 @@ public class UserInfoController {
 					currentUser);
 			return new Message<>(Message.SUCCESS);
 		} else {
-			String message = (String) WebContext.getAttribute(PasswordPolicyValidatorServiceImpl.PASSWORD_POLICY_VALIDATE_RESULT);
-			logger.info("-message: {}",message);
+			String message = (String) WebContext.getAttribute(PasswordPolicyValidatorService.PASSWORD_POLICY_VALIDATE_RESULT);
+			log.info("-message: {}",message);
 			return new Message<>(Message.ERROR,message);
 		}
 	}
 
-    @RequestMapping(value = "/import")
+    @RequestMapping(value = "/api/import")
     public Message<UserInfo> importUsers(
     		@ModelAttribute("excelImportFile")ExcelImport excelImportFile,
     		@CurrentUser UserInfo currentUser)  {

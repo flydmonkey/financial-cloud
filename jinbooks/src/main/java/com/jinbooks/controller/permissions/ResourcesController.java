@@ -1,27 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.controller.permissions;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -42,9 +24,6 @@ import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.permissions.ResourcesService;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,32 +36,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/permissions/resources"})
+@RequestMapping(value={"/api/permissions/resources"})
 public class ResourcesController {
-	static final Logger logger = LoggerFactory.getLogger(ResourcesController.class);
 
 	static String rootId = "1";
 	
-	@Autowired
-	ResourcesService resourcesService;
+	private final ResourcesService resourcesService;
 
-	@Autowired
-	HistorySystemLogsService historySystemLogsService;
+	private final HistorySystemLogsService historySystemLogsService;
 
-	@Autowired
-	IdentifierGenerator identifierGenerator;
+	private final IdentifierGenerator identifierGenerator;
 
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<Resources>> fetch(ResourcesPageDto dto, @CurrentUser UserInfo currentUser) {
-		logger.debug("fetch {}" , dto);
+		log.debug("fetch {}" , dto);
 		dto.setBookId(rootId);
 		return resourcesService.pageList(dto);
 	}
 
 	@GetMapping(value={"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<List<Resources>>  query(ResourcesPageDto dto,@CurrentUser UserInfo currentUser) {
-		logger.debug("-query  {}" , dto);
+		log.debug("-query  {}" , dto);
 		LambdaQueryWrapper<Resources> wrapper = new LambdaQueryWrapper<>();
 		List<Resources>  resourceList = resourcesService.list(wrapper);
 		if (resourceList != null) {
@@ -100,7 +77,7 @@ public class ResourcesController {
 
 	@PostMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Resources> insert(@RequestBody Resources resource,@CurrentUser UserInfo currentUser) {
-		logger.debug("-Add  : {}" , resource);
+		log.debug("-Add  : {}" , resource);
 		resource.setId(identifierGenerator.nextId(resource).toString());
 		if(StringUtils.isBlank(resource.getPermission())) {
 			resource.setPermission(resource.getId());
@@ -120,7 +97,7 @@ public class ResourcesController {
 
 	@PutMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Resources> update(@RequestBody  Resources resource,@CurrentUser UserInfo currentUser) {
-		logger.debug("-update  : {}" , resource);
+		log.debug("-update  : {}" , resource);
 		if (resourcesService.updateById(resource)) {
 			historySystemLogsService.log(
 					ConstsEntryType.RESOURCE,
@@ -136,7 +113,7 @@ public class ResourcesController {
 
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Resources> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
-		logger.debug("-delete  ids : {} " , ids);
+		log.debug("-delete  ids : {} " , ids);
 		if (resourcesService.removeByIds(ids)) {
 			historySystemLogsService.log(
 					ConstsEntryType.RESOURCE,
@@ -152,7 +129,7 @@ public class ResourcesController {
 
 	@GetMapping(value={"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<TreeAttributes> tree(@ModelAttribute Resources resource,@CurrentUser UserInfo currentUser) {
-		logger.debug("-query  {}" , resource);
+		log.debug("-query  {}" , resource);
 		List<Resources>  resourceList = resourcesService.list(Wrappers.<Resources>lambdaQuery());
 		if (resourceList != null) {
 			TreeAttributes treeAttributes = new TreeAttributes();

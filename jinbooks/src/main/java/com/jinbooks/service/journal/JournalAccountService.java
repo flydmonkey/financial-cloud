@@ -1,48 +1,75 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.service.journal;
 
-import java.math.BigDecimal;
-import java.util.List;
+import cn.hutool.core.bean.BeanUtil;
+import lombok.extern.slf4j.Slf4j;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinbooks.common.Message;
 import com.jinbooks.dto.common.ListIdsDto;
 import com.jinbooks.domain.journal.JournalAccount;
 import com.jinbooks.dto.journal.JournalAccountDto;
 import com.jinbooks.dto.journal.JournalAccountPageDto;
+import com.jinbooks.repository.journal.JournalAccountMapper;
+import com.jinbooks.service.journal.JournalAccountService;
 
-public interface JournalAccountService extends IService<JournalAccount> {
-    Message<Page<JournalAccount>> pageList(JournalAccountPageDto dto);
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-    public Message<List <JournalAccount> > findAll(String bookId) ;
-    
-    Message<String> save(JournalAccountDto dto);
+import java.math.BigDecimal;
+import java.util.*;
 
-    Message<String> update(JournalAccountDto dto);
+@Slf4j
+@Service
+public class JournalAccountService extends ServiceImpl<JournalAccountMapper, JournalAccount>{
+    public Message<Page<JournalAccount>> pageList(JournalAccountPageDto dto) {
+        Page<JournalAccount> page = this.getBaseMapper().pageList(dto.build(), dto);
+        return new Message<>(Message.SUCCESS, page);
+    }
+    public Message<List <JournalAccount> > findAll(String bookId) {
+    	LambdaQueryWrapper<JournalAccount> wrapper = new LambdaQueryWrapper<>();
+    	wrapper.eq(JournalAccount::getBookId, bookId);
+        return new Message<>(Message.SUCCESS, this.getBaseMapper().selectList(wrapper));
+    }
+    @Transactional
+    public Message<String> save(JournalAccountDto dto) {
+        JournalAccount account = new JournalAccount();
+        BeanUtil.copyProperties(dto, account);
+        //通过新增记录初始化
+        account.setOpeningBalance(null);
+        boolean saveResult = super.save(account);
+        return saveResult ? new Message<>(Message.SUCCESS, "新增成功") : new Message<>(Message.FAIL, "新增失败");
+    }
+    @Transactional
+    public Message<String> update(JournalAccountDto dto) {
+        String id = dto.getId();
+        JournalAccount account = super.getById(id);
+        BeanUtil.copyProperties(dto, account);
+        //通过新增记录初始化
+        account.setOpeningBalance(null);
+        boolean result = super.updateById(account);
+        return result ? new Message<>(Message.SUCCESS, "修改成功") : new Message<>(Message.FAIL, "修改失败");
+    }
+    @Transactional
+    public Message<String> delete(ListIdsDto dto) {
+        List<String> listIds = dto.getListIds();
+        //删除
+        boolean result = super.removeByIds(listIds);
 
-    Message<String> delete(ListIdsDto dto);
-    
-    int income(String accId,BigDecimal income);
-    
-    int expenditure(String accId,BigDecimal expenditure);
-    
-    public int checkout(String bookId);
+        return result ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
+    }
+	public int income(String accId, BigDecimal income) {
+		return this.getBaseMapper().income(accId, income);
+	}
+	public int expenditure(String accId, BigDecimal expenditure) {
+		return this.getBaseMapper().expenditure(accId, expenditure);
+	}
+
+	/**
+	 * 结账：本期期初余额=余额
+	 */
+	public int checkout(String bookId) {
+		return this.getBaseMapper().checkout(bookId);
+	}
 }

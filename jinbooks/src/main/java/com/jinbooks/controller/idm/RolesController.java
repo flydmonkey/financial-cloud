@@ -1,27 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.controller.idm;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,14 +20,11 @@ import com.jinbooks.domain.idm.Roles;
 import com.jinbooks.dto.idm.RolesPageDto;
 import com.jinbooks.service.idm.RolesService;
 import com.jinbooks.service.history.HistorySystemLogsService;
-import com.jinbooks.validate.AddGroup;
-import com.jinbooks.validate.EditGroup;
+import com.jinbooks.validation.AddGroup;
+import com.jinbooks.validation.EditGroup;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -60,19 +39,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/idm/groups"})
+@RequestMapping(value={"/api/idm/groups"})
 public class RolesController {
-	static final Logger logger = LoggerFactory.getLogger(RolesController.class);
 
-	@Autowired
-	RolesService groupsService;
+	private final RolesService groupsService;
 
-	@Autowired
-	HistorySystemLogsService historySystemLogsService;
+	private final HistorySystemLogsService historySystemLogsService;
 
-	@Autowired
-	IdentifierGenerator identifierGenerator;
+	private final IdentifierGenerator identifierGenerator;
 
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<Roles>> fetch(
@@ -89,7 +66,7 @@ public class RolesController {
 
 	@GetMapping(value={"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Roles> query(@ModelAttribute Roles group,@CurrentUser UserInfo currentUser) {
-		logger.debug("-query  : {}" , group);
+		log.debug("-query  : {}" , group);
 		LambdaQueryWrapper<Roles> wrapper = new LambdaQueryWrapper<>();
 		if (ObjectUtils.isNotEmpty(groupsService.list(wrapper))) {
 			 return new Message<>(Message.SUCCESS);
@@ -107,7 +84,7 @@ public class RolesController {
 
 	@PostMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Roles> insert(@Validated(value = AddGroup.class) @RequestBody Roles group, @CurrentUser UserInfo currentUser) {
-		logger.debug("-Add  : {}" , group);
+		log.debug("-Add  : {}" , group);
 		group.setId(identifierGenerator.nextId("groups").toString());
 		if(StringUtils.isBlank(group.getRoleCode())) {
 			group.setRoleCode(group.getId());
@@ -129,7 +106,7 @@ public class RolesController {
 
 	@PutMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Roles> update(@Validated(value = EditGroup.class) @RequestBody Roles group,@CurrentUser UserInfo currentUser) {
-		logger.debug("-update  group : {}" , group);
+		log.debug("-update  group : {}" , group);
 		if(group.getId().equalsIgnoreCase("ROLE_ALL_USER")) {
 			group.setDefaultAllUser();
 		}
@@ -150,7 +127,7 @@ public class RolesController {
 
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Roles> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
-		logger.debug("-delete ids : {}" , ids);
+		log.debug("-delete ids : {}" , ids);
 		ids.removeAll(Arrays.asList("ROLE_ALL_USER","ROLE_ADMINISTRATORS","-1"));
 		if (groupsService.removeByIds(ids)) {
 			historySystemLogsService.log(

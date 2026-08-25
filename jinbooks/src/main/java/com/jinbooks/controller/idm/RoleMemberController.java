@@ -1,27 +1,9 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.controller.idm;
 
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -42,9 +24,6 @@ import com.jinbooks.service.history.HistorySystemLogsService;
 import com.jinbooks.service.idm.UserInfoService;
 import com.jinbooks.context.WebContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -56,32 +35,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
+@RequiredArgsConstructor
+@Slf4j
 @RestController
-@RequestMapping(value={"/idm/groupmembers"})
+@RequestMapping(value={"/api/idm/groupmembers"})
 public class RoleMemberController {
-	static final Logger logger = LoggerFactory.getLogger(RoleMemberController.class);
 
-	@Autowired
-	RoleMemberService groupMemberService;
+	private final RoleMemberService groupMemberService;
 
-	@Autowired
-	RolesService groupsService;
+	private final RolesService groupsService;
 
-	@Autowired
-	UserInfoService userInfoService;
+	private final UserInfoService userInfoService;
 
-	@Autowired
-	HistorySystemLogsService historySystemLogsService;
+	private final HistorySystemLogsService historySystemLogsService;
 
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<RoleMember>> fetch(
 			RoleMemberPageDto dto,
 			@CurrentUser UserInfo currentUser) {
-		logger.debug("fetch {}",dto);
+		log.debug("fetch {}",dto);
 		LambdaQueryWrapper<RoleMember> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(RoleMember::getBookId, currentUser.getBookId());
 		if(AuthorizationUtils.getAuthentication().getAuthorities().contains(ConstsRoles.ROLE_MANAGER)){
-			logger.debug("Has ROLE_MANAGERS {}" ,currentUser.getId());
+			log.debug("Has ROLE_MANAGERS {}" ,currentUser.getId());
 			wrapper.eq(RoleMember::getGradingUserId, currentUser.getId());
 		}
 		return new Message<>(Message.SUCCESS, groupMemberService.page(dto.build(), wrapper));
@@ -90,7 +66,7 @@ public class RoleMemberController {
 	@GetMapping(value = { "/memberInGroup" })
 	public Message<Page<RoleMember>> memberInGroup(RoleMemberPageDto dto,
 													@CurrentUser UserInfo currentUser) {
-		logger.debug("groupMember : {}",dto);
+		log.debug("groupMember : {}",dto);
 		dto.setBookId(currentUser.getBookId());
 		return new Message<>(Message.SUCCESS, groupMemberService.memberInRole(dto.build(), dto));
 	}
@@ -162,7 +138,7 @@ public class RoleMemberController {
 
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<RoleMember> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
-		logger.debug("-delete ids : {}" , ids);
+		log.debug("-delete ids : {}" , ids);
 		if (groupMemberService.removeBatchByIds(ids)) {
 			 return new Message<>(Message.SUCCESS);
 		} else {

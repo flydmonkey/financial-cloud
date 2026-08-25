@@ -1,27 +1,51 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
 package com.jinbooks.service.security;
 
-import com.jinbooks.service.security.ConfigLoginPolicyService;
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.jinbooks.domain.security.ConfigLoginPolicy;
 
-public interface ConfigLoginPolicyService extends IService<ConfigLoginPolicy> {
-    public ConfigLoginPolicy getConfigLoginPolicy();
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.TimeUnit;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.jinbooks.domain.security.ConfigLoginPolicy;
+import com.jinbooks.repository.security.ConfigLoginPolicyMapper;
+import com.jinbooks.service.security.ConfigLoginPolicyService;
+
+import org.springframework.stereotype.Service;
+
+@RequiredArgsConstructor
+@Slf4j
+@Service
+public class ConfigLoginPolicyService extends ServiceImpl<ConfigLoginPolicyMapper,ConfigLoginPolicy>{
+
+	static final String CONFIG_LOGIN_POLICY_KEY = "CONFIG_LOGIN_POLICY_KEY";
+
+	private final ConfigLoginPolicyMapper configLoginPolicyMapper;
+
+    //Cache ConfigLoginPolicy in memory ONE_HOUR
+    static final Cache<String,  ConfigLoginPolicy> configLoginPolicyStore =
+            Caffeine.newBuilder()
+                .expireAfterWrite(60, TimeUnit.MINUTES)
+                .build();
+
+	public ConfigLoginPolicyMapper getMapper() {
+		return configLoginPolicyMapper;
+	}
+	public ConfigLoginPolicy getConfigLoginPolicy() {
+		ConfigLoginPolicy configLoginPolicy = configLoginPolicyStore.getIfPresent(CONFIG_LOGIN_POLICY_KEY);
+        if (configLoginPolicy == null) {
+			LambdaQueryWrapper<ConfigLoginPolicy> wrapper = new LambdaQueryWrapper<>();
+			wrapper.isNotNull(ConfigLoginPolicy::getId);
+			configLoginPolicy = super.getOne(wrapper);
+            configLoginPolicyStore.put(CONFIG_LOGIN_POLICY_KEY,configLoginPolicy);
+            log.debug("get ConfigLoginPolicy : {}" , configLoginPolicy);
+        }
+        return configLoginPolicy;
+    }
+
+
+
 }

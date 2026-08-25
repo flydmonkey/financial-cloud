@@ -1,30 +1,7 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- 
-
-
-
-
-
 package com.jinbooks.authn.provider.impl;
 
-import com.jinbooks.ip2location.IpLocationParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -52,8 +29,8 @@ import com.jinbooks.context.WebContext;
  * @author Crystal.Sea
  *
  */
+@Slf4j
 public class NormalAuthenticationProvider extends AbstractAuthenticationProvider {
-    private static final Logger logger =LoggerFactory.getLogger(NormalAuthenticationProvider.class);
 
     private HutoolCaptchaService hutoolCaptchaService;
 
@@ -71,13 +48,11 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
     	    LoginService loginService,
     	    AuthTokenService authTokenService,
     	    SessionManager sessionManager,
-    	    IpLocationParser ipLocationParser,
     	    HutoolCaptchaService hutoolCaptchaService) {
 		this.authenticationRealm = authenticationRealm;
 		this.loginService = loginService;
 		this.authTokenService = authTokenService;
 		this.sessionManager = sessionManager;
-		this.ipLocationParser = ipLocationParser;
 		this.hutoolCaptchaService = hutoolCaptchaService;
 	}
 
@@ -85,7 +60,7 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
 	public Authentication doAuthenticate(LoginCredential loginCredential) {
 		UsernamePasswordAuthenticationToken authenticationToken = null;
 		loginCredential.setStyle(Session.STYLE.MGMT);
-		logger.debug("Trying to authenticate user {} via {}", loginCredential.getPrincipal(), getProviderName());
+		log.debug("Trying to authenticate user {} via {}", loginCredential.getPrincipal(), getProviderName());
         try {
 	        //判断图片验证码并验证
 	        if(!this.loginService.getConfigLoginPolicy().getCaptchaMgt().equalsIgnoreCase(ConstsCaptchaType.NONE)) {
@@ -124,7 +99,7 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
 
 	        authenticationToken = createOnlineTicket(loginCredential,userInfo,client);
 	        // user authenticated
-	        logger.debug("'{}' authenticated successfully by {}.",
+	        log.debug("'{}' authenticated successfully by {}.",
 	        		loginCredential.getPrincipal(), getProviderName());
 
 	        authenticationRealm.insertLoginHistory(userInfo,
@@ -134,14 +109,14 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
 									                "xe00000004",
 									                WebConstants.LOGIN_RESULT.SUCCESS);
         } catch (AuthenticationException e) {
-            logger.error("Failed to authenticate user {} via {}: {}",
+            log.error("Failed to authenticate user {} via {}: {}",
                     				loginCredential.getPrincipal(),
                                     getProviderName(),
                                     e.getMessage() );
             WebContext.setAttribute(
                     WebConstants.LOGIN_ERROR_SESSION_MESSAGE, e.getMessage());
         } catch (Exception e) {
-            logger.error("Login error Unexpected exception in {} authentication:{}" ,
+            log.error("Login error Unexpected exception in {} authentication:{}" ,
                             getProviderName(), e.getMessage());
         }
 

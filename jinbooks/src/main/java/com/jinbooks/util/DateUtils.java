@@ -1,24 +1,5 @@
-/*
- * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package com.jinbooks.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -27,6 +8,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateUtil;
 
 public class DateUtils {
 	public static final String FORMAT_DATE_DEFAULT = "yyyy-MM-dd";
@@ -45,48 +29,45 @@ public class DateUtils {
 
 	public static final String FORMAT_DATE_YYYY_MM_DD_HH_MM = "yyyy-MM-dd HH:mm";
 
-	public static final String getCurrentDateTimeAsString() {
+	public static String getCurrentDateTimeAsString() {
 		return getCurrentDateAsString(FORMAT_DATE_YYYY_MM_DD_HH_MM_SS);
 	}
 
-	public static final String getCurrentDateAsString(String formatPattern) {
-		Date date = new Date();
-		return format(date, formatPattern);
+	public static String getCurrentDateAsString(String formatPattern) {
+		return format(new Date(), formatPattern);
 	}
 
-	public static final Date getCurrentDate() {
+	public static Date getCurrentDate() {
 		return new Date();
 	}
 
-	public static final String format(Date date) {
+	public static String format(Date date) {
 		if (date == null) {
 			return "";
 		}
 		return format(date, FORMAT_DATE_DEFAULT);
 	}
 
-	public static final String formatDateTime(Date date) {
+	public static String formatDateTime(Date date) {
 		if (date == null) {
 			return "";
 		}
 		return format(date, FORMAT_DATE_YYYY_MM_DD_HH_MM_SS);
 	}
 
-	public static final String format(Date date, String formatPattern) {
+	public static String format(Date date, String formatPattern) {
 		if (date == null) {
 			return "";
 		}
-		return new SimpleDateFormat(formatPattern).format(date);
+		return DateUtil.format(date, formatPattern);
 	}
 
-	public static final Date parse(String stringValue, String formatPattern) {
-		SimpleDateFormat format = new SimpleDateFormat(formatPattern);
+	public static Date parse(String stringValue, String formatPattern) {
 		try {
-			return format.parse(stringValue);
-		} catch (ParseException e) {
-			e.printStackTrace();
+			return DateUtil.parse(stringValue, formatPattern);
+		} catch (Exception e) {
+			return null;
 		}
-		return null;
 	}
 
 	public static Date addMinutes(Date date, int amount) {
@@ -97,10 +78,7 @@ public class DateUtils {
 		if (date == null) {
 			throw new IllegalArgumentException("The date must not be null");
 		}
-		Calendar c = Calendar.getInstance();
-		c.setTime(date);
-		c.add(calendarField, amount);
-		return c.getTime();
+		return DateUtil.offset(date, toDateField(calendarField), amount);
 	}
 
 	public static Date addDate(Date date, int year, int month, int day, int hour, int minute, int second,
@@ -108,18 +86,15 @@ public class DateUtils {
 		if (date == null) {
 			return null;
 		}
-
-		Calendar c = Calendar.getInstance();
-		c.setTime(date);
-		c.add(Calendar.YEAR, year);
-		c.add(Calendar.MONTH, month);
-		c.add(Calendar.DATE, day);
-		c.add(Calendar.HOUR_OF_DAY, hour);
-		c.add(Calendar.MINUTE, minute);
-		c.add(Calendar.SECOND, second);
-		c.add(Calendar.MILLISECOND, milliSecond);
-
-		return c.getTime();
+		Date result = date;
+		result = DateUtil.offset(result, DateField.YEAR, year);
+		result = DateUtil.offset(result, DateField.MONTH, month);
+		result = DateUtil.offset(result, DateField.DAY_OF_MONTH, day);
+		result = DateUtil.offset(result, DateField.HOUR_OF_DAY, hour);
+		result = DateUtil.offset(result, DateField.MINUTE, minute);
+		result = DateUtil.offset(result, DateField.SECOND, second);
+		result = DateUtil.offset(result, DateField.MILLISECOND, milliSecond);
+		return result;
 	}
 
 	public static Date addDate(Date date, int year, int month, int day, int hour, int minute, int second) {
@@ -148,7 +123,7 @@ public class DateUtils {
 		return lastDay(format(day));
 	}
 
-	public static String toUtc(java.util.Date date) {
+	public static String toUtc(Date date) {
 		return Instant.ofEpochMilli(date.getTime()).atOffset(ZoneOffset.UTC).toString();
 	}
 
@@ -160,7 +135,7 @@ public class DateUtils {
 		return Instant.parse(date).atOffset(ZoneOffset.UTC).toString();
 	}
 
-	public static String toUtcLocal(java.util.Date date) {
+	public static String toUtcLocal(Date date) {
 		return ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.systemDefault()).toString();
 	}
 
@@ -168,4 +143,16 @@ public class DateUtils {
 		return ZonedDateTime.parse(date).withZoneSameInstant(ZoneOffset.systemDefault()).toString();
 	}
 
+	private static DateField toDateField(int calendarField) {
+		return switch (calendarField) {
+			case Calendar.YEAR -> DateField.YEAR;
+			case Calendar.MONTH -> DateField.MONTH;
+			case Calendar.DATE -> DateField.DAY_OF_MONTH;
+			case Calendar.HOUR, Calendar.HOUR_OF_DAY -> DateField.HOUR_OF_DAY;
+			case Calendar.MINUTE -> DateField.MINUTE;
+			case Calendar.SECOND -> DateField.SECOND;
+			case Calendar.MILLISECOND -> DateField.MILLISECOND;
+			default -> throw new IllegalArgumentException("Unsupported calendar field: " + calendarField);
+		};
+	}
 }

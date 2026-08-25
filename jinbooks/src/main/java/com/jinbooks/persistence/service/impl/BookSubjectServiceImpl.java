@@ -84,6 +84,9 @@ public class BookSubjectServiceImpl extends ServiceImpl<BookSubjectMapper, BookS
     @Autowired
     private StatementSubjectBalanceService subjectBalanceService;
 
+    @Autowired
+    private JsonMapper jsonMapper;
+
     @Override
     public BookSubject getById(String bookId, String id) {
         LambdaQueryWrapper<BookSubject> lqw = Wrappers.lambdaQuery();
@@ -472,7 +475,7 @@ public class BookSubjectServiceImpl extends ServiceImpl<BookSubjectMapper, BookS
         String name = bookSubject.getName();
 
         try {
-            List<Map<String, Object>> auxiliaryList = JsonMapper.builder().build().readValue(
+            List<Map<String, Object>> auxiliaryList = jsonMapper.readValue(
                     auxiliary,
                     new TypeReference<>() {
                     }

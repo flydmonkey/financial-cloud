@@ -92,7 +92,7 @@ public class PageQuery implements Serializable {
         if (pageNum <= 0) {
             pageNum = DEFAULT_PAGE_NUM;
         }
-        if (pageSize == null || pageSize <= 0) {
+        if (pageSize <= 0) {
             pageSize = DEFAULT_PAGE_SIZE;
         } else if (pageSize > MAX_PAGE_SIZE) {
             pageSize = MAX_PAGE_SIZE;

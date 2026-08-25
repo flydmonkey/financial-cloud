@@ -24,12 +24,12 @@ import com.jinbooks.repository.standard.StandardSubjectMapper;
 import com.jinbooks.service.standard.StandardSubjectService;
 import com.jinbooks.util.StrUtils;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.dromara.hutool.core.tree.MapTree;
-import org.dromara.hutool.core.tree.TreeNode;
-import org.dromara.hutool.core.tree.TreeUtil;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.lang.tree.TreeNode;
+import cn.hutool.core.lang.tree.TreeUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +54,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
     public Message<Page<StandardSubject>> pageList(SubjectPageDto dto) {
         return new Message<>(Message.SUCCESS, standardSubjectMapper.pageList(new Page<>(1, 1000), dto));
     }
-    public List<MapTree<String>> tree(BookSubjectTreeDto dto) {
+    public List<Tree<String>> tree(BookSubjectTreeDto dto) {
         String standardId = dto.getStandardId();
         List<StandardSubject> subjects = new ArrayList<>();
         //查询准则下科目
@@ -91,7 +91,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
 
             treeNode.add(stringTreeNode);
         });
-        List<MapTree<String>> tree = TreeUtil.build(treeNode, null);
+        List<Tree<String>> tree = TreeUtil.build(treeNode, null);
 
         if (ObjectUtils.isEmpty(tree)) {
             tree = new ArrayList<>();

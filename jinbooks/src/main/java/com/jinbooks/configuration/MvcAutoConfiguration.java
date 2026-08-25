@@ -24,7 +24,6 @@ import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
-import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
 import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.DelegatingFilterProxy;
@@ -91,22 +90,6 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
 
 
 
-    /**
-     * marshallingHttpMessageConverter .
-     * @return marshallingHttpMessageConverter
-     */
-    @Bean(name = "marshallingHttpMessageConverter")
-    MarshallingHttpMessageConverter marshallingHttpMessageConverter() {
-        MarshallingHttpMessageConverter marshallingHttpMessageConverter = new MarshallingHttpMessageConverter();
-        ArrayList<MediaType> mediaTypesList = new ArrayList<>();
-        mediaTypesList.add(MediaType.APPLICATION_XML);
-        mediaTypesList.add(MediaType.TEXT_XML);
-        mediaTypesList.add(MediaType.TEXT_PLAIN);
-        log.debug("marshallingHttpMessageConverter MediaTypes {}" , mediaTypesList);
-        marshallingHttpMessageConverter.setSupportedMediaTypes(mediaTypesList);
-        return marshallingHttpMessageConverter;
-    }
-
     @Bean
     JsonMapper jsonMapper() {
         JsonMapper mapper = JsonMapper.builder()
@@ -159,14 +142,12 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
     @Bean(name = "addConverterRequestMappingHandlerAdapter")
     RequestMappingHandlerAdapter requestMappingHandlerAdapter(
             JacksonJsonHttpMessageConverter jacksonJsonHttpMessageConverter,
-            MarshallingHttpMessageConverter marshallingHttpMessageConverter,
             RequestMappingHandlerAdapter requestMappingHandlerAdapter) {
         StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter();
         List<HttpMessageConverter<?>> httpMessageConverterList = new ArrayList<>();
         // ByteArray responses need a dedicated converter before JSON.
         httpMessageConverterList.add(new ByteArrayHttpMessageConverter());
         httpMessageConverterList.add(jacksonJsonHttpMessageConverter);
-        httpMessageConverterList.add(marshallingHttpMessageConverter);
         httpMessageConverterList.add(stringHttpMessageConverter);
         log.debug("stringHttpMessageConverter {}",stringHttpMessageConverter.getDefaultCharset());
 
@@ -179,13 +160,10 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
      * @return restTemplate
      */
     @Bean(name = "restTemplate")
-    RestTemplate restTemplate(
-            JacksonJsonHttpMessageConverter jacksonJsonHttpMessageConverter,
-            MarshallingHttpMessageConverter marshallingHttpMessageConverter) {
+    RestTemplate restTemplate(JacksonJsonHttpMessageConverter jacksonJsonHttpMessageConverter) {
         RestTemplate restTemplate = new RestTemplate();
         List<HttpMessageConverter<?>> httpMessageConverterList = new ArrayList<>();
         httpMessageConverterList.add(jacksonJsonHttpMessageConverter);
-        httpMessageConverterList.add(marshallingHttpMessageConverter);
         restTemplate.setMessageConverters(httpMessageConverterList);
         return restTemplate;
     }

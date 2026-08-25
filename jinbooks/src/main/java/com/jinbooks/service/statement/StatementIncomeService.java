@@ -34,7 +34,7 @@ import com.jinbooks.util.excel.ExcelDataModeEnum;
 import com.jinbooks.util.excel.ExcelExporter;
 import com.jinbooks.util.excel.ExcelParams;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import java.io.File;

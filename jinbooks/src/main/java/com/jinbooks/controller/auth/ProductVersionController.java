@@ -4,7 +4,7 @@ package com.jinbooks.controller.auth;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 

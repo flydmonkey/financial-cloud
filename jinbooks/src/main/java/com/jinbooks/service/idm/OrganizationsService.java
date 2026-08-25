@@ -12,9 +12,9 @@ import com.jinbooks.common.Message;
 import com.jinbooks.dto.idm.OrgPageDto;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.dromara.hutool.core.tree.MapTree;
-import org.dromara.hutool.core.tree.TreeNode;
-import org.dromara.hutool.core.tree.TreeUtil;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.lang.tree.TreeNode;
+import cn.hutool.core.lang.tree.TreeUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -263,7 +263,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
             );
         }
     }
-    public List<MapTree<String>> tree(Organizations org) {
+    public List<Tree<String>> tree(Organizations org) {
         LambdaQueryWrapper<Organizations> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Organizations::getBookId, org.getBookId());
         List<Organizations> orgInfos = organizationsMapper.selectList(wrapper);
@@ -272,7 +272,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
                 String.valueOf(temp.getParentId()),
                 temp.getOrgName(), temp.getSortIndex())));
 
-        List<MapTree<String>> tree = TreeUtil.build(treeNode, "null");
+        List<Tree<String>> tree = TreeUtil.build(treeNode, "null");
         if (ObjectUtils.isEmpty(tree)) {
             tree = new ArrayList<>();
         }

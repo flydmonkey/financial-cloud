@@ -18,7 +18,7 @@ import com.jinbooks.validation.EditGroup;
 
 import java.util.List;
 
-import org.dromara.hutool.core.tree.MapTree;
+import cn.hutool.core.lang.tree.Tree;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,8 +38,8 @@ public class BookSubjectController {
     private final BookSubjectService bookSubjectService;
 
     @GetMapping(value = {"/tree/{bookId}"}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public Message<List<MapTree<String>>> treeByBookId(@PathVariable(name = "bookId") String bookId) {
-        List<MapTree<String>> tree = bookSubjectService.tree(bookId);
+    public Message<List<Tree<String>>> treeByBookId(@PathVariable(name = "bookId") String bookId) {
+        List<Tree<String>> tree = bookSubjectService.tree(bookId);
         return new Message<>(Message.SUCCESS, tree);
     }
 

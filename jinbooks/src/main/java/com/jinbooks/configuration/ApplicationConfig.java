@@ -10,14 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 全局应用程序配置 包含 1、数据源配置 dataSoruceConfig 2、字符集转换配置 characterEncodingConfig
- * 3、webseal认证集成配置 webSealConfig 4、系统的配置 sysConfig 5、所有用户可访问地址配置 allAccessUrl
- * 
- * 其中1、2、3项在applicationContext.xml中配置，配置文件applicationConfig.properties
- * 4项根据dynamic的属性判断是否动态从sysConfigService动态读取
- * 
- * @author Crystal.Sea
- * 
+ * 全局应用程序配置，包含数据源、字符集、可访问地址等运行时参数。
  */
 
 @Data

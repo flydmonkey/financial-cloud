@@ -15,7 +15,7 @@ import com.jinbooks.domain.standard.StandardSubject;
 import com.jinbooks.service.standard.StandardSubjectService;
 import com.jinbooks.validation.AddGroup;
 import com.jinbooks.validation.EditGroup;
-import org.dromara.hutool.core.tree.MapTree;
+import cn.hutool.core.lang.tree.Tree;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,8 +45,8 @@ public class StandardSubjectController {
     }
 
     @GetMapping(value = {"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public Message<List<MapTree<String>>> tree(BookSubjectTreeDto dto) {
-        List<MapTree<String>> tree = standardSubjectService.tree(dto);
+    public Message<List<Tree<String>>> tree(BookSubjectTreeDto dto) {
+        List<Tree<String>> tree = standardSubjectService.tree(dto);
         return new Message<>(Message.SUCCESS, tree);
     }
     

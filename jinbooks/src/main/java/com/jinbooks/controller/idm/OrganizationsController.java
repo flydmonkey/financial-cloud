@@ -26,7 +26,7 @@ import com.jinbooks.service.idm.OrganizationsService;
 import com.jinbooks.validation.AddGroup;
 import com.jinbooks.validation.EditGroup;
 
-import org.dromara.hutool.core.tree.MapTree;
+import cn.hutool.core.lang.tree.Tree;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -136,7 +136,7 @@ public class OrganizationsController {
     }
 
     @GetMapping(value = {"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public Message<List<MapTree<String>>> tree(@ModelAttribute Organizations organization, @CurrentUser UserInfo currentUser) {
+    public Message<List<Tree<String>>> tree(@ModelAttribute Organizations organization, @CurrentUser UserInfo currentUser) {
         log.debug("-query  {}", organization);
         organization.setBookId(currentUser.getBookId());
 
@@ -145,7 +145,7 @@ public class OrganizationsController {
             organization.setGradingUserId(currentUser.getId());
         }
 
-        List<MapTree<String>> tree = organizationsService.tree(organization);
+        List<Tree<String>> tree = organizationsService.tree(organization);
         return new Message<>(Message.SUCCESS, tree);
 
     }

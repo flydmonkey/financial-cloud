@@ -32,12 +32,12 @@ import com.jinbooks.service.book.BookSubjectService;
 import com.jinbooks.service.statement.StatementSubjectBalanceService;
 import com.jinbooks.util.StrUtils;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.dromara.hutool.core.tree.MapTree;
-import org.dromara.hutool.core.tree.TreeNode;
-import org.dromara.hutool.core.tree.TreeUtil;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.lang.tree.TreeNode;
+import cn.hutool.core.lang.tree.TreeUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -468,7 +468,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
             log.error("解析辅助核算数据失败", e);
         }
     }
-    public List<MapTree<String>> tree(String bookId) {
+    public List<Tree<String>> tree(String bookId) {
         List<BaseSubject> subjects = new ArrayList<>();
         //查询账簿下科目
         if (StringUtils.isNotBlank(bookId)) {
@@ -513,7 +513,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
             treeNode.add(stringTreeNode);
         });
 
-        List<MapTree<String>> tree = TreeUtil.build(treeNode, null);
+        List<Tree<String>> tree = TreeUtil.build(treeNode, null);
 
         if (ObjectUtils.isEmpty(tree)) {
             tree = new ArrayList<>();

@@ -66,14 +66,34 @@
 
 | 框架                     | 说明            | 版本     |
 |------------------------|---------------|--------|
-| Spring Boot            | 系统框架             | 3.4.6 |
+| Spring Boot            | 系统框架             | 4.1.1 |
 | Mysql Connector        | 数据库驱动           | 8.4.0 |
-| Druid                  | JDBC 连接池、监控组件 |1.2.23 |
-| MyBatis                | MyBatis 数据库工具   | 3.5.19 | 
-| MyBatis Plus           | MyBatis 增强工具包   | 3.5.12 | 
+| HikariCP               | JDBC 连接池（Spring Boot 默认） | — |
+| Jackson                | JSON 工具（Spring Boot 默认） | 3.x |
+| MyBatis Plus           | MyBatis 增强工具包   | 3.5.16 | 
+| SpringDoc OpenAPI      | API 文档（Swagger UI） | 3.1.0 |
 | Hutool                 | Java工具类库         | 5.8.33 | 
 | Lombok                 | 消除冗长的 Java 代码 | 1.18.34 | 
 
+## 构建与运行
+
+后端使用 **Maven** 单模块工程，JDK **17+**：
+
+```bash
+cd jinbooks
+mvnw.cmd -DskipTests package
+java -jar target/jinbooks-boot-1.1.0-ga.jar
+```
+
+本地 MySQL（WSL Docker）：
+
+```bash
+docker-compose up -d
+```
+
+默认连接 `127.0.0.1:3307`（避免与本机 3306 冲突），库名 `jinbooks`，用户/密码见 `docker-compose.yml`。
+
+默认端口 `2154`，上下文路径 `/jinbooks-api`。数据库等配置见 `jinbooks/src/main/resources/application-jinbooks.properties`，可通过环境变量 `DATABASE_HOST`、`DATABASE_PORT`、`DATABASE_NAME` 等覆盖。
 
 ## 前端技术
 

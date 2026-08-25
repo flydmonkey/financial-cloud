@@ -38,8 +38,7 @@ classpath-data.json
 
 **/target/*
 
-/.gradle/
-/.gradle/*
+**/.mvn/wrapper/maven-wrapper.jar
 .vscode/settings.json
 
 
@@ -52,6 +51,4 @@ release_frontend.bat
 jinbooks-ui/package-lock.json
 jinbooks-ui/yarn.lock
 package-lock.json
-/jinbooks/.gradle
-jinbooks/.gradle/*
 

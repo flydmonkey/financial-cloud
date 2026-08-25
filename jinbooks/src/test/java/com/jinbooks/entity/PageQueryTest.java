@@ -1,6 +1,7 @@
 package com.jinbooks.entity;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jinbooks.common.PageQuery;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

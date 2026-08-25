@@ -1,11 +1,13 @@
-echo off
+@echo off
 echo set env
 
-set JBX_VERSION=1.0.1
+set JBX_VERSION=1.1.0
 set JBX_REPOSITORY=jinbooks
 
-set JAVA_HOME=D:\Environment\jdk-17.0.6
-set GRADLE_HOME=D:\Environment\gradle-8.8
+if "%JAVA_HOME%"=="" (
+    echo JAVA_HOME is not set. Please install JDK 17+ and set JAVA_HOME.
+    exit /b 1
+)
 
-call %JAVA_HOME%/bin/java -version
-call %GRADLE_HOME%/bin/gradle -version
+call "%JAVA_HOME%\bin\java" -version
+call mvnw.cmd -version

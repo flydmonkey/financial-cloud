@@ -1,12 +1,12 @@
 /*
  * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,107 +14,43 @@
  * limitations under the License.
  *
  */
- 
-
-
-
-
 
 package com.jinbooks.autoconfigure;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
-import com.jinbooks.authn.secretkey.SecretKeyManager;
-import com.jinbooks.authn.secretkey.impl.InMemorySecretKeyManager;
-import com.jinbooks.authn.secretkey.impl.RedisSecretKeyManager;
 import com.jinbooks.authn.session.SessionManager;
-import com.jinbooks.authn.session.impl.SessionManagerImpl;
-import com.jinbooks.authn.web.HttpSessionListenerAdapter;
-import com.jinbooks.authn.web.SavedRequestAwareAuthenticationSuccessHandler;
-import com.jinbooks.configuration.ApplicationConfig;
-import com.jinbooks.entity.config.ConfigLoginPolicy;
-import com.jinbooks.persistence.service.ConfigLoginPolicyService;
-import com.jinbooks.persistence.service.HistoryLoginService;
-import com.jinbooks.persistence.service.SessionListService;
+import com.jinbooks.authn.session.impl.InMemorySessionManager;
+import com.jinbooks.authn.handler.HttpSessionListenerAdapter;
+import com.jinbooks.authn.handler.SavedRequestAwareAuthenticationSuccessHandler;
+import com.jinbooks.domain.security.ConfigLoginPolicy;
+import com.jinbooks.service.security.ConfigLoginPolicyService;
 
-import tools.jackson.databind.json.JsonMapper;
-
-/**
- * 会话自动配置
- *
- * @author Crystal.Sea
- *
- */
 @AutoConfiguration
 public class SessionAutoConfiguration {
-    private static final  Logger logger = LoggerFactory.getLogger(SessionAutoConfiguration.class);
+	private static final Logger logger = LoggerFactory.getLogger(SessionAutoConfiguration.class);
 
-    @Bean(name = "savedRequestSuccessHandler")
-    SavedRequestAwareAuthenticationSuccessHandler savedRequestAwareAuthenticationSuccessHandler() {
-        return new SavedRequestAwareAuthenticationSuccessHandler();
-    }
-
-    /**
-     * @Description:
-     * @Param: [applicationConfig, configLoginPolicyService, redisConnFactory, sessionListService, historyLoginService]
-     * @return: org.maxkey.authn.session.SessionManager
-     * @Author: xZen
-     * @Date: 2024/11/25 15:57
-     */
-    @Bean(name = "sessionManager")
-    SessionManager sessionManager(
-    		ApplicationConfig applicationConfig,
-            ConfigLoginPolicyService configLoginPolicyService,
-            ObjectProvider<StringRedisTemplate> redisProvider,
-			JsonMapper jsonMapper,
-            SessionListService sessionListService,
-            HistoryLoginService historyLoginService
-    ) {
-    	ConfigLoginPolicy configLoginPolicy = configLoginPolicyService.getConfigLoginPolicy();
-    	logger.debug("session persistence {} , timeout {}" ,applicationConfig.getCached(), configLoginPolicy.getSessionValidity() * 3600);
-		StringRedisTemplate redis = applicationConfig.isCachedRedis()
-				? requireRedis(redisProvider) : null;
-    	return new SessionManagerImpl(applicationConfig.getCached(),
-				configLoginPolicy.getSessionValidity() * 3600, redis, jsonMapper,
-				sessionListService, historyLoginService);
-    }
-
-    @Bean(name = "secretKeyManager")
-    SecretKeyManager secretKeyManager(
-    		ApplicationConfig applicationConfig,
-            ObjectProvider<StringRedisTemplate> redisProvider,
-			JsonMapper jsonMapper) {
-    	logger.debug("init secretKeyManager.");
-    	SecretKeyManager secretKeyManager = null;
-    	if (applicationConfig.isCachedRedis()) {
-        	secretKeyManager = new RedisSecretKeyManager(requireRedis(redisProvider), jsonMapper);
-            logger.debug("RedisSecretKeyManager");
-        }else {
-        	secretKeyManager = new InMemorySecretKeyManager();
-            logger.debug("InMemorySecretKeyManager");
-        }
-
-    	return  secretKeyManager;
-    }
-
-	private StringRedisTemplate requireRedis(ObjectProvider<StringRedisTemplate> redisProvider) {
-		StringRedisTemplate redis = redisProvider.getIfAvailable();
-		if (redis == null) {
-			throw new IllegalStateException("Redis caching selected but StringRedisTemplate is unavailable");
-		}
-		return redis;
+	@Bean(name = "savedRequestSuccessHandler")
+	SavedRequestAwareAuthenticationSuccessHandler savedRequestAwareAuthenticationSuccessHandler() {
+		return new SavedRequestAwareAuthenticationSuccessHandler();
 	}
 
+	@Bean(name = "sessionManager")
+	SessionManager sessionManager(ConfigLoginPolicyService configLoginPolicyService) {
+		ConfigLoginPolicy configLoginPolicy = configLoginPolicyService.getConfigLoginPolicy();
+		int validitySeconds = 8 * 3600;
+		if (configLoginPolicy != null) {
+			validitySeconds = configLoginPolicy.getSessionValidity() * 3600;
+		}
+		logger.debug("InMemory session timeout {}s", validitySeconds);
+		return new InMemorySessionManager(validitySeconds);
+	}
 
-
-
-    @Bean
-    HttpSessionListenerAdapter httpSessionListenerAdapter() {
-        return new HttpSessionListenerAdapter();
-    }
+	@Bean
+	HttpSessionListenerAdapter httpSessionListenerAdapter() {
+		return new HttpSessionListenerAdapter();
+	}
 }

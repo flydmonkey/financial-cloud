@@ -2,11 +2,7 @@ com.jinbooks.autoconfigure.MvcCurrentUserAutoConfiguration
 com.jinbooks.autoconfigure.SessionAutoConfiguration
 com.jinbooks.autoconfigure.TokenAutoConfiguration
 com.jinbooks.autoconfigure.IpLocationAutoConfiguration
-com.jinbooks.autoconfigure.OneTimePasswordAutoConfiguration
-com.jinbooks.autoconfigure.SmsAutoConfiguration
 com.jinbooks.autoconfigure.AuthnProviderAutoConfiguration
-com.jinbooks.autoconfigure.CasAuthnAutoConfiguration
-com.jinbooks.autoconfigure.KaptchaAutoConfiguration
 com.jinbooks.autoconfigure.ApplicationAutoConfiguration
 com.jinbooks.autoconfigure.MvcAutoConfiguration
 com.jinbooks.autoconfigure.MvcCorsAutoConfiguration
@@ -14,8 +10,6 @@ com.jinbooks.autoconfigure.MvcDateTimeAutoConfiguration
 com.jinbooks.autoconfigure.MvcInstAutoConfiguration
 com.jinbooks.autoconfigure.MvcResourceAutoConfiguration
 com.jinbooks.autoconfigure.MvcRestrictHostAutoConfiguration
-com.jinbooks.autoconfigure.RedisAutoConfiguration
-com.jinbooks.autoconfigure.SwaggerAutoConfiguration
 com.jinbooks.autoconfigure.MvcXssAutoConfiguration
 com.jinbooks.autoconfigure.JinBooksConfig
 com.jinbooks.autoconfigure.JinBooksMvcConfig

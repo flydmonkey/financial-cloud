@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinbooks.repository.statement.StatementSubjectBalanceMapper">
+
+    <select id="groupCodeSubjectBalance" resultType="com.jinbooks.domain.statement.StatementSubjectBalance">
+        SELECT
+        sb.subject_code,
+        sb.subject_name,
+        sb.source_id,
+        sb.parent_id,
+        sb.is_auxiliary,
+
+        -- 年初余额：只取1月
+        SUM(CASE WHEN sb.year_period = #{minPeriod} THEN sb.opening_balance_debit ELSE 0 END) AS
+        opening_balance_debit,
+        SUM(CASE WHEN sb.year_period = #{minPeriod} THEN sb.opening_balance_credit ELSE 0 END) AS
+        opening_balance_credit,
+        -- 本期发生额
+        SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.current_period_debit ELSE 0 END) AS current_period_debit,
+        SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.current_period_credit ELSE 0 END) AS current_period_credit,
+        -- 本年累计发生额（取最后一个月的累计值，需外部传入最终月份，如2025-08）
+        SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.year_to_date_debit ELSE 0 END) AS year_to_date_debit,
+        SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.year_to_date_credit ELSE 0 END) AS year_to_date_credit,
+
+        -- 期末余额（取最后一个月）
+        SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.closing_balance_debit ELSE 0 END) AS
+        closing_balance_debit,
+        SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.closing_balance_credit ELSE 0 END) AS
+        closing_balance_credit
+
+        FROM jbx_statement_subject_balance sb
+
+        WHERE sb.deleted = 'n'
+        AND sb.book_id = #{dto.bookId}
+        <if test="dto.showAll == false">
+            AND sb.is_voucher = 'y'
+        </if>
+        <if test="allMonths != null and allMonths.size() > 0">
+            AND sb.year_period IN
+            <foreach collection="allMonths" item="month" open="(" separator="," close=")">
+                #{month}
+            </foreach>
+        </if>
+
+        GROUP BY
+        sb.subject_code,
+        sb.subject_name,
+        sb.source_id,
+        sb.parent_id,
+        sb.is_auxiliary
+        ORDER BY sb.subject_code ASC
+    </select>
+
+</mapper>

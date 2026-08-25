@@ -22,12 +22,8 @@
         <mysql.version>8.4.0</mysql.version>
         <hutool.version>5.8.33</hutool.version>
         <dromara-hutool.version>6.0.0-M18</dromara-hutool.version>
-        <springdoc.version>3.1.0</springdoc.version>
-        <nimbus-jose-jwt.version>9.41.2</nimbus-jose-jwt.version>
         <justauth.version>1.16.6</justauth.version>
         <cas-client.version>4.0.4</cas-client.version>
-        <kaptcha.version>2.3.2</kaptcha.version>
-        <jhlabs-filters.version>2.0.235-1</jhlabs-filters.version>
         <ip2region.version>2.7.0</ip2region.version>
         <bouncycastle.version>1.71</bouncycastle.version>
         <esapi.version>2.2.0.0</esapi.version>
@@ -99,16 +95,6 @@
                 <version>${dromara-hutool.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>${springdoc.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.nimbusds</groupId>
-                <artifactId>nimbus-jose-jwt</artifactId>
-                <version>${nimbus-jose-jwt.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>me.zhyd.oauth</groupId>
                 <artifactId>JustAuth</artifactId>
                 <version>${justauth.version}</version>
@@ -117,16 +103,6 @@
                 <groupId>org.apereo.cas.client</groupId>
                 <artifactId>cas-client-core</artifactId>
                 <version>${cas-client.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.penggle</groupId>
-                <artifactId>kaptcha</artifactId>
-                <version>${kaptcha.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.jhlabs</groupId>
-                <artifactId>filters</artifactId>
-                <version>${jhlabs-filters.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.lionsoul</groupId>
@@ -306,26 +282,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <!-- Jackson 3 (Spring Boot 4 default) -->
         <dependency>
@@ -380,10 +340,6 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -466,10 +422,6 @@
         <!-- JSON handled by spring-boot-starter-jackson -->
         <!-- Auth / Security -->
         <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-        </dependency>
-        <dependency>
             <groupId>me.zhyd.oauth</groupId>
             <artifactId>JustAuth</artifactId>
         </dependency>
@@ -494,18 +446,8 @@
             <artifactId>passay</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.warrenstrange</groupId>
-            <artifactId>googleauth</artifactId>
-            <version>1.5.0</version>
-        </dependency>
-        <dependency>
             <groupId>net.shibboleth.utilities</groupId>
             <artifactId>java-support</artifactId>
-        </dependency>
-        <!-- API Docs -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <!-- Utils -->
         <dependency>
@@ -559,14 +501,6 @@
         <dependency>
             <groupId>org.lionsoul</groupId>
             <artifactId>ip2region</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.penggle</groupId>
-            <artifactId>kaptcha</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.jhlabs</groupId>
-            <artifactId>filters</artifactId>
         </dependency>
         <!-- Cloud SDKs -->
         <dependency>

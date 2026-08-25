@@ -34,7 +34,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.jinbooks.authn.provider.AbstractAuthenticationProvider;
-import com.jinbooks.authn.web.interceptor.PermissionInterceptor;
+import com.jinbooks.authn.interceptor.PermissionInterceptor;
 
 @EnableWebMvc
 @AutoConfiguration
@@ -74,10 +74,6 @@ public class JinBooksMvcConfig implements WebMvcConfigurer {
                         "/metadata/version",
                         "/actuator/health",
                         "/actuator/info",
-                        "/v3/api-docs",
-                        "/v3/api-docs/**",
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
                         "/exception/error/**"
                 );
         logger.debug("PermissionInterceptor registered");

@@ -1,0 +1,85 @@
+/*
+ * Copyright [2025] [JinBooks of copyright http://www.jinbooks.com]
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+ 
+
+package com.jinbooks.domain.statement;
+
+import com.baomidou.mybatisplus.annotation.*;
+import com.jinbooks.common.BaseEntity;
+import com.jinbooks.dto.statement.StatementBalanceSheetItemListVo;
+import com.jinbooks.validate.AddGroup;
+import com.jinbooks.validate.EditGroup;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+/**
+ * èµäº§è´åºè¡¨ jbx_statement_balance_sheet
+ *
+ * @author wuyan
+ * {@code @date} 2025-02-03
+ */
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+@TableName("jbx_statement_balance_sheet")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class StatementBalanceSheet extends BaseEntity implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * ä¸»é®
+     */
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**
+     * è´¦å¥ID
+     */
+    @NotBlank(message = "è´¦å¥ä¸è½ä¸ºç©º", groups = {AddGroup.class, EditGroup.class})
+    private String bookId;
+
+   
+    @NotBlank(message = "æé´ä¸è½ä¸ºç©º", groups = {AddGroup.class, EditGroup.class})
+    private String yearPeriod;
+
+    /**
+     * æ¥è¡¨å¨æï¼å¦ï¼monthãquarterãyearï¼?
+     */
+    @NotBlank(message = "报表周期（月、季、年）不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String periodType;
+
+    /**
+     * å é¤æ è®°ï¼é»è®¤ä¸º 'n' (æªå é?ï¼å¦æä¸º 'y' è¡¨ç¤ºå·²å é?
+     */
+    @TableField(fill = FieldFill.INSERT)
+    @TableLogic(value = "n", delval = "y")
+    private String deleted;
+
+    /**
+     * æç»é¡?
+     */
+    @TableField(exist = false)
+    private StatementBalanceSheetItemListVo items;
+
+}

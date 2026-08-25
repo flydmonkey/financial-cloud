@@ -76,13 +76,13 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
      */
     @Bean(name = "messageSource")
     ReloadableResourceBundleMessageSource reloadableResourceBundleMessageSource(
-            @Value("${spring.messages.basename:classpath:messages/message}")
+            @Value("${spring.messages.basename:classpath:messages/messages}")
             String messagesBasename)  {
         logger.debug("Basename {}" , messagesBasename);
-        String passwordPolicyMessagesBasename="classpath:messages/passwordpolicy_message";
 
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
-        messageSource.setBasenames(messagesBasename,passwordPolicyMessagesBasename);
+        messageSource.setBasenames(messagesBasename);
+        messageSource.setDefaultEncoding("UTF-8");
         messageSource.setUseCodeAsDefaultMessage(false);
         return messageSource;
     }
@@ -184,9 +184,7 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
             RequestMappingHandlerAdapter requestMappingHandlerAdapter) {
         StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter();
         List<HttpMessageConverter<?>> httpMessageConverterList = new ArrayList<>();
-        //需要追加byte，否则springdoc-openapi接口会响应Base64编码内容，导致接口文档显示失败
-        // https://github.com/springdoc/springdoc-openapi/issues/2143
-        // 解决方案
+        // ByteArray responses need a dedicated converter before JSON.
         httpMessageConverterList.add(new ByteArrayHttpMessageConverter());
         httpMessageConverterList.add(jacksonJsonHttpMessageConverter);
         httpMessageConverterList.add(marshallingHttpMessageConverter);

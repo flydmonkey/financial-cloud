@@ -1,0 +1,76 @@
+application:
+  title: JinBooks
+  formatted-version: v1.1.0 GA
+
+spring:
+  application:
+    name: JinBooks
+  main:
+    banner-mode: off
+    allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DATABASE_HOST:127.0.0.1}:${DATABASE_PORT:3307}/${DATABASE_NAME:jinbooks}?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: ${DATABASE_USER:jinbooks}
+    password: ${DATABASE_PWD:Jinbooks321!}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  mvc:
+    date-format: yyyy-MM-dd HH:mm:ss
+    static-path-pattern: /static/**
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 4194304
+  messages:
+    basename: classpath:messages/messages
+    encoding: UTF-8
+
+server:
+  port: ${SERVER_PORT:2154}
+  servlet:
+    context-path: /jinbooks-api
+
+jinbooks:
+  server:
+    default:
+      uri: /main
+  login.iplocation: ${LOGIN_IPLOCATION:true}
+  login.iplocation.offline.provider: ${LOGIN_IPLOCATION_PROVIDER:Ip2Region}
+  job:
+    cron:
+      schedule: 0 0 0/1 * * ?
+      enable: true
+
+mybatis-plus:
+  dialect: mysql
+  type-aliases-package: com.jinbooks.domain.voucher,com.jinbooks.domain.book,com.jinbooks.domain.journal,com.jinbooks.domain.statement,com.jinbooks.domain.idm,com.jinbooks.domain.permissions,com.jinbooks.domain.security,com.jinbooks.domain.config,com.jinbooks.domain.hr,com.jinbooks.domain.standard,com.jinbooks.domain.history,com.jinbooks.domain.auth,com.jinbooks.common
+  mapper-locations: classpath*:com/jinbooks/repository/**/xml/${mybatis-plus.dialect}/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+logging:
+  file:
+    name: logs/jinbooks.log
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    com.baomidou.mybatisplus: DEBUG
+    org.apache.ibatis: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    mail:
+      enabled: false

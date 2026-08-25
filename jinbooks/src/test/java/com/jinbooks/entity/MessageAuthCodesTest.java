@@ -1,5 +1,6 @@
 package com.jinbooks.entity;
 
+import com.jinbooks.common.Message;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -1,0 +1,25 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: jinbooks-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: jinbooks
+      MYSQL_USER: jinbooks
+      MYSQL_PASSWORD: Jinbooks321!
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - jinbooks-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ujinbooks", "-pJinbooks321!"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  jinbooks-mysql-data:

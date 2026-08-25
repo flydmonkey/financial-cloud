@@ -44,8 +44,8 @@ setEnvVars.bat
 
 **/target/*
 
-/.gradle/
-/.gradle/*
+**/target/*
+**/.mvn/wrapper/maven-wrapper.jar
 .vscode/settings.json
 
 node_modules/

@@ -1,3 +1,0 @@
-com.jinbooks.autoconfigure.MvcCurrentUserAutoConfiguration
-com.jinbooks.autoconfigure.SessionAutoConfiguration
-com.jinbooks.autoconfigure.TokenAutoConfiguration

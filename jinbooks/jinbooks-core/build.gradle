@@ -1,9 +1,0 @@
-description = "jinbooks-core"
-
-dependencies {
-	implementation project(":jinbooks-commons:jinbooks-common")
-	implementation project(":jinbooks-commons:jinbooks-crypto")
-	//local jars
-	implementation fileTree(dir: '../jinbooks-lib/', include: '*/*.jar')
-	
-}

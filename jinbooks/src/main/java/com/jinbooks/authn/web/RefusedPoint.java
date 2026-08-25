@@ -38,15 +38,7 @@ import tools.jackson.databind.json.JsonMapper;
 import com.jinbooks.entity.Message;
 
 /**
- * 未认证接口返回/auth/entrypoint
- * <p>
- * {
- * 	"status" :403 ,
- *  "error" :"Refused"
- *  "message": "Refused",
- *  "path" : "/"
- * }
- * </p>
+ * 无权访问接口 /auth/refusedpoint，以 Message 信封返回 403、提示信息和时间戳。
  * 
  * @author Crystal.Sea
  *
@@ -55,13 +47,19 @@ import com.jinbooks.entity.Message;
 @RequestMapping(value = "/auth")
 public class RefusedPoint {
 	private static final Logger logger = LoggerFactory.getLogger(RefusedPoint.class);
-	
+
+	private final JsonMapper jsonMapper;
+
+	public RefusedPoint(JsonMapper jsonMapper) {
+		this.jsonMapper = jsonMapper;
+	}
+
  	@GetMapping(value={"/refusedpoint"})
 	public void refusedPoint(HttpServletRequest request, HttpServletResponse response) throws IOException {
  		logger.trace("RefusedPoint /refusedpoint.");
  		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
  	    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
  	    Message<Void> body = new Message<>(Message.FORBIDDEN, "Forbidden");
- 	    JsonMapper.builder().build().writeValue(response.getOutputStream(), body);
+		jsonMapper.writeValue(response.getOutputStream(), body);
  	}	
 }

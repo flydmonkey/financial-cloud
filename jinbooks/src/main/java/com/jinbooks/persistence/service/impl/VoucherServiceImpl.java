@@ -297,13 +297,12 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
             return Map.of();
         }
 
-        List<VoucherVo> vouchers = new ArrayList<>();
-        for (String id : idList) {
-            VoucherVo voucher = baseMapper.selectVoById(id);
-            if (voucher != null) {
-                vouchers.add(voucher);
-            }
-        }
+        Map<String, VoucherVo> vouchersById = baseMapper.selectVoBatchIds(idList).stream()
+                .collect(Collectors.toMap(VoucherVo::getId, voucher -> voucher));
+        List<VoucherVo> vouchers = idList.stream()
+                .map(vouchersById::get)
+                .filter(Objects::nonNull)
+                .toList();
         if (vouchers.isEmpty()) {
             return Map.of();
         }

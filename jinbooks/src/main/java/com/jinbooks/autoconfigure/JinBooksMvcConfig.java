@@ -54,13 +54,13 @@ public class JinBooksMvcConfig implements WebMvcConfigurer {
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable())
+                .logout(logout -> logout.disable())
                 .build();
     }
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         logger.debug("add PermissionInterceptor default-deny");
-        permissionInterceptor.setMgmt(true);
         registry.addInterceptor(permissionInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(

@@ -38,15 +38,7 @@ import tools.jackson.databind.json.JsonMapper;
 import com.jinbooks.entity.Message;
 
 /**
- * 未认证接口返回/auth/entrypoint
- * <p>
- * {
- * 	"status" :401 ,
- *  "error" :"Unauthorized"
- *  "message": "Unauthorized",
- *  "path" : "/"
- * }
- * </p>
+ * 未认证接口 /auth/entrypoint，以 Message 信封返回 401、提示信息和时间戳。
  * 
  * @author Crystal.Sea
  *
@@ -55,14 +47,20 @@ import com.jinbooks.entity.Message;
 @RequestMapping(value = "/auth")
 public class UnauthorizedEntryPoint {
 	private static final Logger logger = LoggerFactory.getLogger(UnauthorizedEntryPoint.class);
-	
+
+	private final JsonMapper jsonMapper;
+
+	public UnauthorizedEntryPoint(JsonMapper jsonMapper) {
+		this.jsonMapper = jsonMapper;
+	}
+
  	@GetMapping(value={"/entrypoint"})
 	public void entryPoint(HttpServletRequest request, HttpServletResponse response) throws IOException {
  		logger.trace("UnauthorizedEntryPoint /entrypoint.");
  		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
  	    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
  	    Message<Void> body = new Message<>(Message.UNAUTHORIZED, "Unauthorized");
- 	    JsonMapper.builder().build().writeValue(response.getOutputStream(), body);
+		jsonMapper.writeValue(response.getOutputStream(), body);
  	}	
  	
 }

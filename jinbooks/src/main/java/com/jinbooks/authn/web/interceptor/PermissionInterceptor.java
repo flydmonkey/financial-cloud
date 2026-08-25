@@ -65,10 +65,12 @@ public class PermissionInterceptor  implements AsyncHandlerInterceptor  {
 	 */
 	@Autowired
 	AuthTokenService authTokenService ;
-	/**
-	 * 是否管理端
-	 */
-	boolean mgmt = false;
+
+	private final JsonMapper jsonMapper;
+
+	public PermissionInterceptor(JsonMapper jsonMapper) {
+		this.jsonMapper = jsonMapper;
+	}
 	
 	/*
 	 * 请求前处理
@@ -95,16 +97,7 @@ public class PermissionInterceptor  implements AsyncHandlerInterceptor  {
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		Message<Void> body = new Message<>(Message.UNAUTHORIZED, "Unauthorized");
-		JsonMapper.builder().build().writeValue(response.getOutputStream(), body);
-	}
-
-	/**
-	 * 设置管理
-	 * @param mgmt
-	 */
-	public void setMgmt(boolean mgmt) {
-		this.mgmt = mgmt;
-		logger.debug("Permission for ADMINISTRATORS {}", this.mgmt);
+		jsonMapper.writeValue(response.getOutputStream(), body);
 	}
 	
 }

@@ -16,11 +16,11 @@ class PageQueryTest {
     @Test
     void clampsPageSizeToMax() {
         PageQuery q = new PageQuery();
-        q.setPageSize(500);
+        q.setPageSize(200000);
         q.setPageNumber(2);
         Page<Object> page = q.build();
         assertEquals(2, page.getCurrent());
-        assertEquals(100, page.getSize());
+        assertEquals(100000, page.getSize());
     }
 
     @Test

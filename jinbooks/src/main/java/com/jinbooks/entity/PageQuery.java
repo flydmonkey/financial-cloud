@@ -83,7 +83,8 @@ public class PageQuery implements Serializable {
      * 每页显示记录数 默认值
      */
     public static final int DEFAULT_PAGE_SIZE = 20;
-    public static final int MAX_PAGE_SIZE = 100;
+    // Reference-data screens intentionally request full datasets in one page.
+    public static final int MAX_PAGE_SIZE = 100000;
 
     public <T> Page<T> build() {
         Integer pageNum = ObjectUtils.defaultIfNull(getPageNumber(), DEFAULT_PAGE_NUM);

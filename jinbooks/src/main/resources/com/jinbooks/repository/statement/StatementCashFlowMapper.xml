@@ -5,18 +5,18 @@
     <select id="fetchSpecifyCashFlow"
             parameterType="com.jinbooks.dto.voucher.VoucherItemPageDto"
             resultType="com.jinbooks.domain.statement.StatementCashFlow">
-        select jbx_statement_cash_flow.*
-        from jbx_statement_cash_flow
-        where jbx_statement_cash_flow.deleted = 'n'
-        and jbx_statement_cash_flow.book_id = #{params.bookId}
+        select statement_cash_flow.*
+        from statement_cash_flow
+        where statement_cash_flow.deleted = 'n'
+        and statement_cash_flow.book_id = #{params.bookId}
         <if test="params.year != null">
-            AND YEAR(jbx_statement_cash_flow.report_date) = #{params.year}
+            AND YEAR(statement_cash_flow.report_date) = #{params.year}
         </if>
         <if test="params.month != null">
-            AND MONTH(jbx_statement_cash_flow.report_date) = #{params.month}
+            AND MONTH(statement_cash_flow.report_date) = #{params.month}
         </if>
         <if test="params.quarter != null">
-            AND QUARTER(jbx_statement_cash_flow.report_date) = #{params.quarter}
+            AND QUARTER(statement_cash_flow.report_date) = #{params.quarter}
         </if>
     </select>
 
@@ -33,10 +33,10 @@
         i.debit_amount as debitAmount,
         i.credit_amount as creditAmount,
         v.id as voucherId
-        FROM jbx_voucher_item_cash_flow jvicf
-        JOIN jbx_voucher_item i on jvicf.voucher_item_id = i.id
+        FROM voucher_item_cash_flow jvicf
+        JOIN voucher_item i on jvicf.voucher_item_id = i.id
         and jvicf.book_id = #{params.bookId}
-        JOIN jbx_voucher v ON i.voucher_id = v.id
+        JOIN voucher v ON i.voucher_id = v.id
         WHERE i.deleted = 'n'
         AND v.deleted = 'n'
         AND v.book_id = #{params.bookId}
@@ -65,10 +65,10 @@
         i.debit_amount as debitAmount,
         i.credit_amount as creditAmount,
         v.id as voucherId
-        FROM jbx_voucher_item_cash_flow jvicf
-        JOIN jbx_voucher_item i on jvicf.voucher_item_id = i.id
+        FROM voucher_item_cash_flow jvicf
+        JOIN voucher_item i on jvicf.voucher_item_id = i.id
         and jvicf.book_id = #{params.bookId}
-        JOIN jbx_voucher v ON i.voucher_id = v.id
+        JOIN voucher v ON i.voucher_id = v.id
         WHERE i.deleted = 'n'
         AND v.deleted = 'n'
         AND v.book_id = #{params.bookId}

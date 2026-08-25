@@ -70,15 +70,6 @@ export function deleteBatch(id: any): any {
     })
 }
 
-//查询自定义字段
-export function findList(query: any): any {
-    return request({
-        url: '/config/expandattrs/findList',
-        method: 'get',
-        params: query
-    })
-}
-
 export function exportOrgs(query: any): any {
     return request({
         url: `/orgs/export/${query}`,

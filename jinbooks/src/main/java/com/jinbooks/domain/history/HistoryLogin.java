@@ -22,7 +22,7 @@ import com.jinbooks.common.client.ClientUserAgent;
 
 @Data
 @NoArgsConstructor
-@TableName("JBX_HISTORY_LOGIN")
+@TableName("history_login")
 public class HistoryLogin implements Serializable{
 	@Serial
 	private static final long serialVersionUID = -1321470643357719383L;

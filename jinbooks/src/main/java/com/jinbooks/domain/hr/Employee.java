@@ -11,7 +11,7 @@ import com.jinbooks.common.BaseEntity;
 import lombok.*;
 
 /**
- * 员工对象 jbx_employee
+ * 员工对象 employee
  *
  * @author wuyan
  * {@code @date} 2025-01-22
@@ -19,7 +19,7 @@ import lombok.*;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_employee")
+@TableName("employee")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

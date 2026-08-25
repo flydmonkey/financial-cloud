@@ -3,6 +3,8 @@ package com.jinbooks.authn.session.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -10,131 +12,134 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.jinbooks.authn.SignedPrincipal;
 import com.jinbooks.authn.session.Session;
 import com.jinbooks.authn.session.SessionManager;
 import com.jinbooks.authn.session.UserSessions;
 import com.jinbooks.domain.permissions.SessionList;
 
+import org.springframework.security.core.Authentication;
+
 /**
- * 会话管理 内存存储
- * 
- * @author Crystal.Sea
- *
+ * Single-node in-memory session store backed by Caffeine.
  */
 @Slf4j
-public class InMemorySessionManager implements SessionManager{
+public class InMemorySessionManager implements SessionManager {
 
-    static final 	long 	CACHE_MAXIMUM_SIZE 		= 2000000;//200W
-    static final 	int 	CACHE_DEFAULT_SECONDS 	= 60 * 30; //default 30 minutes.
-    int validitySeconds 							= CACHE_DEFAULT_SECONDS;
-    
-	Cache<String, Session> sessionStore;
-	
-	Cache<String, Session> sessionTwoFactorStore;
-	
-	Cache<String, UserSessions> userSessionsStore;
-	
-	public InMemorySessionManager(int validitySeconds) {
-        super();
-        this.validitySeconds = validitySeconds;
-        sessionStore = Caffeine.newBuilder()
-                    	.expireAfterWrite(validitySeconds, TimeUnit.SECONDS)
-                    	.maximumSize(CACHE_MAXIMUM_SIZE)
-                    	.build();
-        
-        sessionTwoFactorStore = Caffeine.newBuilder()
-		            	.expireAfterWrite(10, TimeUnit.MINUTES)
-		            	.maximumSize(CACHE_MAXIMUM_SIZE)
-		            	.build();
-        
-        userSessionsStore = 
-		        Caffeine.newBuilder()
-		            .expireAfterWrite(CACHE_DEFAULT_SECONDS, TimeUnit.SECONDS)
-		            .maximumSize(CACHE_MAXIMUM_SIZE)
-		            .build();
-        
-    }
+	private final int validitySeconds;
+	private final int maxSize;
 
-    @Override
+	private final Cache<String, Session> sessionStore;
+	private final Cache<String, Session> sessionTwoFactorStore;
+	private final Cache<String, UserSessions> userSessionsStore;
+
+	public InMemorySessionManager(int validitySeconds, int maxSize) {
+		this.validitySeconds = validitySeconds;
+		this.maxSize = maxSize;
+		sessionStore = Caffeine.newBuilder()
+				.expireAfterWrite(validitySeconds, TimeUnit.SECONDS)
+				.maximumSize(maxSize)
+				.build();
+
+		sessionTwoFactorStore = Caffeine.newBuilder()
+				.expireAfterWrite(10, TimeUnit.MINUTES)
+				.maximumSize(maxSize)
+				.build();
+
+		userSessionsStore = Caffeine.newBuilder()
+				.expireAfterWrite(validitySeconds, TimeUnit.SECONDS)
+				.maximumSize(maxSize)
+				.build();
+
+		log.info("In-memory session store ready (maxSize={}, validitySeconds={})", maxSize, validitySeconds);
+	}
+
+	@Override
 	public void create(String sessionId, Session session) {
-    	session.setExpiredTime(session.getLastAccessTime().plusSeconds(validitySeconds));
-    	sessionStore.put(sessionId, session);
+		session.setExpiredTime(session.getLastAccessTime().plusSeconds(validitySeconds));
+		sessionStore.put(sessionId, session);
 	}
 
 	@Override
 	public Session remove(String sessionId) {
-	    Session session = sessionStore.getIfPresent(sessionId);	
-	    sessionStore.invalidate(sessionId);
+		Session session = sessionStore.getIfPresent(sessionId);
+		sessionStore.invalidate(sessionId);
 		return session;
 	}
 
-    @Override
-    public Session get(String sessionId) {
-    	return sessionStore.getIfPresent(sessionId); 
-    }
+	@Override
+	public Session get(String sessionId) {
+		return sessionStore.getIfPresent(sessionId);
+	}
 
-    @Override
-    public Session refresh(String sessionId,LocalDateTime refreshTime) {
-        Session session = get(sessionId);
-        if(session != null) {
-        	log.debug("refresh session Id {} at refreshTime {}",sessionId,refreshTime);
-	        session.setLastAccessTime(refreshTime);
-	        //renew one
-	        create(sessionId , session);
-        }
-        return session;
-    }
+	@Override
+	public Session refresh(String sessionId, LocalDateTime refreshTime) {
+		Session session = get(sessionId);
+		if (session != null) {
+			log.debug("refresh session Id {} at refreshTime {}", sessionId, refreshTime);
+			session.setLastAccessTime(refreshTime);
+			create(sessionId, session);
+		}
+		return session;
+	}
 
-    @Override
-    public Session refresh(String sessionId) {
-        Session session = get(sessionId);
-        
-        if(session != null) {
-        	LocalDateTime currentTime = LocalDateTime.now();
-        	log.debug("refresh session Id {} at time {}",sessionId,currentTime);
-        	session.setLastAccessTime(currentTime);
-        	//put renew session
-	        create(sessionId , session);
-        }
-        return session;
-    }
+	@Override
+	public Session refresh(String sessionId) {
+		Session session = get(sessionId);
+		if (session != null) {
+			LocalDateTime currentTime = LocalDateTime.now();
+			log.debug("refresh session Id {} at time {}", sessionId, currentTime);
+			session.setLastAccessTime(currentTime);
+			create(sessionId, session);
+		}
+		return session;
+	}
 
+	@Override
 	public int getValiditySeconds() {
 		return validitySeconds;
 	}
 
 	@Override
 	public List<SessionList> sessionList(String style) {
-		ConcurrentMap<String, Session> sessions = sessionStore.asMap();
-		for (Map.Entry<String, Session> entry: sessions.entrySet()) {
-			log.debug("session id = {}, Value = {} Start at {} , Expired at {}" , 
-					entry.getKey(),entry.getValue(), entry.getValue().getStartTimestamp(),entry.getValue().getExpiredTime());
-		}
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
 	public void terminate(String sessionId, String userId, String username) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setLimit(int sessionLimit) {
-		// TODO Auto-generated method stub
-		
+		log.debug("terminate session {} for user {}({})", sessionId, username, userId);
+		remove(sessionId);
 	}
 
 	@Override
 	public void terminateByUserId(String userId) {
-		// TODO Auto-generated method stub
-		
+		if (userId == null) {
+			return;
+		}
+		ConcurrentMap<String, Session> sessions = sessionStore.asMap();
+		List<String> toRemove = new ArrayList<>();
+		for (Map.Entry<String, Session> entry : sessions.entrySet()) {
+			Authentication authentication = entry.getValue().getAuthentication();
+			if (authentication == null) {
+				continue;
+			}
+			Object principal = authentication.getPrincipal();
+			if (principal instanceof SignedPrincipal signedPrincipal
+					&& userId.equals(signedPrincipal.getUserId())) {
+				toRemove.add(entry.getKey());
+			}
+		}
+		toRemove.forEach(this::remove);
+		log.debug("terminated {} session(s) for user {}", toRemove.size(), userId);
+	}
+
+	@Override
+	public void setLimit(int sessionLimit) {
+		log.debug("session limit {} ignored for in-memory store (use jinbooks.session.max-size)", sessionLimit);
 	}
 
 	@Override
 	public void put(String style, String userId, String sessionKey) {
-		// TODO Auto-generated method stub
-		
+		log.trace("session index put ignored for style={}, userId={}", style, userId);
 	}
-
 }

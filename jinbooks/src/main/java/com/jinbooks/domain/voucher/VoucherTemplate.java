@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 凭证模板 jbx_voucher_template
+ * 凭证模板 voucher_template
  *
  * @author wuyan
  * {@code @date} 2025-05-08
@@ -19,7 +19,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_voucher_template")
+@TableName("voucher_template")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -33,6 +34,10 @@ public class JinBooksMvcConfig implements WebMvcConfigurer {
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable())
                 .logout(logout -> logout.disable())
+                .headers(headers -> headers
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .frameOptions(frame -> frame.sameOrigin())
+                        .cacheControl(Customizer.withDefaults()))
                 .build();
     }
     
@@ -52,7 +57,9 @@ public class JinBooksMvcConfig implements WebMvcConfigurer {
                         "/api/metadata/version",
                         "/actuator/health",
                         "/actuator/info",
-                        "/api/exception/error/**"
+                        "/api/exception/error/**",
+                        "/static/**",
+                        "/error"
                 );
         log.debug("PermissionInterceptor registered");
     }

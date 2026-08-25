@@ -45,6 +45,8 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
 
     private final UserInfoMapper userInfoMapper;
 
+    private final LegacySecretCodec legacySecretCodec;
+
     public UserInfoMapper getMapper() {
         return userInfoMapper;
     }
@@ -188,7 +190,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
         //密码不为空，则需要进行加密处理
         if (StringUtils.isNotBlank(changePassword.getPassword())) {
             String password = passwordEncoder.encode(changePassword.getPassword());
-            changePassword.setDecipherable(LegacySecretCodec.getInstance().encode(changePassword.getPassword()));
+            changePassword.setDecipherable(legacySecretCodec.encode(changePassword.getPassword()));
             log.debug("decipherable : {}", changePassword.getDecipherable());
             changePassword.setPassword(password);
             changePassword.setPasswordLastSetTime(DateUtils.getCurrentDateTimeAsString());
@@ -208,7 +210,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
     @Transactional
     public boolean changePassword(ChangePassword changePassword, boolean passwordPolicy) {
         log.debug("decipherable old : {}", changePassword.getDecipherable());
-        log.debug("decipherable new : {}", LegacySecretCodec.getInstance().encode(changePassword.getDecipherable()));
+        log.debug("decipherable new : {}", legacySecretCodec.encode(changePassword.getDecipherable()));
 
         if (passwordPolicy) {
             passwordPolicyValidatorService.validator(changePassword);

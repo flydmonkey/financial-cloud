@@ -4,8 +4,8 @@
 
     <select id="queryRolesByMembers" parameterType="QueryGroupMembersDto" resultType="Roles">
         select distinct mg.*
-        from jbx_roles mg
-        join jbx_role_member mgm
+        from roles mg
+        join role_member mgm
         on mg.id = mgm.role_id
         where mg.status = 1
         and mg.deleted = 'n'

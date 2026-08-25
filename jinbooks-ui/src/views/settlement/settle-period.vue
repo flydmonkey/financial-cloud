@@ -77,7 +77,6 @@ import type {TabsPaneContext} from 'element-plus'
 import {useRoute, useRouter} from "vue-router";
 import * as settlementApi from "@/api/system/book/settlement";
 import bookStore from "@/store/modules/bookStore";
-import { disable } from '@/api/system/apps';
 
 const currBookStore = bookStore()
 const currentTerm = ref(currBookStore.termCurrent);

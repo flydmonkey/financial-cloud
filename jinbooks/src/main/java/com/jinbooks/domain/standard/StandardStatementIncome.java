@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * å©æ¶¦è¡¨æ¨¡æ?jbx_standard_statement_income_item
+ * å©æ¶¦è¡¨æ¨¡æ?standard_statement_income_item
  *
  * @author wuyan
  * {@code @date} 2025-02-03
@@ -19,7 +19,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_standard_statement_income")
+@TableName("standard_statement_income")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

@@ -8,7 +8,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 辅助核算对象 jbx_assist_acc
+ * 辅助核算对象 assist_acc
  *
  * @author Wuyan
  * {@code @date} 2025-03-10
@@ -18,7 +18,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("jbx_assist_acc")
+@TableName("assist_acc")
 public class AssistAcc extends BaseEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

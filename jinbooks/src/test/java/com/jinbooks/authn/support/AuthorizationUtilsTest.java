@@ -19,7 +19,7 @@ class AuthorizationUtilsTest {
     @Test
     void authenticatesValidSession() {
         String sessionId = "session-1";
-        InMemorySessionManager sessionManager = new InMemorySessionManager(3600);
+        InMemorySessionManager sessionManager = new InMemorySessionManager(3600, 100);
         Session session = buildSession(sessionId);
         sessionManager.create(sessionId, session);
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -41,7 +41,7 @@ class AuthorizationUtilsTest {
 
     @Test
     void rejectsMissingSession() {
-        InMemorySessionManager sessionManager = new InMemorySessionManager(3600);
+        InMemorySessionManager sessionManager = new InMemorySessionManager(3600, 100);
         MockHttpServletRequest request = new MockHttpServletRequest();
 
         AuthorizationUtils.doSessionAuthenticate(
@@ -55,7 +55,7 @@ class AuthorizationUtilsTest {
 
     @Test
     void rejectsBlankSessionId() {
-        InMemorySessionManager sessionManager = new InMemorySessionManager(3600);
+        InMemorySessionManager sessionManager = new InMemorySessionManager(3600, 100);
         MockHttpServletRequest request = new MockHttpServletRequest();
 
         AuthorizationUtils.doSessionAuthenticate(
@@ -65,6 +65,34 @@ class AuthorizationUtilsTest {
                 sessionManager);
 
         assertThat(AuthorizationUtils.getAuthentication(request)).isNull();
+    }
+
+    @Test
+    void authenticatesSessionCookie() {
+        String sessionId = "session-cookie";
+        InMemorySessionManager sessionManager = new InMemorySessionManager(3600, 100);
+        sessionManager.create(sessionId, buildSession(sessionId));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new jakarta.servlet.http.Cookie(
+                AuthorizationUtils.BearerType.SESSION_COOKIE, sessionId));
+
+        AuthorizationUtils.authenticate(request, sessionManager);
+
+        assertThat(AuthorizationUtils.getAuthentication(request)).isNotNull();
+    }
+
+    @Test
+    void authenticatesLegacyCongressCookie() {
+        String sessionId = "session-legacy";
+        InMemorySessionManager sessionManager = new InMemorySessionManager(3600, 100);
+        sessionManager.create(sessionId, buildSession(sessionId));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new jakarta.servlet.http.Cookie(
+                AuthorizationUtils.BearerType.LEGACY_SESSION_COOKIE, sessionId));
+
+        AuthorizationUtils.authenticate(request, sessionManager);
+
+        assertThat(AuthorizationUtils.getAuthentication(request)).isNotNull();
     }
 
     private Session buildSession(String sessionId) {

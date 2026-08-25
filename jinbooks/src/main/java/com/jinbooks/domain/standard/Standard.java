@@ -18,7 +18,7 @@ import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_standard")
+@TableName("standard")
 public class Standard extends BaseEntity implements Serializable {
 
     @Serial

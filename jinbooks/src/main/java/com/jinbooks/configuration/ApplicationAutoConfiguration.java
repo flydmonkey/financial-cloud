@@ -8,15 +8,17 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.MessageSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.jinbooks.configuration.IdStrategyConfig;
 import com.jinbooks.configuration.LegacyPasswordEncoders;
 import com.jinbooks.util.LegacySecretCodec;
 import com.jinbooks.service.security.ConfigPasswordPolicyService;
-import com.jinbooks.service.security.PasswordPolicyValidatorService;
 import com.jinbooks.service.security.PasswordPolicyValidatorService;
 import com.jinbooks.util.IdGenerator;
 import com.jinbooks.context.WebContext;
@@ -27,8 +29,20 @@ import cn.hutool.core.util.IdUtil;
 public class ApplicationAutoConfiguration {
 
 	@Bean
-	LegacySecretCodec legacySecretCodec() {
-		return LegacySecretCodec.getInstance();
+	TaskExecutor historyTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(1);
+		executor.setMaxPoolSize(4);
+		executor.setQueueCapacity(256);
+		executor.setThreadNamePrefix("history-login-");
+		executor.initialize();
+		return executor;
+	}
+
+	@Bean
+	LegacySecretCodec legacySecretCodec(
+			@Value("${jinbooks.security.legacy-secret-suffix:l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6}") String keySuffix) {
+		return new LegacySecretCodec(keySuffix);
 	}
 
 	@Bean

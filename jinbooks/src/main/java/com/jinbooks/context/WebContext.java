@@ -465,12 +465,12 @@ public final class WebContext {
     
     public static String version() {
 		StringBuffer version = new StringBuffer();
-		version.append("-----------------------------------------------------------");
-		version.append("+                      MaxKey Enterprise Edition  ");
-		version.append("+                      Single   Sign   On ( SSO ) ");
-		version.append("+                           Version %s".formatted(
+		version.append("-----------------------------------------------------------\n");
+		version.append("+                      JinBooks Accounting Platform  \n");
+		version.append("+                      Financial Management System    \n");
+		version.append("+                           Version %s\n".formatted(
                         WebContext.getProperty("application.formatted-version")));
-		version.append("+");
+		version.append("+\n");
 		version.append("-----------------------------------------------------------");
 		return version.toString();
     }

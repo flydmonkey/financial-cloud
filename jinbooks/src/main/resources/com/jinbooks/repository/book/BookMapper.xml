@@ -4,8 +4,8 @@
     <select id="pageList" parameterType="com.jinbooks.dto.book.BookPageDto"
             resultType="com.jinbooks.domain.book.Book">
         select jbs.*, jbas.name AS standardsName
-        from jbx_book jbs
-        left join jbx_standard jbas
+        from book jbs
+        left join standard jbas
         on jbs.standard_id = jbas.id
         and jbas.deleted = 'n'
         where jbs.deleted = 'n'
@@ -17,7 +17,7 @@
 
     <select id="listBooks" resultType="com.jinbooks.dto.book.BookVo">
         select b.id, b.name, b.company_name
-        from jbx_book b,jbx_permission_book pb
+        from book b,permission_book pb
         where  pb.book_id = b.id
         	and b.deleted = 'n' 
         	and pb.deleted = 'n'

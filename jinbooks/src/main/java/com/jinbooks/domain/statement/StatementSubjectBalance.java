@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * ç§ç®ä½é¢ jbx_statement_subject_balance
+ * ç§ç®ä½é¢ statement_subject_balance
  *
  * @author wuyan
  * {@code @date} 2025-02-03
@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_statement_subject_balance")
+@TableName("statement_subject_balance")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

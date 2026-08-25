@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * 凭证明细对象 jbx_voucher_item
+ * 凭证明细对象 voucher_item
  *
  * @author wuyan
  * {@code @date} 2025-01-14
@@ -22,7 +22,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("jbx_voucher_item")
+@TableName("voucher_item")
 public class VoucherItem extends BaseEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

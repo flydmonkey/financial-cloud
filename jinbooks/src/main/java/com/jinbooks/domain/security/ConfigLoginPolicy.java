@@ -17,7 +17,7 @@ import java.io.Serializable;
  *
  */
 @NoArgsConstructor
-@TableName(value = "jbx_config_login_policy")
+@TableName(value = "config_login_policy")
 @Data
 public class ConfigLoginPolicy implements Serializable {
 	@Serial

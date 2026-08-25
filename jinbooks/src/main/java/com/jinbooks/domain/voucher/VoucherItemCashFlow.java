@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("jbx_voucher_item_cash_flow")
+@TableName("voucher_item_cash_flow")
 public class VoucherItemCashFlow extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 5584043579878024120L;

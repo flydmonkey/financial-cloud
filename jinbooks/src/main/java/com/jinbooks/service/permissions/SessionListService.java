@@ -10,11 +10,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinbooks.domain.permissions.SessionList;
 import com.jinbooks.domain.idm.UserInfo;
 import com.jinbooks.repository.permissions.SessionListMapper;
-import com.jinbooks.service.permissions.SessionListService;
 import com.jinbooks.context.WebContext;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -24,6 +25,9 @@ public class SessionListService  extends ServiceImpl<SessionListMapper,SessionLi
 
 	private final SessionListMapper sessionListMapper;
 
+	@Qualifier("historyTaskExecutor")
+	private final TaskExecutor historyTaskExecutor;
+
 	public SessionListMapper getMapper() {
 		return sessionListMapper;
 	}
@@ -31,8 +35,11 @@ public class SessionListService  extends ServiceImpl<SessionListMapper,SessionLi
 
     public void insertOnline(SessionList sessionList) {
     	sessionList.setId(WebContext.genId());
-
-        new Thread(new SessionInsertRunnable(this,sessionList)).start();
+		historyTaskExecutor.execute(() -> {
+			log.debug(" sessionList {}" , sessionList);
+			sessionList.setOperateTime(new Date());
+			save(sessionList);
+		});
     }
 
 	public SessionList getBySessionId(String sessionId) {
@@ -57,23 +64,4 @@ public class SessionListService  extends ServiceImpl<SessionListMapper,SessionLi
 			return getMapper().listByStyle(style);
 		}
 	}
-
-	public class SessionInsertRunnable implements Runnable{
-
-		SessionListService service;
-
-		SessionList sessionList;
-
-		public SessionInsertRunnable(SessionListService sessionListService, SessionList sessionList) {
-			super();
-			this.service = sessionListService;
-			this.sessionList = sessionList;
-		}
-	    public void run() {
-			log.debug(" sessionList {}" , sessionList);
-			sessionList.setOperateTime(new Date());
-			service.save(sessionList);
-		}
-	}
-
 }

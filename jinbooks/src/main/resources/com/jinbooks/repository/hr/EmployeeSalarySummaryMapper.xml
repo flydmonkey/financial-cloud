@@ -27,7 +27,7 @@
             SUM(taxable_wages) AS taxable_wages,
             SUM(tax_deduction) AS tax_deduction,
             SUM(business_expenditure_costs) AS business_expenditure_costs
-        FROM jbx_employee_salary_summary
+        FROM employee_salary_summary
         WHERE book_id = #{Dto.bookId}
           AND (belong_date >= #{Dto.startDateRange} AND  #{Dto.endDateRange}>= belong_date)
           AND deleted = 'n'

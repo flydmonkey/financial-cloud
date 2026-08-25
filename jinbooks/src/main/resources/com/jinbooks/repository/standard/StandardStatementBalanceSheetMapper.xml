@@ -3,7 +3,7 @@
 <mapper namespace="com.jinbooks.repository.standard.StandardStatementBalanceSheetMapper">
     <!-- 增加 sort_index 的方法 -->
     <update id="incrementSortIndex">
-        UPDATE jbx_standard_statement_balance_sheet
+        UPDATE standard_statement_balance_sheet
         SET sort_index = sort_index + 1
         WHERE standard_id = #{standardId}
         AND sort_index >= #{sortIndex}
@@ -15,7 +15,7 @@
 
     <!-- 减少 sort_index 的方法 -->
     <update id="decrementSortIndex">
-        UPDATE jbx_standard_statement_balance_sheet
+        UPDATE standard_statement_balance_sheet
         SET sort_index = sort_index - 1
         WHERE standard_id = #{standardId}
         AND sort_index >= #{sortIndex}
@@ -27,7 +27,7 @@
 
     <!-- 增加 item_code 的方法 -->
     <update id="incrementItemCode">
-        UPDATE jbx_standard_statement_balance_sheet
+        UPDATE standard_statement_balance_sheet
         SET item_code = LPAD(CAST(CAST(item_code AS UNSIGNED) + 1 AS CHAR), 4, '0')
         WHERE standard_id = #{standardId}
         AND item_code &gt;= #{itemCode}
@@ -41,7 +41,7 @@
 
     <!-- 减少 item_code 的方法 -->
     <update id="decrementItemCode">
-        UPDATE jbx_standard_statement_balance_sheet
+        UPDATE standard_statement_balance_sheet
         SET item_code = LPAD(CAST(CAST(item_code AS UNSIGNED) - 1 AS CHAR), 4, '0')
         WHERE standard_id = #{standardId}
         AND item_code &gt;= #{itemCode}

@@ -28,11 +28,13 @@ public class ConfigSmsProviderController {
 
 	private final ConfigSmsProviderService configSmsProviderService;
 
+	private final LegacySecretCodec legacySecretCodec;
+
 	@GetMapping(value={"/get"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<ConfigSmsProvider> get(@CurrentUser UserInfo currentUser){
 		ConfigSmsProvider smsProvider = configSmsProviderService.getById(currentUser.getBookId());
 		if(smsProvider != null && StringUtils.isNoneBlank(smsProvider.getId())) {
-			smsProvider.setAppSecret(LegacySecretCodec.getInstance().decoder(smsProvider.getAppSecret()));
+			smsProvider.setAppSecret(legacySecretCodec.decoder(smsProvider.getAppSecret()));
 		}
 		return new Message<>(smsProvider);
 	}
@@ -40,7 +42,7 @@ public class ConfigSmsProviderController {
 	@PutMapping(value={"/update"})
 	public Message<ConfigSmsProvider> update( @RequestBody ConfigSmsProvider smsProvider,@CurrentUser UserInfo currentUser,BindingResult result) {
 		log.debug("update smsProvider : {}" ,smsProvider);
-		smsProvider.setAppSecret(LegacySecretCodec.getInstance().encode(smsProvider.getAppSecret()));
+		smsProvider.setAppSecret(legacySecretCodec.encode(smsProvider.getAppSecret()));
 		smsProvider.setBookId(currentUser.getBookId());
 		boolean updateResult = false;
 		if(StringUtils.isBlank(smsProvider.getId())) {

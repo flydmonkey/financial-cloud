@@ -18,7 +18,7 @@ import com.jinbooks.common.BaseEntity;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@TableName("jbx_config_sms_provider")
+@TableName("config_sms_provider")
 public class ConfigSmsProvider extends BaseEntity implements Serializable {
 	@Serial
     private static final long serialVersionUID = -4595539647817265938L;

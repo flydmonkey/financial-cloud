@@ -135,7 +135,7 @@ function handleUploadError(err: any): any {
 
 // 上传成功回调
 function handleUploadSuccess(res: any, file: any): any {
-  if (res.code === 200) {
+  if (res.code === 0) {
     uploadList.value.push({ name: res.fileName, url: res.fileName });
     uploadedSuccessfully();
   } else {

@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_settlement")
+@TableName("settlement")
 public class Settlement extends BaseEntity implements Serializable {
 
     /**

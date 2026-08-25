@@ -18,7 +18,7 @@
 		select
 			*
 		from
-			jbx_socials_provider
+			socials_provider
 		where
 			 book_id   =   #{bookId}
 		<include refid="where_statement"/>

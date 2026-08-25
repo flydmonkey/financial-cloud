@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * å©æ¶¦è¡?jbx_statement_income
+ * å©æ¶¦è¡?statement_income
  *
  * @author wuyan
  * {@code @date} 2025-02-03
@@ -21,7 +21,7 @@ import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_statement_income")
+@TableName("statement_income")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

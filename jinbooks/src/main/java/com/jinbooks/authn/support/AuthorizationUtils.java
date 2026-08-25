@@ -23,13 +23,18 @@ import com.jinbooks.context.WebContext;
 @Slf4j
 public class AuthorizationUtils {
 
-	public class BearerType {
-		public static final String CONGRESS = "congress";
-		public static final String CONGRESS_TYPE = "cookie";
-		public static final String PARAMETER = "congress";
-		public static final String PARAMETER_TYPE = "parameter";
+	public static final class BearerType {
+		public static final String SESSION_COOKIE = "jb_session";
+		public static final String LEGACY_SESSION_COOKIE = "congress";
+		public static final String SESSION_PARAM = "jb_session";
+		public static final String LEGACY_SESSION_PARAM = "congress";
 		public static final String AUTHORIZATION = "Authorization";
 		public static final String AUTHORIZATION_TYPE = "Authorization";
+		public static final String COOKIE_TYPE = "cookie";
+		public static final String PARAMETER_TYPE = "parameter";
+
+		private BearerType() {
+		}
 	}
 
 	public static void authenticate(HttpServletRequest request, SessionManager sessionManager) {
@@ -38,19 +43,36 @@ public class AuthorizationUtils {
 		log.trace("bearerType {} , sessionId {}", bearerType, sessionId);
 
 		if (StringUtils.isBlank(sessionId)) {
-			sessionId = request.getParameter(BearerType.CONGRESS);
-			bearerType = BearerType.PARAMETER_TYPE;
+			sessionId = resolveSessionParameter(request);
+			if (StringUtils.isNotBlank(sessionId)) {
+				bearerType = BearerType.PARAMETER_TYPE;
+			}
 		}
 
 		if (StringUtils.isBlank(sessionId)) {
-			Cookie authCookie = WebContext.getCookie(request, BearerType.CONGRESS);
-			if (authCookie != null) {
-				sessionId = authCookie.getValue();
-				bearerType = BearerType.CONGRESS_TYPE;
+			sessionId = resolveSessionCookie(request);
+			if (StringUtils.isNotBlank(sessionId)) {
+				bearerType = BearerType.COOKIE_TYPE;
 			}
 		}
 
 		doSessionAuthenticate(request, bearerType, sessionId, sessionManager);
+	}
+
+	private static String resolveSessionParameter(HttpServletRequest request) {
+		String sessionId = request.getParameter(BearerType.SESSION_PARAM);
+		if (StringUtils.isBlank(sessionId)) {
+			sessionId = request.getParameter(BearerType.LEGACY_SESSION_PARAM);
+		}
+		return sessionId;
+	}
+
+	private static String resolveSessionCookie(HttpServletRequest request) {
+		Cookie authCookie = WebContext.getCookie(request, BearerType.SESSION_COOKIE);
+		if (authCookie == null) {
+			authCookie = WebContext.getCookie(request, BearerType.LEGACY_SESSION_COOKIE);
+		}
+		return authCookie == null ? null : authCookie.getValue();
 	}
 
 	public static void doSessionAuthenticate(

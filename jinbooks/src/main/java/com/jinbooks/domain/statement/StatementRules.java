@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * 报表统计规则实体对象 jbx_statement_rules
+ * 报表统计规则实体对象 statement_rules
  *
  * @author wuyan
  * {@code @date} 2025-03-19
@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_statement_rules")
+@TableName("statement_rules")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

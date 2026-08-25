@@ -9,7 +9,7 @@ import com.jinbooks.common.BaseEntity;
 import java.io.Serializable;
 
 /**
- * 凭证模板条目 jbx_voucher_template_item
+ * 凭证模板条目 voucher_template_item
  *
  * @author wuyan
  * {@code @date} 2025-05-08
@@ -17,7 +17,7 @@ import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_voucher_template_item")
+@TableName("voucher_template_item")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

@@ -6,8 +6,8 @@
         select child.*,
         parent.code as parentCode,
         parent.name as parentName
-        from jbx_book_subject child
-        left join jbx_book_subject parent
+        from book_subject child
+        left join book_subject parent
         on child.parent_id = parent.id
         and parent.deleted = 'n'
         and parent.book_id = #{Dto.bookId}
@@ -34,14 +34,14 @@
             resultType="com.jinbooks.dto.statement.StatementSubjectVo">
         SELECT s.id, s.parent_id, s.`code`, s.`name`, s.direction, s.category, s.id_path,
                i.debit_amount, i.credit_amount, i.subject_balance as balance
-        FROM jbx_book_subject s
+        FROM book_subject s
         LEFT JOIN (
         SELECT i_inner.*
-        FROM jbx_voucher_item i_inner
+        FROM voucher_item i_inner
         INNER JOIN (
         SELECT subject_code,
         ${params.countType}(id) AS max_id
-        FROM jbx_voucher_item
+        FROM voucher_item
         WHERE deleted = 'n'
         <if test="params.year != null">
             AND YEAR(voucher_date) = #{params.year}
@@ -55,7 +55,7 @@
         GROUP BY subject_code
         ) latest ON i_inner.subject_code = latest.subject_code AND i_inner.id = latest.max_id
         ) i ON s.`code` = i.subject_code
-        LEFT JOIN jbx_voucher v ON i.voucher_id = v.id AND v.deleted = 'n' and v.status in ('reviewing', 'completed')
+        LEFT JOIN voucher v ON i.voucher_id = v.id AND v.deleted = 'n' and v.status in ('reviewing', 'completed')
         WHERE s.book_id = #{params.bookId}
         AND s.deleted = 'n'
         and (s.is_auxiliary &lt;&gt; 1 OR s.is_auxiliary IS NULL)
@@ -63,6 +63,6 @@
     </select>
 
     <delete id="deleteByBookId" parameterType="string">
-        delete from jbx_book_subject where book_id = #{bookId}
+        delete from book_subject where book_id = #{bookId}
     </delete>
 </mapper>

@@ -8,9 +8,9 @@
         jo.org_name AS departmentName,
         jbs.name AS booksSetName
         FROM
-        jbx_employee je
+        employee je
         INNER JOIN
-        jbx_organizations jo
+        organizations jo
         ON je.department_id = jo.id
         AND jo.deleted = 'n'
         and jo.book_id = #{Dto.bookId}
@@ -18,7 +18,7 @@
             AND jo.code_path LIKE CONCAT('%', #{Dto.departmentId}, '%')
         </if>
         INNER JOIN
-        jbx_book jbs
+        book jbs
         ON je.book_id = jbs.id
         AND jbs.deleted = 'n'
         and jbs.id = #{Dto.bookId}
@@ -34,8 +34,8 @@
 
     <select id="listNoCalCurrent" parameterType="com.jinbooks.dto.hr.ListNoCalCurrentDto"
             resultType="com.jinbooks.domain.hr.Employee">
-        SELECT je.* FROM jbx_employee je
-                             LEFT JOIN jbx_employee_salary_temp jest ON je.id = jest.employee_id
+        SELECT je.* FROM employee je
+                             LEFT JOIN employee_salary_temp jest ON je.id = jest.employee_id
             AND jest.belong_date = #{Dto.belongDate}
             AND jest.deleted = 'n'
             AND jest.book_id = #{Dto.bookId}

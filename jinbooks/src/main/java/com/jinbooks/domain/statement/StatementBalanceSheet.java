@@ -12,7 +12,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * èµäº§è´åºè¡¨ jbx_statement_balance_sheet
+ * èµäº§è´åºè¡¨ statement_balance_sheet
  *
  * @author wuyan
  * {@code @date} 2025-02-03
@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_statement_balance_sheet")
+@TableName("statement_balance_sheet")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

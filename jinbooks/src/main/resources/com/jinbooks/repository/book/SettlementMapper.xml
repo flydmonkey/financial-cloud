@@ -4,7 +4,7 @@
     <select id="pageList" parameterType="com.jinbooks.dto.book.SettlementPageDto"
             resultType="com.jinbooks.domain.book.Settlement">
         select js.*
-        from jbx_settlement js
+        from settlement js
         where js.deleted = 'n'
         	and js.book_id = #{dto.bookId}
         <if test="dto.year != 0">

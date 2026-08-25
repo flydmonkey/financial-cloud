@@ -242,7 +242,7 @@ function getState(): any {
 
 function openOtherLogin(id: any): any {
   getThirdById(id).then((res: any) => {
-    if (res.code === 200) {
+    if (res.code === 0) {
       const flag: any = window.open(res.data, '', "height=800, width=1400, top=100, left=100,toolbar=no, menubar=no, scrollbars=no, resizable=no, loca tion=no, status=no");
       const loop: any = setInterval(function () {
         if (flag?.closed) {

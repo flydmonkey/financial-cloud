@@ -24,7 +24,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@TableName("jbx_config_password_policy")
+@TableName("config_password_policy")
 public class ConfigPasswordPolicy implements Serializable {
 
     @Serial

@@ -10,7 +10,7 @@ import com.jinbooks.common.BaseEntity;
 import lombok.*;
 
 /**
- * 凭证字对象 jbx_voucher_word
+ * 凭证字对象 voucher_word
  *
  * @author wuyan
  * {@code @date} 2025-01-14
@@ -18,7 +18,7 @@ import lombok.*;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_voucher_word")
+@TableName("voucher_word")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

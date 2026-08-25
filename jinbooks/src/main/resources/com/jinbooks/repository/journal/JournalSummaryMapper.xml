@@ -6,7 +6,7 @@
 		parameterType="com.jinbooks.dto.journal.JournalSummaryPageDto"
 		resultType="com.jinbooks.domain.journal.JournalSummary">
 		select jjs.*
-		from jbx_journal_summary jjs
+		from journal_summary jjs
 
 		where jjs.deleted = 'n'
 			and jjs.book_id = #{dto.bookId}
@@ -37,11 +37,11 @@
 			jjet.expenditure ,
 			jjety.year_income,
 			jjety.year_expenditure
-		from jbx_journal_account jja 
+		from journal_account jja 
 		left join
 		(
 			select book_id,acc_id,sum(income) income,sum(expenditure) as expenditure 
-			from jbx_journal_entry 
+			from journal_entry 
 			where date(trade_date) &gt;= str_to_date(#{yearPeriodStart},'%Y-%m-%d')
 				and date(trade_date) &lt;= last_day(str_to_date(#{yearPeriodStart},'%Y-%m-%d'))
 				and direction in('i','e')
@@ -52,7 +52,7 @@
 			and jja.book_id = jjet.book_id
 		left join ( 
 			select book_id,acc_id,sum(income) year_income,sum(expenditure) as year_expenditure 
-			from jbx_journal_entry 
+			from journal_entry 
 			where date(trade_date) &gt;= str_to_date(CONCAT(#{years},'-01-01'),'%Y-%m-%d') 
 				and date(trade_date) &lt;= last_day(str_to_date(#{yearPeriodStart},'%Y-%m-%d'))  
 				and direction in('i','e')
@@ -73,7 +73,7 @@
 			sum(jjs.expenditure) as expenditure,
 			sum(jjs.year_income) as year_income,
 			sum(jjs.year_expenditure) as year_expenditure
-		from jbx_journal_summary jjs
+		from journal_summary jjs
 		where jjs.book_id = #{dto.bookId} and jjs.deleted = 'n' 
 		<if test="dto.accName != null and dto.accName != ''">
 			and jjs.acc_name like CONCAT('%', #{dto.accName}, '%')

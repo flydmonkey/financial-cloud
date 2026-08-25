@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.jinbooks.authn.session.Session;
 import com.jinbooks.context.WebConstants;
 
@@ -23,7 +24,8 @@ import lombok.NoArgsConstructor;
 public class LoginCredential  implements Authentication {
     private static final long serialVersionUID = 3125709257481600320L;
     String style =Session.STYLE.WEB;
-    String congress;
+    @JsonAlias("congress")
+    String sessionToken;
     String username;
     String password;
     String captcha;

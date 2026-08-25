@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * å©æ¶¦è¡?jbx_statement_income
+ * å©æ¶¦è¡?statement_income
  *
  * @author wuyan
  * {@code @date} 2025-02-03
@@ -21,7 +21,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_statement_income_item")
+@TableName("statement_income_item")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

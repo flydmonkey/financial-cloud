@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@TableName("jbx_config_email_senders")
+@TableName("config_email_senders")
 public class ConfigEmailSenders  extends BaseEntity implements Serializable {
 
 	@Serial

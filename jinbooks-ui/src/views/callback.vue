@@ -132,7 +132,7 @@ function load(): any {
       const query: any = route.query;
       if (query.id) {
         callbackLogin(query).then((res: any) =>  {
-          if (res.code == 200) {
+          if (res.code == 0) {
             userStore.setCredential(res.data)
             window.close();
           }

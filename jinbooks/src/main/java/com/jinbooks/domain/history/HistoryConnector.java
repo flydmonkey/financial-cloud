@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@TableName("JBX_HISTORY_CONNECTOR")
+@TableName("history_connector")
 public class HistoryConnector  extends BaseEntity  implements Serializable{
     @Serial
     private static final long serialVersionUID = 3465459057253994386L;

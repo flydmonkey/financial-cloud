@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import cn.hutool.crypto.SmUtil;
@@ -45,7 +44,6 @@ public final class LegacyPasswordEncoders {
 	public static PasswordEncoder create() {
 		Map<String, PasswordEncoder> encoders = new HashMap<>();
 		String idForEncode = "bcrypt";
-		encoders.put("plain", NoOpPasswordEncoder.getInstance());
 		encoders.put("bcrypt", new BCryptPasswordEncoder());
 		encoders.put("sm3", sm3());
 		encoders.put("md5", saltedMd5());

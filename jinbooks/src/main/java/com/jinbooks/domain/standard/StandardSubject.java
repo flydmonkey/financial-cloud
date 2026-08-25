@@ -16,7 +16,7 @@ import java.io.Serial;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName(value = "jbx_standard_subject", autoResultMap = true)
+@TableName(value = "standard_subject", autoResultMap = true)
 public class StandardSubject extends BaseSubject{
     @Serial
     private static final long serialVersionUID = -4940236669574217392L;

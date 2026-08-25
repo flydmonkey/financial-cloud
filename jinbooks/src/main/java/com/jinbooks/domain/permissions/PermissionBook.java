@@ -20,7 +20,7 @@ import com.jinbooks.common.BaseEntity;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@TableName("jbx_permission_book")
+@TableName("permission_book")
 public class PermissionBook  extends BaseEntity implements Serializable {
 
     /**

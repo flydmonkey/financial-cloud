@@ -17,7 +17,7 @@ import java.io.Serial;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName(value = "jbx_standard_subject_cash_flow")
+@TableName(value = "standard_subject_cash_flow")
 public class StandardSubjectCashFlow extends BaseEntity {
     @Serial
     private static final long serialVersionUID = 1705305465180125164L;

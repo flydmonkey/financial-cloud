@@ -4,8 +4,8 @@
     <select id="selectOneStandard" parameterType="string"
             resultType="com.jinbooks.domain.standard.Standard">
         SELECT a.name
-        FROM jbx_standard a
-        JOIN jbx_standard_subject s ON a.id = s.standard_id
+        FROM standard a
+        JOIN standard_subject s ON a.id = s.standard_id
         and s.subject_id = #{id}
         WHERE a.deleted = 'n'
         LIMIT 1;

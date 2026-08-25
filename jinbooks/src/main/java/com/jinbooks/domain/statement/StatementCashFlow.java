@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * ç°éæµéè¡?jbx_statement_cash_flow
+ * ç°éæµéè¡?statement_cash_flow
  *
  * @author wuyan
  * {@code @date} 2025-02-03
@@ -22,7 +22,7 @@ import java.time.LocalDate;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_statement_cash_flow")
+@TableName("statement_cash_flow")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

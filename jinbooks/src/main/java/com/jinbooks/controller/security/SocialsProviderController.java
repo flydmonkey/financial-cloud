@@ -37,6 +37,8 @@ public class SocialsProviderController {
 
 	private final SocialsProviderService socialsProviderService;
 
+	private final LegacySecretCodec legacySecretCodec;
+
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<SocialsProvider>> fetch(SocialsProviderPageDto dto, @CurrentUser UserInfo currentUser) {
 		log.debug("fetch {}",dto);
@@ -62,7 +64,7 @@ public class SocialsProviderController {
 	@GetMapping(value = { "/get/{id}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<SocialsProvider> get(@PathVariable("id") String id) {
 		SocialsProvider socialsProvider=socialsProviderService.getById(id);
-		socialsProvider.setClientSecret(LegacySecretCodec.getInstance().decoder(socialsProvider.getClientSecret()));
+		socialsProvider.setClientSecret(legacySecretCodec.decoder(socialsProvider.getClientSecret()));
 		return new Message<>(socialsProvider);
 	}
 
@@ -70,7 +72,7 @@ public class SocialsProviderController {
 	public Message<SocialsProvider> insert(@RequestBody  SocialsProvider socialsProvider,@CurrentUser UserInfo currentUser) {
 		log.debug("-Add  : {}" , socialsProvider);
 		socialsProvider.setBookId(currentUser.getBookId());
-		socialsProvider.setClientSecret(LegacySecretCodec.getInstance().encode(socialsProvider.getClientSecret()));
+		socialsProvider.setClientSecret(legacySecretCodec.encode(socialsProvider.getClientSecret()));
 		if (socialsProviderService.save(socialsProvider)) {
 			return new Message<>(Message.SUCCESS);
 		} else {
@@ -82,7 +84,7 @@ public class SocialsProviderController {
 	public Message<SocialsProvider> update(@RequestBody  SocialsProvider socialsProvider,@CurrentUser UserInfo currentUser) {
 		log.debug("-update  : {}" , socialsProvider);
 		socialsProvider.setBookId(currentUser.getBookId());
-		socialsProvider.setClientSecret(LegacySecretCodec.getInstance().encode(socialsProvider.getClientSecret()));
+		socialsProvider.setClientSecret(legacySecretCodec.encode(socialsProvider.getClientSecret()));
 		if (socialsProviderService.updateById(socialsProvider)) {
 		    return new Message<>(Message.SUCCESS);
 		} else {

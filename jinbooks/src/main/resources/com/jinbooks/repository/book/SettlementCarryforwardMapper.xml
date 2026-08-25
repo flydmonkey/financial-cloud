@@ -4,8 +4,8 @@
     <select id="pageList" parameterType="com.jinbooks.dto.voucher.VoucherTemplatePageDto"
             resultType="com.jinbooks.dto.book.SettlementCarryforwardVo">
         select jvt.*,jsc.voucher_id
-        from jbx_voucher_template jvt
-        left join jbx_settlement_carryforward jsc
+        from voucher_template jvt
+        left join settlement_carryforward jsc
         on jvt.id = jsc.voucher_template_id 
           and jsc.year_period = #{dto.yearPeriod}
           and jsc.book_id = #{dto.bookId}

@@ -136,11 +136,11 @@ if exist %WRAPPER_JAR% (
 @REM End of extension
 
 @REM If specified, validate the SHA-256 sum of the Maven wrapper.jar file
-SET WRAPPER_SHA_256_SUM=""
+SET WRAPPER_SHA_256_SUM=
 FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.properties") DO (
     IF "%%A"=="wrapperSha256Sum" SET WRAPPER_SHA_256_SUM=%%B
 )
-IF NOT %WRAPPER_SHA_256_SUM%=="" (
+IF NOT "%WRAPPER_SHA_256_SUM%"=="" (
     powershell -Command "&{"^
        "$hash = (Get-FileHash \"%WRAPPER_JAR%\" -Algorithm SHA256).Hash.ToLower();"^
        "If('%WRAPPER_SHA_256_SUM%' -ne $hash){"^
@@ -157,11 +157,11 @@ IF NOT %WRAPPER_SHA_256_SUM%=="" (
 @REM across both Windows and non-Windows executions.
 set MAVEN_CMD_LINE_ARGS=%*
 
-%MAVEN_JAVA_EXE% ^
+"%JAVACMD%" ^
   %JVM_CONFIG_MAVEN_PROPS% ^
   %MAVEN_OPTS% ^
   %MAVEN_DEBUG_OPTS% ^
-  -classpath %WRAPPER_JAR% ^
+  -classpath "%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.jar" ^
   "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" ^
   %WRAPPER_LAUNCHER% %MAVEN_CONFIG% %*
 if ERRORLEVEL 1 goto error

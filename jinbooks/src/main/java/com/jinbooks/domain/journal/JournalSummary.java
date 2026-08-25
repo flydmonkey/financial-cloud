@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_journal_summary")
+@TableName("journal_summary")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

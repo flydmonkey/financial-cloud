@@ -2,6 +2,7 @@ package com.jinbooks.configuration;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
 
@@ -22,14 +23,17 @@ public class SessionAutoConfiguration {
 	}
 
 	@Bean(name = "sessionManager")
-	SessionManager sessionManager(ConfigLoginPolicyService configLoginPolicyService) {
+	SessionManager sessionManager(
+			ConfigLoginPolicyService configLoginPolicyService,
+			@Value("${jinbooks.session.max-size:10000}") int maxSize,
+			@Value("${jinbooks.session.default-validity-hours:8}") int defaultValidityHours) {
 		ConfigLoginPolicy configLoginPolicy = configLoginPolicyService.getConfigLoginPolicy();
-		int validitySeconds = 8 * 3600;
-		if (configLoginPolicy != null) {
+		int validitySeconds = defaultValidityHours * 3600;
+		if (configLoginPolicy != null && configLoginPolicy.getSessionValidity() > 0) {
 			validitySeconds = configLoginPolicy.getSessionValidity() * 3600;
 		}
-		log.debug("InMemory session timeout {}s", validitySeconds);
-		return new InMemorySessionManager(validitySeconds);
+		log.info("Using in-memory session store for single-node deployment (timeout {}s)", validitySeconds);
+		return new InMemorySessionManager(validitySeconds, maxSize);
 	}
 
 	@Bean

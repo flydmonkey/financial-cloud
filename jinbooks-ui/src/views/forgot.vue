@@ -155,7 +155,7 @@ function sendCode(): any {
         otpType: 'forgot',
       }
       sendSmsCode(params).then((res: any) => {
-        if (res.code === 200) {
+        if (res.code === 0) {
           modal.msgSuccess(t('forgot.sendSuccess'))
           startCountdown();
         } else {
@@ -184,7 +184,7 @@ function onNextReset(): any {
         }
       })
       .then((res: any) => {
-        if (res.code === 200) {
+        if (res.code === 0) {
           tempId.value = res.data;
           active.value = 3;
         } else {
@@ -205,7 +205,7 @@ function confirm(): any {
   passwordForm.value.validate((valid: any) => {
     if (valid) {
       setNewPassword(params).then((res: any) => {
-        if (res.code === 200) {
+        if (res.code === 0) {
           modal.msgSuccess(t('forgot.setSuccess'));
           backToLogin();
         } else {
@@ -223,7 +223,7 @@ function backToLogin(): any {
 //获取密码策略
 function passwordPolicy(): any {
   getPwdPolicy().then((res: any) => {
-    if (res.code === 200) {
+    if (res.code === 0) {
       pwdPolicy.value = res.data;
     } else {
       modal.msgError(t('profile.pwdPolicy'))

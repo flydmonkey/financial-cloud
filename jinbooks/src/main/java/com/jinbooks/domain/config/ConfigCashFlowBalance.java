@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_config_cash_flow_balance")
+@TableName("config_cash_flow_balance")
 @NoArgsConstructor
 public class ConfigCashFlowBalance extends BaseEntity {
     @Serial

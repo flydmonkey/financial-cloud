@@ -6,7 +6,7 @@
 		parameterType="com.jinbooks.dto.hr.EmployeeTaxDeductionPageDto"
 		resultType="com.jinbooks.domain.hr.EmployeeTaxDeduction">
 		select jetd.*
-		from jbx_employee_tax_deduction jetd
+		from employee_tax_deduction jetd
 
 		where jetd.deleted = 'n'
 			and jetd.book_id = #{dto.bookId}

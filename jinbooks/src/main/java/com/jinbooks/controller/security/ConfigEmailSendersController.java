@@ -27,11 +27,13 @@ public class ConfigEmailSendersController {
 
 	private final ConfigEmailSendersService configEmailSendersService;
 
+	private final LegacySecretCodec legacySecretCodec;
+
 	@GetMapping(value={"/get"})
 	public Message<ConfigEmailSenders> get(@CurrentUser UserInfo currentUser){
 		ConfigEmailSenders emailSenders = configEmailSendersService.getById(currentUser.getBookId());
 		if(emailSenders != null && StringUtils.isNotBlank(emailSenders.getCredentials())) {
-			emailSenders.setCredentials(LegacySecretCodec.getInstance().decoder(emailSenders.getCredentials()));
+			emailSenders.setCredentials(legacySecretCodec.decoder(emailSenders.getCredentials()));
 		}else {
 			emailSenders =new ConfigEmailSenders();
 			emailSenders.setProtocol("smtp");
@@ -44,7 +46,7 @@ public class ConfigEmailSendersController {
 	public Message<ConfigEmailSenders> update( @RequestBody ConfigEmailSenders emailSenders,@CurrentUser UserInfo currentUser,BindingResult result) {
 		log.debug("update emailSenders : {}",emailSenders);
 		emailSenders.setBookId(currentUser.getBookId());
-		emailSenders.setCredentials(LegacySecretCodec.getInstance().encode(emailSenders.getCredentials()));
+		emailSenders.setCredentials(legacySecretCodec.encode(emailSenders.getCredentials()));
 		if(StringUtils.isBlank(emailSenders.getId())) {
 			emailSenders.setId(emailSenders.getBookId());
 			if(configEmailSendersService.save(emailSenders)) {

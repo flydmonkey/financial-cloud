@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie'
 
-const TokenKey: any = 'Admin-Token'
+const TokenKey: any = 'jb-token'
 const RefreshTokenKey: any = 'refresh_token'
 const TokenInfoKey: any = '_token'
 const UserInfoKey: any = 'user'

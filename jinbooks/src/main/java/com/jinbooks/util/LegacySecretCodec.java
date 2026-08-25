@@ -19,16 +19,17 @@ import cn.hutool.core.util.HexUtil;
 public final class LegacySecretCodec implements PasswordEncoder {
 
 	private static final int PREFIX_LENGTH = 7;
-	private static final String DEFAULT_SECRET_KEY = "l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6";
+	static final String DEFAULT_SECRET_KEY_SUFFIX = "l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6";
 	private static final String DESEDE = "DESede";
 
-	private static final LegacySecretCodec INSTANCE = new LegacySecretCodec();
+	private final String keySuffix;
 
-	private LegacySecretCodec() {
+	public LegacySecretCodec() {
+		this(DEFAULT_SECRET_KEY_SUFFIX);
 	}
 
-	public static LegacySecretCodec getInstance() {
-		return INSTANCE;
+	public LegacySecretCodec(String keySuffix) {
+		this.keySuffix = StringUtils.isBlank(keySuffix) ? DEFAULT_SECRET_KEY_SUFFIX : keySuffix;
 	}
 
 	public String decoder(CharSequence encodedPassword) {
@@ -53,12 +54,12 @@ public final class LegacySecretCodec implements PasswordEncoder {
 		return salt + encodeHex(password, salt.substring(PREFIX_LENGTH));
 	}
 
-	private static String encodeHex(String plain, String secretKey) {
+	private String encodeHex(String plain, String secretKey) {
 		byte[] cipher = encrypt(plain.getBytes(StandardCharsets.UTF_8), desedeKey(secretKey));
 		return HexUtil.encodeHexStr(cipher);
 	}
 
-	private static String decodeHex(String cipherHex, String secretKey) {
+	private String decodeHex(String cipherHex, String secretKey) {
 		if (StringUtils.isBlank(cipherHex)) {
 			return "";
 		}
@@ -66,8 +67,8 @@ public final class LegacySecretCodec implements PasswordEncoder {
 		return new String(plain, StandardCharsets.UTF_8);
 	}
 
-	private static String desedeKey(String secretKey) {
-		return (secretKey + DEFAULT_SECRET_KEY).substring(0, 24);
+	private String desedeKey(String secretKey) {
+		return (secretKey + keySuffix).substring(0, 24);
 	}
 
 	private static byte[] encrypt(byte[] plain, String key) {

@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * 凭证记录对象 jbx_voucher
+ * 凭证记录对象 voucher
  *
  * @author wuyan
  * {@code @date} 2025-01-14
@@ -22,7 +22,7 @@ import java.util.Date;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_voucher")
+@TableName("voucher")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

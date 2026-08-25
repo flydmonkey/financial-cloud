@@ -14,7 +14,7 @@ public class WebConstants {
     
     public static final  String CURRENT_INST 		= "current_inst";
     
-    public static final   String INST_COOKIE_NAME 	= "mxk_inst";
+    public static final   String INST_COOKIE_NAME 	= "jb_inst";
 
     // SPRING_SECURITY_SAVED_REQUEST
     public static final  String FIRST_SAVED_REQUEST_PARAMETER  = "SPRING_SECURITY_SAVED_REQUEST";
@@ -45,13 +45,13 @@ public class WebConstants {
     
     public static final  String SESSION = "current_session";
     
-    public static final  String THEME_COOKIE_NAME = "mxk_theme_value";
+    public static final  String THEME_COOKIE_NAME = "jb_theme";
     
     public static final  String LOGIN_ERROR_SESSION_MESSAGE  = "login_error_session_message_key";
     
     public static final  String ONLINE_TICKET_NAME = "online_ticket";
     
-	public static final  String MXK_METADATA_PREFIX = "mxk_metadata_";
+	public static final  String METADATA_PREFIX = "jb_metadata_";
 	
     public static final class LOGIN_RESULT{
     	public static final  String SUCCESS 		= "success";

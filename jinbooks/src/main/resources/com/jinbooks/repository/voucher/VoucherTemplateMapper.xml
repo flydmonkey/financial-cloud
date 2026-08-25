@@ -4,7 +4,7 @@
     <select id="pageList" parameterType="com.jinbooks.dto.voucher.VoucherTemplatePageDto"
             resultType="com.jinbooks.domain.voucher.VoucherTemplate">
         select jvt.*
-        from jbx_voucher_template jvt
+        from voucher_template jvt
         where jvt.deleted = 'n'
         <if test="dto.relatedId != null and dto.relatedId != ''">
             and jvt.related_Id = #{dto.relatedId}

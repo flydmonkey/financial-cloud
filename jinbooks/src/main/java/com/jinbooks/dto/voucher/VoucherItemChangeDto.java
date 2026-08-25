@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 凭证明细对象 jbx_books_voucher_item
+ * 凭证明细对象 voucher_item
  *
  * @author wuyan
  * {@code @date} 2025-01-14

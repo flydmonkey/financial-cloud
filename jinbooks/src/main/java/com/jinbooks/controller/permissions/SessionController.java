@@ -64,11 +64,12 @@ public class SessionController {
         boolean isTerminated = false;
         try {
             for(String sessionId : StrUtils.string2List(ids, ",")) {
-                if(currentUser.getSessionId().contains(sessionId)) {
+                if (sessionId.equals(currentUser.getSessionId())) {
                     continue;//skip current session
                 }
                 log.trace("terminate session Id {} ",sessionId);
                 sessionManager.terminate(sessionId,currentUser.getId(),currentUser.getUsername());
+                sessionListService.removeById(sessionId);
             }
             isTerminated = true;
         }catch(Exception e) {

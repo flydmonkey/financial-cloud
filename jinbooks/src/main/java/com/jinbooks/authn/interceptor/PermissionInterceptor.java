@@ -20,7 +20,6 @@ import com.jinbooks.authn.SignedPrincipal;
 import com.jinbooks.authn.session.SessionManager;
 import com.jinbooks.authn.support.AuthorizationUtils;
 import com.jinbooks.common.Message;
-import com.jinbooks.configuration.ApplicationConfig;
 import com.jinbooks.domain.idm.UserInfo;
 import com.jinbooks.service.auth.LoginService;
 
@@ -33,8 +32,6 @@ import tools.jackson.databind.json.JsonMapper;
 @Slf4j
 @Component
 public class PermissionInterceptor implements AsyncHandlerInterceptor {
-
-	private final ApplicationConfig applicationConfig;
 
 	private final SessionManager sessionManager;
 

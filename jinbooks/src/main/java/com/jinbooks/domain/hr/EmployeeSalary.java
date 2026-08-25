@@ -17,7 +17,7 @@ import java.time.YearMonth;
  */
 
 @EqualsAndHashCode(callSuper = true)
-@TableName("jbx_employee_salary")
+@TableName("employee_salary")
 @Data
 public class EmployeeSalary extends BaseEntity {
     @Serial

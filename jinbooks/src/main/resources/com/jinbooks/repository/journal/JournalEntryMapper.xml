@@ -6,7 +6,7 @@
 		parameterType="com.jinbooks.dto.journal.JournalEntryPageDto"
 		resultType="com.jinbooks.domain.journal.JournalEntry">
 		select jja.*
-		from jbx_journal_entry jja
+		from journal_entry jja
 
 		where jja.deleted = 'n'
 			and jja.book_id = #{dto.bookId}

@@ -7,7 +7,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 凭证明细辅助核算关联对象 jbx_voucher_auxiliary
+ * 凭证明细辅助核算关联对象 voucher_auxiliary
  *
  * @author wuyan
  * {@code @date} 2025-02-23
@@ -17,7 +17,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName("jbx_voucher_auxiliary")
+@TableName("voucher_auxiliary")
 public class VoucherAuxiliary implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

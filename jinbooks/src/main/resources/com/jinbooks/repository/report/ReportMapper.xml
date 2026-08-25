@@ -5,7 +5,7 @@
     <select id="analysisDay" parameterType="DashBoardReqDto" resultType="Integer">
         select
             count(id) reportcount
-        from jbx_history_login
+        from history_login
         where  book_id   =   #{bookId}
             and category = 1
             and date(operate_time) =curdate()
@@ -14,7 +14,7 @@
     <select id="analysisNewUsers" parameterType="DashBoardReqDto" resultType="Integer">
         select
             count(*) reportcount
-        from jbx_userinfo
+        from userinfo
         where book_id   =   #{bookId}
           and last_day(created_date) =last_day(curdate())
     </select>
@@ -22,14 +22,14 @@
     <select id="analysisOnlineUsers" parameterType="DashBoardReqDto" resultType="Integer">
             select
                 count(*) reportcount
-            from jbx_session_list
+            from session_list
             where   book_id   =   #{bookId}
     </select>
     <!-- 30天活跃用户统计 -->
     <select id="analysisActiveUsers" parameterType="DashBoardReqDto" resultType="Integer">
         select
             count(*) reportcount
-        from jbx_userinfo
+        from userinfo
         where book_id   =   #{bookId}
           and last_login_time >date_add(curdate(), interval - day(curdate()) -31 day)
     </select>
@@ -63,7 +63,7 @@
             select 23 reportname
         ) h left join(
             select count(id) reportcount, hour(operate_time) reportname
-            from jbx_history_login
+            from history_login
             where book_id = #{bookId}
                 and category = 1
                 and date(operate_time) =curdate()
@@ -77,7 +77,7 @@
         select
             count(id) reportcount,
             DATE_FORMAT(operate_time,'%Y-%m-%d') reportname
-        from jbx_history_login
+        from history_login
         where   book_id   =   #{bookId}
             and category = 1
             and operate_time > date_add(curdate(), interval - day(curdate()) -31 day)
@@ -90,7 +90,7 @@
         select
             count(id) reportcount,
             coalesce(browser,'Other') reportname
-        from jbx_history_login
+        from history_login
         where  book_id   =   #{bookId}
             and category = 1
             and operate_time >date_add(curdate(), interval - day(curdate()) -31 day)
@@ -104,7 +104,7 @@
         select
             count(id) as reportcount,
             coalesce(province,'Other') as reportname
-        from jbx_history_login
+        from history_login
         where  book_id   =   #{bookId}
           and category = 1
           and operate_time >date_add(curdate(), interval - day(curdate()) -31 day)

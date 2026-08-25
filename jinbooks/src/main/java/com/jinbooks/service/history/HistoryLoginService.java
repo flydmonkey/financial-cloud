@@ -9,9 +9,10 @@ import java.util.Date;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jinbooks.domain.history.HistoryLogin;
 import com.jinbooks.repository.history.HistoryLoginMapper;
-import com.jinbooks.service.history.HistoryLoginService;
 import com.jinbooks.context.WebContext;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -21,31 +22,21 @@ public class HistoryLoginService  extends ServiceImpl<HistoryLoginMapper,History
 
 	private final HistoryLoginMapper historyLoginMapper;
 
+	@Qualifier("historyTaskExecutor")
+	private final TaskExecutor historyTaskExecutor;
+
 	public HistoryLoginMapper getMapper() {
 		return historyLoginMapper;
 	}
+
     public void insertHistory(HistoryLogin historyLogin) {
         historyLogin.setId(WebContext.genId());
-        //Thread insert HistoryLogin
-        new Thread(new HistoryLoginRunnable(this,historyLogin)).start();
-    }
-
-	public class HistoryLoginRunnable implements Runnable{
-
-		HistoryLoginService service;
-
-		HistoryLogin historyLogin;
-
-		public HistoryLoginRunnable(HistoryLoginService historyLoginService, HistoryLogin historyLogin) {
-			super();
-			this.service = historyLoginService;
-			this.historyLogin = historyLogin;
-		}
-	    public void run() {
+        historyTaskExecutor.execute(() -> {
 			log.debug(" historyLogin {}" , historyLogin);
 			historyLogin.setOperateTime(new Date());
-			service.save(historyLogin);
-		}
-	}
+			save(historyLogin);
+		});
+    }
 
 }
+

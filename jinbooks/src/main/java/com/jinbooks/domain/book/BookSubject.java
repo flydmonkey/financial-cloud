@@ -16,7 +16,7 @@ import java.io.Serial;
  * @time: 2025/1/15 18:05
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName("jbx_book_subject")
+@TableName("book_subject")
 @Data
 public class BookSubject extends BaseSubject{
     @Serial

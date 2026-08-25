@@ -7,8 +7,8 @@
 	        i.subject_code as subjectCode,
 	        ${params.countType}(i.debit_amount) AS debitAmount,
 	        ${params.countType}(i.credit_amount) AS creditAmount
-        FROM jbx_voucher_item i
-        JOIN jbx_voucher v
+        FROM voucher_item i
+        JOIN voucher v
         ON i.book_id = v.book_id and i.voucher_id = v.id
         WHERE 	v.book_id = #{params.bookId}
 	        AND i.deleted = 'n'
@@ -37,8 +37,8 @@
     <select id="subLedgerPage" parameterType="com.jinbooks.dto.voucher.VoucherItemPageDto"
             resultType="com.jinbooks.dto.voucher.VoucherItemVo">
         SELECT i.*, v.word
-        FROM jbx_voucher_item i
-        LEFT JOIN jbx_voucher v ON i.voucher_id = v.id
+        FROM voucher_item i
+        LEFT JOIN voucher v ON i.voucher_id = v.id
         WHERE v.book_id = #{params.bookId}
         AND i.deleted = 'n'
         AND v.deleted = 'n'
@@ -87,11 +87,11 @@
         i.debit_amount as debitAmount,
         i.credit_amount as creditAmount,
         v.id as voucherId
-        FROM jbx_voucher_item_cash_flow jvicf
-        RIGHT JOIN jbx_voucher_item i on jvicf.voucher_item_id = i.id
+        FROM voucher_item_cash_flow jvicf
+        RIGHT JOIN voucher_item i on jvicf.voucher_item_id = i.id
         and jvicf.book_id = #{params.bookId}
         and jvicf.cash_flow_item_type = #{params.cashFlowItemType}
-        JOIN jbx_voucher v ON i.voucher_id = v.id
+        JOIN voucher v ON i.voucher_id = v.id
         LEFT JOIN (
         SELECT
         voucher_item_id,
@@ -99,11 +99,11 @@
         CONCAT(auxiliary_name, ':', item_name)
         SEPARATOR '；'
         ) AS auxiliaryLabel
-        FROM jbx_voucher_auxiliary
+        FROM voucher_auxiliary
         WHERE voucher_item_id IN (
         SELECT i.id
-        FROM jbx_voucher_item i
-        JOIN jbx_voucher v ON i.voucher_id = v.id
+        FROM voucher_item i
+        JOIN voucher v ON i.voucher_id = v.id
         WHERE i.deleted = 'n'
         AND v.deleted = 'n'
         AND v.book_id = #{params.bookId}
@@ -112,7 +112,7 @@
         )
         GROUP BY voucher_item_id
         ) aux ON i.id = aux.voucher_item_id
-        join jbx_book_subject jbs on i.subject_id = jbs.id
+        join book_subject jbs on i.subject_id = jbs.id
         and jbs.book_id = #{params.bookId}
         and jbs.deleted = 'n'
         WHERE i.deleted = 'n'
@@ -135,8 +135,8 @@
         <if test="params.cashFlowItemType == 0">
             /* 主表项目：需要检查凭证是否包含现金类科目 */
             AND EXISTS (
-            SELECT 1 FROM jbx_voucher_item cash_items
-            join jbx_book_subject jbs on cash_items.subject_id = jbs.id
+            SELECT 1 FROM voucher_item cash_items
+            join book_subject jbs on cash_items.subject_id = jbs.id
             and jbs.book_id = #{params.bookId}
             and jbs.deleted = 'n'
             WHERE cash_items.voucher_id = v.id
@@ -177,7 +177,7 @@
      		substr(jvi.subject_code,1,4) subject_code,
      		jvi.debit_amount,
      		jvi.credit_amount
-     	FROM jbx_voucher_item jvi,jbx_voucher  jv
+     	FROM voucher_item jvi,voucher  jv
 		 where
 			jvi.book_id = #{bookId}
 		    and jv.book_id=#{bookId}
@@ -202,7 +202,7 @@
 	        	AND str_to_date(#{dateRangeEnd}, '%Y-%m-%d') >= jv.voucher_date
 	        </if>
 		) jvtsum
-		left join jbx_book_subject jbs
+		left join book_subject jbs
 		on jvtsum.subject_code = jbs.code and jbs.book_id=#{bookId}
 		group by subject_code,subject_name
 		order by subject_code  asc

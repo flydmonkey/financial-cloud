@@ -4,8 +4,8 @@
     <select id="pageList" parameterType="com.jinbooks.dto.book.SubjectPageDto"
             resultType="com.jinbooks.domain.standard.StandardSubject">
         select child.*, parent.code as parentCode, parent.name AS parentName
-        from jbx_standard_subject child
-        left join jbx_standard_subject parent
+        from standard_subject child
+        left join standard_subject parent
         on child.parent_id = parent.id
         and parent.deleted = 'n'
         where child.deleted = 'n'

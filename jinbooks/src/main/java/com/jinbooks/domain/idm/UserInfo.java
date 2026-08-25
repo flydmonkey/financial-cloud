@@ -25,14 +25,14 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@TableName("JBX_USERINFO")
+@TableName("userinfo")
 public class UserInfo extends BaseEntity  implements Serializable {
     @Serial
     private static final long serialVersionUID = 6402443942083382236L;
 
     public static final String CLASS_TYPE = "UserInfo";
 
-    public  static final String DEFAULT_PASSWORD_SUFFIX = "MaxKey@888";
+    public  static final String DEFAULT_PASSWORD_SUFFIX = "JinBooks@888";
 
     @TableField(exist = false)
     String sessionId;
@@ -41,8 +41,8 @@ public class UserInfo extends BaseEntity  implements Serializable {
     String id;
 
 
-    @NotEmpty(message = "????????", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 32, message = "???????????32?", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = "用户名不能为空", groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 32, message = "用户名长度不能超过32位", groups = {AddGroup.class, EditGroup.class})
     protected String username;
 
     @NotEmpty(message = "密码不能为空", groups = {AddGroup.class})

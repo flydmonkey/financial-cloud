@@ -9,7 +9,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 辅助核算项目对象 jbx_books_voucher_item
+ * 辅助核算项目对象 voucher_item
  *
  * @author wuyan
  * {@code @date} 2025-02-18

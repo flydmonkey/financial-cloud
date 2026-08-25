@@ -26,11 +26,11 @@
         i.debit_amount as debitAmount,
         i.credit_amount as creditAmount,
         v.id as voucherId
-        FROM jbx_voucher_item_cash_flow jvicf
-        RIGHT JOIN jbx_voucher_item i on jvicf.voucher_item_id = i.id
+        FROM voucher_item_cash_flow jvicf
+        RIGHT JOIN voucher_item i on jvicf.voucher_item_id = i.id
         and jvicf.book_id = #{params.bookId}
         and jvicf.cash_flow_item_type = #{params.cashFlowItemType}
-        JOIN jbx_voucher v ON i.voucher_id = v.id
+        JOIN voucher v ON i.voucher_id = v.id
         LEFT JOIN (
         SELECT
         voucher_item_id,
@@ -38,17 +38,17 @@
         CONCAT(auxiliary_name, ':', item_name)
         SEPARATOR '；'
         ) AS auxiliaryLabel
-        FROM jbx_voucher_auxiliary
+        FROM voucher_auxiliary
         WHERE voucher_item_id IN (
         SELECT i.id
-        FROM jbx_voucher_item i
-        JOIN jbx_voucher v ON i.voucher_id = v.id
+        FROM voucher_item i
+        JOIN voucher v ON i.voucher_id = v.id
         WHERE i.deleted = 'n'
         <include refid="dynamicQueryConditions"/>
         )
         GROUP BY voucher_item_id
         ) aux ON i.id = aux.voucher_item_id
-        join jbx_book_subject jbs on i.subject_id = jbs.id
+        join book_subject jbs on i.subject_id = jbs.id
         and jbs.book_id = #{params.bookId}
         and jbs.deleted = 'n'
         WHERE i.deleted = 'n'
@@ -68,8 +68,8 @@
         <if test="params.cashFlowItemType == 0">
             /* 主表项目：需要检查凭证是否包含现金类科目 */
             AND EXISTS (
-            SELECT 1 FROM jbx_voucher_item cash_items
-            join jbx_book_subject jbs on cash_items.subject_id = jbs.id
+            SELECT 1 FROM voucher_item cash_items
+            join book_subject jbs on cash_items.subject_id = jbs.id
             and jbs.book_id = #{params.bookId}
             and jbs.deleted = 'n'
             WHERE cash_items.voucher_id = v.id
@@ -103,8 +103,8 @@
             parameterType="map"
             resultType="string">
         select jvicf.id
-            from jbx_voucher_item_cash_flow jvicf
-        join jbx_voucher_item jvi
+            from voucher_item_cash_flow jvicf
+        join voucher_item jvi
         on jvi.id = jvicf.voucher_item_id
         and jvi.voucher_id = #{params.voucherId}
         and jvi.deleted = 'n'

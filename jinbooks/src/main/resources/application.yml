@@ -10,9 +10,9 @@ spring:
     allow-bean-definition-overriding: true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DATABASE_HOST:127.0.0.1}:${DATABASE_PORT:3307}/${DATABASE_NAME:jinbooks}?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
-    username: ${DATABASE_USER:jinbooks}
-    password: ${DATABASE_PWD:Jinbooks321!}
+    url: jdbc:mysql://127.0.0.1:3307/jinbooks?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: jinbooks
+    password: Jinbooks321!
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -34,12 +34,19 @@ spring:
     encoding: UTF-8
 
 server:
-  port: ${SERVER_PORT:2154}
+  port: 2154
 
 jinbooks:
   server:
     default:
       uri: /main
+    frontend:
+      uri: http://localhost:5173
+  security:
+    legacy-secret-suffix: l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6
+  session:
+    max-size: 10000
+    default-validity-hours: 8
   job:
     cron:
       schedule: 0 0 0/1 * * ?
@@ -58,8 +65,8 @@ logging:
   level:
     root: INFO
     org.springframework.web: INFO
-    com.baomidou.mybatisplus: DEBUG
-    org.apache.ibatis: DEBUG
+    com.baomidou.mybatisplus: INFO
+    org.apache.ibatis: INFO
 
 management:
   endpoints:

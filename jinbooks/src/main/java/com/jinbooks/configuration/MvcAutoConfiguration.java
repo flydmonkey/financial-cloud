@@ -144,7 +144,7 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
             @Value("${jinbooks.server.domain:jinbooks.top}")
             String domainName) {
         log.debug("DomainName {}" , domainName);
-        CookieLocaleResolver cookieLocaleResolver = new CookieLocaleResolver("mxk_locale");
+        CookieLocaleResolver cookieLocaleResolver = new CookieLocaleResolver("jb_locale");
         cookieLocaleResolver.setCookieDomain(domainName);
         //2 week
         cookieLocaleResolver.setCookieMaxAge(Duration.ofDays(14));

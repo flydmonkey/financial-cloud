@@ -11,7 +11,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 报表统计规则实体对象 jbx_standard_statement_rules
+ * 报表统计规则实体对象 standard_statement_rules
  *
  * @author wuyan
  * {@code @date} 2025-03-19
@@ -19,7 +19,7 @@ import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_standard_statement_rules")
+@TableName("standard_statement_rules")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

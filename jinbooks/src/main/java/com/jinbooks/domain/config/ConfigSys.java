@@ -9,14 +9,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 参数配置表 jbx_config
+ * 参数配置表 config
  *
  * @author Wuyan
  */
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("jbx_config")
+@TableName("config")
 public class ConfigSys extends BaseEntity {
 
     /**

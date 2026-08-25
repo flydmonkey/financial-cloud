@@ -14,7 +14,7 @@ import java.io.Serial;
  */
 
 @EqualsAndHashCode(callSuper = true)
-@TableName("jbx_config_salary_formula")
+@TableName("config_salary_formula")
 @Data
 public class ConfigSalaryFormula extends BaseEntity {
 

@@ -15,7 +15,7 @@ import java.io.Serial;
 
 
 @EqualsAndHashCode(callSuper = true)
-@TableName("jbx_config_personal_tax")
+@TableName("config_personal_tax")
 @Data
 public class ConfigPersonalTax extends BaseEntity {
     @Serial

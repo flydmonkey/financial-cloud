@@ -18,7 +18,7 @@ import java.time.YearMonth;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_book")
+@TableName("book")
 public class Book extends BaseEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 4825104334666554378L;

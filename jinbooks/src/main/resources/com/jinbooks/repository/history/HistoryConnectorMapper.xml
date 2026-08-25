@@ -52,7 +52,7 @@
      <select id="fetchPageResults" parameterType="HistoryConnector" resultType="HistoryConnector">
     	select
 			*
-    	from jbx_history_connector
+    	from history_connector
     	where	book_id   =   #{bookId}
     	<include refid="where_statement"/>
 

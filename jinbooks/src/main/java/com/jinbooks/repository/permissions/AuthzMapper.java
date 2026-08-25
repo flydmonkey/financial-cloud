@@ -18,7 +18,7 @@ public  interface AuthzMapper extends BaseMapper<UserInfo> {
 
 	public List<Roles> queryRolesByMembers(QueryGroupMembersDto dto) ;
 	
-	@Select("select * from  jbx_userinfo where id = #{userId} and deleted = 'n'")
+	@Select("select * from  userinfo where id = #{userId} and deleted = 'n'")
 	public UserInfo findUserById(@Param ("userId") String userId ) ;
 
 }

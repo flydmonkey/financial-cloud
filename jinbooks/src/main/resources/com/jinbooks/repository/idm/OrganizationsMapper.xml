@@ -18,7 +18,7 @@
 		<if test="gradingUserId != null and gradingUserId != ''">
 			and id in(
 				select rg.grading
-				from jbx_group_gradings rg,jbx_groups r,jbx_group_member rm, jbx_userinfo u
+				from group_gradings rg,groups r,group_member rm, userinfo u
 				where r.id=rm.groupid and rm.memberid =u.id
 				and rg.groupid=r.id and rg.type='org' and rg.book_id=#{bookId} and u.id=#{gradingUserId}
 				and r.deleted = 'n' and u.deleted = 'n'
@@ -32,7 +32,7 @@
      <select id="queryOrgs" parameterType="Organizations" resultType="Organizations">
     	select
 			*
-    	from jbx_organizations
+    	from organizations
     	where	book_id   =   #{bookId}
     	<include refid="dao_where_statement"/>
     	order by sort_index,id
@@ -43,7 +43,7 @@
 		   resultType="com.jinbooks.domain.idm.Organizations">
     	select
 			*
-    	from jbx_organizations
+    	from organizations
     	where book_id = #{Dto.bookId}
 	   <if test="Dto.id != null and Dto.id != ''">
 		   and	id = #{Dto.id}

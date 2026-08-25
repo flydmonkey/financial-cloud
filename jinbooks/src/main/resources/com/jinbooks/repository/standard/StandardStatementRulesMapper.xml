@@ -3,7 +3,7 @@
 <mapper namespace="com.jinbooks.repository.standard.StandardStatementRulesMapper">
     <!-- 增加 item_code 的方法 -->
     <update id="incrementItemCode">
-        UPDATE jbx_standard_statement_rules
+        UPDATE standard_statement_rules
         SET item_code = LPAD(CAST(CAST(item_code AS UNSIGNED) + 1 AS CHAR), 4, '0')
         WHERE standard_id = #{standardId}
         AND item_code &gt;= #{itemCode}
@@ -15,7 +15,7 @@
 
     <!-- 减少 item_code 的方法 -->
     <update id="decrementItemCode">
-        UPDATE jbx_standard_statement_rules
+        UPDATE standard_statement_rules
         SET item_code = LPAD(CAST(CAST(item_code AS UNSIGNED) - 1 AS CHAR), 4, '0')
         WHERE standard_id = #{standardId}
         AND item_code &gt;= #{itemCode}

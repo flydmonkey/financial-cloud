@@ -28,7 +28,7 @@
         SUM(CASE WHEN sb.year_period = #{maxPeriod} THEN sb.closing_balance_credit ELSE 0 END) AS
         closing_balance_credit
 
-        FROM jbx_statement_subject_balance sb
+        FROM statement_subject_balance sb
 
         WHERE sb.deleted = 'n'
         AND sb.book_id = #{dto.bookId}

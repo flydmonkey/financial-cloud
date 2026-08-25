@@ -40,7 +40,7 @@
 		<if test="gradingUserId != null and gradingUserId != ''">
 			and userId in(
 				select rg.grading
-				from jbx_group_gradings rg,jbx_groups r,jbx_group_member rm, jbx_userinfo u
+				from group_gradings rg,groups r,group_member rm, userinfo u
 				where r.id=rm.groupid and rm.memberid =u.id
 				and rg.groupid=r.id and rg.type='org' and rg.book_id=#{bookId} and u.id=#{gradingUserId}
 				and r.deleted = 'n' and u.deleted = 'n'
@@ -72,7 +72,7 @@
 			operatetime,
 			style,
 			book_id
-    	from jbx_session_list
+    	from session_list
     	where	book_id   =   #{bookId}
     	<include refid="dao_where_statement"/>
 

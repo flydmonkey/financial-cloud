@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @NoArgsConstructor
-@TableName("JBX_FILE_STORAGE")
+@TableName("file_storage")
 public class FileStorage {
 
     @TableId(type = IdType.ASSIGN_ID)

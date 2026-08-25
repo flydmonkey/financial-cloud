@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * 初期余额表 jbx_book_init_balance
+ * 初期余额表 book_init_balance
  *
  * @author Wuyan
  * {@code @date} 2025-03-11
@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("jbx_book_init_balance")
+@TableName("book_init_balance")
 public class BookInitBalance extends BaseEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

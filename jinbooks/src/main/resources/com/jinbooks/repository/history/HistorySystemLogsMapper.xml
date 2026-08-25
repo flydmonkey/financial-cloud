@@ -32,7 +32,7 @@
 
      <select id="fetchPageResults" parameterType="HistorySystemLogs" resultType="HistorySystemLogs">
     	select *
-    	from jbx_history_system_logs
+    	from history_system_logs
     	where	book_id   =   #{bookId}
     	<include refid="where_statement"/>
 

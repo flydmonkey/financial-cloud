@@ -16,6 +16,7 @@ import com.jinbooks.authn.session.SessionManager;
 import com.jinbooks.authn.support.AuthorizationUtils;
 import com.jinbooks.common.Message;
 import com.jinbooks.domain.idm.UserInfo;
+import com.jinbooks.service.permissions.SessionListService;
 import com.jinbooks.util.AuthorizationHeaderUtils;
 
 /**
@@ -27,6 +28,8 @@ import com.jinbooks.util.AuthorizationHeaderUtils;
 public class LogoutController {
 
 	private final SessionManager sessionManager;
+
+	private final SessionListService sessionListService;
 
 	@GetMapping(value = { "/api/logout" }, produces = { MediaType.APPLICATION_JSON_VALUE })
 	public Message<String> logout(
@@ -40,6 +43,7 @@ public class LogoutController {
 		}
 		if (StringUtils.isNotBlank(sessionId)) {
 			sessionManager.remove(sessionId);
+			sessionListService.removeById(sessionId);
 		}
 		AuthorizationUtils.clearAuthentication(request);
 		return new Message<>();

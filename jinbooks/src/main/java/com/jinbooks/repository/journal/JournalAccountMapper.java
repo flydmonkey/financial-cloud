@@ -22,7 +22,7 @@ public interface JournalAccountMapper extends BaseMapper<JournalAccount> {
      * @param income
      * @return
      */
-    @Update("update jbx_journal_account set balance = balance + #{income} where id = #{accId}")
+    @Update("update journal_account set balance = balance + #{income} where id = #{accId}")
     public int income(@Param ("accId") String accId,@Param ("income") BigDecimal income);
     
     /**
@@ -31,7 +31,7 @@ public interface JournalAccountMapper extends BaseMapper<JournalAccount> {
      * @param expenditure
      * @return
      */
-    @Update("update jbx_journal_account set balance = balance - #{expenditure} where id = #{accId}")
+    @Update("update journal_account set balance = balance - #{expenditure} where id = #{accId}")
     public int expenditure(@Param ("accId") String accId,@Param ("expenditure") BigDecimal expenditure);
     
     /**
@@ -39,7 +39,7 @@ public interface JournalAccountMapper extends BaseMapper<JournalAccount> {
      * @param bookId
      * @return
      */
-    @Update("update jbx_journal_account set opening_balance = balance where book_id = #{bookId}")
+    @Update("update journal_account set opening_balance = balance where book_id = #{bookId}")
     public int checkout(@Param ("bookId") String bookId);
     
 

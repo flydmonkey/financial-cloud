@@ -139,7 +139,7 @@ function uploadImg(): any {
     let formData: any = new FormData();
     formData.append("uploadFile", data);
     uploadImage(formData).then((response: any) =>  {
-      if (response.code === 200) {
+      if (response.code === 0) {
         open.value = false;
         options.img = import.meta.env.VITE_APP_BASE_API + response.data;
         userStore.avatar = options.img;

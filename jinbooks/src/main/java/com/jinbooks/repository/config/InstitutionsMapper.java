@@ -10,6 +10,6 @@ import com.jinbooks.domain.config.Institutions;
 @Mapper
 public interface InstitutionsMapper extends BaseMapper<Institutions> {
 
-	@Select("select * from  jbx_institutions where deleted = 'n' and id = #{value} or domain = #{value}  or console_domain = #{value}" )
+	@Select("select * from  institutions where deleted = 'n' and id = #{value} or domain = #{value}  or console_domain = #{value}" )
 	public Institutions getByInstIdOrDomain(String instIdOrDomain);
 }

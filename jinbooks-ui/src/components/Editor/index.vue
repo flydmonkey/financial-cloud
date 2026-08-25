@@ -152,7 +152,7 @@ function handleBeforeUpload(file: any): any {
 // 上传成功处理
 function handleUploadSuccess(res: any, file: any): any {
   // 如果上传成功
-  if (res.code == 200) {
+  if (res.code == 0) {
     // 获取富文本实例
     let quill: any = toRaw(quillEditorRef.value).getQuill();
     // 获取光标位置

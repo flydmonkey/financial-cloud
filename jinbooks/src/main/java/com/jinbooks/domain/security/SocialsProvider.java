@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @EqualsAndHashCode(callSuper=false)
 @NoArgsConstructor
-@TableName("JBX_SOCIALS_PROVIDER")
+@TableName("socials_provider")
 public class SocialsProvider extends BaseEntity implements Serializable {
     static final long serialVersionUID = 1636727203025187769L;
 

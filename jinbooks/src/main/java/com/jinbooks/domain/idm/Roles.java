@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
-@TableName( "JBX_ROLES")
+@TableName( "roles")
 public class Roles extends BaseEntity implements Serializable {
 
     @Serial

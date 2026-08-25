@@ -15,7 +15,7 @@ import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("jbx_settlement_carryforward")
+@TableName("settlement_carryforward")
 public class SettlementCarryforward extends BaseEntity implements Serializable {
 
 	/**

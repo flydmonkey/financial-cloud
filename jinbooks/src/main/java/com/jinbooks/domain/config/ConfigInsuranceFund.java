@@ -12,7 +12,7 @@ import java.math.RoundingMode;
  * @time: 2025/2/12 10:53
  */
 
-@TableName("jbx_config_insurance_fund")
+@TableName("config_insurance_fund")
 @Data
 public class ConfigInsuranceFund {
 

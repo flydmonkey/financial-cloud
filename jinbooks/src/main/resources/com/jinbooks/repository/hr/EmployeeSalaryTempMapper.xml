@@ -5,8 +5,8 @@
             resultType="com.jinbooks.domain.hr.EmployeeSalaryTemp">
         select jest.*, je.display_name as employeeName, je.bank_card_no as bankCardNo,je.bank_name,
                je.employee_number as employeeNumber,je.employee_type
-        from jbx_employee_salary_temp jest
-        inner join jbx_employee je on jest.employee_id = je.id
+        from employee_salary_temp jest
+        inner join employee je on jest.employee_id = je.id
         and je.deleted = 'n'
         and je.book_id = #{Dto.bookId}
         <if test="Dto.employeeName != null and Dto.employeeName != '' ">
@@ -24,8 +24,8 @@
     <select id="listCurrentMonth" parameterType="com.jinbooks.dto.hr.SalaryDetailPageDto"
             resultType="com.jinbooks.domain.hr.EmployeeSalaryTemp">
         select jest.*
-        from jbx_employee_salary_temp jest
-        inner join jbx_employee je on jest.employee_id = je.id
+        from employee_salary_temp jest
+        inner join employee je on jest.employee_id = je.id
         and je.deleted = 'n'
         and je.book_id = #{Dto.bookId}
         where jest.deleted = 'n'
@@ -34,7 +34,7 @@
     </select>
 
     <delete id="removeCurrentMonth" parameterType="com.jinbooks.dto.hr.ListNoCalCurrentDto">
-        delete from jbx_employee_salary_temp
+        delete from employee_salary_temp
         where book_id = #{Dto.bookId}
         and belong_date = #{Dto.belongDate}
     </delete>

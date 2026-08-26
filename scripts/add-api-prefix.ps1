@@ -36,8 +36,8 @@ function Add-ApiPrefixToMethodMappings([string]$content) {
     return $content
 }
 
-$controllerRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks\controller"
-$endpointRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks\authn\endpoint"
+$controllerRoot = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks\controller"
+$endpointRoot = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks\authn\endpoint"
 $changed = 0
 
 Get-ChildItem -Path $controllerRoot, $endpointRoot -Recurse -Filter *.java | ForEach-Object {

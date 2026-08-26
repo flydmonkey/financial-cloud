@@ -11,6 +11,7 @@ import pymysql
 
 ROOT = Path(__file__).resolve().parents[1]
 SQL_DIR = ROOT / "sql"
+APP_DIR = ROOT / "financial-cloud"
 SCRIPTS = [
     "jinbooks_v1.1.0-rename-tables.sql",
     "jinbooks_v1.1.0-migrate-plain-passwords.sql",
@@ -19,7 +20,7 @@ SCRIPTS = [
 
 
 def load_defaults_from_application_yml() -> dict[str, str | int]:
-    yml = ROOT / "jinbooks" / "src" / "main" / "resources" / "application.yml"
+    yml = ROOT / "financial-cloud" / "src" / "main" / "resources" / "application.yml"
     text = yml.read_text(encoding="utf-8")
     url = re.search(r"url:\s*jdbc:mysql://([^:/]+):(\d+)/([^?]+)", text)
     user = re.search(r"username:\s*(\S+)", text)

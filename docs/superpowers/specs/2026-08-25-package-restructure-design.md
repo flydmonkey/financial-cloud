@@ -8,7 +8,7 @@
 
 ## 1. 背景与目标
 
-当前 `com.jinbooks` 包职责混杂：
+当前 `com.financial.cloud` 包职责混杂：
 
 - `entity.*` 同时承载表实体、DTO、VO
 - `web.*.controller` 与 `*Endpoint` 分散
@@ -37,7 +37,7 @@
 ## 2. 目标包结构
 
 ```
-com.jinbooks
+com.financial.cloud
 ├── common/                          # 横切内核（原 entity 根下共享类）
 │   ├── BaseEntity.java
 │   ├── BaseSubject.java
@@ -111,29 +111,29 @@ XML 内 `namespace` 必须改为新 Mapper 全限定名。
 **`MybatisPlusConfiguration.java`：**
 
 ```java
-@MapperScan(basePackages = "com.jinbooks.repository")
+@MapperScan(basePackages = "com.financial.cloud.repository")
 ```
 
-（分波期间可临时双扫：`com.jinbooks.persistence.mapper` + `com.jinbooks.repository`，收尾后只保留后者。）
+（分波期间可临时双扫：`com.financial.cloud.persistence.mapper` + `com.financial.cloud.repository`，收尾后只保留后者。）
 
 **`application-jinbooks.properties`：**
 
 ```properties
 # 收尾后示例（按域列举或使用通配）
-mybatis-plus.type-aliases-package=com.jinbooks.domain.voucher,com.jinbooks.domain.book,...
+mybatis-plus.type-aliases-package=com.financial.cloud.domain.voucher,com.financial.cloud.domain.book,...
 # 或简化为（若 MP 支持通配扫描实体包）
-mybatis-plus.mapper-locations=classpath*:com/jinbooks/repository/**/xml/${mybatis-plus.dialect}/*.xml
+mybatis-plus.mapper-locations=classpath*:com/financial/cloud/repository/**/xml/${mybatis-plus.dialect}/*.xml
 ```
 
 删除不存在的 `entity.apps`、`entity.openapi`、`entity.sync` 别名配置。
 
 ### 4.2 组件扫描
 
-`@SpringBootApplication` 在 `com.jinbooks` 下，**无需改 scan**；新包均在子包内。
+`@SpringBootApplication` 在 `com.financial.cloud` 下，**无需改 scan**；新包均在子包内。
 
 ### 4.3 不动部分
 
-- `web.filter`、`GlobalExceptionHandler`、`WebContext` 暂留 `com.jinbooks.web`（非 Controller）
+- `web.filter`、`GlobalExceptionHandler`、`WebContext` 暂留 `com.financial.cloud.web`（非 Controller）
 - `authn.*` 会话/JWT 基础设施本波不迁（仅 `auth` 控制器迁入 `controller.auth`）
 - `autoconfigure`、`configuration` 保持
 
@@ -159,7 +159,7 @@ mybatis-plus.mapper-locations=classpath*:com/jinbooks/repository/**/xml/${mybati
 
 1. **优先 IDE Refactor → Move**，保证 import 与 XML namespace 一致  
 2. 每波结束：`.\mvnw.cmd -DskipTests compile`（收尾 `package`）  
-3. grep 残留：`com.jinbooks.entity.`、`persistence.mapper`、`web\.book\.controller` 等应为 0（未迁域除外）  
+3. grep 残留：`com.financial.cloud.entity.`、`persistence.mapper`、`web\.book\.controller` 等应为 0（未迁域除外）  
 4. 不改 `@RequestMapping` 值；仅改 Java 包与类引用  
 5. `*Endpoint` 重命名为 `*Controller` 时更新 Spring 白名单注释（若有）
 
@@ -179,9 +179,9 @@ mybatis-plus.mapper-locations=classpath*:com/jinbooks/repository/**/xml/${mybati
 
 ## 8. 验收标准（全部完成后）
 
-- [ ] 无 `com.jinbooks.entity.{book,voucher,...}` 业务包（仅 `common` 或已删除 `entity`）
-- [ ] 无 `com.jinbooks.persistence.mapper` / `persistence.service`
-- [ ] 无 `com.jinbooks.web.{book,voucher,...}.controller`
+- [ ] 无 `com.financial.cloud.entity.{book,voucher,...}` 业务包（仅 `common` 或已删除 `entity`）
+- [ ] 无 `com.financial.cloud.persistence.mapper` / `persistence.service`
+- [ ] 无 `com.financial.cloud.web.{book,voucher,...}.controller`
 - [ ] 所有 REST 类在 `controller.{功能}` 下，后缀 `Controller`
 - [ ] 所有 `@TableName` 类在 `domain.{功能}` 下
 - [ ] 所有 DTO/Vo 在 `dto.{功能}` 下（无独立 `vo` 包）

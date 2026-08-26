@@ -1,0 +1,78 @@
+application:
+  title: 财务云
+  formatted-version: v1.1.0 GA
+
+spring:
+  application:
+    name: financial-cloud
+  main:
+    banner-mode: off
+    allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3307/jinbooks?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: jinbooks
+    password: Jinbooks321!
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  mvc:
+    date-format: yyyy-MM-dd HH:mm:ss
+    static-path-pattern: /static/**
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 4194304
+  messages:
+    basename: classpath:messages/messages
+    encoding: UTF-8
+
+server:
+  port: 2154
+
+financial-cloud:
+  server:
+    default:
+      uri: /main
+    frontend:
+      uri: http://localhost:5173
+  security:
+    legacy-secret-suffix: l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6
+  session:
+    max-size: 10000
+    default-validity-hours: 8
+  job:
+    cron:
+      schedule: 0 0 0/1 * * ?
+      enable: true
+
+mybatis-plus:
+  type-aliases-package: com.financial.cloud.domain.voucher,com.financial.cloud.domain.book,com.financial.cloud.domain.journal,com.financial.cloud.domain.statement,com.financial.cloud.domain.idm,com.financial.cloud.domain.permissions,com.financial.cloud.domain.security,com.financial.cloud.domain.config,com.financial.cloud.domain.hr,com.financial.cloud.domain.standard,com.financial.cloud.domain.history,com.financial.cloud.domain.auth,com.financial.cloud.common,com.financial.cloud.dto
+  mapper-locations: classpath*:com/financial/cloud/repository/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+logging:
+  file:
+    name: logs/financial-cloud.log
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    com.baomidou.mybatisplus: INFO
+    org.apache.ibatis: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    mail:
+      enabled: false

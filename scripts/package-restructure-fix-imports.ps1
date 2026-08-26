@@ -1,6 +1,6 @@
 # Fix imports after wave 0+1 package restructure
 $ErrorActionPreference = "Stop"
-$srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java"
+$srcRoot = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java"
 
 function Add-ImportIfMissing($file, $importLine) {
     $c = [System.IO.File]::ReadAllText($file)
@@ -16,7 +16,7 @@ function Add-ImportIfMissing($file, $importLine) {
 Get-ChildItem -Path $srcRoot -Recurse -Filter *.java | ForEach-Object {
     $c = [System.IO.File]::ReadAllText($_.FullName)
     if ($c -match 'extends BaseEntity' -and $c -notmatch 'import com\.jinbooks\.common\.BaseEntity') {
-        Add-ImportIfMissing $_.FullName 'import com.jinbooks.common.BaseEntity;'
+        Add-ImportIfMissing $_.FullName 'import com.financial.cloud.common.BaseEntity;'
     }
 }
 
@@ -24,7 +24,7 @@ Get-ChildItem -Path $srcRoot -Recurse -Filter *.java | ForEach-Object {
 Get-ChildItem -Path $srcRoot -Recurse -Filter *.java | ForEach-Object {
     $c = [System.IO.File]::ReadAllText($_.FullName)
     if ($c -match 'extends PageQuery' -and $c -notmatch 'import com\.jinbooks\.common\.PageQuery') {
-        Add-ImportIfMissing $_.FullName 'import com.jinbooks.common.PageQuery;'
+        Add-ImportIfMissing $_.FullName 'import com.financial.cloud.common.PageQuery;'
     }
 }
 
@@ -40,7 +40,7 @@ foreach ($f in $starEntityFiles) {
     $c = [System.IO.File]::ReadAllText($f)
     $c = $c -replace 'import com\.jinbooks\.entity\.\*;\r?\n', ''
     if ($c -notmatch 'import com\.jinbooks\.common\.Message') {
-        $c = $c -replace '(?m)^(package .+;\r?\n)\r?\n', "`$1`r`nimport com.jinbooks.common.Message;`r`n"
+        $c = $c -replace '(?m)^(package .+;\r?\n)\r?\n', "`$1`r`nimport com.financial.cloud.common.Message;`r`n"
     }
     [System.IO.File]::WriteAllText($f, $c)
     Write-Host "Fixed star entity import: $(Split-Path $f -Leaf)"
@@ -48,9 +48,9 @@ foreach ($f in $starEntityFiles) {
 
 # 4. Global string replacements for cross-domain voucher references
 $replacements = [ordered]@{
-    'import com.jinbooks.persistence.mapper.Voucher' = 'import com.jinbooks.repository.voucher.Voucher'
-    'import com.jinbooks.persistence.service.Voucher' = 'import com.jinbooks.service.voucher.Voucher'
-    'import com.jinbooks.persistence.service.impl.Voucher' = 'import com.jinbooks.service.voucher.impl.Voucher'
+    'import com.financial.cloud.persistence.mapper.Voucher' = 'import com.financial.cloud.repository.voucher.Voucher'
+    'import com.financial.cloud.persistence.service.Voucher' = 'import com.financial.cloud.service.voucher.Voucher'
+    'import com.financial.cloud.persistence.service.impl.Voucher' = 'import com.financial.cloud.service.voucher.impl.Voucher'
 }
 
 Get-ChildItem -Path $srcRoot -Recurse -Filter *.java | ForEach-Object {
@@ -70,13 +70,13 @@ if (Test-Path $voucherImplDir) {
         if ($c -match 'import com\.jinbooks\.persistence\.mapper\.\*;') {
             $c = $c -replace 'import com\.jinbooks\.persistence\.mapper\.\*;\r?\n', ''
             $mapperImports = @(
-                'import com.jinbooks.repository.voucher.VoucherMapper;',
-                'import com.jinbooks.repository.voucher.VoucherItemMapper;',
-                'import com.jinbooks.repository.voucher.VoucherWordMapper;',
-                'import com.jinbooks.repository.voucher.VoucherItemAuxiliaryMapper;',
-                'import com.jinbooks.repository.voucher.VoucherItemCashFlowMapper;',
-                'import com.jinbooks.repository.voucher.VoucherTemplateMapper;',
-                'import com.jinbooks.repository.voucher.VoucherTemplateItemMapper;'
+                'import com.financial.cloud.repository.voucher.VoucherMapper;',
+                'import com.financial.cloud.repository.voucher.VoucherItemMapper;',
+                'import com.financial.cloud.repository.voucher.VoucherWordMapper;',
+                'import com.financial.cloud.repository.voucher.VoucherItemAuxiliaryMapper;',
+                'import com.financial.cloud.repository.voucher.VoucherItemCashFlowMapper;',
+                'import com.financial.cloud.repository.voucher.VoucherTemplateMapper;',
+                'import com.financial.cloud.repository.voucher.VoucherTemplateItemMapper;'
             )
             $needed = $mapperImports | Where-Object {
                 $name = $_ -replace '.*\.(\w+);', '$1'
@@ -90,7 +90,7 @@ if (Test-Path $voucherImplDir) {
             $otherMappers = @('UserInfoMapper','BookMapper','StandardSubjectCashFlowMapper','EmployeeSalarySummaryMapper')
             foreach ($m in $otherMappers) {
                 if ($c -match "\b$m\b" -and $c -notmatch "import com\.jinbooks\.persistence\.mapper\.$m") {
-                    Add-ImportIfMissing $_.FullName "import com.jinbooks.persistence.mapper.$m;"
+                    Add-ImportIfMissing $_.FullName "import com.financial.cloud.persistence.mapper.$m;"
                     $c = [System.IO.File]::ReadAllText($_.FullName)
                 }
             }
@@ -114,16 +114,16 @@ $crossDomainFiles = @(
     "$srcRoot\com\jinbooks\persistence\service\SettlementCarryService.java"
 )
 $crossImports = @{
-    'VoucherService' = 'import com.jinbooks.service.voucher.VoucherService;'
-    'VoucherTemplateService' = 'import com.jinbooks.service.voucher.VoucherTemplateService;'
-    'VoucherTemplateItemService' = 'import com.jinbooks.service.voucher.VoucherTemplateItemService;'
-    'VoucherItemCashFlowService' = 'import com.jinbooks.service.voucher.VoucherItemCashFlowService;'
-    'VoucherMapper' = 'import com.jinbooks.repository.voucher.VoucherMapper;'
-    'VoucherItemMapper' = 'import com.jinbooks.repository.voucher.VoucherItemMapper;'
-    'VoucherTemplateMapper' = 'import com.jinbooks.repository.voucher.VoucherTemplateMapper;'
-    'VoucherTemplateItemMapper' = 'import com.jinbooks.repository.voucher.VoucherTemplateItemMapper;'
-    'VoucherWordMapper' = 'import com.jinbooks.repository.voucher.VoucherWordMapper;'
-    'VoucherItemCashFlowMapper' = 'import com.jinbooks.repository.voucher.VoucherItemCashFlowMapper;'
+    'VoucherService' = 'import com.financial.cloud.service.voucher.VoucherService;'
+    'VoucherTemplateService' = 'import com.financial.cloud.service.voucher.VoucherTemplateService;'
+    'VoucherTemplateItemService' = 'import com.financial.cloud.service.voucher.VoucherTemplateItemService;'
+    'VoucherItemCashFlowService' = 'import com.financial.cloud.service.voucher.VoucherItemCashFlowService;'
+    'VoucherMapper' = 'import com.financial.cloud.repository.voucher.VoucherMapper;'
+    'VoucherItemMapper' = 'import com.financial.cloud.repository.voucher.VoucherItemMapper;'
+    'VoucherTemplateMapper' = 'import com.financial.cloud.repository.voucher.VoucherTemplateMapper;'
+    'VoucherTemplateItemMapper' = 'import com.financial.cloud.repository.voucher.VoucherTemplateItemMapper;'
+    'VoucherWordMapper' = 'import com.financial.cloud.repository.voucher.VoucherWordMapper;'
+    'VoucherItemCashFlowMapper' = 'import com.financial.cloud.repository.voucher.VoucherItemCashFlowMapper;'
 }
 foreach ($f in $crossDomainFiles) {
     if (-not (Test-Path $f)) { continue }

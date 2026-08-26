@@ -1,7 +1,7 @@
 # Wave 3: journal + statement full stack migration
 $ErrorActionPreference = "Stop"
-$base = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks"
-$resBase = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\resources"
+$base = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks"
+$resBase = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\resources"
 $srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src"
 
 function Ensure-Dir($p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
@@ -39,31 +39,31 @@ function Migrate-Domain($domain, $entityDirs, $controllers, $mappers, $services,
     foreach ($dir in $entityDirs) {
         Get-ChildItem "$base\entity\$dir\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
             Move-File $_.FullName "$base\domain\$domain\$($_.Name)"
-            Set-Package "$base\domain\$domain\$($_.Name)" "com.jinbooks.domain.$domain"
+            Set-Package "$base\domain\$domain\$($_.Name)" "com.financial.cloud.domain.$domain"
         }
         Get-ChildItem "$base\entity\$dir\dto\*.java","$base\entity\$dir\vo\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
             Move-File $_.FullName "$base\dto\$domain\$($_.Name)"
-            Set-Package "$base\dto\$domain\$($_.Name)" "com.jinbooks.dto.$domain"
+            Set-Package "$base\dto\$domain\$($_.Name)" "com.financial.cloud.dto.$domain"
         }
     }
 
     foreach ($c in $controllers) {
         Move-File "$base\web\$domain\controller\$c" "$base\controller\$domain\$c"
-        Set-Package "$base\controller\$domain\$c" "com.jinbooks.controller.$domain"
+        Set-Package "$base\controller\$domain\$c" "com.financial.cloud.controller.$domain"
     }
 
     foreach ($m in $mappers) {
         Move-File "$base\persistence\mapper\$m" "$base\repository\$domain\$m"
-        Set-Package "$base\repository\$domain\$m" "com.jinbooks.repository.$domain"
+        Set-Package "$base\repository\$domain\$m" "com.financial.cloud.repository.$domain"
     }
 
     foreach ($s in $services) {
         Move-File "$base\persistence\service\$s" "$base\service\$domain\$s"
-        Set-Package "$base\service\$domain\$s" "com.jinbooks.service.$domain"
+        Set-Package "$base\service\$domain\$s" "com.financial.cloud.service.$domain"
     }
     foreach ($i in $impls) {
         Move-File "$base\persistence\service\impl\$i" "$base\service\$domain\impl\$i"
-        Set-Package "$base\service\$domain\impl\$i" "com.jinbooks.service.$domain.impl"
+        Set-Package "$base\service\$domain\impl\$i" "com.financial.cloud.service.$domain.impl"
     }
 
     $xmlDst = "$resBase\com\jinbooks\repository\$domain\xml\mysql"
@@ -73,7 +73,7 @@ function Migrate-Domain($domain, $entityDirs, $controllers, $mappers, $services,
         if (Test-Path $src) {
             Move-File $src "$xmlDst\$x"
             $c = [System.IO.File]::ReadAllText("$xmlDst\$x")
-            $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', "com.jinbooks.repository.$domain."
+            $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', "com.financial.cloud.repository.$domain."
             [System.IO.File]::WriteAllText("$xmlDst\$x", $c)
         }
     }
@@ -115,47 +115,47 @@ Migrate-Domain -domain "statement" `
 
 # --- global replacements (specific first) ---
 $replacements = [ordered]@{
-    'com.jinbooks.entity.journal.dto.' = 'com.jinbooks.dto.journal.'
-    'com.jinbooks.entity.journal.vo.'  = 'com.jinbooks.dto.journal.'
-    'com.jinbooks.entity.journal.'     = 'com.jinbooks.domain.journal.'
-    'com.jinbooks.entity.statement.dto.' = 'com.jinbooks.dto.statement.'
-    'com.jinbooks.entity.statement.vo.'  = 'com.jinbooks.dto.statement.'
-    'com.jinbooks.entity.statement.'     = 'com.jinbooks.domain.statement.'
-    'com.jinbooks.web.journal.controller.' = 'com.jinbooks.controller.journal.'
-    'com.jinbooks.web.statement.controller.' = 'com.jinbooks.controller.statement.'
+    'com.financial.cloud.entity.journal.dto.' = 'com.financial.cloud.dto.journal.'
+    'com.financial.cloud.entity.journal.vo.'  = 'com.financial.cloud.dto.journal.'
+    'com.financial.cloud.entity.journal.'     = 'com.financial.cloud.domain.journal.'
+    'com.financial.cloud.entity.statement.dto.' = 'com.financial.cloud.dto.statement.'
+    'com.financial.cloud.entity.statement.vo.'  = 'com.financial.cloud.dto.statement.'
+    'com.financial.cloud.entity.statement.'     = 'com.financial.cloud.domain.statement.'
+    'com.financial.cloud.web.journal.controller.' = 'com.financial.cloud.controller.journal.'
+    'com.financial.cloud.web.statement.controller.' = 'com.financial.cloud.controller.statement.'
 
-    'com.jinbooks.persistence.mapper.JournalAccount' = 'com.jinbooks.repository.journal.JournalAccount'
-    'com.jinbooks.persistence.mapper.JournalEntry' = 'com.jinbooks.repository.journal.JournalEntry'
-    'com.jinbooks.persistence.mapper.JournalSummary' = 'com.jinbooks.repository.journal.JournalSummary'
-    'com.jinbooks.persistence.mapper.StatementBalanceSheetItem' = 'com.jinbooks.repository.statement.StatementBalanceSheetItem'
-    'com.jinbooks.persistence.mapper.StatementBalanceSheet' = 'com.jinbooks.repository.statement.StatementBalanceSheet'
-    'com.jinbooks.persistence.mapper.StatementCashFlow' = 'com.jinbooks.repository.statement.StatementCashFlow'
-    'com.jinbooks.persistence.mapper.StatementIncomeItem' = 'com.jinbooks.repository.statement.StatementIncomeItem'
-    'com.jinbooks.persistence.mapper.StatementIncome' = 'com.jinbooks.repository.statement.StatementIncome'
-    'com.jinbooks.persistence.mapper.StatementRules' = 'com.jinbooks.repository.statement.StatementRules'
-    'com.jinbooks.persistence.mapper.StatementSubjectBalance' = 'com.jinbooks.repository.statement.StatementSubjectBalance'
+    'com.financial.cloud.persistence.mapper.JournalAccount' = 'com.financial.cloud.repository.journal.JournalAccount'
+    'com.financial.cloud.persistence.mapper.JournalEntry' = 'com.financial.cloud.repository.journal.JournalEntry'
+    'com.financial.cloud.persistence.mapper.JournalSummary' = 'com.financial.cloud.repository.journal.JournalSummary'
+    'com.financial.cloud.persistence.mapper.StatementBalanceSheetItem' = 'com.financial.cloud.repository.statement.StatementBalanceSheetItem'
+    'com.financial.cloud.persistence.mapper.StatementBalanceSheet' = 'com.financial.cloud.repository.statement.StatementBalanceSheet'
+    'com.financial.cloud.persistence.mapper.StatementCashFlow' = 'com.financial.cloud.repository.statement.StatementCashFlow'
+    'com.financial.cloud.persistence.mapper.StatementIncomeItem' = 'com.financial.cloud.repository.statement.StatementIncomeItem'
+    'com.financial.cloud.persistence.mapper.StatementIncome' = 'com.financial.cloud.repository.statement.StatementIncome'
+    'com.financial.cloud.persistence.mapper.StatementRules' = 'com.financial.cloud.repository.statement.StatementRules'
+    'com.financial.cloud.persistence.mapper.StatementSubjectBalance' = 'com.financial.cloud.repository.statement.StatementSubjectBalance'
 
-    'com.jinbooks.persistence.service.impl.JournalAccount' = 'com.jinbooks.service.journal.impl.JournalAccount'
-    'com.jinbooks.persistence.service.impl.JournalEntry' = 'com.jinbooks.service.journal.impl.JournalEntry'
-    'com.jinbooks.persistence.service.impl.JournalSummary' = 'com.jinbooks.service.journal.impl.JournalSummary'
-    'com.jinbooks.persistence.service.impl.StatementBalanceSheetConfig' = 'com.jinbooks.service.statement.impl.StatementBalanceSheetConfig'
-    'com.jinbooks.persistence.service.impl.StatementBalanceSheet' = 'com.jinbooks.service.statement.impl.StatementBalanceSheet'
-    'com.jinbooks.persistence.service.impl.StatementCashFlow' = 'com.jinbooks.service.statement.impl.StatementCashFlow'
-    'com.jinbooks.persistence.service.impl.StatementIncomeConfig' = 'com.jinbooks.service.statement.impl.StatementIncomeConfig'
-    'com.jinbooks.persistence.service.impl.StatementIncome' = 'com.jinbooks.service.statement.impl.StatementIncome'
-    'com.jinbooks.persistence.service.impl.StatementReport' = 'com.jinbooks.service.statement.impl.StatementReport'
-    'com.jinbooks.persistence.service.impl.StatementSubjectBalance' = 'com.jinbooks.service.statement.impl.StatementSubjectBalance'
+    'com.financial.cloud.persistence.service.impl.JournalAccount' = 'com.financial.cloud.service.journal.impl.JournalAccount'
+    'com.financial.cloud.persistence.service.impl.JournalEntry' = 'com.financial.cloud.service.journal.impl.JournalEntry'
+    'com.financial.cloud.persistence.service.impl.JournalSummary' = 'com.financial.cloud.service.journal.impl.JournalSummary'
+    'com.financial.cloud.persistence.service.impl.StatementBalanceSheetConfig' = 'com.financial.cloud.service.statement.impl.StatementBalanceSheetConfig'
+    'com.financial.cloud.persistence.service.impl.StatementBalanceSheet' = 'com.financial.cloud.service.statement.impl.StatementBalanceSheet'
+    'com.financial.cloud.persistence.service.impl.StatementCashFlow' = 'com.financial.cloud.service.statement.impl.StatementCashFlow'
+    'com.financial.cloud.persistence.service.impl.StatementIncomeConfig' = 'com.financial.cloud.service.statement.impl.StatementIncomeConfig'
+    'com.financial.cloud.persistence.service.impl.StatementIncome' = 'com.financial.cloud.service.statement.impl.StatementIncome'
+    'com.financial.cloud.persistence.service.impl.StatementReport' = 'com.financial.cloud.service.statement.impl.StatementReport'
+    'com.financial.cloud.persistence.service.impl.StatementSubjectBalance' = 'com.financial.cloud.service.statement.impl.StatementSubjectBalance'
 
-    'com.jinbooks.persistence.service.JournalAccount' = 'com.jinbooks.service.journal.JournalAccount'
-    'com.jinbooks.persistence.service.JournalEntry' = 'com.jinbooks.service.journal.JournalEntry'
-    'com.jinbooks.persistence.service.JournalSummary' = 'com.jinbooks.service.journal.JournalSummary'
-    'com.jinbooks.persistence.service.StatementBalanceSheetConfig' = 'com.jinbooks.service.statement.StatementBalanceSheetConfig'
-    'com.jinbooks.persistence.service.StatementBalanceSheet' = 'com.jinbooks.service.statement.StatementBalanceSheet'
-    'com.jinbooks.persistence.service.StatementCashFlow' = 'com.jinbooks.service.statement.StatementCashFlow'
-    'com.jinbooks.persistence.service.StatementIncomeConfig' = 'com.jinbooks.service.statement.StatementIncomeConfig'
-    'com.jinbooks.persistence.service.StatementIncome' = 'com.jinbooks.service.statement.StatementIncome'
-    'com.jinbooks.persistence.service.StatementReport' = 'com.jinbooks.service.statement.StatementReport'
-    'com.jinbooks.persistence.service.StatementSubjectBalance' = 'com.jinbooks.service.statement.StatementSubjectBalance'
+    'com.financial.cloud.persistence.service.JournalAccount' = 'com.financial.cloud.service.journal.JournalAccount'
+    'com.financial.cloud.persistence.service.JournalEntry' = 'com.financial.cloud.service.journal.JournalEntry'
+    'com.financial.cloud.persistence.service.JournalSummary' = 'com.financial.cloud.service.journal.JournalSummary'
+    'com.financial.cloud.persistence.service.StatementBalanceSheetConfig' = 'com.financial.cloud.service.statement.StatementBalanceSheetConfig'
+    'com.financial.cloud.persistence.service.StatementBalanceSheet' = 'com.financial.cloud.service.statement.StatementBalanceSheet'
+    'com.financial.cloud.persistence.service.StatementCashFlow' = 'com.financial.cloud.service.statement.StatementCashFlow'
+    'com.financial.cloud.persistence.service.StatementIncomeConfig' = 'com.financial.cloud.service.statement.StatementIncomeConfig'
+    'com.financial.cloud.persistence.service.StatementIncome' = 'com.financial.cloud.service.statement.StatementIncome'
+    'com.financial.cloud.persistence.service.StatementReport' = 'com.financial.cloud.service.statement.StatementReport'
+    'com.financial.cloud.persistence.service.StatementSubjectBalance' = 'com.financial.cloud.service.statement.StatementSubjectBalance'
 }
 
 Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
@@ -167,26 +167,26 @@ Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
 
 # Cross-domain symbol imports
 $symbols = [ordered]@{
-    'JournalAccountService' = 'import com.jinbooks.service.journal.JournalAccountService;'
-    'JournalEntryService' = 'import com.jinbooks.service.journal.JournalEntryService;'
-    'JournalSummaryService' = 'import com.jinbooks.service.journal.JournalSummaryService;'
-    'JournalAccountMapper' = 'import com.jinbooks.repository.journal.JournalAccountMapper;'
-    'JournalEntryMapper' = 'import com.jinbooks.repository.journal.JournalEntryMapper;'
-    'JournalSummaryMapper' = 'import com.jinbooks.repository.journal.JournalSummaryMapper;'
-    'StatementBalanceSheetConfigService' = 'import com.jinbooks.service.statement.StatementBalanceSheetConfigService;'
-    'StatementBalanceSheetService' = 'import com.jinbooks.service.statement.StatementBalanceSheetService;'
-    'StatementCashFlowService' = 'import com.jinbooks.service.statement.StatementCashFlowService;'
-    'StatementIncomeConfigService' = 'import com.jinbooks.service.statement.StatementIncomeConfigService;'
-    'StatementIncomeService' = 'import com.jinbooks.service.statement.StatementIncomeService;'
-    'StatementReportService' = 'import com.jinbooks.service.statement.StatementReportService;'
-    'StatementSubjectBalanceService' = 'import com.jinbooks.service.statement.StatementSubjectBalanceService;'
-    'StatementBalanceSheetMapper' = 'import com.jinbooks.repository.statement.StatementBalanceSheetMapper;'
-    'StatementBalanceSheetItemMapper' = 'import com.jinbooks.repository.statement.StatementBalanceSheetItemMapper;'
-    'StatementCashFlowMapper' = 'import com.jinbooks.repository.statement.StatementCashFlowMapper;'
-    'StatementIncomeMapper' = 'import com.jinbooks.repository.statement.StatementIncomeMapper;'
-    'StatementIncomeItemMapper' = 'import com.jinbooks.repository.statement.StatementIncomeItemMapper;'
-    'StatementRulesMapper' = 'import com.jinbooks.repository.statement.StatementRulesMapper;'
-    'StatementSubjectBalanceMapper' = 'import com.jinbooks.repository.statement.StatementSubjectBalanceMapper;'
+    'JournalAccountService' = 'import com.financial.cloud.service.journal.JournalAccountService;'
+    'JournalEntryService' = 'import com.financial.cloud.service.journal.JournalEntryService;'
+    'JournalSummaryService' = 'import com.financial.cloud.service.journal.JournalSummaryService;'
+    'JournalAccountMapper' = 'import com.financial.cloud.repository.journal.JournalAccountMapper;'
+    'JournalEntryMapper' = 'import com.financial.cloud.repository.journal.JournalEntryMapper;'
+    'JournalSummaryMapper' = 'import com.financial.cloud.repository.journal.JournalSummaryMapper;'
+    'StatementBalanceSheetConfigService' = 'import com.financial.cloud.service.statement.StatementBalanceSheetConfigService;'
+    'StatementBalanceSheetService' = 'import com.financial.cloud.service.statement.StatementBalanceSheetService;'
+    'StatementCashFlowService' = 'import com.financial.cloud.service.statement.StatementCashFlowService;'
+    'StatementIncomeConfigService' = 'import com.financial.cloud.service.statement.StatementIncomeConfigService;'
+    'StatementIncomeService' = 'import com.financial.cloud.service.statement.StatementIncomeService;'
+    'StatementReportService' = 'import com.financial.cloud.service.statement.StatementReportService;'
+    'StatementSubjectBalanceService' = 'import com.financial.cloud.service.statement.StatementSubjectBalanceService;'
+    'StatementBalanceSheetMapper' = 'import com.financial.cloud.repository.statement.StatementBalanceSheetMapper;'
+    'StatementBalanceSheetItemMapper' = 'import com.financial.cloud.repository.statement.StatementBalanceSheetItemMapper;'
+    'StatementCashFlowMapper' = 'import com.financial.cloud.repository.statement.StatementCashFlowMapper;'
+    'StatementIncomeMapper' = 'import com.financial.cloud.repository.statement.StatementIncomeMapper;'
+    'StatementIncomeItemMapper' = 'import com.financial.cloud.repository.statement.StatementIncomeItemMapper;'
+    'StatementRulesMapper' = 'import com.financial.cloud.repository.statement.StatementRulesMapper;'
+    'StatementSubjectBalanceMapper' = 'import com.financial.cloud.repository.statement.StatementSubjectBalanceMapper;'
 }
 
 Get-ChildItem -Path "$srcRoot\main\java" -Recurse -Filter *.java | ForEach-Object {
@@ -216,7 +216,7 @@ foreach ($pair in @(
     $f = "$base\service\$($pair.Domain)\impl\$($pair.Impl)"
     if (-not (Test-Path $f)) { continue }
     foreach ($iface in $pair.Ifaces) {
-        Add-ImportIfMissing $f "import com.jinbooks.service.$($pair.Domain).$iface;"
+        Add-ImportIfMissing $f "import com.financial.cloud.service.$($pair.Domain).$iface;"
     }
 }
 

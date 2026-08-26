@@ -18,7 +18,7 @@
 - Do not change accounting business rules.
 - Accept one-time Redis session invalidation after migration.
 - Work under `jinbooks/` (+ docs). Large dirty tree may exist — stage only files for the current task.
-- Build: `cd jinbooks` then `.\mvnw.cmd -DskipTests compile` / `package` (set `JAVA_HOME`; quote `-D` in PowerShell).
+- Build: `cd financial-cloud` then `.\mvnw.cmd -DskipTests compile` / `package` (set `JAVA_HOME`; quote `-D` in PowerShell).
 - Context path remains `/jinbooks-api`.
 
 ---
@@ -46,14 +46,14 @@
 
 **Files:**
 - Delete directories (if present under `jinbooks/`): `jinbooks-core/`, `jinbooks-commons/`, `jinbooks-starter/`, `jinbooks-persistence/`, `jinbooks-web/`
-- Delete packages under `jinbooks/src/main/java` (after grep confirms no main callers):
-  - `com/jinbooks/json/` (custom serializers)
-  - `com/jinbooks/web/HttpRequestAdapter.java`
-  - `com/jinbooks/uuid/`
-  - `com/jinbooks/pretty/`
-  - `com/jinbooks/nanoid/`
-  - `com/jinbooks/ldap/`
-  - `com/jinbooks/util/QRCode.java`, `QRCodeUtils.java`, `QRCodeConfig.java`
+- Delete packages under `financial-cloud/src/main/java` (after grep confirms no main callers):
+  - `com/financial/cloud/json/` (custom serializers)
+  - `com/financial/cloud/web/HttpRequestAdapter.java`
+  - `com/financial/cloud/uuid/`
+  - `com/financial/cloud/pretty/`
+  - `com/financial/cloud/nanoid/`
+  - `com/financial/cloud/ldap/`
+  - `com/financial/cloud/util/QRCode.java`, `QRCodeUtils.java`, `QRCodeConfig.java`
   - Unused util leftovers listed in spec (§2): `IdSequence`, `MacAddress`, `EthernetAddress`, `HttpEncoder`, `HttpsTrusts`, `StreamUtils`, `Preconditions`, unused BeanUtil chain if grep-clean
   - Isolated crypto: `SM4Utils`, `Base32Utils`, `Md5Sum`, `CertSigner`, `CertCrypto` if grep-clean
 - Delete matching tests under `src/test/java/org/maxkey/` that only cover deleted code
@@ -81,15 +81,15 @@ cd C:\Users\Administrator\Projects\jinbooks\jinbooks
 Remove-Item -Recurse -Force jinbooks-core,jinbooks-commons,jinbooks-starter,jinbooks-persistence,jinbooks-web -ErrorAction SilentlyContinue
 ```
 
-Confirm root/`jinbooks/pom.xml` has no `<modules>` referencing them.
+Confirm root/`financial-cloud/pom.xml` has no `<modules>` referencing them.
 
 - [ ] **Step 3: Delete dead Java packages/files + orphan tests**
 
 Use `git rm -r` for tracked paths. Example:
 
 ```powershell
-git rm -r jinbooks/src/main/java/com/jinbooks/json
-git rm jinbooks/src/main/java/com/jinbooks/web/HttpRequestAdapter.java
+git rm -r financial-cloud/src/main/java/com/financial/cloud/json
+git rm financial-cloud/src/main/java/com/financial/cloud/web/HttpRequestAdapter.java
 # ... remaining list after grep
 ```
 
@@ -117,19 +117,19 @@ Only include Task 1 deletions (avoid staging Redis/kaptcha WIP).
 ### Task 2: Redis → Spring Data Redis
 
 **Files:**
-- Modify: `jinbooks/pom.xml`
-- Modify: `jinbooks/src/main/resources/application-jinbooks.properties`
-- Rewrite: `jinbooks/src/main/java/com/jinbooks/autoconfigure/RedisAutoConfiguration.java`
+- Modify: `financial-cloud/pom.xml`
+- Modify: `financial-cloud/src/main/resources/application-jinbooks.properties`
+- Rewrite: `financial-cloud/src/main/java/com/financial/cloud/autoconfigure/RedisAutoConfiguration.java`
 - Rewrite: `RedisCacheService`, `RedisOtpTokenStore`, `RedisSecretKeyManager`, `RedisCongressService`, `RedisSessionManager` / `SessionManagerImpl`, `RedisDiplexCache` (or delete if unused)
 - Modify: `SessionAutoConfiguration`, `TokenAutoConfiguration`, `OneTimePasswordAutoConfiguration`, any other `RedisConnectionFactory` injectors
-- Delete: entire `jinbooks/src/main/java/com/jinbooks/persistence/redis/`
+- Delete: entire `financial-cloud/src/main/java/com/financial/cloud/persistence/redis/`
 - Remove `RedisConnectionFactory` from `AutoConfiguration.imports` only if class removed; keep a Boot-friendly Redis auto-config entry
-- Create: `jinbooks/src/test/java/com/jinbooks/persistence/cache/RedisCacheServiceTest.java` (unit test with mocked `StringRedisTemplate` **or** skip if no easy mock — then compile + smoke in Task 8)
+- Create: `financial-cloud/src/test/java/com/financial/cloud/persistence/cache/RedisCacheServiceTest.java` (unit test with mocked `StringRedisTemplate` **or** skip if no easy mock — then compile + smoke in Task 8)
 - Update README/docker notes if they document `spring.redis.*`
 
 **Interfaces:**
 - Consumes: `ApplicationConfig.isCachedRedis()`, InMemory fallbacks
-- Produces: All Redis-backed services take `StringRedisTemplate` (+ shared `JsonMapper` for object values). No `com.jinbooks.persistence.redis` types remain.
+- Produces: All Redis-backed services take `StringRedisTemplate` (+ shared `JsonMapper` for object values). No `com.financial.cloud.persistence.redis` types remain.
 
 - [ ] **Step 1: Add dependency; remove direct jedis if unused after**
 
@@ -231,7 +231,7 @@ Preferred: `jinbooks.server.cached=0` default stays InMemory; Redis auto-config 
 - [ ] **Step 5: Delete `persistence/redis` package**
 
 ```powershell
-git rm -r jinbooks/src/main/java/com/jinbooks/persistence/redis
+git rm -r financial-cloud/src/main/java/com/financial/cloud/persistence/redis
 ```
 
 Fix all compile errors until zero references to `RedisConnectionFactory` / `IRedisStatement`.
@@ -253,8 +253,8 @@ git commit -m "refactor: replace custom Redis stack with Spring Data Redis"
 ### Task 3: Remove kaptcha fork; use library defaults
 
 **Files:**
-- Delete: `jinbooks/src/main/java/com/google/code/kaptcha/**`
-- Modify: `jinbooks/src/main/resources/kaptcha.properties`
+- Delete: `financial-cloud/src/main/java/com/google/code/kaptcha/**`
+- Modify: `financial-cloud/src/main/resources/kaptcha.properties`
 - Keep: `KaptchaAutoConfiguration`, `ImageCaptchaEndpoint`, `web/kaptcha/ImageCaptcha.java`, `CaptchaContent.java`
 
 **Interfaces:**
@@ -283,7 +283,7 @@ kaptcha.background.clear.to=white
 - [ ] **Step 2: Delete fork sources**
 
 ```powershell
-git rm -r jinbooks/src/main/java/com/google
+git rm -r financial-cloud/src/main/java/com/google
 ```
 
 - [ ] **Step 3: Compile + optional quick check that `KaptchaAutoConfiguration` still builds `Producer` bean**
@@ -304,8 +304,8 @@ git commit -m "chore: drop vendored kaptcha fork; use library defaults"
 
 **Files:**
 - Modify: `pom.xml` — add googleauth
-- Create: `jinbooks/src/main/java/com/jinbooks/password/onetimepwd/TotpService.java`
-- Create: `jinbooks/src/test/java/com/jinbooks/password/onetimepwd/TotpServiceTest.java`
+- Create: `financial-cloud/src/main/java/com/financial/cloud/password/onetimepwd/TotpService.java`
+- Create: `financial-cloud/src/test/java/com/financial/cloud/password/onetimepwd/TotpServiceTest.java`
 - Delete: `algorithm/HmacOTP.java`
 - Delete stubs if unused: `CapOtpAuthn`, `RsaOtpAuthn`, `MessageQueueOtpAuthn` (grep first)
 - Wire `TotpService` where `sharedSecret` / TFA validation needs TOTP (search `tfaOtpAuthn`, `TIMEBASED`, `sharedSecret` usages). If no production caller today, still add `TotpService` + test and delete `HmacOTP`; document for future TFA wiring.
@@ -378,7 +378,7 @@ git commit -m "feat: replace custom HmacOTP with googleauth TotpService"
 - [ ] **Step 1: Grep ad-hoc mappers and mapstruct/simple-http**
 
 ```powershell
-rg "JsonMapper\.builder\(\)\.build\(\)|new ObjectMapper\(" jinbooks/src/main/java -g "*.java"
+rg "JsonMapper\.builder\(\)\.build\(\)|new ObjectMapper\(" financial-cloud/src/main/java -g "*.java"
 rg "mapstruct|simple-http|org\.mapstruct" jinbooks -g "*.{java,xml}"
 ```
 
@@ -417,7 +417,7 @@ git commit -m "refactor: use Hutool snowflake and trim dead DateUtils APIs"
 ### Task 7: Delete unused MITRE JWT signer/encryption stack
 
 **Files:**
-- Keep: `com.jinbooks.crypto.jwt.Hmac512Service` (already Nimbus; used by Auth*TokenService)
+- Keep: `com.financial.cloud.crypto.jwt.Hmac512Service` (already Nimbus; used by Auth*TokenService)
 - Delete if still only self-referenced (confirmed earlier):  
   `crypto/jwt/signer/**`, `crypto/jwt/encryption/**`  
   including `DefaultJwtSigningAndValidationService`, `JWKSetCacheService`, `SymmetricCacheService`, builders, encryption services
@@ -430,7 +430,7 @@ git commit -m "refactor: use Hutool snowflake and trim dead DateUtils APIs"
 - [ ] **Step 1: Re-grep imports of signer/encryption packages from outside themselves**
 
 ```powershell
-rg "crypto\.jwt\.signer|crypto\.jwt\.encryption" jinbooks/src/main/java -g "*.java"
+rg "crypto\.jwt\.signer|crypto\.jwt\.encryption" financial-cloud/src/main/java -g "*.java"
 ```
 
 - [ ] **Step 2: Delete unused tree; compile; login-critical classes must still compile**
@@ -456,7 +456,7 @@ cd C:\Users\Administrator\Projects\jinbooks\jinbooks
 
 - [ ] **Step 2: Start jar (InMemory mode default)**
 
-Confirm log: `Started JinBooksApplication`
+Confirm log: `Started FinancialCloudApplication`
 
 - [ ] **Step 3: Smoke**
 
@@ -473,8 +473,8 @@ Optional Redis: set `jinbooks.server.cached=1` and Redis up; restart; login twic
 - [ ] **Step 4: Verify deletions**
 
 ```powershell
-Test-Path jinbooks/src/main/java/com/jinbooks/persistence/redis
-Test-Path jinbooks/src/main/java/com/google/code/kaptcha
+Test-Path financial-cloud/src/main/java/com/financial/cloud/persistence/redis
+Test-Path financial-cloud/src/main/java/com/google/code/kaptcha
 ```
 
 Both must be `$false`.

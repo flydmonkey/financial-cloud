@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCAN_DIRS = [ROOT / "jinbooks" / "src", ROOT / "sql"]
+SCAN_DIRS = [ROOT / "financial-cloud" / "src", ROOT / "sql"]
 SKIP_DIR_NAMES = {"target", "node_modules", ".git"}
 EXTENSIONS = {".java", ".xml", ".sql"}
 TABLE_PATTERN = re.compile(r"(?i)jbx_([a-z0-9_]+)")

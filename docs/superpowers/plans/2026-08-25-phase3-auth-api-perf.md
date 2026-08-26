@@ -27,31 +27,31 @@
 
 | File | Responsibility |
 |------|----------------|
-| `jinbooks/src/main/java/com/jinbooks/entity/Message.java` | Add `UNAUTHORIZED=401`, `FORBIDDEN=403` |
-| `jinbooks/src/main/java/com/jinbooks/authn/web/interceptor/PermissionInterceptor.java` | Write `Message` 401 JSON; no forward |
-| `jinbooks/src/main/java/com/jinbooks/autoconfigure/JinBooksMvcConfig.java` | Intercept `/**` + public excludes |
-| `jinbooks/src/main/java/com/jinbooks/authn/web/UnauthorizedEntryPoint.java` | Return `Message` 401 |
-| `jinbooks/src/main/java/com/jinbooks/authn/web/RefusedPoint.java` | Return `Message` 403 |
-| `jinbooks/src/main/java/com/jinbooks/enums/BookBusinessExceptionEnum.java` | Codes `510001+` |
-| `jinbooks/src/main/java/com/jinbooks/enums/OrgsBusinessExceptionEnum.java` | Codes `520001+` |
-| `jinbooks/src/main/java/com/jinbooks/web/filter/ApiV1PathRewriteFilter.java` | Strip `/api/v1` prefix |
-| `jinbooks/src/main/java/com/jinbooks/autoconfigure/ApiV1PathRewriteAutoConfiguration.java` | Register Filter bean |
-| `jinbooks/src/main/java/com/jinbooks/entity/PageQuery.java` | Default 20, max 100 clamp |
-| `jinbooks/src/main/java/com/jinbooks/persistence/service/impl/VoucherServiceImpl.java` | Batch `queryByIds`; fix N+1 |
-| `jinbooks/src/test/java/com/jinbooks/entity/PageQueryTest.java` | Pagination unit tests |
-| `jinbooks/src/test/java/com/jinbooks/entity/MessageAuthCodesTest.java` | Constant smoke tests |
-| `jinbooks/src/test/java/com/jinbooks/web/filter/ApiV1PathRewriteFilterTest.java` | Rewrite unit tests |
-| `jinbooks/src/test/java/com/jinbooks/enums/BusinessExceptionCodeRangesTest.java` | Code-range assertions |
+| `financial-cloud/src/main/java/com/financial/cloud/entity/Message.java` | Add `UNAUTHORIZED=401`, `FORBIDDEN=403` |
+| `financial-cloud/src/main/java/com/financial/cloud/authn/web/interceptor/PermissionInterceptor.java` | Write `Message` 401 JSON; no forward |
+| `financial-cloud/src/main/java/com/financial/cloud/autoconfigure/FinancialCloudMvcConfig.java` | Intercept `/**` + public excludes |
+| `financial-cloud/src/main/java/com/financial/cloud/authn/web/UnauthorizedEntryPoint.java` | Return `Message` 401 |
+| `financial-cloud/src/main/java/com/financial/cloud/authn/web/RefusedPoint.java` | Return `Message` 403 |
+| `financial-cloud/src/main/java/com/financial/cloud/enums/BookBusinessExceptionEnum.java` | Codes `510001+` |
+| `financial-cloud/src/main/java/com/financial/cloud/enums/OrgsBusinessExceptionEnum.java` | Codes `520001+` |
+| `financial-cloud/src/main/java/com/financial/cloud/web/filter/ApiV1PathRewriteFilter.java` | Strip `/api/v1` prefix |
+| `financial-cloud/src/main/java/com/financial/cloud/autoconfigure/ApiV1PathRewriteAutoConfiguration.java` | Register Filter bean |
+| `financial-cloud/src/main/java/com/financial/cloud/entity/PageQuery.java` | Default 20, max 100 clamp |
+| `financial-cloud/src/main/java/com/financial/cloud/persistence/service/impl/VoucherServiceImpl.java` | Batch `queryByIds`; fix N+1 |
+| `financial-cloud/src/test/java/com/financial/cloud/entity/PageQueryTest.java` | Pagination unit tests |
+| `financial-cloud/src/test/java/com/financial/cloud/entity/MessageAuthCodesTest.java` | Constant smoke tests |
+| `financial-cloud/src/test/java/com/financial/cloud/web/filter/ApiV1PathRewriteFilterTest.java` | Rewrite unit tests |
+| `financial-cloud/src/test/java/com/financial/cloud/enums/BusinessExceptionCodeRangesTest.java` | Code-range assertions |
 
 ---
 
 ### Task 1: Message auth constants + PageQuery caps
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/entity/Message.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/entity/PageQuery.java`
-- Create: `jinbooks/src/test/java/com/jinbooks/entity/MessageAuthCodesTest.java`
-- Create: `jinbooks/src/test/java/com/jinbooks/entity/PageQueryTest.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/entity/Message.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/entity/PageQuery.java`
+- Create: `financial-cloud/src/test/java/com/financial/cloud/entity/MessageAuthCodesTest.java`
+- Create: `financial-cloud/src/test/java/com/financial/cloud/entity/PageQueryTest.java`
 
 **Interfaces:**
 - Consumes: none
@@ -62,7 +62,7 @@
 Create `MessageAuthCodesTest.java`:
 
 ```java
-package com.jinbooks.entity;
+package com.financial.cloud.entity;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,7 +81,7 @@ class MessageAuthCodesTest {
 Create `PageQueryTest.java`:
 
 ```java
-package com.jinbooks.entity;
+package com.financial.cloud.entity;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.junit.jupiter.api.Test;
@@ -175,7 +175,7 @@ Expected: `BUILD SUCCESS`, both tests green.
 
 ```powershell
 cd C:\Users\Administrator\Projects\jinbooks
-git add jinbooks/src/main/java/com/jinbooks/entity/Message.java jinbooks/src/main/java/com/jinbooks/entity/PageQuery.java jinbooks/src/test/java/com/jinbooks/entity/MessageAuthCodesTest.java jinbooks/src/test/java/com/jinbooks/entity/PageQueryTest.java
+git add financial-cloud/src/main/java/com/financial/cloud/entity/Message.java financial-cloud/src/main/java/com/financial/cloud/entity/PageQuery.java financial-cloud/src/test/java/com/financial/cloud/entity/MessageAuthCodesTest.java financial-cloud/src/test/java/com/financial/cloud/entity/PageQueryTest.java
 git commit -m "fix: cap PageQuery size and add Message 401/403 constants"
 ```
 
@@ -184,16 +184,16 @@ git commit -m "fix: cap PageQuery size and add Message 401/403 constants"
 ### Task 2: Default-deny interceptor + Message 401 response
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/autoconfigure/JinBooksMvcConfig.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/web/interceptor/PermissionInterceptor.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/web/UnauthorizedEntryPoint.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/web/RefusedPoint.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/autoconfigure/FinancialCloudMvcConfig.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/web/interceptor/PermissionInterceptor.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/web/UnauthorizedEntryPoint.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/web/RefusedPoint.java`
 
 **Interfaces:**
 - Consumes: `Message.UNAUTHORIZED`, `Message.FORBIDDEN`
 - Produces: All non-excluded paths require `SignedPrincipal`; unauthenticated calls get HTTP 401 + JSON `Message`
 
-- [ ] **Step 1: Rewrite JinBooksMvcConfig intercept registration**
+- [ ] **Step 1: Rewrite FinancialCloudMvcConfig intercept registration**
 
 Replace the body of `addInterceptors` so it uses default-deny:
 
@@ -235,7 +235,7 @@ Replace the `principal == null` branch in `preHandle` (remove `RequestDispatcher
 import java.io.IOException;
 import org.springframework.http.MediaType;
 import tools.jackson.databind.json.JsonMapper;
-import com.jinbooks.entity.Message;
+import com.financial.cloud.entity.Message;
 ```
 
 ```java
@@ -280,7 +280,7 @@ Message<Void> body = new Message<>(Message.FORBIDDEN, "Forbidden");
 JsonMapper.builder().build().writeValue(response.getOutputStream(), body);
 ```
 
-Add `import com.jinbooks.entity.Message;` and remove unused `HashMap`/`Map` imports.
+Add `import com.financial.cloud.entity.Message;` and remove unused `HashMap`/`Map` imports.
 
 - [ ] **Step 4: Compile check**
 
@@ -295,7 +295,7 @@ Expected: `BUILD SUCCESS`.
 
 ```powershell
 cd C:\Users\Administrator\Projects\jinbooks
-git add jinbooks/src/main/java/com/jinbooks/autoconfigure/JinBooksMvcConfig.java jinbooks/src/main/java/com/jinbooks/authn/web/interceptor/PermissionInterceptor.java jinbooks/src/main/java/com/jinbooks/authn/web/UnauthorizedEntryPoint.java jinbooks/src/main/java/com/jinbooks/authn/web/RefusedPoint.java
+git add financial-cloud/src/main/java/com/financial/cloud/autoconfigure/FinancialCloudMvcConfig.java financial-cloud/src/main/java/com/financial/cloud/authn/web/interceptor/PermissionInterceptor.java financial-cloud/src/main/java/com/financial/cloud/authn/web/UnauthorizedEntryPoint.java financial-cloud/src/main/java/com/financial/cloud/authn/web/RefusedPoint.java
 git commit -m "feat: default-deny auth interceptor with Message 401/403"
 ```
 
@@ -304,9 +304,9 @@ git commit -m "feat: default-deny auth interceptor with Message 401/403"
 ### Task 3: Business exception code ranges
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/enums/BookBusinessExceptionEnum.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/enums/OrgsBusinessExceptionEnum.java`
-- Create: `jinbooks/src/test/java/com/jinbooks/enums/BusinessExceptionCodeRangesTest.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/enums/BookBusinessExceptionEnum.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/enums/OrgsBusinessExceptionEnum.java`
+- Create: `financial-cloud/src/test/java/com/financial/cloud/enums/BusinessExceptionCodeRangesTest.java`
 
 **Interfaces:**
 - Consumes: none
@@ -324,7 +324,7 @@ If UI/tests hard-code specific `50000x` values, update those call sites in this 
 - [ ] **Step 2: Write range test**
 
 ```java
-package com.jinbooks.enums;
+package com.financial.cloud.enums;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -378,7 +378,7 @@ cd C:\Users\Administrator\Projects\jinbooks\jinbooks
 
 ```powershell
 cd C:\Users\Administrator\Projects\jinbooks
-git add jinbooks/src/main/java/com/jinbooks/enums/BookBusinessExceptionEnum.java jinbooks/src/main/java/com/jinbooks/enums/OrgsBusinessExceptionEnum.java jinbooks/src/test/java/com/jinbooks/enums/BusinessExceptionCodeRangesTest.java
+git add financial-cloud/src/main/java/com/financial/cloud/enums/BookBusinessExceptionEnum.java financial-cloud/src/main/java/com/financial/cloud/enums/OrgsBusinessExceptionEnum.java financial-cloud/src/test/java/com/financial/cloud/enums/BusinessExceptionCodeRangesTest.java
 git commit -m "refactor: split Book/Orgs business codes into 51/52 ranges"
 ```
 
@@ -387,10 +387,10 @@ git commit -m "refactor: split Book/Orgs business codes into 51/52 ranges"
 ### Task 4: `/api/v1` path rewrite Filter
 
 **Files:**
-- Create: `jinbooks/src/main/java/com/jinbooks/web/filter/ApiV1PathRewriteFilter.java`
-- Create: `jinbooks/src/main/java/com/jinbooks/autoconfigure/ApiV1PathRewriteAutoConfiguration.java`
-- Create: `jinbooks/src/test/java/com/jinbooks/web/filter/ApiV1PathRewriteFilterTest.java`
-- Modify: `jinbooks/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (append new auto-config class if that file is how other autoconfigs are registered; otherwise rely on `@AutoConfiguration` component scan from `com.jinbooks`)
+- Create: `financial-cloud/src/main/java/com/financial/cloud/web/filter/ApiV1PathRewriteFilter.java`
+- Create: `financial-cloud/src/main/java/com/financial/cloud/autoconfigure/ApiV1PathRewriteAutoConfiguration.java`
+- Create: `financial-cloud/src/test/java/com/financial/cloud/web/filter/ApiV1PathRewriteFilterTest.java`
+- Modify: `financial-cloud/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (append new auto-config class if that file is how other autoconfigs are registered; otherwise rely on `@AutoConfiguration` component scan from `com.financial.cloud`)
 
 **Interfaces:**
 - Consumes: servlet request path after context-path
@@ -398,10 +398,10 @@ git commit -m "refactor: split Book/Orgs business codes into 51/52 ranges"
 
 - [ ] **Step 1: Confirm how AutoConfiguration is registered**
 
-Open `jinbooks/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`. If present and lists `com.jinbooks.autoconfigure.*`, append:
+Open `financial-cloud/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`. If present and lists `com.financial.cloud.autoconfigure.*`, append:
 
 ```
-com.jinbooks.autoconfigure.ApiV1PathRewriteAutoConfiguration
+com.financial.cloud.autoconfigure.ApiV1PathRewriteAutoConfiguration
 ```
 
 Save **UTF-8 without BOM**.
@@ -409,7 +409,7 @@ Save **UTF-8 without BOM**.
 - [ ] **Step 2: Write Filter implementation**
 
 ```java
-package com.jinbooks.web.filter;
+package com.financial.cloud.web.filter;
 
 import java.io.IOException;
 
@@ -469,14 +469,14 @@ public class ApiV1PathRewriteFilter extends OncePerRequestFilter {
 - [ ] **Step 3: Register Filter early (before MVC)**
 
 ```java
-package com.jinbooks.autoconfigure;
+package com.financial.cloud.autoconfigure;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 
-import com.jinbooks.web.filter.ApiV1PathRewriteFilter;
+import com.financial.cloud.web.filter.ApiV1PathRewriteFilter;
 
 @AutoConfiguration
 public class ApiV1PathRewriteAutoConfiguration {
@@ -496,7 +496,7 @@ public class ApiV1PathRewriteAutoConfiguration {
 - [ ] **Step 4: Unit test with MockHttpServletRequest**
 
 ```java
-package com.jinbooks.web.filter;
+package com.financial.cloud.web.filter;
 
 import java.io.IOException;
 
@@ -543,7 +543,7 @@ class ApiV1PathRewriteFilterTest {
 }
 ```
 
-If `spring-boot-starter-test` / `spring-test` is already on the test classpath (Boot projects usually are), this compiles. If not, add test dependency in `jinbooks/pom.xml`:
+If `spring-boot-starter-test` / `spring-test` is already on the test classpath (Boot projects usually are), this compiles. If not, add test dependency in `financial-cloud/pom.xml`:
 
 ```xml
 <dependency>
@@ -566,7 +566,7 @@ Expected: `BUILD SUCCESS`.
 
 ```powershell
 cd C:\Users\Administrator\Projects\jinbooks
-git add jinbooks/src/main/java/com/jinbooks/web/filter/ApiV1PathRewriteFilter.java jinbooks/src/main/java/com/jinbooks/autoconfigure/ApiV1PathRewriteAutoConfiguration.java jinbooks/src/test/java/com/jinbooks/web/filter/ApiV1PathRewriteFilterTest.java jinbooks/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+git add financial-cloud/src/main/java/com/financial/cloud/web/filter/ApiV1PathRewriteFilter.java financial-cloud/src/main/java/com/financial/cloud/autoconfigure/ApiV1PathRewriteAutoConfiguration.java financial-cloud/src/test/java/com/financial/cloud/web/filter/ApiV1PathRewriteFilterTest.java financial-cloud/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
 git commit -m "feat: rewrite /api/v1 requests onto existing controller paths"
 ```
 
@@ -575,7 +575,7 @@ git commit -m "feat: rewrite /api/v1 requests onto existing controller paths"
 ### Task 5: Voucher batch load — remove N+1
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/persistence/service/impl/VoucherServiceImpl.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/persistence/service/impl/VoucherServiceImpl.java`
 
 **Interfaces:**
 - Consumes: existing `baseMapper.selectVoById`, `queryItems`, mappers
@@ -719,7 +719,7 @@ Expected: `BUILD SUCCESS`.
 
 ```powershell
 cd C:\Users\Administrator\Projects\jinbooks
-git add jinbooks/src/main/java/com/jinbooks/persistence/service/impl/VoucherServiceImpl.java
+git add financial-cloud/src/main/java/com/financial/cloud/persistence/service/impl/VoucherServiceImpl.java
 # include mapper/xml only if added
 git commit -m "perf: batch-load vouchers to remove submit/audit/delete N+1"
 ```
@@ -741,7 +741,7 @@ cd C:\Users\Administrator\Projects\jinbooks\jinbooks
 .\mvnw.cmd -DskipTests package
 ```
 
-Expected: `BUILD SUCCESS`, jar at `target/jinbooks-boot-*.jar`.
+Expected: `BUILD SUCCESS`, jar at `target/financial-cloud-boot-*.jar`.
 
 - [ ] **Step 2: Ensure MySQL is up** (Docker/Podman compose on host port **3307** as previously configured). If already running, skip.
 
@@ -749,10 +749,10 @@ Expected: `BUILD SUCCESS`, jar at `target/jinbooks-boot-*.jar`.
 
 ```powershell
 cd C:\Users\Administrator\Projects\jinbooks\jinbooks
-java -jar target\jinbooks-boot-1.1.0-ga.jar
+java -jar target\financial-cloud-boot-1.1.0-ga.jar
 ```
 
-Wait for log line containing `Started JinBooksApplication`.
+Wait for log line containing `Started FinancialCloudApplication`.
 
 - [ ] **Step 4: Smoke curls** (PowerShell examples)
 

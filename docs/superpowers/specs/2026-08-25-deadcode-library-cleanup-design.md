@@ -29,13 +29,13 @@
 
 | 现状 | 处理 |
 |------|------|
-| `com.jinbooks.persistence.redis.**` + 自研 `RedisConnectionFactory` / Statement / Pool|Cluster | **删除**；改用 `spring-boot-starter-data-redis` + `StringRedisTemplate`（默认 Lettuce） |
+| `com.financial.cloud.persistence.redis.**` + 自研 `RedisConnectionFactory` / Statement / Pool|Cluster | **删除**；改用 `spring-boot-starter-data-redis` + `StringRedisTemplate`（默认 Lettuce） |
 | `RedisCacheService` / `RedisSessionManager` / `RedisCongressService` / `RedisSecretKeyManager` / `RedisOtpTokenStore` / `RedisDiplexCache` | 改为依赖 `StringRedisTemplate`（或带 Jackson 的 `RedisTemplate`） |
 | `RedisAutoConfiguration` + `spring.redis.*` | 启用 Boot Redis 自动配置；属性迁到 Boot 4 的 `spring.data.redis.*` |
 | `src/.../com/google/code/kaptcha/**` fork | **删除**；仅依赖官方 `kaptcha`；`KaptchaAutoConfiguration` 只用库内 `DefaultKaptcha` |
 | `HmacOTP` 及自研 TOTP 算法 | 改为 `com.warrenstrange:googleauth`（或行为等价的维护中库）；统一生成/校验入口 |
 | 恒失败 / 无调用的 OTP stub（如 `CapOtpAuthn`） | **删除**（确认无引用后） |
-| `com.jinbooks.json` 自定义 Date 序列化（main 零接线） | **删除**；日期靠 `MvcAutoConfiguration` + `@JsonFormat` |
+| `com.financial.cloud.json` 自定义 Date 序列化（main 零接线） | **删除**；日期靠 `MvcAutoConfiguration` + `@JsonFormat` |
 | `HttpRequestAdapter`、`uuid/`、`pretty/`、`nanoid/`、`ldap/`、QR wrapper、孤立 crypto util、无用 BeanUtils 链 | **删除**（含仅服务它们的 `org.maxkey` 测试） |
 | 旧多模块目录 `jinbooks-core/`、`jinbooks-commons/`、`jinbooks-starter/`、`jinbooks-persistence/`、`jinbooks-web/`（若仍存在且不参与 Maven） | **删除** |
 | 自研 JWT MITRE 签名/校验栈（仍被 `AuthJwtService` 等使用） | 迁到已有依赖 `nimbus-jose-jwt` |
@@ -52,7 +52,7 @@
 
 删除包：
 
-- `com.jinbooks.persistence.redis`（含 `connection`、`statement`、`RedisConfig`、`RedisConfigConsts`、`IRedis*`）
+- `com.financial.cloud.persistence.redis`（含 `connection`、`statement`、`RedisConfig`、`RedisConfigConsts`、`IRedis*`）
 
 ### 3.2 新建/改造
 
@@ -120,7 +120,7 @@
 - [ ] 账号密码登录成功；token refresh 成功  
 - [ ] 启用 TOTP 时，库生成的码可校验（若环境可测）  
 - [ ] 配置 Redis 时，缓存/会话读写正常；无 Redis 时 InMemory 仍可启动（若原本支持）  
-- [ ] 仓库中不存在 `com.jinbooks.persistence.redis` 与 `com.google.code.kaptcha` 源码包  
+- [ ] 仓库中不存在 `com.financial.cloud.persistence.redis` 与 `com.google.code.kaptcha` 源码包  
 - [ ] `pom` 含 `spring-boot-starter-data-redis` 与 googleauth；无 mapstruct/simple-http（若确认零引用）  
 
 ---

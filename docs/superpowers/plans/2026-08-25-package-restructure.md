@@ -27,9 +27,9 @@
 - Modify: `MybatisPlusConfiguration.java`, `application-jinbooks.properties`
 - Global import replace across `jinbooks/src`
 
-- [x] 移动三类到 `com.jinbooks.common`
+- [x] 移动三类到 `com.financial.cloud.common`
 - [x] 全项目替换 import
-- [x] `@MapperScan` 增加 `com.jinbooks.repository`
+- [x] `@MapperScan` 增加 `com.financial.cloud.repository`
 - [x] `mapper-locations` 增加 `repository/**/xml` 通配
 - [x] `mvnw -DskipTests compile`
 
@@ -45,7 +45,7 @@
 
 - [x] 移动 + 改 package
 - [x] 全项目 import / XML namespace 替换
-- [x] `type-aliases-package` 增加 `com.jinbooks.domain.voucher`
+- [x] `type-aliases-package` 增加 `com.financial.cloud.domain.voucher`
 - [x] 删除空 `entity/voucher`、`web/voucher`
 - [x] `mvnw -DskipTests compile`
 

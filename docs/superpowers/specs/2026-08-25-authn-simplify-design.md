@@ -6,7 +6,7 @@
 
 ## 背景
 
-当前 `com.jinbooks.authn` 叠加了 JWT、服务端 Session、Congress、SM2 密钥、CAS/Trusted、Spring Security 空壳等。实际鉴权已由 `PermissionInterceptor` 完成。目标是保留「能登录、能登出、能拦请求」，去掉多余复杂度。
+当前 `com.financial.cloud.authn` 叠加了 JWT、服务端 Session、Congress、SM2 密钥、CAS/Trusted、Spring Security 空壳等。实际鉴权已由 `PermissionInterceptor` 完成。目标是保留「能登录、能登出、能拦请求」，去掉多余复杂度。
 
 ## 已确认决策
 

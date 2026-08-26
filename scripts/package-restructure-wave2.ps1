@@ -1,7 +1,7 @@
 # Wave 2: book (+ base) full stack migration
 $ErrorActionPreference = "Stop"
-$base = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks"
-$resBase = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\resources"
+$base = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks"
+$resBase = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\resources"
 $srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src"
 
 function Ensure-Dir($p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
@@ -41,26 +41,26 @@ $entities = @(
 )
 foreach ($e in $entities) {
     Move-File $e.Src "$base\domain\book\$($e.Name)"
-    Set-Package "$base\domain\book\$($e.Name)" "com.jinbooks.domain.book"
+    Set-Package "$base\domain\book\$($e.Name)" "com.financial.cloud.domain.book"
 }
 
 # --- dto (book dto/vo + base dto/vo) ---
 Ensure-Dir "$base\dto\book"
 Get-ChildItem "$base\entity\book\dto\*.java","$base\entity\book\vo\*.java","$base\entity\base\dto\*.java","$base\entity\base\vo\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
     Move-File $_.FullName "$base\dto\book\$($_.Name)"
-    Set-Package "$base\dto\book\$($_.Name)" "com.jinbooks.dto.book"
+    Set-Package "$base\dto\book\$($_.Name)" "com.financial.cloud.dto.book"
 }
 
 # --- controllers ---
 Ensure-Dir "$base\controller\book"
 Get-ChildItem "$base\web\book\controller\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
     Move-File $_.FullName "$base\controller\book\$($_.Name)"
-    Set-Package "$base\controller\book\$($_.Name)" "com.jinbooks.controller.book"
+    Set-Package "$base\controller\book\$($_.Name)" "com.financial.cloud.controller.book"
 }
 # AssistAcc / BookInitBalance live under web.config but belong to book domain
 foreach ($c in @("AssistAccController.java","BookInitBalanceController.java")) {
     Move-File "$base\web\config\controller\$c" "$base\controller\book\$c"
-    Set-Package "$base\controller\book\$c" "com.jinbooks.controller.book"
+    Set-Package "$base\controller\book\$c" "com.financial.cloud.controller.book"
 }
 
 # --- repository mappers ---
@@ -71,7 +71,7 @@ $mappers = @(
 )
 foreach ($m in $mappers) {
     Move-File "$base\persistence\mapper\$m" "$base\repository\book\$m"
-    Set-Package "$base\repository\book\$m" "com.jinbooks.repository.book"
+    Set-Package "$base\repository\book\$m" "com.financial.cloud.repository.book"
 }
 
 # --- services ---
@@ -82,7 +82,7 @@ $services = @(
 )
 foreach ($s in $services) {
     Move-File "$base\persistence\service\$s" "$base\service\book\$s"
-    Set-Package "$base\service\book\$s" "com.jinbooks.service.book"
+    Set-Package "$base\service\book\$s" "com.financial.cloud.service.book"
 }
 $impls = @(
     "BookServiceImpl.java","BookSubjectServiceImpl.java","SettlementServiceImpl.java",
@@ -90,7 +90,7 @@ $impls = @(
 )
 foreach ($i in $impls) {
     Move-File "$base\persistence\service\impl\$i" "$base\service\book\impl\$i"
-    Set-Package "$base\service\book\impl\$i" "com.jinbooks.service.book.impl"
+    Set-Package "$base\service\book\impl\$i" "com.financial.cloud.service.book.impl"
 }
 
 # --- XML ---
@@ -102,40 +102,40 @@ foreach ($x in $xmlFiles) {
     if (Test-Path $src) {
         Move-File $src "$xmlDst\$x"
         $c = [System.IO.File]::ReadAllText("$xmlDst\$x")
-        $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', 'com.jinbooks.repository.book.'
+        $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', 'com.financial.cloud.repository.book.'
         [System.IO.File]::WriteAllText("$xmlDst\$x", $c)
     }
 }
 
 # --- global import replacements (longest / most specific first) ---
 $replacements = [ordered]@{
-    'com.jinbooks.entity.book.dto.' = 'com.jinbooks.dto.book.'
-    'com.jinbooks.entity.book.vo.'  = 'com.jinbooks.dto.book.'
-    'com.jinbooks.entity.base.dto.' = 'com.jinbooks.dto.book.'
-    'com.jinbooks.entity.base.vo.'  = 'com.jinbooks.dto.book.'
-    'com.jinbooks.entity.book.'     = 'com.jinbooks.domain.book.'
-    'com.jinbooks.entity.base.'     = 'com.jinbooks.domain.book.'
-    'com.jinbooks.web.book.controller.' = 'com.jinbooks.controller.book.'
-    'com.jinbooks.web.config.controller.AssistAccController' = 'com.jinbooks.controller.book.AssistAccController'
-    'com.jinbooks.web.config.controller.BookInitBalanceController' = 'com.jinbooks.controller.book.BookInitBalanceController'
-    'com.jinbooks.persistence.mapper.BookSubject' = 'com.jinbooks.repository.book.BookSubject'
-    'com.jinbooks.persistence.mapper.BookInitBalance' = 'com.jinbooks.repository.book.BookInitBalance'
-    'com.jinbooks.persistence.mapper.Book' = 'com.jinbooks.repository.book.Book'
-    'com.jinbooks.persistence.mapper.SettlementCarryforward' = 'com.jinbooks.repository.book.SettlementCarryforward'
-    'com.jinbooks.persistence.mapper.Settlement' = 'com.jinbooks.repository.book.Settlement'
-    'com.jinbooks.persistence.mapper.AssistAcc' = 'com.jinbooks.repository.book.AssistAcc'
-    'com.jinbooks.persistence.service.impl.BookSubject' = 'com.jinbooks.service.book.impl.BookSubject'
-    'com.jinbooks.persistence.service.impl.BookInitBalance' = 'com.jinbooks.service.book.impl.BookInitBalance'
-    'com.jinbooks.persistence.service.impl.Book' = 'com.jinbooks.service.book.impl.Book'
-    'com.jinbooks.persistence.service.impl.SettlementCarry' = 'com.jinbooks.service.book.impl.SettlementCarry'
-    'com.jinbooks.persistence.service.impl.Settlement' = 'com.jinbooks.service.book.impl.Settlement'
-    'com.jinbooks.persistence.service.impl.AssistAcc' = 'com.jinbooks.service.book.impl.AssistAcc'
-    'com.jinbooks.persistence.service.BookSubject' = 'com.jinbooks.service.book.BookSubject'
-    'com.jinbooks.persistence.service.BookInitBalance' = 'com.jinbooks.service.book.BookInitBalance'
-    'com.jinbooks.persistence.service.Book' = 'com.jinbooks.service.book.Book'
-    'com.jinbooks.persistence.service.SettlementCarry' = 'com.jinbooks.service.book.SettlementCarry'
-    'com.jinbooks.persistence.service.Settlement' = 'com.jinbooks.service.book.Settlement'
-    'com.jinbooks.persistence.service.AssistAcc' = 'com.jinbooks.service.book.AssistAcc'
+    'com.financial.cloud.entity.book.dto.' = 'com.financial.cloud.dto.book.'
+    'com.financial.cloud.entity.book.vo.'  = 'com.financial.cloud.dto.book.'
+    'com.financial.cloud.entity.base.dto.' = 'com.financial.cloud.dto.book.'
+    'com.financial.cloud.entity.base.vo.'  = 'com.financial.cloud.dto.book.'
+    'com.financial.cloud.entity.book.'     = 'com.financial.cloud.domain.book.'
+    'com.financial.cloud.entity.base.'     = 'com.financial.cloud.domain.book.'
+    'com.financial.cloud.web.book.controller.' = 'com.financial.cloud.controller.book.'
+    'com.financial.cloud.web.config.controller.AssistAccController' = 'com.financial.cloud.controller.book.AssistAccController'
+    'com.financial.cloud.web.config.controller.BookInitBalanceController' = 'com.financial.cloud.controller.book.BookInitBalanceController'
+    'com.financial.cloud.persistence.mapper.BookSubject' = 'com.financial.cloud.repository.book.BookSubject'
+    'com.financial.cloud.persistence.mapper.BookInitBalance' = 'com.financial.cloud.repository.book.BookInitBalance'
+    'com.financial.cloud.persistence.mapper.Book' = 'com.financial.cloud.repository.book.Book'
+    'com.financial.cloud.persistence.mapper.SettlementCarryforward' = 'com.financial.cloud.repository.book.SettlementCarryforward'
+    'com.financial.cloud.persistence.mapper.Settlement' = 'com.financial.cloud.repository.book.Settlement'
+    'com.financial.cloud.persistence.mapper.AssistAcc' = 'com.financial.cloud.repository.book.AssistAcc'
+    'com.financial.cloud.persistence.service.impl.BookSubject' = 'com.financial.cloud.service.book.impl.BookSubject'
+    'com.financial.cloud.persistence.service.impl.BookInitBalance' = 'com.financial.cloud.service.book.impl.BookInitBalance'
+    'com.financial.cloud.persistence.service.impl.Book' = 'com.financial.cloud.service.book.impl.Book'
+    'com.financial.cloud.persistence.service.impl.SettlementCarry' = 'com.financial.cloud.service.book.impl.SettlementCarry'
+    'com.financial.cloud.persistence.service.impl.Settlement' = 'com.financial.cloud.service.book.impl.Settlement'
+    'com.financial.cloud.persistence.service.impl.AssistAcc' = 'com.financial.cloud.service.book.impl.AssistAcc'
+    'com.financial.cloud.persistence.service.BookSubject' = 'com.financial.cloud.service.book.BookSubject'
+    'com.financial.cloud.persistence.service.BookInitBalance' = 'com.financial.cloud.service.book.BookInitBalance'
+    'com.financial.cloud.persistence.service.Book' = 'com.financial.cloud.service.book.Book'
+    'com.financial.cloud.persistence.service.SettlementCarry' = 'com.financial.cloud.service.book.SettlementCarry'
+    'com.financial.cloud.persistence.service.Settlement' = 'com.financial.cloud.service.book.Settlement'
+    'com.financial.cloud.persistence.service.AssistAcc' = 'com.financial.cloud.service.book.AssistAcc'
 }
 
 Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
@@ -151,18 +151,18 @@ Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
 
 # Cross-domain: add explicit imports where wildcard persistence.service.* was used
 $symbols = [ordered]@{
-    'BookService' = 'import com.jinbooks.service.book.BookService;'
-    'BookSubjectService' = 'import com.jinbooks.service.book.BookSubjectService;'
-    'SettlementService' = 'import com.jinbooks.service.book.SettlementService;'
-    'SettlementCarryService' = 'import com.jinbooks.service.book.SettlementCarryService;'
-    'AssistAccService' = 'import com.jinbooks.service.book.AssistAccService;'
-    'BookInitBalanceService' = 'import com.jinbooks.service.book.BookInitBalanceService;'
-    'BookMapper' = 'import com.jinbooks.repository.book.BookMapper;'
-    'BookSubjectMapper' = 'import com.jinbooks.repository.book.BookSubjectMapper;'
-    'SettlementMapper' = 'import com.jinbooks.repository.book.SettlementMapper;'
-    'SettlementCarryforwardMapper' = 'import com.jinbooks.repository.book.SettlementCarryforwardMapper;'
-    'AssistAccMapper' = 'import com.jinbooks.repository.book.AssistAccMapper;'
-    'BookInitBalanceMapper' = 'import com.jinbooks.repository.book.BookInitBalanceMapper;'
+    'BookService' = 'import com.financial.cloud.service.book.BookService;'
+    'BookSubjectService' = 'import com.financial.cloud.service.book.BookSubjectService;'
+    'SettlementService' = 'import com.financial.cloud.service.book.SettlementService;'
+    'SettlementCarryService' = 'import com.financial.cloud.service.book.SettlementCarryService;'
+    'AssistAccService' = 'import com.financial.cloud.service.book.AssistAccService;'
+    'BookInitBalanceService' = 'import com.financial.cloud.service.book.BookInitBalanceService;'
+    'BookMapper' = 'import com.financial.cloud.repository.book.BookMapper;'
+    'BookSubjectMapper' = 'import com.financial.cloud.repository.book.BookSubjectMapper;'
+    'SettlementMapper' = 'import com.financial.cloud.repository.book.SettlementMapper;'
+    'SettlementCarryforwardMapper' = 'import com.financial.cloud.repository.book.SettlementCarryforwardMapper;'
+    'AssistAccMapper' = 'import com.financial.cloud.repository.book.AssistAccMapper;'
+    'BookInitBalanceMapper' = 'import com.financial.cloud.repository.book.BookInitBalanceMapper;'
 }
 
 Get-ChildItem -Path "$srcRoot\main\java" -Recurse -Filter *.java | ForEach-Object {

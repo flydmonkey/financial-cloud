@@ -1,6 +1,6 @@
 # Wave 0: Move BaseEntity, Message, PageQuery to common
 $ErrorActionPreference = "Stop"
-$base = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks"
+$base = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks"
 $srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src"
 
 New-Item -ItemType Directory -Force -Path "$base\common" | Out-Null
@@ -22,15 +22,15 @@ foreach ($f in $moves) {
 # Update package in moved files
 Get-ChildItem "$base\common\*.java" | ForEach-Object {
     $c = [System.IO.File]::ReadAllText($_.FullName)
-    $c = $c -replace 'package com\.jinbooks\.entity;', 'package com.jinbooks.common;'
+    $c = $c -replace 'package com\.jinbooks\.entity;', 'package com.financial.cloud.common;'
     [System.IO.File]::WriteAllText($_.FullName, $c)
 }
 
 # Global import replacements
 $replacements = @{
-    'com.jinbooks.entity.BaseEntity' = 'com.jinbooks.common.BaseEntity'
-    'com.jinbooks.entity.Message'    = 'com.jinbooks.common.Message'
-    'com.jinbooks.entity.PageQuery'  = 'com.jinbooks.common.PageQuery'
+    'com.financial.cloud.entity.BaseEntity' = 'com.financial.cloud.common.BaseEntity'
+    'com.financial.cloud.entity.Message'    = 'com.financial.cloud.common.Message'
+    'com.financial.cloud.entity.PageQuery'  = 'com.financial.cloud.common.PageQuery'
 }
 Get-ChildItem -Path $srcRoot -Recurse -Filter *.java | ForEach-Object {
     $c = [System.IO.File]::ReadAllText($_.FullName)

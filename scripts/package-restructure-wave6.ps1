@@ -1,7 +1,7 @@
 # Wave 6: auth + common leftovers + MyBatis cleanup
 $ErrorActionPreference = "Stop"
-$base = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks"
-$resBase = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\resources"
+$base = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks"
+$resBase = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\resources"
 $srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src"
 
 function Ensure-Dir($p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
@@ -25,7 +25,7 @@ function Move-Xml($name, $domain) {
     Ensure-Dir (Split-Path $dst -Parent)
     Move-Item -Force $src $dst
     $c = [System.IO.File]::ReadAllText($dst)
-    $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', "com.jinbooks.repository.$domain."
+    $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', "com.financial.cloud.repository.$domain."
     [System.IO.File]::WriteAllText($dst, $c)
 }
 function Add-ImportIfMissing($file, $importLine) {
@@ -65,22 +65,22 @@ function Rename-Controller($src, $newName, $pkg) {
 Ensure-Dir "$base\domain\auth"; Ensure-Dir "$base\dto\auth"; Ensure-Dir "$base\controller\auth"
 Ensure-Dir "$base\repository\auth"; Ensure-Dir "$base\service\auth\impl"
 
-Move-Set "$base\entity\FileStorage.java" "$base\domain\auth\FileStorage.java" "com.jinbooks.domain.auth"
-Move-Set "$base\entity\ForgotPassword.java" "$base\dto\auth\ForgotPassword.java" "com.jinbooks.dto.auth"
-Move-Set "$base\entity\ChangePassword.java" "$base\dto\auth\ChangePassword.java" "com.jinbooks.dto.auth"
+Move-Set "$base\entity\FileStorage.java" "$base\domain\auth\FileStorage.java" "com.financial.cloud.domain.auth"
+Move-Set "$base\entity\ForgotPassword.java" "$base\dto\auth\ForgotPassword.java" "com.financial.cloud.dto.auth"
+Move-Set "$base\entity\ChangePassword.java" "$base\dto\auth\ChangePassword.java" "com.financial.cloud.dto.auth"
 
 # auth-related DTOs from entity/dto
 foreach ($d in @("NewPwdDto.java","RegisterDto.java","QueryGrantedAppsDto.java","QueryAppResourceDto.java","QueryGroupMembersDto.java","QueryOrgDto.java","QueryRoleMembersDto.java")) {
-    Move-Set "$base\entity\dto\$d" "$base\dto\auth\$d" "com.jinbooks.dto.auth"
+    Move-Set "$base\entity\dto\$d" "$base\dto\auth\$d" "com.financial.cloud.dto.auth"
 }
-Move-Set "$base\entity\vo\AppResourcesVo.java" "$base\dto\auth\AppResourcesVo.java" "com.jinbooks.dto.auth"
+Move-Set "$base\entity\vo\AppResourcesVo.java" "$base\dto\auth\AppResourcesVo.java" "com.financial.cloud.dto.auth"
 
-Move-Set "$base\persistence\mapper\LoginMapper.java" "$base\repository\auth\LoginMapper.java" "com.jinbooks.repository.auth"
-Move-Set "$base\persistence\mapper\FileStorageMapper.java" "$base\repository\auth\FileStorageMapper.java" "com.jinbooks.repository.auth"
-Move-Set "$base\persistence\service\LoginService.java" "$base\service\auth\LoginService.java" "com.jinbooks.service.auth"
-Move-Set "$base\persistence\service\FileStorageService.java" "$base\service\auth\FileStorageService.java" "com.jinbooks.service.auth"
-Move-Set "$base\persistence\service\impl\LoginServiceImpl.java" "$base\service\auth\impl\LoginServiceImpl.java" "com.jinbooks.service.auth.impl"
-Move-Set "$base\persistence\service\impl\FileStorageServiceImpl.java" "$base\service\auth\impl\FileStorageServiceImpl.java" "com.jinbooks.service.auth.impl"
+Move-Set "$base\persistence\mapper\LoginMapper.java" "$base\repository\auth\LoginMapper.java" "com.financial.cloud.repository.auth"
+Move-Set "$base\persistence\mapper\FileStorageMapper.java" "$base\repository\auth\FileStorageMapper.java" "com.financial.cloud.repository.auth"
+Move-Set "$base\persistence\service\LoginService.java" "$base\service\auth\LoginService.java" "com.financial.cloud.service.auth"
+Move-Set "$base\persistence\service\FileStorageService.java" "$base\service\auth\FileStorageService.java" "com.financial.cloud.service.auth"
+Move-Set "$base\persistence\service\impl\LoginServiceImpl.java" "$base\service\auth\impl\LoginServiceImpl.java" "com.financial.cloud.service.auth.impl"
+Move-Set "$base\persistence\service\impl\FileStorageServiceImpl.java" "$base\service\auth\impl\FileStorageServiceImpl.java" "com.financial.cloud.service.auth.impl"
 Move-Xml "LoginMapper.xml" "auth"
 
 # Controllers: Endpoint -> Controller
@@ -94,72 +94,72 @@ $endpointMap = @{
     "$base\web\ExceptionEndpoint.java" = "ExceptionController.java"
 }
 foreach ($src in $endpointMap.Keys) {
-    Rename-Controller $src $endpointMap[$src] "com.jinbooks.controller.auth"
+    Rename-Controller $src $endpointMap[$src] "com.financial.cloud.controller.auth"
 }
 
 # ========== APPROVAL -> book ==========
-Move-Set "$base\entity\approval\ApprovalRecord.java" "$base\domain\book\ApprovalRecord.java" "com.jinbooks.domain.book"
-Move-Set "$base\persistence\mapper\ApprovalRecordMapper.java" "$base\repository\book\ApprovalRecordMapper.java" "com.jinbooks.repository.book"
+Move-Set "$base\entity\approval\ApprovalRecord.java" "$base\domain\book\ApprovalRecord.java" "com.financial.cloud.domain.book"
+Move-Set "$base\persistence\mapper\ApprovalRecordMapper.java" "$base\repository\book\ApprovalRecordMapper.java" "com.financial.cloud.repository.book"
 
 # ========== COMMON leftovers ==========
 foreach ($e in @("BaseSubject.java","SubjectAuxiliary.java","TreeNode.java","TreeAttributes.java","ExtraAttr.java","ExtraAttrs.java","PeriodStr.java","DbTableColumn.java","DbTableMetaData.java","ExcelImport.java")) {
-    Move-Set "$base\entity\$e" "$base\common\$e" "com.jinbooks.common"
+    Move-Set "$base\entity\$e" "$base\common\$e" "com.financial.cloud.common"
 }
 # shared DTOs
 foreach ($d in @("ListIdsDto.java","ChangeStatusDto.java","BookQueryDto.java","NoticesPageDto.java","TimeBasedDto.java")) {
-    Move-Set "$base\entity\dto\$d" "$base\dto\common\$d" "com.jinbooks.dto.common"
+    Move-Set "$base\entity\dto\$d" "$base\dto\common\$d" "com.financial.cloud.dto.common"
 }
 # client helpers -> common.client
 Get-ChildItem "$base\entity\client\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\common\client\$($_.Name)" "com.jinbooks.common.client"
+    Move-Set $_.FullName "$base\common\client\$($_.Name)" "com.financial.cloud.common.client"
 }
 
 # ========== replacements ==========
 $replacements = [ordered]@{
-    'com.jinbooks.entity.FileStorage' = 'com.jinbooks.domain.auth.FileStorage'
-    'com.jinbooks.entity.ForgotPassword' = 'com.jinbooks.dto.auth.ForgotPassword'
-    'com.jinbooks.entity.ChangePassword' = 'com.jinbooks.dto.auth.ChangePassword'
-    'com.jinbooks.entity.dto.NewPwdDto' = 'com.jinbooks.dto.auth.NewPwdDto'
-    'com.jinbooks.entity.dto.RegisterDto' = 'com.jinbooks.dto.auth.RegisterDto'
-    'com.jinbooks.entity.dto.QueryGrantedAppsDto' = 'com.jinbooks.dto.auth.QueryGrantedAppsDto'
-    'com.jinbooks.entity.dto.QueryAppResourceDto' = 'com.jinbooks.dto.auth.QueryAppResourceDto'
-    'com.jinbooks.entity.dto.QueryGroupMembersDto' = 'com.jinbooks.dto.auth.QueryGroupMembersDto'
-    'com.jinbooks.entity.dto.QueryOrgDto' = 'com.jinbooks.dto.auth.QueryOrgDto'
-    'com.jinbooks.entity.dto.QueryRoleMembersDto' = 'com.jinbooks.dto.auth.QueryRoleMembersDto'
-    'com.jinbooks.entity.vo.AppResourcesVo' = 'com.jinbooks.dto.auth.AppResourcesVo'
-    'com.jinbooks.entity.approval.ApprovalRecord' = 'com.jinbooks.domain.book.ApprovalRecord'
-    'com.jinbooks.entity.BaseSubject' = 'com.jinbooks.common.BaseSubject'
-    'com.jinbooks.entity.SubjectAuxiliary' = 'com.jinbooks.common.SubjectAuxiliary'
-    'com.jinbooks.entity.TreeAttributes' = 'com.jinbooks.common.TreeAttributes'
-    'com.jinbooks.entity.TreeNode' = 'com.jinbooks.common.TreeNode'
-    'com.jinbooks.entity.ExtraAttrs' = 'com.jinbooks.common.ExtraAttrs'
-    'com.jinbooks.entity.ExtraAttr' = 'com.jinbooks.common.ExtraAttr'
-    'com.jinbooks.entity.PeriodStr' = 'com.jinbooks.common.PeriodStr'
-    'com.jinbooks.entity.DbTableMetaData' = 'com.jinbooks.common.DbTableMetaData'
-    'com.jinbooks.entity.DbTableColumn' = 'com.jinbooks.common.DbTableColumn'
-    'com.jinbooks.entity.ExcelImport' = 'com.jinbooks.common.ExcelImport'
-    'com.jinbooks.entity.dto.ListIdsDto' = 'com.jinbooks.dto.common.ListIdsDto'
-    'com.jinbooks.entity.dto.ChangeStatusDto' = 'com.jinbooks.dto.common.ChangeStatusDto'
-    'com.jinbooks.entity.dto.BookQueryDto' = 'com.jinbooks.dto.common.BookQueryDto'
-    'com.jinbooks.entity.dto.NoticesPageDto' = 'com.jinbooks.dto.common.NoticesPageDto'
-    'com.jinbooks.entity.dto.TimeBasedDto' = 'com.jinbooks.dto.common.TimeBasedDto'
-    'com.jinbooks.entity.client.' = 'com.jinbooks.common.client.'
+    'com.financial.cloud.entity.FileStorage' = 'com.financial.cloud.domain.auth.FileStorage'
+    'com.financial.cloud.entity.ForgotPassword' = 'com.financial.cloud.dto.auth.ForgotPassword'
+    'com.financial.cloud.entity.ChangePassword' = 'com.financial.cloud.dto.auth.ChangePassword'
+    'com.financial.cloud.entity.dto.NewPwdDto' = 'com.financial.cloud.dto.auth.NewPwdDto'
+    'com.financial.cloud.entity.dto.RegisterDto' = 'com.financial.cloud.dto.auth.RegisterDto'
+    'com.financial.cloud.entity.dto.QueryGrantedAppsDto' = 'com.financial.cloud.dto.auth.QueryGrantedAppsDto'
+    'com.financial.cloud.entity.dto.QueryAppResourceDto' = 'com.financial.cloud.dto.auth.QueryAppResourceDto'
+    'com.financial.cloud.entity.dto.QueryGroupMembersDto' = 'com.financial.cloud.dto.auth.QueryGroupMembersDto'
+    'com.financial.cloud.entity.dto.QueryOrgDto' = 'com.financial.cloud.dto.auth.QueryOrgDto'
+    'com.financial.cloud.entity.dto.QueryRoleMembersDto' = 'com.financial.cloud.dto.auth.QueryRoleMembersDto'
+    'com.financial.cloud.entity.vo.AppResourcesVo' = 'com.financial.cloud.dto.auth.AppResourcesVo'
+    'com.financial.cloud.entity.approval.ApprovalRecord' = 'com.financial.cloud.domain.book.ApprovalRecord'
+    'com.financial.cloud.entity.BaseSubject' = 'com.financial.cloud.common.BaseSubject'
+    'com.financial.cloud.entity.SubjectAuxiliary' = 'com.financial.cloud.common.SubjectAuxiliary'
+    'com.financial.cloud.entity.TreeAttributes' = 'com.financial.cloud.common.TreeAttributes'
+    'com.financial.cloud.entity.TreeNode' = 'com.financial.cloud.common.TreeNode'
+    'com.financial.cloud.entity.ExtraAttrs' = 'com.financial.cloud.common.ExtraAttrs'
+    'com.financial.cloud.entity.ExtraAttr' = 'com.financial.cloud.common.ExtraAttr'
+    'com.financial.cloud.entity.PeriodStr' = 'com.financial.cloud.common.PeriodStr'
+    'com.financial.cloud.entity.DbTableMetaData' = 'com.financial.cloud.common.DbTableMetaData'
+    'com.financial.cloud.entity.DbTableColumn' = 'com.financial.cloud.common.DbTableColumn'
+    'com.financial.cloud.entity.ExcelImport' = 'com.financial.cloud.common.ExcelImport'
+    'com.financial.cloud.entity.dto.ListIdsDto' = 'com.financial.cloud.dto.common.ListIdsDto'
+    'com.financial.cloud.entity.dto.ChangeStatusDto' = 'com.financial.cloud.dto.common.ChangeStatusDto'
+    'com.financial.cloud.entity.dto.BookQueryDto' = 'com.financial.cloud.dto.common.BookQueryDto'
+    'com.financial.cloud.entity.dto.NoticesPageDto' = 'com.financial.cloud.dto.common.NoticesPageDto'
+    'com.financial.cloud.entity.dto.TimeBasedDto' = 'com.financial.cloud.dto.common.TimeBasedDto'
+    'com.financial.cloud.entity.client.' = 'com.financial.cloud.common.client.'
 
-    'com.jinbooks.web.controller.LoginEndpoint' = 'com.jinbooks.controller.auth.LoginController'
-    'com.jinbooks.web.controller.LogoutEndpoint' = 'com.jinbooks.controller.auth.LogoutController'
-    'com.jinbooks.web.controller.ImageCaptchaEndpoint' = 'com.jinbooks.controller.auth.ImageCaptchaController'
-    'com.jinbooks.web.FileStorageEndpoint' = 'com.jinbooks.controller.auth.FileStorageController'
-    'com.jinbooks.web.MetadataEndpoint' = 'com.jinbooks.controller.auth.MetadataController'
-    'com.jinbooks.web.ProductVersionEndpoint' = 'com.jinbooks.controller.auth.ProductVersionController'
-    'com.jinbooks.web.ExceptionEndpoint' = 'com.jinbooks.controller.auth.ExceptionController'
+    'com.financial.cloud.web.controller.LoginEndpoint' = 'com.financial.cloud.controller.auth.LoginController'
+    'com.financial.cloud.web.controller.LogoutEndpoint' = 'com.financial.cloud.controller.auth.LogoutController'
+    'com.financial.cloud.web.controller.ImageCaptchaEndpoint' = 'com.financial.cloud.controller.auth.ImageCaptchaController'
+    'com.financial.cloud.web.FileStorageEndpoint' = 'com.financial.cloud.controller.auth.FileStorageController'
+    'com.financial.cloud.web.MetadataEndpoint' = 'com.financial.cloud.controller.auth.MetadataController'
+    'com.financial.cloud.web.ProductVersionEndpoint' = 'com.financial.cloud.controller.auth.ProductVersionController'
+    'com.financial.cloud.web.ExceptionEndpoint' = 'com.financial.cloud.controller.auth.ExceptionController'
 
-    'com.jinbooks.persistence.mapper.Login' = 'com.jinbooks.repository.auth.Login'
-    'com.jinbooks.persistence.mapper.FileStorage' = 'com.jinbooks.repository.auth.FileStorage'
-    'com.jinbooks.persistence.mapper.ApprovalRecord' = 'com.jinbooks.repository.book.ApprovalRecord'
-    'com.jinbooks.persistence.service.impl.Login' = 'com.jinbooks.service.auth.impl.Login'
-    'com.jinbooks.persistence.service.impl.FileStorage' = 'com.jinbooks.service.auth.impl.FileStorage'
-    'com.jinbooks.persistence.service.Login' = 'com.jinbooks.service.auth.Login'
-    'com.jinbooks.persistence.service.FileStorage' = 'com.jinbooks.service.auth.FileStorage'
+    'com.financial.cloud.persistence.mapper.Login' = 'com.financial.cloud.repository.auth.Login'
+    'com.financial.cloud.persistence.mapper.FileStorage' = 'com.financial.cloud.repository.auth.FileStorage'
+    'com.financial.cloud.persistence.mapper.ApprovalRecord' = 'com.financial.cloud.repository.book.ApprovalRecord'
+    'com.financial.cloud.persistence.service.impl.Login' = 'com.financial.cloud.service.auth.impl.Login'
+    'com.financial.cloud.persistence.service.impl.FileStorage' = 'com.financial.cloud.service.auth.impl.FileStorage'
+    'com.financial.cloud.persistence.service.Login' = 'com.financial.cloud.service.auth.Login'
+    'com.financial.cloud.persistence.service.FileStorage' = 'com.financial.cloud.service.auth.FileStorage'
 }
 
 Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
@@ -170,12 +170,12 @@ Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
 }
 
 $symbols = [ordered]@{
-    'LoginService'='import com.jinbooks.service.auth.LoginService;'
-    'FileStorageService'='import com.jinbooks.service.auth.FileStorageService;'
-    'FileStorageServiceImpl'='import com.jinbooks.service.auth.impl.FileStorageServiceImpl;'
-    'LoginMapper'='import com.jinbooks.repository.auth.LoginMapper;'
-    'FileStorageMapper'='import com.jinbooks.repository.auth.FileStorageMapper;'
-    'ApprovalRecordMapper'='import com.jinbooks.repository.book.ApprovalRecordMapper;'
+    'LoginService'='import com.financial.cloud.service.auth.LoginService;'
+    'FileStorageService'='import com.financial.cloud.service.auth.FileStorageService;'
+    'FileStorageServiceImpl'='import com.financial.cloud.service.auth.impl.FileStorageServiceImpl;'
+    'LoginMapper'='import com.financial.cloud.repository.auth.LoginMapper;'
+    'FileStorageMapper'='import com.financial.cloud.repository.auth.FileStorageMapper;'
+    'ApprovalRecordMapper'='import com.financial.cloud.repository.book.ApprovalRecordMapper;'
 }
 Get-ChildItem -Path "$srcRoot\main\java" -Recurse -Filter *.java | ForEach-Object {
     $c = [System.IO.File]::ReadAllText($_.FullName)

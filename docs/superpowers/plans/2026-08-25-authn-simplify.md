@@ -16,7 +16,7 @@
 - `/login/get` must not require SecretKey; omit or null `secretKey`/`secretPublicKey`
 - Do not git commit unless the user explicitly asks
 - Active Maven module is `jinbooks/` (not legacy multi-module trees)
-- Compile verify: `cd jinbooks` then Maven wrapper `-DskipTests compile`
+- Compile verify: `cd financial-cloud` then Maven wrapper `-DskipTests compile`
 
 ---
 
@@ -41,9 +41,9 @@
 ### Task 1: Token blacklist service
 
 **Files:**
-- Create: `jinbooks/src/main/java/com/jinbooks/authn/jwt/TokenBlacklistService.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/autoconfigure/TokenAutoConfiguration.java` — register `@Bean TokenBlacklistService`
-- Test: `jinbooks/src/test/java/com/jinbooks/authn/jwt/TokenBlacklistServiceTest.java`
+- Create: `financial-cloud/src/main/java/com/financial/cloud/authn/jwt/TokenBlacklistService.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/autoconfigure/TokenAutoConfiguration.java` — register `@Bean TokenBlacklistService`
+- Test: `financial-cloud/src/test/java/com/financial/cloud/authn/jwt/TokenBlacklistServiceTest.java`
 
 **Interfaces:**
 - Produces: `void revoke(String jti, long ttlSeconds)`, `boolean isRevoked(String jti)`
@@ -51,7 +51,7 @@
 - [ ] **Step 1: Write failing test**
 
 ```java
-package com.jinbooks.authn.jwt;
+package com.financial.cloud.authn.jwt;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -87,7 +87,7 @@ Expected: FAIL (class not found / compile error)
 - [ ] **Step 3: Implement**
 
 ```java
-package com.jinbooks.authn.jwt;
+package com.financial.cloud.authn.jwt;
 
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
@@ -137,10 +137,10 @@ TokenBlacklistService tokenBlacklistService() {
 ### Task 2: AuthorizationUtils — JWT only + blacklist
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/web/AuthorizationUtils.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/web/interceptor/PermissionInterceptor.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/controller/permissions/OpenFuncListController.java` (same authenticate signature)
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/jwt/service/AuthTokenService.java` — inject blacklist into `validateJwtToken` OR check in AuthorizationUtils
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/web/AuthorizationUtils.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/web/interceptor/PermissionInterceptor.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/controller/permissions/OpenFuncListController.java` (same authenticate signature)
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/jwt/service/AuthTokenService.java` — inject blacklist into `validateJwtToken` OR check in AuthorizationUtils
 
 **Interfaces:**
 - Consumes: `TokenBlacklistService.isRevoked(jti)`, `AuthTokenService.validateJwtToken`, `resolve(JWTClaimsSet)`
@@ -194,10 +194,10 @@ Expected: BUILD SUCCESS
 ### Task 3: Login without SessionManager / SecretKey
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/controller/auth/LoginController.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/provider/AbstractAuthenticationProvider.java` (`createOnlineTicket`)
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/provider/impl/NormalAuthenticationProvider.java` — remove SM2 decrypt if present
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/dto/LoginConfigDto.java` — secret fields optional/nullable
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/controller/auth/LoginController.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/provider/AbstractAuthenticationProvider.java` (`createOnlineTicket`)
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/provider/impl/NormalAuthenticationProvider.java` — remove SM2 decrypt if present
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/dto/LoginConfigDto.java` — secret fields optional/nullable
 
 - [ ] **Step 1: `/login/get`** — remove `SecretKeyManager` injection and:
 
@@ -226,8 +226,8 @@ sessionManager.create(session.getId(), session);
 ### Task 4: Logout + refresh blacklist
 
 **Files:**
-- Modify: `jinbooks/src/main/java/com/jinbooks/controller/auth/LogoutController.java`
-- Modify: `jinbooks/src/main/java/com/jinbooks/authn/web/AuthTokenRefreshPoint.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/controller/auth/LogoutController.java`
+- Modify: `financial-cloud/src/main/java/com/financial/cloud/authn/web/AuthTokenRefreshPoint.java`
 
 - [ ] **Step 1: Logout**
 
@@ -277,7 +277,7 @@ public Message<String> logout(HttpServletRequest request,
 - [ ] **Step 1: Grep and delete dead types**
 
 ```powershell
-rg "CongressService|SecretKeyManager|TrustedAuthentication|CasTrust|SM2Utils|LoginSecretKey" jinbooks/src/main/java
+rg "CongressService|SecretKeyManager|TrustedAuthentication|CasTrust|SM2Utils|LoginSecretKey" financial-cloud/src/main/java
 ```
 
 - [ ] **Step 2: Delete files + fix compile errors**
@@ -296,7 +296,7 @@ rg "CongressService|SecretKeyManager|TrustedAuthentication|CasTrust|SM2Utils|Log
 - Delete `SessionTimeoutScheduler` auth coupling if it only cleaned dual-track sessions  
 - Remove `isRedis` leftovers already gone
 
-- [ ] **Step 1: Grep `SessionManager` in `jinbooks/src/main/java`**
+- [ ] **Step 1: Grep `SessionManager` in `financial-cloud/src/main/java`**
 - [ ] **Step 2: Remove auth-path injections; leave admin session list as follow-up if broken**
 - [ ] **Step 3: Compile**
 

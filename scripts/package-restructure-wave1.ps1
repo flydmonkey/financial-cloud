@@ -1,7 +1,7 @@
 # Wave 1: voucher domain full stack migration
 $ErrorActionPreference = "Stop"
-$base = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks"
-$resBase = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\resources"
+$base = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks"
+$resBase = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\resources"
 $srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src"
 
 function Ensure-Dir($p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
@@ -27,25 +27,25 @@ $entities = @(
 )
 foreach ($e in $entities) {
     Move-File "$base\entity\voucher\$e" "$base\domain\voucher\$e"
-    Set-Package "$base\domain\voucher\$e" "com.jinbooks.domain.voucher"
+    Set-Package "$base\domain\voucher\$e" "com.financial.cloud.domain.voucher"
 }
 
 # --- dto (dto + vo merged) ---
 Ensure-Dir "$base\dto\voucher"
 Get-ChildItem "$base\entity\voucher\dto\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
     Move-File $_.FullName "$base\dto\voucher\$($_.Name)"
-    Set-Package "$base\dto\voucher\$($_.Name)" "com.jinbooks.dto.voucher"
+    Set-Package "$base\dto\voucher\$($_.Name)" "com.financial.cloud.dto.voucher"
 }
 Get-ChildItem "$base\entity\voucher\vo\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
     Move-File $_.FullName "$base\dto\voucher\$($_.Name)"
-    Set-Package "$base\dto\voucher\$($_.Name)" "com.jinbooks.dto.voucher"
+    Set-Package "$base\dto\voucher\$($_.Name)" "com.financial.cloud.dto.voucher"
 }
 
 # --- controllers ---
 Ensure-Dir "$base\controller\voucher"
 Get-ChildItem "$base\web\voucher\controller\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
     Move-File $_.FullName "$base\controller\voucher\$($_.Name)"
-    Set-Package "$base\controller\voucher\$($_.Name)" "com.jinbooks.controller.voucher"
+    Set-Package "$base\controller\voucher\$($_.Name)" "com.financial.cloud.controller.voucher"
 }
 
 # --- repository mappers ---
@@ -56,7 +56,7 @@ $mappers = @(
 )
 foreach ($m in $mappers) {
     Move-File "$base\persistence\mapper\$m" "$base\repository\voucher\$m"
-    Set-Package "$base\repository\voucher\$m" "com.jinbooks.repository.voucher"
+    Set-Package "$base\repository\voucher\$m" "com.financial.cloud.repository.voucher"
 }
 
 # --- services ---
@@ -66,11 +66,11 @@ $services = @(
 )
 foreach ($s in $services) {
     Move-File "$base\persistence\service\$s" "$base\service\voucher\$s"
-    Set-Package "$base\service\voucher\$s" "com.jinbooks.service.voucher"
+    Set-Package "$base\service\voucher\$s" "com.financial.cloud.service.voucher"
 }
 Get-ChildItem "$base\persistence\service\impl\Voucher*.java" -ErrorAction SilentlyContinue | ForEach-Object {
     Move-File $_.FullName "$base\service\voucher\impl\$($_.Name)"
-    Set-Package "$base\service\voucher\impl\$($_.Name)" "com.jinbooks.service.voucher.impl"
+    Set-Package "$base\service\voucher\impl\$($_.Name)" "com.financial.cloud.service.voucher.impl"
 }
 
 # --- XML ---
@@ -82,20 +82,20 @@ foreach ($x in $xmlFiles) {
     if (Test-Path $src) {
         Move-File $src "$xmlDst\$x"
         $c = [System.IO.File]::ReadAllText("$xmlDst\$x")
-        $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', 'com.jinbooks.repository.voucher.'
+        $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', 'com.financial.cloud.repository.voucher.'
         [System.IO.File]::WriteAllText("$xmlDst\$x", $c)
     }
 }
 
 # --- global import replacements (voucher-specific only) ---
 $replacements = [ordered]@{
-    'com.jinbooks.entity.voucher.dto.'       = 'com.jinbooks.dto.voucher.'
-    'com.jinbooks.entity.voucher.vo.'        = 'com.jinbooks.dto.voucher.'
-    'com.jinbooks.entity.voucher.'           = 'com.jinbooks.domain.voucher.'
-    'com.jinbooks.web.voucher.controller.'   = 'com.jinbooks.controller.voucher.'
-    'com.jinbooks.persistence.mapper.Voucher' = 'com.jinbooks.repository.voucher.Voucher'
-    'com.jinbooks.persistence.service.impl.Voucher' = 'com.jinbooks.service.voucher.impl.Voucher'
-    'com.jinbooks.persistence.service.Voucher' = 'com.jinbooks.service.voucher.Voucher'
+    'com.financial.cloud.entity.voucher.dto.'       = 'com.financial.cloud.dto.voucher.'
+    'com.financial.cloud.entity.voucher.vo.'        = 'com.financial.cloud.dto.voucher.'
+    'com.financial.cloud.entity.voucher.'           = 'com.financial.cloud.domain.voucher.'
+    'com.financial.cloud.web.voucher.controller.'   = 'com.financial.cloud.controller.voucher.'
+    'com.financial.cloud.persistence.mapper.Voucher' = 'com.financial.cloud.repository.voucher.Voucher'
+    'com.financial.cloud.persistence.service.impl.Voucher' = 'com.financial.cloud.service.voucher.impl.Voucher'
+    'com.financial.cloud.persistence.service.Voucher' = 'com.financial.cloud.service.voucher.Voucher'
 }
 
 Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {

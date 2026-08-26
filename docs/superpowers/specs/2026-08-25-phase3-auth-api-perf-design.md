@@ -1,7 +1,7 @@
 # 阶段 3 设计：认证加固 · API 规范化 · 性能收紧
 
 **日期：** 2026-08-25  
-**范围：** 单体模块 `jinbooks/`（Spring Boot 4.1 + JWT 拦截器 + Vue 前端 `jinbooks-ui`）  
+**范围：** 单体模块 `jinbooks/`（Spring Boot 4.1 + JWT 拦截器 + Vue 前端 `financial-cloud-ui`）  
 **状态：** 待用户审阅规格后进入实现计划
 
 ---
@@ -12,7 +12,7 @@
 
 | 支柱 | 现状问题 | 本波目标 |
 |------|----------|----------|
-| 认证 | `JinBooksMvcConfig` 白名单式 `addPathPatterns`，账套/凭证/日记账/报表等核心 API **未拦截** | 默认全部需登录；公开接口显式排除；401 统一 `Message` |
+| 认证 | `FinancialCloudMvcConfig` 白名单式 `addPathPatterns`，账套/凭证/日记账/报表等核心 API **未拦截** | 默认全部需登录；公开接口显式排除；401 统一 `Message` |
 | API | 401/403 为裸 JSON；业务码 `Book*` / `Orgs*` 同用 `500xxx` 重叠；无版本前缀 | 错误体统一；码段收敛；提供 `/api/v1` 规范入口（旧路径兼容） |
 | 性能 | `PageQuery.DEFAULT_PAGE_SIZE = Integer.MAX_VALUE`；凭证批处理循环 `queryById` | 分页上限；批量加载消除 N+1 |
 
@@ -42,7 +42,7 @@
 
 ### 3.1 拦截策略
 
-将 `JinBooksMvcConfig` 从「枚举需登录路径」改为「默认拦截全部 + 排除公开路径」：
+将 `FinancialCloudMvcConfig` 从「枚举需登录路径」改为「默认拦截全部 + 排除公开路径」：
 
 ```java
 registry.addInterceptor(permissionInterceptor)
@@ -79,7 +79,7 @@ registry.addInterceptor(permissionInterceptor)
 
 同步改造 `UnauthorizedEntryPoint` / `RefusedPoint`：若仍保留端点，响应体改为同一 `Message` 结构（403 用 `code: 403`），避免前端双解析路径。
 
-前端 `jinbooks-ui/src/utils/Request.ts` 已处理 `code === 401` 与 `response.status === 401`，无需为本波改协议；仅需回归登录跳转。
+前端 `financial-cloud-ui/src/utils/Request.ts` 已处理 `code === 401` 与 `response.status === 401`，无需为本波改协议；仅需回归登录跳转。
 
 ### 3.3 验收
 
@@ -93,7 +93,7 @@ registry.addInterceptor(permissionInterceptor)
 
 ### 4.1 统一错误体
 
-继续使用 `com.jinbooks.entity.Message` 作为唯一 API 包装：
+继续使用 `com.financial.cloud.entity.Message` 作为唯一 API 包装：
 
 | code | 含义 | 说明 |
 |------|------|------|

@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java"
+$srcRoot = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java"
 $serviceRoot = Join-Path $srcRoot "com\jinbooks\service"
 
 # 1) Transform *ServiceImpl.java -> parent/*Service.java
@@ -9,7 +9,7 @@ Get-ChildItem -Path $serviceRoot -Recurse -Filter "*ServiceImpl.java" | ForEach-
     $oldClass = $implFile.BaseName
     $newClass = $oldClass -replace 'Impl$',''
     $moduleRel = $parentDir.Substring($serviceRoot.Length + 1).Replace('\', '.')
-    $newPackage = "com.jinbooks.service.$moduleRel"
+    $newPackage = "com.financial.cloud.service.$moduleRel"
 
     $content = Get-Content -LiteralPath $implFile.FullName -Raw -Encoding UTF8
     $content = $content -replace 'package com\.jinbooks\.service\.[^;]+\.impl;', "package $newPackage;"
@@ -28,7 +28,7 @@ $resolverImpl = Join-Path $serviceRoot "security\impl\PasswordPolicyMessageResol
 $resolverTarget = Join-Path $serviceRoot "security\PasswordPolicyMessageResolver.java"
 if (Test-Path $resolverImpl) {
     $content = Get-Content -LiteralPath $resolverImpl -Raw -Encoding UTF8
-    $content = $content -replace 'package com\.jinbooks\.service\.security\.impl;', 'package com.jinbooks.service.security;'
+    $content = $content -replace 'package com\.jinbooks\.service\.security\.impl;', 'package com.financial.cloud.service.security;'
     Set-Content -LiteralPath $resolverTarget -Value $content -Encoding UTF8 -NoNewline
     Remove-Item -LiteralPath $resolverImpl -Force
     Write-Host "moved PasswordPolicyMessageResolver"
@@ -61,7 +61,7 @@ Get-ChildItem -Path $serviceRoot -Recurse -Directory -Filter "impl" | Sort-Objec
 
 # 5) Update references across source tree
 $javaFiles = Get-ChildItem -Path (Join-Path $srcRoot "com\jinbooks") -Recurse -Filter "*.java"
-$testRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\test\java"
+$testRoot = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\test\java"
 if (Test-Path $testRoot) {
     $javaFiles += Get-ChildItem -Path $testRoot -Recurse -Filter "*.java"
 }
@@ -69,8 +69,8 @@ if (Test-Path $testRoot) {
 foreach ($file in $javaFiles) {
     $content = Get-Content -LiteralPath $file.FullName -Raw -Encoding UTF8
     $original = $content
-    $content = $content -replace 'com\.jinbooks\.service\.([^.]+)\.impl\.(\w+)ServiceImpl', 'com.jinbooks.service.$1.$2Service'
-    $content = $content -replace 'com\.jinbooks\.service\.security\.impl\.PasswordPolicyMessageResolver', 'com.jinbooks.service.security.PasswordPolicyMessageResolver'
+    $content = $content -replace 'com\.jinbooks\.service\.([^.]+)\.impl\.(\w+)ServiceImpl', 'com.financial.cloud.service.$1.$2Service'
+    $content = $content -replace 'com\.jinbooks\.service\.security\.impl\.PasswordPolicyMessageResolver', 'com.financial.cloud.service.security.PasswordPolicyMessageResolver'
     $content = $content -replace '(?m)^import com\.jinbooks\.service\.config\.ConfigService;\r?\n', ''
     $content = $content -replace 'ConfigSysServiceImpl', 'ConfigSysService'
     $content = $content -replace 'PasswordPolicyValidatorServiceImpl', 'PasswordPolicyValidatorService'

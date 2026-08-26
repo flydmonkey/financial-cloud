@@ -48,7 +48,7 @@ release_frontend.bat
 **/out/*
 
 
-jinbooks-ui/package-lock.json
-jinbooks-ui/yarn.lock
+financial-cloud-ui/package-lock.json
+financial-cloud-ui/yarn.lock
 package-lock.json
 

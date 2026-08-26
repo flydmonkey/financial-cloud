@@ -1,0 +1,174 @@
+package com.financial.cloud.controller.idm;
+
+
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.financial.cloud.authn.annotation.CurrentUser;
+import com.financial.cloud.authn.support.AuthorizationUtils;
+import com.financial.cloud.constants.ConstsAct;
+import com.financial.cloud.constants.ConstsActResult;
+import com.financial.cloud.constants.ConstsEntryType;
+import com.financial.cloud.constants.ConstsRoles;
+import com.financial.cloud.common.ExcelImport;
+import com.financial.cloud.common.Message;
+import com.financial.cloud.domain.idm.Organizations;
+import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.dto.idm.OrgPageDto;
+import com.financial.cloud.service.history.HistorySystemLogsService;
+import com.financial.cloud.service.idm.OrganizationsExcelService;
+import com.financial.cloud.service.idm.OrganizationsService;
+import com.financial.cloud.validation.AddGroup;
+import com.financial.cloud.validation.EditGroup;
+
+import cn.hutool.core.lang.tree.Tree;
+import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.HttpServletResponse;
+
+
+@RequiredArgsConstructor
+@Slf4j
+@RestController
+@RequestMapping({"/api/orgs"})
+public class OrganizationsController {
+
+    private final OrganizationsService organizationsService;
+
+    private final OrganizationsExcelService organizationsExcelService;
+
+    private final HistorySystemLogsService historySystemLogsService;
+
+    private final IdentifierGenerator identifierGenerator;
+
+    @GetMapping(value = {"/fetch"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<Page<Organizations>> fetch(OrgPageDto dto, @CurrentUser UserInfo currentUser) {
+        dto.setBookId(currentUser.getBookId());
+        return organizationsService.pageList(dto);
+    }
+
+    @GetMapping(value = {"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<List<Organizations>> query(@ModelAttribute Organizations org, @CurrentUser UserInfo currentUser) {
+        log.debug("-query  {}", org);
+        LambdaQueryWrapper<Organizations> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Organizations::getBookId, currentUser.getBookId());
+        List<Organizations> orgList = organizationsService.list(wrapper);
+        if (orgList != null) {
+            return new Message<>(Message.SUCCESS, orgList);
+        } else {
+            return new Message<>(Message.FAIL);
+        }
+    }
+
+    @GetMapping(value = {"/get/{id}"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<Organizations> get(@PathVariable("id") String id) {
+        Organizations org = organizationsService.getById(id);
+        return new Message<>(org);
+    }
+
+    @PostMapping(value = {"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<Organizations> insert(@Validated(value = AddGroup.class)
+                                         @RequestBody Organizations org, @CurrentUser UserInfo currentUser) {
+        log.debug("-Add  : {}", org);
+        org.setBookId(currentUser.getBookId());
+        if (organizationsService.saveOneOrg(org)) {
+            historySystemLogsService.log(
+                    ConstsEntryType.ORGANIZATION,
+                    org,
+                    ConstsAct.CREATE,
+                    ConstsActResult.SUCCESS,
+                    currentUser);
+            return new Message<>(Message.SUCCESS, org);
+        } else {
+            return new Message<>(Message.FAIL);
+        }
+    }
+
+    @PutMapping(value = {"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<Organizations> update(@Validated(value = EditGroup.class)
+                                         @RequestBody Organizations org,
+                                         @CurrentUser UserInfo currentUser) {
+        log.debug("-update  : {}", org);
+        org.setBookId(currentUser.getBookId());
+        if (organizationsService.updateOneOrg(org)) {
+            historySystemLogsService.log(
+                    ConstsEntryType.ORGANIZATION,
+                    org,
+                    ConstsAct.UPDATE,
+                    ConstsActResult.SUCCESS,
+                    currentUser);
+            return new Message<>(Message.SUCCESS);
+        } else {
+            return new Message<>(Message.FAIL);
+        }
+    }
+
+    @DeleteMapping(value = {"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<Organizations> delete(@RequestParam("ids") List<String> ids, @CurrentUser UserInfo currentUser) {
+        log.debug("-delete  ids : {} ", ids);
+        if (organizationsService.removeByIds(ids)) {
+            historySystemLogsService.log(
+                    ConstsEntryType.ORGANIZATION,
+                    ids,
+                    ConstsAct.DELETE,
+                    ConstsActResult.SUCCESS,
+                    currentUser);
+            return new Message<>(Message.SUCCESS);
+        } else {
+            return new Message<>(Message.FAIL);
+        }
+    }
+
+    @GetMapping(value = {"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public Message<List<Tree<String>>> tree(@ModelAttribute Organizations organization, @CurrentUser UserInfo currentUser) {
+        log.debug("-query  {}", organization);
+        organization.setBookId(currentUser.getBookId());
+
+        if (AuthorizationUtils.getAuthentication().getAuthorities().contains(ConstsRoles.ROLE_MANAGER)) {
+            log.debug("Has ROLE_MANAGERS {}", currentUser.getId());
+            organization.setGradingUserId(currentUser.getId());
+        }
+
+        List<Tree<String>> tree = organizationsService.tree(organization);
+        return new Message<>(Message.SUCCESS, tree);
+
+    }
+
+    @RequestMapping(value = "/api/import")
+    public Message<Organizations> importingOrganizations(
+            @ModelAttribute("excelImportFile") ExcelImport excelImportFile,
+            @CurrentUser UserInfo currentUser) {
+        if (excelImportFile.isExcelNotEmpty()) {
+        	organizationsExcelService.importFromExcel(excelImportFile,currentUser);
+        }
+
+        return new Message<>(Message.FAIL);
+
+    }
+
+    @GetMapping(value = "/export/{type}")
+    public void exportOrganizations(@ModelAttribute Organizations organization,
+                                    @PathVariable("type") String type,
+                                    HttpServletResponse response,
+                                    @CurrentUser UserInfo currentUser) {
+    	organization.setBookId(currentUser.getBookId());
+    	organizationsExcelService.exportToExcel(type,organization,response);
+    }
+
+}

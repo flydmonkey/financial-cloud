@@ -1,7 +1,7 @@
 # Wave 5: config + hr + standard + history + report
 $ErrorActionPreference = "Stop"
-$base = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\java\com\jinbooks"
-$resBase = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src\main\resources"
+$base = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\java\com\jinbooks"
+$resBase = "C:\Users\Administrator\Projects\jinbooks\financial-cloud\src\main\resources"
 $srcRoot = "C:\Users\Administrator\Projects\jinbooks\jinbooks\src"
 
 function Ensure-Dir($p) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
@@ -25,7 +25,7 @@ function Move-Xml($name, $domain) {
     Ensure-Dir (Split-Path $dst -Parent)
     Move-Item -Force $src $dst
     $c = [System.IO.File]::ReadAllText($dst)
-    $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', "com.jinbooks.repository.$domain."
+    $c = $c -replace 'com\.jinbooks\.persistence\.mapper\.', "com.financial.cloud.repository.$domain."
     [System.IO.File]::WriteAllText($dst, $c)
     Write-Host "XML -> $domain/$name"
 }
@@ -46,28 +46,28 @@ Ensure-Dir "$base\domain\config"; Ensure-Dir "$base\dto\config"; Ensure-Dir "$ba
 Ensure-Dir "$base\repository\config"; Ensure-Dir "$base\service\config\impl"
 
 foreach ($e in @("ConfigSys.java","ConfigCashFlowBalance.java","ConfigInsuranceFund.java","ConfigPersonalTax.java","ConfigSalaryFormula.java")) {
-    Move-Set "$base\entity\config\$e" "$base\domain\config\$e" "com.jinbooks.domain.config"
+    Move-Set "$base\entity\config\$e" "$base\domain\config\$e" "com.financial.cloud.domain.config"
 }
-Move-Set "$base\entity\Institutions.java" "$base\domain\config\Institutions.java" "com.jinbooks.domain.config"
+Move-Set "$base\entity\Institutions.java" "$base\domain\config\Institutions.java" "com.financial.cloud.domain.config"
 
 Get-ChildItem "$base\entity\config\dto\*.java","$base\entity\config\vo\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\dto\config\$($_.Name)" "com.jinbooks.dto.config"
+    Move-Set $_.FullName "$base\dto\config\$($_.Name)" "com.financial.cloud.dto.config"
 }
-Move-Set "$base\entity\dto\InstitutionsPageDto.java" "$base\dto\config\InstitutionsPageDto.java" "com.jinbooks.dto.config"
-Move-Set "$base\entity\dto\ExpandAttrsPageDto.java" "$base\dto\config\ExpandAttrsPageDto.java" "com.jinbooks.dto.config" # may already be gone
+Move-Set "$base\entity\dto\InstitutionsPageDto.java" "$base\dto\config\InstitutionsPageDto.java" "com.financial.cloud.dto.config"
+Move-Set "$base\entity\dto\ExpandAttrsPageDto.java" "$base\dto\config\ExpandAttrsPageDto.java" "com.financial.cloud.dto.config" # may already be gone
 
 foreach ($c in @("ConfigSysController.java","ConfigCashFlowBalanceController.java","ConfigInsuranceFundController.java","ConfigPersonalTaxController.java","ConfigSalaryFormulaController.java","InstitutionsController.java")) {
-    Move-Set "$base\web\config\controller\$c" "$base\controller\config\$c" "com.jinbooks.controller.config"
+    Move-Set "$base\web\config\controller\$c" "$base\controller\config\$c" "com.financial.cloud.controller.config"
 }
 
 foreach ($m in @("ConfigSysMapper.java","ConfigCashFlowBalanceMapper.java","ConfigInsuranceFundMapper.java","ConfigPersonalTaxMapper.java","ConfigSalaryFormulaMapper.java","InstitutionsMapper.java")) {
-    Move-Set "$base\persistence\mapper\$m" "$base\repository\config\$m" "com.jinbooks.repository.config"
+    Move-Set "$base\persistence\mapper\$m" "$base\repository\config\$m" "com.financial.cloud.repository.config"
 }
 foreach ($s in @("ConfigSysService.java","ConfigService.java","ConfigCashFlowBalanceService.java","ConfigInsuranceFundService.java","ConfigPersonalTaxService.java","ConfigSalaryFormulaService.java","InstitutionsService.java")) {
-    Move-Set "$base\persistence\service\$s" "$base\service\config\$s" "com.jinbooks.service.config"
+    Move-Set "$base\persistence\service\$s" "$base\service\config\$s" "com.financial.cloud.service.config"
 }
 foreach ($i in @("ConfigSysServiceImpl.java","ConfigCashFlowBalanceServiceImpl.java","ConfigInsuranceFundServiceImpl.java","ConfigPersonalTaxServiceImpl.java","ConfigSalaryFormulaServiceImpl.java","InstitutionsServiceImpl.java")) {
-    Move-Set "$base\persistence\service\impl\$i" "$base\service\config\impl\$i" "com.jinbooks.service.config.impl"
+    Move-Set "$base\persistence\service\impl\$i" "$base\service\config\impl\$i" "com.financial.cloud.service.config.impl"
 }
 Move-Xml "InstitutionsMapper.xml" "config"
 
@@ -76,22 +76,22 @@ Ensure-Dir "$base\domain\hr"; Ensure-Dir "$base\dto\hr"; Ensure-Dir "$base\contr
 Ensure-Dir "$base\repository\hr"; Ensure-Dir "$base\service\hr\impl"
 
 Get-ChildItem "$base\entity\hr\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\domain\hr\$($_.Name)" "com.jinbooks.domain.hr"
+    Move-Set $_.FullName "$base\domain\hr\$($_.Name)" "com.financial.cloud.domain.hr"
 }
 Get-ChildItem "$base\entity\hr\dto\*.java","$base\entity\hr\vo\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\dto\hr\$($_.Name)" "com.jinbooks.dto.hr"
+    Move-Set $_.FullName "$base\dto\hr\$($_.Name)" "com.financial.cloud.dto.hr"
 }
 foreach ($c in @("EmployeeController.java","EmployeeSalaryController.java","EmployeeSalarySummaryController.java","EmployeeSalaryTempController.java","EmployeeTaxDeductionController.java")) {
-    Move-Set "$base\web\hr\controller\$c" "$base\controller\hr\$c" "com.jinbooks.controller.hr"
+    Move-Set "$base\web\hr\controller\$c" "$base\controller\hr\$c" "com.financial.cloud.controller.hr"
 }
 foreach ($m in @("EmployeeMapper.java","EmployeeSalaryMapper.java","EmployeeSalarySummaryMapper.java","EmployeeSalaryTempMapper.java","EmployeeTaxDeductionMapper.java")) {
-    Move-Set "$base\persistence\mapper\$m" "$base\repository\hr\$m" "com.jinbooks.repository.hr"
+    Move-Set "$base\persistence\mapper\$m" "$base\repository\hr\$m" "com.financial.cloud.repository.hr"
 }
 foreach ($s in @("EmployeeService.java","EmployeeSalaryService.java","EmployeeSalarySummaryService.java","EmployeeSalaryTempService.java","EmployeeTaxDeductionService.java")) {
-    Move-Set "$base\persistence\service\$s" "$base\service\hr\$s" "com.jinbooks.service.hr"
+    Move-Set "$base\persistence\service\$s" "$base\service\hr\$s" "com.financial.cloud.service.hr"
 }
 foreach ($i in @("EmployeeServiceImpl.java","EmployeeSalaryServiceImpl.java","EmployeeSalarySummaryServiceImpl.java","EmployeeSalaryTempServiceImpl.java","EmployeeTaxDeductionServiceImpl.java")) {
-    Move-Set "$base\persistence\service\impl\$i" "$base\service\hr\impl\$i" "com.jinbooks.service.hr.impl"
+    Move-Set "$base\persistence\service\impl\$i" "$base\service\hr\impl\$i" "com.financial.cloud.service.hr.impl"
 }
 foreach ($x in @("EmployeeMapper.xml","EmployeeSalaryMapper.xml","EmployeeSalarySummaryMapper.xml","EmployeeSalaryTempMapper.xml","EmployeeTaxDeductionMapper.xml")) { Move-Xml $x "hr" }
 
@@ -100,22 +100,22 @@ Ensure-Dir "$base\domain\standard"; Ensure-Dir "$base\dto\standard"; Ensure-Dir 
 Ensure-Dir "$base\repository\standard"; Ensure-Dir "$base\service\standard\impl"
 
 Get-ChildItem "$base\entity\standard\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\domain\standard\$($_.Name)" "com.jinbooks.domain.standard"
+    Move-Set $_.FullName "$base\domain\standard\$($_.Name)" "com.financial.cloud.domain.standard"
 }
 Get-ChildItem "$base\entity\standard\dto\*.java","$base\entity\standard\vo\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\dto\standard\$($_.Name)" "com.jinbooks.dto.standard"
+    Move-Set $_.FullName "$base\dto\standard\$($_.Name)" "com.financial.cloud.dto.standard"
 }
 foreach ($c in @("StandardController.java","StandardSubjectController.java","StandardSubjectCashFlowController.java","StandardStatementBalanceSheetController.java","StandardStatementIncomeController.java")) {
-    Move-Set "$base\web\standard\controller\$c" "$base\controller\standard\$c" "com.jinbooks.controller.standard"
+    Move-Set "$base\web\standard\controller\$c" "$base\controller\standard\$c" "com.financial.cloud.controller.standard"
 }
 foreach ($m in @("StandardMapper.java","StandardSubjectMapper.java","StandardSubjectCashFlowMapper.java","StandardStatementBalanceSheetMapper.java","StandardStatementIncomeMapper.java","StandardStatementRulesMapper.java")) {
-    Move-Set "$base\persistence\mapper\$m" "$base\repository\standard\$m" "com.jinbooks.repository.standard"
+    Move-Set "$base\persistence\mapper\$m" "$base\repository\standard\$m" "com.financial.cloud.repository.standard"
 }
 foreach ($s in @("StandardService.java","StandardSubjectService.java","StandardSubjectCashFlowService.java","StandardStatementBalanceSheetService.java","StandardStatementIncomeService.java")) {
-    Move-Set "$base\persistence\service\$s" "$base\service\standard\$s" "com.jinbooks.service.standard"
+    Move-Set "$base\persistence\service\$s" "$base\service\standard\$s" "com.financial.cloud.service.standard"
 }
 foreach ($i in @("StandardServiceImpl.java","StandardSubjectServiceImpl.java","StandardSubjectCashFlowServiceImpl.java","StandardStatementBalanceSheetServiceImpl.java","StandardStatementIncomeServiceImpl.java")) {
-    Move-Set "$base\persistence\service\impl\$i" "$base\service\standard\impl\$i" "com.jinbooks.service.standard.impl"
+    Move-Set "$base\persistence\service\impl\$i" "$base\service\standard\impl\$i" "com.financial.cloud.service.standard.impl"
 }
 foreach ($x in @("StandardMapper.xml","StandardSubjectMapper.xml","standardSubjectCashFlowMapper.xml","StandardStatementBalanceSheetMapper.xml","StandardStatementRulesMapper.xml")) { Move-Xml $x "standard" }
 
@@ -124,28 +124,28 @@ Ensure-Dir "$base\domain\history"; Ensure-Dir "$base\dto\history"; Ensure-Dir "$
 Ensure-Dir "$base\repository\history"; Ensure-Dir "$base\service\history\impl"
 
 Get-ChildItem "$base\entity\history\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\domain\history\$($_.Name)" "com.jinbooks.domain.history"
+    Move-Set $_.FullName "$base\domain\history\$($_.Name)" "com.financial.cloud.domain.history"
 }
 Get-ChildItem "$base\entity\history\dto\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\dto\history\$($_.Name)" "com.jinbooks.dto.history"
+    Move-Set $_.FullName "$base\dto\history\$($_.Name)" "com.financial.cloud.dto.history"
 }
 # historys web package (with s)
 foreach ($c in @("LoginHistoryController.java","SystemLogsController.java","SynchronizerHistoryController.java","ConnectorHistoryController.java")) {
-    Move-Set "$base\web\historys\controller\$c" "$base\controller\history\$c" "com.jinbooks.controller.history"
+    Move-Set "$base\web\historys\controller\$c" "$base\controller\history\$c" "com.financial.cloud.controller.history"
 }
 # HistorySynchronizerPageDto under web.historys.controller.dto if exists
 Get-ChildItem "$base\web\historys\controller\dto\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\dto\history\$($_.Name)" "com.jinbooks.dto.history"
+    Move-Set $_.FullName "$base\dto\history\$($_.Name)" "com.financial.cloud.dto.history"
 }
 
 foreach ($m in @("HistoryLoginMapper.java","HistoryLoginAppsMapper.java","HistorySystemLogsMapper.java","HistorySynchronizerMapper.java","HistoryConnectorMapper.java")) {
-    Move-Set "$base\persistence\mapper\$m" "$base\repository\history\$m" "com.jinbooks.repository.history"
+    Move-Set "$base\persistence\mapper\$m" "$base\repository\history\$m" "com.financial.cloud.repository.history"
 }
 foreach ($s in @("HistoryLoginService.java","HistorySystemLogsService.java","HistorySynchronizerService.java","HistoryConnectorService.java")) {
-    Move-Set "$base\persistence\service\$s" "$base\service\history\$s" "com.jinbooks.service.history"
+    Move-Set "$base\persistence\service\$s" "$base\service\history\$s" "com.financial.cloud.service.history"
 }
 foreach ($i in @("HistoryLoginServiceImpl.java","HistorySystemLogsServiceImpl.java","HistorySynchronizerServiceImpl.java","HistoryConnectorServiceImpl.java")) {
-    Move-Set "$base\persistence\service\impl\$i" "$base\service\history\impl\$i" "com.jinbooks.service.history.impl"
+    Move-Set "$base\persistence\service\impl\$i" "$base\service\history\impl\$i" "com.financial.cloud.service.history.impl"
 }
 foreach ($x in @("HistoryLoginMapper.xml","HistoryLoginAppsMapper.xml","HistorySystemLogsMapper.xml","HistorySynchronizerMapper.xml","HistoryConnectorMapper.xml")) { Move-Xml $x "history" }
 
@@ -154,126 +154,126 @@ Ensure-Dir "$base\domain\report"; Ensure-Dir "$base\dto\report"; Ensure-Dir "$ba
 Ensure-Dir "$base\repository\report"; Ensure-Dir "$base\service\report\impl"
 
 Get-ChildItem "$base\entity\report\dto\*.java","$base\entity\report\vo\*.java","$base\entity\fund\*.java" -ErrorAction SilentlyContinue | ForEach-Object {
-    Move-Set $_.FullName "$base\dto\report\$($_.Name)" "com.jinbooks.dto.report"
+    Move-Set $_.FullName "$base\dto\report\$($_.Name)" "com.financial.cloud.dto.report"
 }
 # CashFlowSubjectBalanceVo under entity/vo
-Move-Set "$base\entity\vo\CashFlowSubjectBalanceVo.java" "$base\dto\report\CashFlowSubjectBalanceVo.java" "com.jinbooks.dto.report"
+Move-Set "$base\entity\vo\CashFlowSubjectBalanceVo.java" "$base\dto\report\CashFlowSubjectBalanceVo.java" "com.financial.cloud.dto.report"
 
 foreach ($c in @("DashboardController.java","FundDashboardController.java")) {
-    Move-Set "$base\web\controller\$c" "$base\controller\report\$c" "com.jinbooks.controller.report"
+    Move-Set "$base\web\controller\$c" "$base\controller\report\$c" "com.financial.cloud.controller.report"
 }
-Move-Set "$base\persistence\mapper\ReportMapper.java" "$base\repository\report\ReportMapper.java" "com.jinbooks.repository.report"
+Move-Set "$base\persistence\mapper\ReportMapper.java" "$base\repository\report\ReportMapper.java" "com.financial.cloud.repository.report"
 foreach ($s in @("ReportService.java","FundDashboardService.java")) {
-    Move-Set "$base\persistence\service\$s" "$base\service\report\$s" "com.jinbooks.service.report"
+    Move-Set "$base\persistence\service\$s" "$base\service\report\$s" "com.financial.cloud.service.report"
 }
 foreach ($i in @("ReportServiceImpl.java","FundDashboardServiceImpl.java")) {
-    Move-Set "$base\persistence\service\impl\$i" "$base\service\report\impl\$i" "com.jinbooks.service.report.impl"
+    Move-Set "$base\persistence\service\impl\$i" "$base\service\report\impl\$i" "com.financial.cloud.service.report.impl"
 }
 Move-Xml "ReportMapper.xml" "report"
 
 # ========== replacements ==========
 $replacements = [ordered]@{
-    'com.jinbooks.entity.config.dto.' = 'com.jinbooks.dto.config.'
-    'com.jinbooks.entity.config.vo.' = 'com.jinbooks.dto.config.'
-    'com.jinbooks.entity.config.' = 'com.jinbooks.domain.config.'
-    'com.jinbooks.entity.Institutions' = 'com.jinbooks.domain.config.Institutions'
-    'com.jinbooks.entity.dto.InstitutionsPageDto' = 'com.jinbooks.dto.config.InstitutionsPageDto'
-    'com.jinbooks.web.config.controller.' = 'com.jinbooks.controller.config.'
+    'com.financial.cloud.entity.config.dto.' = 'com.financial.cloud.dto.config.'
+    'com.financial.cloud.entity.config.vo.' = 'com.financial.cloud.dto.config.'
+    'com.financial.cloud.entity.config.' = 'com.financial.cloud.domain.config.'
+    'com.financial.cloud.entity.Institutions' = 'com.financial.cloud.domain.config.Institutions'
+    'com.financial.cloud.entity.dto.InstitutionsPageDto' = 'com.financial.cloud.dto.config.InstitutionsPageDto'
+    'com.financial.cloud.web.config.controller.' = 'com.financial.cloud.controller.config.'
 
-    'com.jinbooks.entity.hr.dto.' = 'com.jinbooks.dto.hr.'
-    'com.jinbooks.entity.hr.vo.' = 'com.jinbooks.dto.hr.'
-    'com.jinbooks.entity.hr.' = 'com.jinbooks.domain.hr.'
-    'com.jinbooks.web.hr.controller.' = 'com.jinbooks.controller.hr.'
+    'com.financial.cloud.entity.hr.dto.' = 'com.financial.cloud.dto.hr.'
+    'com.financial.cloud.entity.hr.vo.' = 'com.financial.cloud.dto.hr.'
+    'com.financial.cloud.entity.hr.' = 'com.financial.cloud.domain.hr.'
+    'com.financial.cloud.web.hr.controller.' = 'com.financial.cloud.controller.hr.'
 
-    'com.jinbooks.entity.standard.dto.' = 'com.jinbooks.dto.standard.'
-    'com.jinbooks.entity.standard.vo.' = 'com.jinbooks.dto.standard.'
-    'com.jinbooks.entity.standard.' = 'com.jinbooks.domain.standard.'
-    'com.jinbooks.web.standard.controller.' = 'com.jinbooks.controller.standard.'
+    'com.financial.cloud.entity.standard.dto.' = 'com.financial.cloud.dto.standard.'
+    'com.financial.cloud.entity.standard.vo.' = 'com.financial.cloud.dto.standard.'
+    'com.financial.cloud.entity.standard.' = 'com.financial.cloud.domain.standard.'
+    'com.financial.cloud.web.standard.controller.' = 'com.financial.cloud.controller.standard.'
 
-    'com.jinbooks.entity.history.dto.' = 'com.jinbooks.dto.history.'
-    'com.jinbooks.entity.history.' = 'com.jinbooks.domain.history.'
-    'com.jinbooks.web.historys.controller.dto.' = 'com.jinbooks.dto.history.'
-    'com.jinbooks.web.historys.controller.' = 'com.jinbooks.controller.history.'
+    'com.financial.cloud.entity.history.dto.' = 'com.financial.cloud.dto.history.'
+    'com.financial.cloud.entity.history.' = 'com.financial.cloud.domain.history.'
+    'com.financial.cloud.web.historys.controller.dto.' = 'com.financial.cloud.dto.history.'
+    'com.financial.cloud.web.historys.controller.' = 'com.financial.cloud.controller.history.'
 
-    'com.jinbooks.entity.report.dto.' = 'com.jinbooks.dto.report.'
-    'com.jinbooks.entity.report.vo.' = 'com.jinbooks.dto.report.'
-    'com.jinbooks.entity.fund.' = 'com.jinbooks.dto.report.'
-    'com.jinbooks.entity.vo.CashFlowSubjectBalanceVo' = 'com.jinbooks.dto.report.CashFlowSubjectBalanceVo'
-    'com.jinbooks.web.controller.DashboardController' = 'com.jinbooks.controller.report.DashboardController'
-    'com.jinbooks.web.controller.FundDashboardController' = 'com.jinbooks.controller.report.FundDashboardController'
+    'com.financial.cloud.entity.report.dto.' = 'com.financial.cloud.dto.report.'
+    'com.financial.cloud.entity.report.vo.' = 'com.financial.cloud.dto.report.'
+    'com.financial.cloud.entity.fund.' = 'com.financial.cloud.dto.report.'
+    'com.financial.cloud.entity.vo.CashFlowSubjectBalanceVo' = 'com.financial.cloud.dto.report.CashFlowSubjectBalanceVo'
+    'com.financial.cloud.web.controller.DashboardController' = 'com.financial.cloud.controller.report.DashboardController'
+    'com.financial.cloud.web.controller.FundDashboardController' = 'com.financial.cloud.controller.report.FundDashboardController'
 
     # mappers longest first
-    'com.jinbooks.persistence.mapper.ConfigCashFlowBalance' = 'com.jinbooks.repository.config.ConfigCashFlowBalance'
-    'com.jinbooks.persistence.mapper.ConfigInsuranceFund' = 'com.jinbooks.repository.config.ConfigInsuranceFund'
-    'com.jinbooks.persistence.mapper.ConfigPersonalTax' = 'com.jinbooks.repository.config.ConfigPersonalTax'
-    'com.jinbooks.persistence.mapper.ConfigSalaryFormula' = 'com.jinbooks.repository.config.ConfigSalaryFormula'
-    'com.jinbooks.persistence.mapper.ConfigSys' = 'com.jinbooks.repository.config.ConfigSys'
-    'com.jinbooks.persistence.mapper.Institutions' = 'com.jinbooks.repository.config.Institutions'
-    'com.jinbooks.persistence.mapper.EmployeeSalarySummary' = 'com.jinbooks.repository.hr.EmployeeSalarySummary'
-    'com.jinbooks.persistence.mapper.EmployeeSalaryTemp' = 'com.jinbooks.repository.hr.EmployeeSalaryTemp'
-    'com.jinbooks.persistence.mapper.EmployeeTaxDeduction' = 'com.jinbooks.repository.hr.EmployeeTaxDeduction'
-    'com.jinbooks.persistence.mapper.EmployeeSalary' = 'com.jinbooks.repository.hr.EmployeeSalary'
-    'com.jinbooks.persistence.mapper.Employee' = 'com.jinbooks.repository.hr.Employee'
-    'com.jinbooks.persistence.mapper.StandardSubjectCashFlow' = 'com.jinbooks.repository.standard.StandardSubjectCashFlow'
-    'com.jinbooks.persistence.mapper.StandardSubject' = 'com.jinbooks.repository.standard.StandardSubject'
-    'com.jinbooks.persistence.mapper.StandardStatementBalanceSheet' = 'com.jinbooks.repository.standard.StandardStatementBalanceSheet'
-    'com.jinbooks.persistence.mapper.StandardStatementIncome' = 'com.jinbooks.repository.standard.StandardStatementIncome'
-    'com.jinbooks.persistence.mapper.StandardStatementRules' = 'com.jinbooks.repository.standard.StandardStatementRules'
-    'com.jinbooks.persistence.mapper.Standard' = 'com.jinbooks.repository.standard.Standard'
-    'com.jinbooks.persistence.mapper.HistoryLoginApps' = 'com.jinbooks.repository.history.HistoryLoginApps'
-    'com.jinbooks.persistence.mapper.HistoryLogin' = 'com.jinbooks.repository.history.HistoryLogin'
-    'com.jinbooks.persistence.mapper.HistorySystemLogs' = 'com.jinbooks.repository.history.HistorySystemLogs'
-    'com.jinbooks.persistence.mapper.HistorySynchronizer' = 'com.jinbooks.repository.history.HistorySynchronizer'
-    'com.jinbooks.persistence.mapper.HistoryConnector' = 'com.jinbooks.repository.history.HistoryConnector'
-    'com.jinbooks.persistence.mapper.Report' = 'com.jinbooks.repository.report.Report'
+    'com.financial.cloud.persistence.mapper.ConfigCashFlowBalance' = 'com.financial.cloud.repository.config.ConfigCashFlowBalance'
+    'com.financial.cloud.persistence.mapper.ConfigInsuranceFund' = 'com.financial.cloud.repository.config.ConfigInsuranceFund'
+    'com.financial.cloud.persistence.mapper.ConfigPersonalTax' = 'com.financial.cloud.repository.config.ConfigPersonalTax'
+    'com.financial.cloud.persistence.mapper.ConfigSalaryFormula' = 'com.financial.cloud.repository.config.ConfigSalaryFormula'
+    'com.financial.cloud.persistence.mapper.ConfigSys' = 'com.financial.cloud.repository.config.ConfigSys'
+    'com.financial.cloud.persistence.mapper.Institutions' = 'com.financial.cloud.repository.config.Institutions'
+    'com.financial.cloud.persistence.mapper.EmployeeSalarySummary' = 'com.financial.cloud.repository.hr.EmployeeSalarySummary'
+    'com.financial.cloud.persistence.mapper.EmployeeSalaryTemp' = 'com.financial.cloud.repository.hr.EmployeeSalaryTemp'
+    'com.financial.cloud.persistence.mapper.EmployeeTaxDeduction' = 'com.financial.cloud.repository.hr.EmployeeTaxDeduction'
+    'com.financial.cloud.persistence.mapper.EmployeeSalary' = 'com.financial.cloud.repository.hr.EmployeeSalary'
+    'com.financial.cloud.persistence.mapper.Employee' = 'com.financial.cloud.repository.hr.Employee'
+    'com.financial.cloud.persistence.mapper.StandardSubjectCashFlow' = 'com.financial.cloud.repository.standard.StandardSubjectCashFlow'
+    'com.financial.cloud.persistence.mapper.StandardSubject' = 'com.financial.cloud.repository.standard.StandardSubject'
+    'com.financial.cloud.persistence.mapper.StandardStatementBalanceSheet' = 'com.financial.cloud.repository.standard.StandardStatementBalanceSheet'
+    'com.financial.cloud.persistence.mapper.StandardStatementIncome' = 'com.financial.cloud.repository.standard.StandardStatementIncome'
+    'com.financial.cloud.persistence.mapper.StandardStatementRules' = 'com.financial.cloud.repository.standard.StandardStatementRules'
+    'com.financial.cloud.persistence.mapper.Standard' = 'com.financial.cloud.repository.standard.Standard'
+    'com.financial.cloud.persistence.mapper.HistoryLoginApps' = 'com.financial.cloud.repository.history.HistoryLoginApps'
+    'com.financial.cloud.persistence.mapper.HistoryLogin' = 'com.financial.cloud.repository.history.HistoryLogin'
+    'com.financial.cloud.persistence.mapper.HistorySystemLogs' = 'com.financial.cloud.repository.history.HistorySystemLogs'
+    'com.financial.cloud.persistence.mapper.HistorySynchronizer' = 'com.financial.cloud.repository.history.HistorySynchronizer'
+    'com.financial.cloud.persistence.mapper.HistoryConnector' = 'com.financial.cloud.repository.history.HistoryConnector'
+    'com.financial.cloud.persistence.mapper.Report' = 'com.financial.cloud.repository.report.Report'
 
     # services
-    'com.jinbooks.persistence.service.impl.ConfigCashFlowBalance' = 'com.jinbooks.service.config.impl.ConfigCashFlowBalance'
-    'com.jinbooks.persistence.service.impl.ConfigInsuranceFund' = 'com.jinbooks.service.config.impl.ConfigInsuranceFund'
-    'com.jinbooks.persistence.service.impl.ConfigPersonalTax' = 'com.jinbooks.service.config.impl.ConfigPersonalTax'
-    'com.jinbooks.persistence.service.impl.ConfigSalaryFormula' = 'com.jinbooks.service.config.impl.ConfigSalaryFormula'
-    'com.jinbooks.persistence.service.impl.ConfigSys' = 'com.jinbooks.service.config.impl.ConfigSys'
-    'com.jinbooks.persistence.service.impl.Institutions' = 'com.jinbooks.service.config.impl.Institutions'
-    'com.jinbooks.persistence.service.impl.EmployeeSalarySummary' = 'com.jinbooks.service.hr.impl.EmployeeSalarySummary'
-    'com.jinbooks.persistence.service.impl.EmployeeSalaryTemp' = 'com.jinbooks.service.hr.impl.EmployeeSalaryTemp'
-    'com.jinbooks.persistence.service.impl.EmployeeTaxDeduction' = 'com.jinbooks.service.hr.impl.EmployeeTaxDeduction'
-    'com.jinbooks.persistence.service.impl.EmployeeSalary' = 'com.jinbooks.service.hr.impl.EmployeeSalary'
-    'com.jinbooks.persistence.service.impl.Employee' = 'com.jinbooks.service.hr.impl.Employee'
-    'com.jinbooks.persistence.service.impl.StandardSubjectCashFlow' = 'com.jinbooks.service.standard.impl.StandardSubjectCashFlow'
-    'com.jinbooks.persistence.service.impl.StandardSubject' = 'com.jinbooks.service.standard.impl.StandardSubject'
-    'com.jinbooks.persistence.service.impl.StandardStatementBalanceSheet' = 'com.jinbooks.service.standard.impl.StandardStatementBalanceSheet'
-    'com.jinbooks.persistence.service.impl.StandardStatementIncome' = 'com.jinbooks.service.standard.impl.StandardStatementIncome'
-    'com.jinbooks.persistence.service.impl.Standard' = 'com.jinbooks.service.standard.impl.Standard'
-    'com.jinbooks.persistence.service.impl.HistoryLogin' = 'com.jinbooks.service.history.impl.HistoryLogin'
-    'com.jinbooks.persistence.service.impl.HistorySystemLogs' = 'com.jinbooks.service.history.impl.HistorySystemLogs'
-    'com.jinbooks.persistence.service.impl.HistorySynchronizer' = 'com.jinbooks.service.history.impl.HistorySynchronizer'
-    'com.jinbooks.persistence.service.impl.HistoryConnector' = 'com.jinbooks.service.history.impl.HistoryConnector'
-    'com.jinbooks.persistence.service.impl.FundDashboard' = 'com.jinbooks.service.report.impl.FundDashboard'
-    'com.jinbooks.persistence.service.impl.Report' = 'com.jinbooks.service.report.impl.Report'
+    'com.financial.cloud.persistence.service.impl.ConfigCashFlowBalance' = 'com.financial.cloud.service.config.impl.ConfigCashFlowBalance'
+    'com.financial.cloud.persistence.service.impl.ConfigInsuranceFund' = 'com.financial.cloud.service.config.impl.ConfigInsuranceFund'
+    'com.financial.cloud.persistence.service.impl.ConfigPersonalTax' = 'com.financial.cloud.service.config.impl.ConfigPersonalTax'
+    'com.financial.cloud.persistence.service.impl.ConfigSalaryFormula' = 'com.financial.cloud.service.config.impl.ConfigSalaryFormula'
+    'com.financial.cloud.persistence.service.impl.ConfigSys' = 'com.financial.cloud.service.config.impl.ConfigSys'
+    'com.financial.cloud.persistence.service.impl.Institutions' = 'com.financial.cloud.service.config.impl.Institutions'
+    'com.financial.cloud.persistence.service.impl.EmployeeSalarySummary' = 'com.financial.cloud.service.hr.impl.EmployeeSalarySummary'
+    'com.financial.cloud.persistence.service.impl.EmployeeSalaryTemp' = 'com.financial.cloud.service.hr.impl.EmployeeSalaryTemp'
+    'com.financial.cloud.persistence.service.impl.EmployeeTaxDeduction' = 'com.financial.cloud.service.hr.impl.EmployeeTaxDeduction'
+    'com.financial.cloud.persistence.service.impl.EmployeeSalary' = 'com.financial.cloud.service.hr.impl.EmployeeSalary'
+    'com.financial.cloud.persistence.service.impl.Employee' = 'com.financial.cloud.service.hr.impl.Employee'
+    'com.financial.cloud.persistence.service.impl.StandardSubjectCashFlow' = 'com.financial.cloud.service.standard.impl.StandardSubjectCashFlow'
+    'com.financial.cloud.persistence.service.impl.StandardSubject' = 'com.financial.cloud.service.standard.impl.StandardSubject'
+    'com.financial.cloud.persistence.service.impl.StandardStatementBalanceSheet' = 'com.financial.cloud.service.standard.impl.StandardStatementBalanceSheet'
+    'com.financial.cloud.persistence.service.impl.StandardStatementIncome' = 'com.financial.cloud.service.standard.impl.StandardStatementIncome'
+    'com.financial.cloud.persistence.service.impl.Standard' = 'com.financial.cloud.service.standard.impl.Standard'
+    'com.financial.cloud.persistence.service.impl.HistoryLogin' = 'com.financial.cloud.service.history.impl.HistoryLogin'
+    'com.financial.cloud.persistence.service.impl.HistorySystemLogs' = 'com.financial.cloud.service.history.impl.HistorySystemLogs'
+    'com.financial.cloud.persistence.service.impl.HistorySynchronizer' = 'com.financial.cloud.service.history.impl.HistorySynchronizer'
+    'com.financial.cloud.persistence.service.impl.HistoryConnector' = 'com.financial.cloud.service.history.impl.HistoryConnector'
+    'com.financial.cloud.persistence.service.impl.FundDashboard' = 'com.financial.cloud.service.report.impl.FundDashboard'
+    'com.financial.cloud.persistence.service.impl.Report' = 'com.financial.cloud.service.report.impl.Report'
 
-    'com.jinbooks.persistence.service.ConfigCashFlowBalance' = 'com.jinbooks.service.config.ConfigCashFlowBalance'
-    'com.jinbooks.persistence.service.ConfigInsuranceFund' = 'com.jinbooks.service.config.ConfigInsuranceFund'
-    'com.jinbooks.persistence.service.ConfigPersonalTax' = 'com.jinbooks.service.config.ConfigPersonalTax'
-    'com.jinbooks.persistence.service.ConfigSalaryFormula' = 'com.jinbooks.service.config.ConfigSalaryFormula'
-    'com.jinbooks.persistence.service.ConfigSys' = 'com.jinbooks.service.config.ConfigSys'
-    'com.jinbooks.persistence.service.ConfigService' = 'com.jinbooks.service.config.ConfigService'
-    'com.jinbooks.persistence.service.Institutions' = 'com.jinbooks.service.config.Institutions'
-    'com.jinbooks.persistence.service.EmployeeSalarySummary' = 'com.jinbooks.service.hr.EmployeeSalarySummary'
-    'com.jinbooks.persistence.service.EmployeeSalaryTemp' = 'com.jinbooks.service.hr.EmployeeSalaryTemp'
-    'com.jinbooks.persistence.service.EmployeeTaxDeduction' = 'com.jinbooks.service.hr.EmployeeTaxDeduction'
-    'com.jinbooks.persistence.service.EmployeeSalary' = 'com.jinbooks.service.hr.EmployeeSalary'
-    'com.jinbooks.persistence.service.Employee' = 'com.jinbooks.service.hr.Employee'
-    'com.jinbooks.persistence.service.StandardSubjectCashFlow' = 'com.jinbooks.service.standard.StandardSubjectCashFlow'
-    'com.jinbooks.persistence.service.StandardSubject' = 'com.jinbooks.service.standard.StandardSubject'
-    'com.jinbooks.persistence.service.StandardStatementBalanceSheet' = 'com.jinbooks.service.standard.StandardStatementBalanceSheet'
-    'com.jinbooks.persistence.service.StandardStatementIncome' = 'com.jinbooks.service.standard.StandardStatementIncome'
-    'com.jinbooks.persistence.service.Standard' = 'com.jinbooks.service.standard.Standard'
-    'com.jinbooks.persistence.service.HistoryLogin' = 'com.jinbooks.service.history.HistoryLogin'
-    'com.jinbooks.persistence.service.HistorySystemLogs' = 'com.jinbooks.service.history.HistorySystemLogs'
-    'com.jinbooks.persistence.service.HistorySynchronizer' = 'com.jinbooks.service.history.HistorySynchronizer'
-    'com.jinbooks.persistence.service.HistoryConnector' = 'com.jinbooks.service.history.HistoryConnector'
-    'com.jinbooks.persistence.service.FundDashboard' = 'com.jinbooks.service.report.FundDashboard'
-    'com.jinbooks.persistence.service.Report' = 'com.jinbooks.service.report.Report'
+    'com.financial.cloud.persistence.service.ConfigCashFlowBalance' = 'com.financial.cloud.service.config.ConfigCashFlowBalance'
+    'com.financial.cloud.persistence.service.ConfigInsuranceFund' = 'com.financial.cloud.service.config.ConfigInsuranceFund'
+    'com.financial.cloud.persistence.service.ConfigPersonalTax' = 'com.financial.cloud.service.config.ConfigPersonalTax'
+    'com.financial.cloud.persistence.service.ConfigSalaryFormula' = 'com.financial.cloud.service.config.ConfigSalaryFormula'
+    'com.financial.cloud.persistence.service.ConfigSys' = 'com.financial.cloud.service.config.ConfigSys'
+    'com.financial.cloud.persistence.service.ConfigService' = 'com.financial.cloud.service.config.ConfigService'
+    'com.financial.cloud.persistence.service.Institutions' = 'com.financial.cloud.service.config.Institutions'
+    'com.financial.cloud.persistence.service.EmployeeSalarySummary' = 'com.financial.cloud.service.hr.EmployeeSalarySummary'
+    'com.financial.cloud.persistence.service.EmployeeSalaryTemp' = 'com.financial.cloud.service.hr.EmployeeSalaryTemp'
+    'com.financial.cloud.persistence.service.EmployeeTaxDeduction' = 'com.financial.cloud.service.hr.EmployeeTaxDeduction'
+    'com.financial.cloud.persistence.service.EmployeeSalary' = 'com.financial.cloud.service.hr.EmployeeSalary'
+    'com.financial.cloud.persistence.service.Employee' = 'com.financial.cloud.service.hr.Employee'
+    'com.financial.cloud.persistence.service.StandardSubjectCashFlow' = 'com.financial.cloud.service.standard.StandardSubjectCashFlow'
+    'com.financial.cloud.persistence.service.StandardSubject' = 'com.financial.cloud.service.standard.StandardSubject'
+    'com.financial.cloud.persistence.service.StandardStatementBalanceSheet' = 'com.financial.cloud.service.standard.StandardStatementBalanceSheet'
+    'com.financial.cloud.persistence.service.StandardStatementIncome' = 'com.financial.cloud.service.standard.StandardStatementIncome'
+    'com.financial.cloud.persistence.service.Standard' = 'com.financial.cloud.service.standard.Standard'
+    'com.financial.cloud.persistence.service.HistoryLogin' = 'com.financial.cloud.service.history.HistoryLogin'
+    'com.financial.cloud.persistence.service.HistorySystemLogs' = 'com.financial.cloud.service.history.HistorySystemLogs'
+    'com.financial.cloud.persistence.service.HistorySynchronizer' = 'com.financial.cloud.service.history.HistorySynchronizer'
+    'com.financial.cloud.persistence.service.HistoryConnector' = 'com.financial.cloud.service.history.HistoryConnector'
+    'com.financial.cloud.persistence.service.FundDashboard' = 'com.financial.cloud.service.report.FundDashboard'
+    'com.financial.cloud.persistence.service.Report' = 'com.financial.cloud.service.report.Report'
 }
 
 Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
@@ -284,53 +284,53 @@ Get-ChildItem -Path $srcRoot -Recurse -Include *.java,*.xml | ForEach-Object {
 }
 
 $symbols = [ordered]@{
-    'ConfigSysService'='import com.jinbooks.service.config.ConfigSysService;'
-    'ConfigService'='import com.jinbooks.service.config.ConfigService;'
-    'ConfigCashFlowBalanceService'='import com.jinbooks.service.config.ConfigCashFlowBalanceService;'
-    'ConfigInsuranceFundService'='import com.jinbooks.service.config.ConfigInsuranceFundService;'
-    'ConfigPersonalTaxService'='import com.jinbooks.service.config.ConfigPersonalTaxService;'
-    'ConfigSalaryFormulaService'='import com.jinbooks.service.config.ConfigSalaryFormulaService;'
-    'InstitutionsService'='import com.jinbooks.service.config.InstitutionsService;'
-    'InstitutionsServiceImpl'='import com.jinbooks.service.config.impl.InstitutionsServiceImpl;'
-    'ConfigSysMapper'='import com.jinbooks.repository.config.ConfigSysMapper;'
-    'ConfigCashFlowBalanceMapper'='import com.jinbooks.repository.config.ConfigCashFlowBalanceMapper;'
-    'ConfigInsuranceFundMapper'='import com.jinbooks.repository.config.ConfigInsuranceFundMapper;'
-    'ConfigPersonalTaxMapper'='import com.jinbooks.repository.config.ConfigPersonalTaxMapper;'
-    'ConfigSalaryFormulaMapper'='import com.jinbooks.repository.config.ConfigSalaryFormulaMapper;'
-    'InstitutionsMapper'='import com.jinbooks.repository.config.InstitutionsMapper;'
-    'EmployeeService'='import com.jinbooks.service.hr.EmployeeService;'
-    'EmployeeSalaryService'='import com.jinbooks.service.hr.EmployeeSalaryService;'
-    'EmployeeSalarySummaryService'='import com.jinbooks.service.hr.EmployeeSalarySummaryService;'
-    'EmployeeSalaryTempService'='import com.jinbooks.service.hr.EmployeeSalaryTempService;'
-    'EmployeeTaxDeductionService'='import com.jinbooks.service.hr.EmployeeTaxDeductionService;'
-    'EmployeeMapper'='import com.jinbooks.repository.hr.EmployeeMapper;'
-    'EmployeeSalaryMapper'='import com.jinbooks.repository.hr.EmployeeSalaryMapper;'
-    'EmployeeSalarySummaryMapper'='import com.jinbooks.repository.hr.EmployeeSalarySummaryMapper;'
-    'EmployeeSalaryTempMapper'='import com.jinbooks.repository.hr.EmployeeSalaryTempMapper;'
-    'EmployeeTaxDeductionMapper'='import com.jinbooks.repository.hr.EmployeeTaxDeductionMapper;'
-    'StandardService'='import com.jinbooks.service.standard.StandardService;'
-    'StandardSubjectService'='import com.jinbooks.service.standard.StandardSubjectService;'
-    'StandardSubjectCashFlowService'='import com.jinbooks.service.standard.StandardSubjectCashFlowService;'
-    'StandardStatementBalanceSheetService'='import com.jinbooks.service.standard.StandardStatementBalanceSheetService;'
-    'StandardStatementIncomeService'='import com.jinbooks.service.standard.StandardStatementIncomeService;'
-    'StandardMapper'='import com.jinbooks.repository.standard.StandardMapper;'
-    'StandardSubjectMapper'='import com.jinbooks.repository.standard.StandardSubjectMapper;'
-    'StandardSubjectCashFlowMapper'='import com.jinbooks.repository.standard.StandardSubjectCashFlowMapper;'
-    'StandardStatementBalanceSheetMapper'='import com.jinbooks.repository.standard.StandardStatementBalanceSheetMapper;'
-    'StandardStatementIncomeMapper'='import com.jinbooks.repository.standard.StandardStatementIncomeMapper;'
-    'StandardStatementRulesMapper'='import com.jinbooks.repository.standard.StandardStatementRulesMapper;'
-    'HistoryLoginService'='import com.jinbooks.service.history.HistoryLoginService;'
-    'HistorySystemLogsService'='import com.jinbooks.service.history.HistorySystemLogsService;'
-    'HistorySynchronizerService'='import com.jinbooks.service.history.HistorySynchronizerService;'
-    'HistoryConnectorService'='import com.jinbooks.service.history.HistoryConnectorService;'
-    'HistoryLoginMapper'='import com.jinbooks.repository.history.HistoryLoginMapper;'
-    'HistoryLoginAppsMapper'='import com.jinbooks.repository.history.HistoryLoginAppsMapper;'
-    'HistorySystemLogsMapper'='import com.jinbooks.repository.history.HistorySystemLogsMapper;'
-    'HistorySynchronizerMapper'='import com.jinbooks.repository.history.HistorySynchronizerMapper;'
-    'HistoryConnectorMapper'='import com.jinbooks.repository.history.HistoryConnectorMapper;'
-    'ReportService'='import com.jinbooks.service.report.ReportService;'
-    'FundDashboardService'='import com.jinbooks.service.report.FundDashboardService;'
-    'ReportMapper'='import com.jinbooks.repository.report.ReportMapper;'
+    'ConfigSysService'='import com.financial.cloud.service.config.ConfigSysService;'
+    'ConfigService'='import com.financial.cloud.service.config.ConfigService;'
+    'ConfigCashFlowBalanceService'='import com.financial.cloud.service.config.ConfigCashFlowBalanceService;'
+    'ConfigInsuranceFundService'='import com.financial.cloud.service.config.ConfigInsuranceFundService;'
+    'ConfigPersonalTaxService'='import com.financial.cloud.service.config.ConfigPersonalTaxService;'
+    'ConfigSalaryFormulaService'='import com.financial.cloud.service.config.ConfigSalaryFormulaService;'
+    'InstitutionsService'='import com.financial.cloud.service.config.InstitutionsService;'
+    'InstitutionsServiceImpl'='import com.financial.cloud.service.config.impl.InstitutionsServiceImpl;'
+    'ConfigSysMapper'='import com.financial.cloud.repository.config.ConfigSysMapper;'
+    'ConfigCashFlowBalanceMapper'='import com.financial.cloud.repository.config.ConfigCashFlowBalanceMapper;'
+    'ConfigInsuranceFundMapper'='import com.financial.cloud.repository.config.ConfigInsuranceFundMapper;'
+    'ConfigPersonalTaxMapper'='import com.financial.cloud.repository.config.ConfigPersonalTaxMapper;'
+    'ConfigSalaryFormulaMapper'='import com.financial.cloud.repository.config.ConfigSalaryFormulaMapper;'
+    'InstitutionsMapper'='import com.financial.cloud.repository.config.InstitutionsMapper;'
+    'EmployeeService'='import com.financial.cloud.service.hr.EmployeeService;'
+    'EmployeeSalaryService'='import com.financial.cloud.service.hr.EmployeeSalaryService;'
+    'EmployeeSalarySummaryService'='import com.financial.cloud.service.hr.EmployeeSalarySummaryService;'
+    'EmployeeSalaryTempService'='import com.financial.cloud.service.hr.EmployeeSalaryTempService;'
+    'EmployeeTaxDeductionService'='import com.financial.cloud.service.hr.EmployeeTaxDeductionService;'
+    'EmployeeMapper'='import com.financial.cloud.repository.hr.EmployeeMapper;'
+    'EmployeeSalaryMapper'='import com.financial.cloud.repository.hr.EmployeeSalaryMapper;'
+    'EmployeeSalarySummaryMapper'='import com.financial.cloud.repository.hr.EmployeeSalarySummaryMapper;'
+    'EmployeeSalaryTempMapper'='import com.financial.cloud.repository.hr.EmployeeSalaryTempMapper;'
+    'EmployeeTaxDeductionMapper'='import com.financial.cloud.repository.hr.EmployeeTaxDeductionMapper;'
+    'StandardService'='import com.financial.cloud.service.standard.StandardService;'
+    'StandardSubjectService'='import com.financial.cloud.service.standard.StandardSubjectService;'
+    'StandardSubjectCashFlowService'='import com.financial.cloud.service.standard.StandardSubjectCashFlowService;'
+    'StandardStatementBalanceSheetService'='import com.financial.cloud.service.standard.StandardStatementBalanceSheetService;'
+    'StandardStatementIncomeService'='import com.financial.cloud.service.standard.StandardStatementIncomeService;'
+    'StandardMapper'='import com.financial.cloud.repository.standard.StandardMapper;'
+    'StandardSubjectMapper'='import com.financial.cloud.repository.standard.StandardSubjectMapper;'
+    'StandardSubjectCashFlowMapper'='import com.financial.cloud.repository.standard.StandardSubjectCashFlowMapper;'
+    'StandardStatementBalanceSheetMapper'='import com.financial.cloud.repository.standard.StandardStatementBalanceSheetMapper;'
+    'StandardStatementIncomeMapper'='import com.financial.cloud.repository.standard.StandardStatementIncomeMapper;'
+    'StandardStatementRulesMapper'='import com.financial.cloud.repository.standard.StandardStatementRulesMapper;'
+    'HistoryLoginService'='import com.financial.cloud.service.history.HistoryLoginService;'
+    'HistorySystemLogsService'='import com.financial.cloud.service.history.HistorySystemLogsService;'
+    'HistorySynchronizerService'='import com.financial.cloud.service.history.HistorySynchronizerService;'
+    'HistoryConnectorService'='import com.financial.cloud.service.history.HistoryConnectorService;'
+    'HistoryLoginMapper'='import com.financial.cloud.repository.history.HistoryLoginMapper;'
+    'HistoryLoginAppsMapper'='import com.financial.cloud.repository.history.HistoryLoginAppsMapper;'
+    'HistorySystemLogsMapper'='import com.financial.cloud.repository.history.HistorySystemLogsMapper;'
+    'HistorySynchronizerMapper'='import com.financial.cloud.repository.history.HistorySynchronizerMapper;'
+    'HistoryConnectorMapper'='import com.financial.cloud.repository.history.HistoryConnectorMapper;'
+    'ReportService'='import com.financial.cloud.service.report.ReportService;'
+    'FundDashboardService'='import com.financial.cloud.service.report.FundDashboardService;'
+    'ReportMapper'='import com.financial.cloud.repository.report.ReportMapper;'
 }
 
 Get-ChildItem -Path "$srcRoot\main\java" -Recurse -Filter *.java | ForEach-Object {

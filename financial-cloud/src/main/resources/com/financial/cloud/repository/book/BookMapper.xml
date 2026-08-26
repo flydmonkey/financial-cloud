@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.financial.cloud.repository.book.BookMapper">
+    <select id="pageList" parameterType="com.financial.cloud.dto.book.BookPageDto"
+            resultType="com.financial.cloud.domain.book.Book">
+        select jbs.*, jbas.name AS standardsName
+        from book jbs
+        left join standard jbas
+        on jbs.standard_id = jbas.id
+        and jbas.deleted = 'n'
+        where jbs.deleted = 'n'
+        <if test="Dto.name != null and Dto.name != ''">
+            and jbs.name like CONCAT('%', #{Dto.name}, '%')
+        </if>
+        order by jbs.created_date desc
+    </select>
+
+    <select id="listBooks" resultType="com.financial.cloud.dto.book.BookVo">
+        select b.id, b.name, b.company_name
+        from book b,permission_book pb
+        where  pb.book_id = b.id
+        	and b.deleted = 'n' 
+        	and pb.deleted = 'n'
+        	and pb.user_id = #{userId}
+    </select>
+</mapper>

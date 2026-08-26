@@ -1,0 +1,26 @@
+# Copy to application-prod.yml (or set via environment / external config) for production.
+# Activate with: spring.profiles.active=prod
+
+spring:
+  datasource:
+    url: jdbc:mysql://db-host:3306/jinbooks?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: jinbooks
+    password: CHANGE_ME
+
+server:
+  port: 2154
+
+financial-cloud:
+  server:
+    frontend:
+      uri: https://your-frontend.example.com
+  security:
+  # Override only if you must keep legacy MaxKey-encoded secrets compatible.
+  # legacy-secret-suffix: your-production-suffix
+  session:
+    max-size: 10000
+    default-validity-hours: 8
+
+logging:
+  file:
+    name: /var/log/jinbooks/jinbooks.log

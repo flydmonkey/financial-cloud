@@ -7,39 +7,40 @@
 
 | 维度 | 结果 |
 |------|------|
-| API 冒烟（34 探针） | 34/34 通过 |
-| Playwright E2E | 18/18 通过（含页面探针） |
-| TypeScript | 261 error（原 728，-64%） |
-| ESLint | 114 error / 698 warning（原 398 / 11378） |
-| 后端单测 | 凭证 + 结账 + 报表 seed |
-| Controller | ~57 个，多数无单测 |
+| API 冒烟（`tools/smoke-api.mjs`） | 7 探针 |
+| Playwright E2E | 22/22 通过 |
+| 后端单测 | 凭证 + 结账 + 报表 + book/journal/hr |
+| TypeScript | 251 error（原 728） |
+| ESLint | 114 error / 698 warning |
 
 ## 分模块
 
 | 模块 | API 冒烟 | E2E | 说明 |
 |------|----------|-----|------|
-| auth | 1/1 | smoke | 低 |
-| voucher | 3/3 | 3 条 | 中 |
-| statement | 5/5 | 4 条 | 报表平衡已修 |
-| settlement | 2/2 | 3 条 | 结账年份默认已修 |
-| dashboard | 5/5 | 部分 | bookId 顺序已修 |
-| book / journal / hr | 全过 | API + 页面探针 | 中 |
-| 其余 | 全过 | — | 低 |
+| auth | ✓ | smoke | 低 |
+| voucher | ✓ | 3 条 | 中 |
+| statement | ✓ | 4 条 | 报表平衡已修 |
+| settlement | ✓ | 3 条 | 结账年份默认已修 |
+| dashboard | ✓ | 2 条 | statistics API |
+| config | ✓ | 2 条 | 期初/辅助核算 |
+| book / journal / hr | ✓ | API + 页面 | 路由拼接已修 |
+| 其余 | ✓ | — | 低 |
 
 ## 复跑
 
 ```bash
 # 后端单测
-cd financial-cloud && ./mvnw.ps1 test
+cd financial-cloud && ./mvnw test
+
+# API 冒烟
+node tools/smoke-api.mjs
 
 # E2E（需 2154 + 3154）
 cd financial-cloud-ui && npm run test:e2e
-
-# API 冒烟（本地 scripts/module-smoke-api.ps1，未入库）
 ```
 
 ## 已知后续
 
 - 账套 4103/4104 权益数据建议人工核对
-- TypeScript ~261 error、ESLint ~114 error（已做首轮基础设施清理，剩余多为组件级问题）
-- 资产负债表总计调平会在服务端日志记录差额
+- TypeScript ~251 error、ESLint ~114 error（组件级问题待续）
+- CI：`.github/workflows/ci.yml`（push 时跑 E2E）

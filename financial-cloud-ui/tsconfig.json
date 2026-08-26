@@ -40,6 +40,7 @@
     "src/**/*.tsx",
     "src/**/*.d.ts",
     "src/**/*.vue",
+    "src/types/vue-app.d.ts",
     "src/types/auto-imports.d.ts",
     "shims-vue.d.ts",
   ],

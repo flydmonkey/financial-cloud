@@ -11,7 +11,7 @@ $JavaExe = Join-Path $JavaHome "bin\java.exe"
 $WrapperJar = Join-Path $ProjectDir ".mvn\wrapper\maven-wrapper.jar"
 
 if (-not (Test-Path $JavaExe)) {
-    throw "Java not found at $JavaExe. Set JAVA_HOME to a valid JDK 17 installation."
+    throw "Java not found at $JavaExe. Set JAVA_HOME to JDK 17 (e.g. C:\Program Files\Java\jdk-17)."
 }
 if (-not (Test-Path $WrapperJar)) {
     throw "Maven wrapper jar not found at $WrapperJar"
@@ -23,5 +23,10 @@ $arguments = @(
     "org.apache.maven.wrapper.MavenWrapperMain"
 ) + $MavenArgs
 
+# JVM warnings on stderr must not abort PowerShell (would kill Surefire mid-run).
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 & $JavaExe @arguments
-exit $LASTEXITCODE
+$exitCode = $LASTEXITCODE
+$ErrorActionPreference = $prevEap
+exit $exitCode

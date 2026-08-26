@@ -4,7 +4,8 @@ import {getRouters} from '@/api/menu'
 import Layout from '@/layout/index.vue'
 import ParentView from '@/components/ParentView/index.vue'
 import InnerLink from '@/layout/components/InnerLink/index.vue'
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia'
+import { joinRoutePath } from '@/utils/routePath'
 
 // 匹配views里面所有的.vue文件
 const modules: any = import.meta.glob('./../../views/**/*.vue')
@@ -95,7 +96,7 @@ function filterChildren(childrenMap: any, lastRouter: any = false): any {
         if (el.children && el.children.length) {
             if (el.component === 'ParentView' && !lastRouter) {
                 el.children.forEach((c: any) => {
-                    c.path = el.path + '/' + c.path
+                    c.path = joinRoutePath(el.path, c.path)
                     if (c.children && c.children.length) {
                         children = children.concat(filterChildren(c.children, c))
                         return
@@ -106,7 +107,7 @@ function filterChildren(childrenMap: any, lastRouter: any = false): any {
             }
         }
         if (lastRouter) {
-            el.path = lastRouter.path + '/' + el.path
+            el.path = joinRoutePath(lastRouter.path, el.path)
             if (el.children && el.children.length) {
                 children = children.concat(filterChildren(el.children, el))
                 return

@@ -1,4 +1,5 @@
 import request from '@/utils/Request'
+import { resolveMenuPath } from '@/utils/routePath'
 import {handleTree} from '@/utils/Jinbooks'
 import useUserStore from '@/store/modules/user'
 import i18n from '@/languages'
@@ -28,7 +29,9 @@ function setChildrenMenu(menus: any): any {
 function formatMenu(menu: any): any {
     const icon: any = (menu.resStyle || "list").replace("anticon-", '')
     let requestUrl: any = menu.requestUrl;
-    // 斜杠开头去掉
+    const hasVisibleChildren = !!mapParentIds[menu.id]
+        && mapChildren[menu.id].filter((t: any) => t.isVisible === 'y').length > 0
+    // 斜杠开头去掉（仅 component 字段使用）
     if (requestUrl && menu.requestUrl.startsWith('/')) {
         requestUrl = menu.requestUrl.substring(1);
     }
@@ -37,14 +40,14 @@ function formatMenu(menu: any): any {
         "id": menu.id,
         "parentId": menu.parentId,
         "name": menu.permission,
-        "path": menu.requestUrl || menu.permission,
+        "path": resolveMenuPath(menu.requestUrl, menu.permission, hasVisibleChildren),
         "query": menu.params || null,
         "hidden": menu.isVisible !== 'y',
         "redirect": "noRedirect",
-        "component": mapParentIds[menu.id] && mapChildren[menu.id].filter((t: any) => t.isVisible === 'y').length > 0
+        "component": hasVisibleChildren
             ? "ParentView"
             : requestUrl,
-        "alwaysShow": !!mapParentIds[menu.id] && mapChildren[menu.id].filter((t: any) => t.isVisible === 'y').length > 0,
+        "alwaysShow": hasVisibleChildren,
         "permissions": [menu.permission],
         "meta": {
             "title": menu.i18n && t(menu.i18n).indexOf('.') < 0

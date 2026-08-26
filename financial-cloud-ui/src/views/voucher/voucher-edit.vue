@@ -379,7 +379,7 @@
                 <span v-else-if="isTotalRow(scope.row)">{{ scope.row.summary }}</span>
                 <el-input
                   v-else-if="showCellInput(scope.row)"
-                  :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-0`)"
+                  :ref="(el: any) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-0`)"
                   v-model="scope.row.summary"
                   type="textarea"
                   :rows="2"
@@ -428,7 +428,7 @@
                       style="width: 100%"
                       filterable
                       clearable
-                      :ref="(el) => setRef(el, `cascader-${scope.$index}-1`)"
+                      :ref="(el: any) => setRef(el, `cascader-${scope.$index}-1`)"
                       placeholder=""
                       :show-all-levels="false"
                       :model-value="resolveSubjectCascaderValue(scope.row)"
@@ -475,7 +475,7 @@
                       >
                         <template #reference>
                           <el-input
-                            :ref="(el) => setRef(el, `input-${scope.$index}-2`)"
+                            :ref="(el: any) => setRef(el, `input-${scope.$index}-2`)"
                             readonly
                             type="textarea"
                             :rows="2"
@@ -544,7 +544,7 @@
                   style="width: 100%"
                   filterable
                   clearable
-                  :ref="(el) => setRef(el, `cascader-${scope.$index}-1`)"
+                  :ref="(el: any) => setRef(el, `cascader-${scope.$index}-1`)"
                   placeholder=""
                   :show-all-levels="false"
                   :model-value="resolveSubjectCascaderValue(scope.row)"
@@ -589,7 +589,7 @@
                 <el-input
                   v-else-if="showCellInput(scope.row)"
                   v-model="scope.row.debitAmount"
-                  :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 3 : 2}`)"
+                  :ref="(el: any) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 3 : 2}`)"
                   class="voucher-cell-input voucher-cell-amount"
                   :class="{redWord: isRedWord(scope.row.debitAmount), 'voucher-cell-readonly': !isCellEditable(scope.row)}"
                   :readonly="!isCellEditable(scope.row)"
@@ -626,7 +626,7 @@
                 <el-input
                   v-else-if="showCellInput(scope.row)"
                   v-model="scope.row.creditAmount"
-                  :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 4 : 3}`)"
+                  :ref="(el: any) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 4 : 3}`)"
                   class="voucher-cell-input voucher-cell-amount"
                   :class="{redWord: isRedWord(scope.row.creditAmount), 'voucher-cell-readonly': !isCellEditable(scope.row)}"
                   :readonly="!isCellEditable(scope.row)"
@@ -727,17 +727,19 @@ import Decimal from 'decimal.js'
 import {getSubjectDisplayName, cascaderSubjectProps as baseCascaderSubjectProps} from "@/utils/Subjects";
 
 interface RecordingVoucher {
-  id: any,
+  id: number,
   summary: string,
   subjectId: string,
-  detailedSubjectCode: string,
+  subjectName?: string,
+  subjectCode?: string,
+  detailedSubjectCode?: string,
   detailedAccounts: string,
   debitAmount: number | string,
   creditAmount: number | string,
   subjectBalance: number | undefined,
   auxiliary: Array<any>,
-  editing: boolean,
-  columnIndex: number,
+  editing?: boolean,
+  columnIndex?: number,
 }
 
 const currBookStore = bookStore()
@@ -1418,10 +1420,10 @@ const closeEditAll = () => {
 }
 
 // 右键
-const rowContextmenu = (row: any, column: any, event: Event) => {
+const rowContextmenu = (row: any, column: any, event: MouseEvent) => {
   if (row.id > 0) {
-    leftMenu.value = event?.clientX - 20
-    topMenu.value = event?.clientY
+    leftMenu.value = event.clientX - 20
+    topMenu.value = event.clientY
     currentRow.value = JSON.parse(JSON.stringify(row))
     currentRow.value.cfg_index = tableSumData.value.indexOf(row);
     visibleContextmenu.value = true

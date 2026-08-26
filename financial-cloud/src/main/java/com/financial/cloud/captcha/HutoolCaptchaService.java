@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import com.financial.cloud.constants.ConstsCaptchaType;
+import com.financial.cloud.constants.auth.ConstsCaptchaType;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;

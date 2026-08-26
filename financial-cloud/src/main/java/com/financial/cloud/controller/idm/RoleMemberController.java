@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.authn.support.AuthorizationUtils;
-import com.financial.cloud.constants.ConstsRoles;
+import com.financial.cloud.constants.auth.ConstsRoles;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.idm.RoleMember;

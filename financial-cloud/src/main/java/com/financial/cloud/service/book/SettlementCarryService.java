@@ -24,7 +24,7 @@ import com.financial.cloud.dto.voucher.GenerateVoucherDto;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
 import com.financial.cloud.dto.voucher.VoucherTemplatePageDto;
-import com.financial.cloud.enums.VoucherStatusEnum;
+import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.hr.EmployeeSalarySummaryMapper;
 import com.financial.cloud.repository.book.SettlementCarryforwardMapper;

@@ -1,10 +1,10 @@
 package com.financial.cloud.dto.statement;
 
 import com.financial.cloud.common.PageQuery;
-import com.financial.cloud.enums.StatementErrorCode;
+import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
-import com.financial.cloud.enums.CounterTypeEnum;
-import com.financial.cloud.enums.StatementPeriodTypeEnum;
+import com.financial.cloud.enums.common.CounterTypeEnum;
+import com.financial.cloud.enums.statement.StatementPeriodTypeEnum;
 import com.financial.cloud.util.DateUtils;
 
 import lombok.*;

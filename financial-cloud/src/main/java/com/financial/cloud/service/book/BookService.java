@@ -20,7 +20,7 @@ import com.financial.cloud.dto.book.BookChangeDto;
 import com.financial.cloud.dto.book.BookPageDto;
 import com.financial.cloud.dto.book.BookVo;
 import com.financial.cloud.dto.common.ListIdsDto;
-import com.financial.cloud.enums.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.service.book.BookService;

@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
-import com.financial.cloud.constants.ConstsHttpHeader;
+import com.financial.cloud.constants.common.ConstsHttpHeader;
 import com.financial.cloud.context.WebContext;
 
 import jakarta.servlet.FilterChain;

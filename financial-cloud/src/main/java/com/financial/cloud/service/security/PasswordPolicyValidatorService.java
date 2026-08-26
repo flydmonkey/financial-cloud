@@ -18,7 +18,7 @@ import com.financial.cloud.domain.security.ConfigPasswordPolicy;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.security.ConfigPasswordPolicyService;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
-import com.financial.cloud.enums.ConfigErrorCode;
+import com.financial.cloud.enums.error.ConfigErrorCode;
 import com.financial.cloud.context.WebContext;
 
 @Slf4j

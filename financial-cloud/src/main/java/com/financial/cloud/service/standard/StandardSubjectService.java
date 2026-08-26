@@ -17,7 +17,7 @@ import com.financial.cloud.dto.book.SubjectPageDto;
 import com.financial.cloud.dto.book.BookSubjectTreeDto;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.standard.StandardSubject;
-import com.financial.cloud.enums.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.standard.StandardMapper;
 import com.financial.cloud.repository.standard.StandardSubjectMapper;

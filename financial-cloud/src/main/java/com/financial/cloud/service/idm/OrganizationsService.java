@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.domain.idm.Organizations;
-import com.financial.cloud.enums.OrgsBusinessExceptionEnum;
+import com.financial.cloud.enums.error.OrgsBusinessExceptionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.idm.OrganizationsMapper;
 import com.financial.cloud.service.idm.OrganizationsService;

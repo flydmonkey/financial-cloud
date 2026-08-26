@@ -4,18 +4,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.financial.cloud.context.WebContext;
-import com.financial.cloud.enums.AssistErrorCode;
-import com.financial.cloud.enums.BookBusinessExceptionEnum;
-import com.financial.cloud.enums.CommonErrorCode;
-import com.financial.cloud.enums.ConfigErrorCode;
-import com.financial.cloud.enums.ExcelErrorCode;
-import com.financial.cloud.enums.HrErrorCode;
-import com.financial.cloud.enums.JournalErrorCode;
-import com.financial.cloud.enums.OrgsBusinessExceptionEnum;
-import com.financial.cloud.enums.StandardErrorCode;
-import com.financial.cloud.enums.StatementErrorCode;
-import com.financial.cloud.enums.UsersBusinessCode;
-import com.financial.cloud.enums.VoucherErrorCode;
+import com.financial.cloud.enums.error.AssistErrorCode;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.error.CommonErrorCode;
+import com.financial.cloud.enums.error.ConfigErrorCode;
+import com.financial.cloud.enums.error.ExcelErrorCode;
+import com.financial.cloud.enums.error.HrErrorCode;
+import com.financial.cloud.enums.error.JournalErrorCode;
+import com.financial.cloud.enums.error.OrgsBusinessExceptionEnum;
+import com.financial.cloud.enums.error.StandardErrorCode;
+import com.financial.cloud.enums.error.StatementErrorCode;
+import com.financial.cloud.enums.error.UsersBusinessCode;
+import com.financial.cloud.enums.error.VoucherErrorCode;
 
 /**
  * Resolves business error codes to localized messages.

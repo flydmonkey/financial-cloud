@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.financial.cloud.constants.ContentType;
+import com.financial.cloud.constants.common.ContentType;
 import com.financial.cloud.context.WebContext;
 
 @RestController

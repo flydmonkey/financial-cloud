@@ -2,13 +2,13 @@ package com.financial.cloud.service.report;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.financial.cloud.constants.ConstsSysConfig;
+import com.financial.cloud.constants.system.ConstsSysConfig;
 import com.financial.cloud.domain.config.ConfigSys;
 import com.financial.cloud.dto.report.*;
 import com.financial.cloud.domain.statement.*;
 import com.financial.cloud.dto.statement.StatementParamsDto;
 import com.financial.cloud.dto.statement.StatementBalanceSheetItemListVo;
-import com.financial.cloud.enums.StatementPeriodTypeEnum;
+import com.financial.cloud.enums.statement.StatementPeriodTypeEnum;
 import com.financial.cloud.repository.statement.StatementSubjectBalanceMapper;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.report.FundDashboardService;
@@ -26,7 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.financial.cloud.constants.ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT;
+import static com.financial.cloud.constants.system.ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT;
 
 /**
  * 简介说明: 资金仪表盘

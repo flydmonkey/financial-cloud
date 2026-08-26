@@ -9,7 +9,7 @@ import com.financial.cloud.domain.config.ConfigPersonalTax;
 import com.financial.cloud.dto.config.ConfigPersonalTaxChangeDto;
 import com.financial.cloud.dto.config.ConfigPersonalTaxPageDto;
 import com.financial.cloud.dto.common.ListIdsDto;
-import com.financial.cloud.enums.ConfigErrorCode;
+import com.financial.cloud.enums.error.ConfigErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.config.ConfigPersonalTaxMapper;
 import com.financial.cloud.service.config.ConfigPersonalTaxService;

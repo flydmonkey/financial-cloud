@@ -12,8 +12,8 @@ import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.financial.cloud.constants.ConstsRoles;
-import com.financial.cloud.constants.ConstsStatus;
+import com.financial.cloud.constants.auth.ConstsRoles;
+import com.financial.cloud.constants.common.ConstsStatus;
 import com.financial.cloud.domain.config.Institutions;
 import com.financial.cloud.domain.idm.Roles;
 import com.financial.cloud.repository.idm.RolesMapper;

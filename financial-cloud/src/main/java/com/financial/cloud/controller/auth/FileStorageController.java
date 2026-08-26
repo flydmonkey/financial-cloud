@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.util.List;
 
-import com.financial.cloud.enums.CommonErrorCode;
+import com.financial.cloud.enums.error.CommonErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.financial.cloud.constants.ConstsStatus;
+import com.financial.cloud.constants.common.ConstsStatus;
 import com.financial.cloud.common.BaseEntity;
 import com.financial.cloud.context.WebContext;
 

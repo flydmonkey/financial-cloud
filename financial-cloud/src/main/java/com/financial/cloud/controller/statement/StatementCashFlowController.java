@@ -7,7 +7,7 @@ import com.financial.cloud.domain.statement.StatementCashFlow;
 import com.financial.cloud.dto.voucher.VoucherItemCashFlowDto;
 import com.financial.cloud.dto.voucher.VoucherItemPageDto;
 import com.financial.cloud.dto.voucher.VoucherItemVo;
-import com.financial.cloud.enums.StatementErrorCode;
+import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementCashFlowService;

@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.constants.common.MessageKeys;
 import com.financial.cloud.context.WebContext;
-import com.financial.cloud.enums.ConfigErrorCode;
+import com.financial.cloud.enums.error.ConfigErrorCode;
 import org.apache.commons.lang3.ObjectUtils;
 import org.passay.CharacterOccurrencesRule;
 import org.passay.CharacterRule;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.financial.cloud.constants.ConstsRegex;
+import com.financial.cloud.constants.common.ConstsRegex;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.security.ConfigPasswordPolicy;
 import com.financial.cloud.domain.idm.UserInfo;

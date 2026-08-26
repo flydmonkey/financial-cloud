@@ -16,7 +16,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.financial.cloud.constants.ConstsUser;
+import com.financial.cloud.constants.auth.ConstsUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.config.ConfigInsuranceFund;
 import com.financial.cloud.domain.config.ConfigPersonalTax;
@@ -27,7 +27,7 @@ import com.financial.cloud.domain.hr.Employee;
 import com.financial.cloud.domain.hr.EmployeeSalaryTemp;
 import com.financial.cloud.dto.hr.*;
 
-import com.financial.cloud.enums.HrErrorCode;
+import com.financial.cloud.enums.error.HrErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.hr.EmployeeSalaryTempService;

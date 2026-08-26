@@ -2,7 +2,7 @@ package com.financial.cloud.service.security;
 
 import java.util.Locale;
 
-import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.constants.common.MessageKeys;
 import org.passay.MessageResolver;
 import org.passay.PropertiesMessageResolver;
 import org.passay.RuleResultDetail;

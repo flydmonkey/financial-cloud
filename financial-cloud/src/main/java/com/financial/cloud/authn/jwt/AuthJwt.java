@@ -10,7 +10,7 @@ import com.financial.cloud.authn.core.Authority;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.financial.cloud.authn.SignedPrincipal;
-import com.financial.cloud.constants.ConstsJwt;
+import com.financial.cloud.constants.auth.ConstsJwt;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

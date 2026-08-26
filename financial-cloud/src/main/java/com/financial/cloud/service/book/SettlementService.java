@@ -20,7 +20,7 @@ import com.financial.cloud.dto.book.SettlementVerifyVo;
 import com.financial.cloud.dto.statement.StatementParamsDto;
 import com.financial.cloud.dto.voucher.VoucherSuccessiveDto;
 import com.financial.cloud.dto.voucher.VoucherItemVo;
-import com.financial.cloud.enums.StatementPeriodTypeEnum;
+import com.financial.cloud.enums.statement.StatementPeriodTypeEnum;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.book.SettlementMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;

@@ -2,7 +2,7 @@ package com.financial.cloud.domain.voucher;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.financial.cloud.enums.VoucherStatusEnum;
+import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.util.excel.ExcelExportCfg;
 import lombok.*;
 import com.financial.cloud.common.BaseEntity;

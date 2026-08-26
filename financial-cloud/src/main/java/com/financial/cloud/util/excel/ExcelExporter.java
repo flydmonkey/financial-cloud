@@ -1,8 +1,8 @@
 package com.financial.cloud.util.excel;
 
-import com.financial.cloud.enums.ExcelErrorCode;
+import com.financial.cloud.enums.error.ExcelErrorCode;
 import com.financial.cloud.exception.BusinessException;
-import com.financial.cloud.enums.BaseEnum;
+import com.financial.cloud.enums.common.BaseEnum;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;

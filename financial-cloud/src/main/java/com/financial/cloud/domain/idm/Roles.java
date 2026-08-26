@@ -4,7 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.financial.cloud.constants.ConstsRoles;
+import com.financial.cloud.constants.auth.ConstsRoles;
 import com.financial.cloud.common.BaseEntity;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;

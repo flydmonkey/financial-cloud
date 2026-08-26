@@ -13,7 +13,7 @@ import com.financial.cloud.dto.book.AssistAccVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.dto.book.AssistAccChangeDto;
 import com.financial.cloud.dto.book.AssistAccPageDto;
-import com.financial.cloud.enums.AssistErrorCode;
+import com.financial.cloud.enums.error.AssistErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.repository.book.AssistAccMapper;
 import com.financial.cloud.service.book.AssistAccService;

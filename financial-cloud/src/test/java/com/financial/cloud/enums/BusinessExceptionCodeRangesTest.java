@@ -1,5 +1,7 @@
 package com.financial.cloud.enums;
 
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.error.OrgsBusinessExceptionEnum;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

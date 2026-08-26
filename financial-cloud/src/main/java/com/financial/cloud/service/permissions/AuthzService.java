@@ -12,7 +12,7 @@ import com.financial.cloud.authn.core.SimpleAuthority;
 import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.financial.cloud.constants.ConstsRoles;
+import com.financial.cloud.constants.auth.ConstsRoles;
 import com.financial.cloud.dto.auth.QueryGroupMembersDto;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.idm.Roles;

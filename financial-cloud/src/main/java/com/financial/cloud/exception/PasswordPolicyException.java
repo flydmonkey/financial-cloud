@@ -1,7 +1,7 @@
 package com.financial.cloud.exception;
 
-import com.financial.cloud.constants.ConstsServiceMessage;
-import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.constants.system.ConstsServiceMessage;
+import com.financial.cloud.constants.common.MessageKeys;
 import com.financial.cloud.context.WebContext;
 
 public class PasswordPolicyException extends Exception {

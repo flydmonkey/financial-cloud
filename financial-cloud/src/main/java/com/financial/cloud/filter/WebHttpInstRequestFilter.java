@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
-import com.financial.cloud.constants.ConstsHttpHeader;
+import com.financial.cloud.constants.common.ConstsHttpHeader;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
 import com.financial.cloud.domain.config.Institutions;

@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.financial.cloud.constants.ConstsStatus;
+import com.financial.cloud.constants.common.ConstsStatus;
 import com.financial.cloud.dto.auth.ChangePassword;
 import com.financial.cloud.domain.idm.Organizations;
 import com.financial.cloud.domain.idm.UserInfo;

@@ -8,8 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.financial.cloud.constants.ConstsServiceMessage;
-import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.constants.system.ConstsServiceMessage;
+import com.financial.cloud.constants.common.MessageKeys;
 import com.financial.cloud.exception.PasswordPolicyException;
 import com.financial.cloud.context.WebContext;
 

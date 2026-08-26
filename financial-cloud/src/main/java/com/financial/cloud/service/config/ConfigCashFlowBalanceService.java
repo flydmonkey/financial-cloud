@@ -10,7 +10,7 @@ import com.financial.cloud.domain.config.ConfigCashFlowBalance;
 import com.financial.cloud.dto.config.ConfigCashFlowChangeDto;
 import com.financial.cloud.dto.config.ConfigCashFlowPageDto;
 import com.financial.cloud.dto.report.CashFlowSubjectBalanceVo;
-import com.financial.cloud.enums.StatementErrorCode;
+import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookInitBalanceMapper;
 import com.baomidou.mybatisplus.extension.toolkit.Db;

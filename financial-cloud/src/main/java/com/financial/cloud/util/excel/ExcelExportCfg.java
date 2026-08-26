@@ -1,6 +1,6 @@
 package com.financial.cloud.util.excel;
 
-import com.financial.cloud.enums.BaseEnum;
+import com.financial.cloud.enums.common.BaseEnum;
 import com.financial.cloud.util.DateUtils;
 
 import java.lang.annotation.*;

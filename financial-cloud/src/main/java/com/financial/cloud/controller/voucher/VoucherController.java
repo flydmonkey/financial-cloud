@@ -11,7 +11,7 @@ import com.financial.cloud.dto.voucher.VoucherSuccessiveQueryDto;
 import com.financial.cloud.dto.voucher.VoucherItemVo;
 import com.financial.cloud.dto.voucher.VoucherSuccessiveDto;
 import com.financial.cloud.dto.voucher.VoucherVo;
-import com.financial.cloud.enums.VoucherStatusEnum;
+import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;

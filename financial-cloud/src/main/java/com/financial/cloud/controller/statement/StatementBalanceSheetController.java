@@ -5,7 +5,7 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.statement.StatementBalanceSheet;
 import com.financial.cloud.dto.statement.StatementParamsDto;
-import com.financial.cloud.enums.StatementErrorCode;
+import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
 import jakarta.servlet.http.HttpServletResponse;

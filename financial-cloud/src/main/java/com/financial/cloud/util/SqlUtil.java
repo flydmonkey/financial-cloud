@@ -1,6 +1,6 @@
 package com.financial.cloud.util;
 
-import com.financial.cloud.enums.CommonErrorCode;
+import com.financial.cloud.enums.error.CommonErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

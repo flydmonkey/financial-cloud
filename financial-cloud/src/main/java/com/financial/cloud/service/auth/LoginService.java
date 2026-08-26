@@ -16,8 +16,8 @@ import com.financial.cloud.authn.core.Authority;
 import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.financial.cloud.constants.ConstsStatus;
-import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.constants.common.ConstsStatus;
+import com.financial.cloud.constants.common.MessageKeys;
 import com.financial.cloud.dto.auth.ChangePassword;
 import com.financial.cloud.domain.permissions.SessionList;
 import com.financial.cloud.dto.book.BookVo;

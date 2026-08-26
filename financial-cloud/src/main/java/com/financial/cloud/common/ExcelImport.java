@@ -1,6 +1,6 @@
 package com.financial.cloud.common;
 
-import com.financial.cloud.enums.CommonErrorCode;
+import com.financial.cloud.enums.error.CommonErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

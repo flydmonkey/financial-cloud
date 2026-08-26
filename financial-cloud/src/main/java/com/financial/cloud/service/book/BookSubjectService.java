@@ -3,7 +3,7 @@ package com.financial.cloud.service.book;
 
 import lombok.RequiredArgsConstructor;
 import cn.hutool.core.bean.BeanUtil;
-import com.financial.cloud.enums.OnOffEnum;
+import com.financial.cloud.enums.common.OnOffEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -23,7 +23,7 @@ import com.financial.cloud.dto.book.SubjectPageDto;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.standard.StandardSubject;
 import com.financial.cloud.domain.statement.StatementSubjectBalance;
-import com.financial.cloud.enums.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.financial.cloud.repository.book.BookSubjectMapper;

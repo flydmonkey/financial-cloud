@@ -24,8 +24,8 @@ import org.springframework.util.CollectionUtils;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
-import com.financial.cloud.constants.ConstsHttpHeader;
-import com.financial.cloud.constants.ContentType;
+import com.financial.cloud.constants.common.ConstsHttpHeader;
+import com.financial.cloud.constants.common.ContentType;
 import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.domain.idm.Organizations;
 import com.financial.cloud.domain.idm.UserInfo;

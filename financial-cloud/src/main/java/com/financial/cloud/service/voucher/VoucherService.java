@@ -41,6 +41,7 @@ import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.util.DateUtils;
+import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.VoucherUtils;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
@@ -59,13 +60,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-/**
- * 凭证记录Service业务层处理
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
 
 @RequiredArgsConstructor
 @Service
@@ -407,6 +401,11 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return Message.failed("已暂存，非当前期不允许提交凭证");
         }
 
+        Message<String> validationResult = validateItemsForSubmit(dto.getItems());
+        if (validationResult.getCode() != Message.SUCCESS) {
+            return validationResult;
+        }
+
         Book resolvedBook = book != null ? book : bookMapper.selectById(dto.getBookId());
         if (VoucherReviewedOnOffEnum.ON.getCode().equals(resolvedBook.getVoucherReviewed())) {
             // 再提交创建审核信息,分配审批人，创建审批记录
@@ -488,6 +487,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> save(VoucherChangeDto dto) {
+        Message<String> validationResult = validateItemsForSave(dto.getItems());
+        if (validationResult.getCode() != Message.SUCCESS) {
+            return validationResult;
+        }
         Voucher voucher = Voucher.builder().build();
         BeanUtil.copyProperties(dto, voucher);
         String currentId = identifierGenerator.nextId(voucher).toString();
@@ -553,6 +556,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> update(VoucherChangeDto dto) {
+        Message<String> validationResult = validateItemsForSave(dto.getItems());
+        if (validationResult.getCode() != Message.SUCCESS) {
+            return validationResult;
+        }
         String currentId = dto.getId();
 //        dto.setWord(null);
 //        dto.setWordNum(null);
@@ -866,6 +873,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         List<VoucherItemChangeDto> items = dto.getItems();
         List<VoucherAuxiliary> insertAuxiliary = new ArrayList<>();
         List<VoucherItem> insertItems = items.stream().map(t -> {
+            prepareVoucherItem(t);
             if (!isUpdate) {
                 String itemId = identifierGenerator.nextId(booksVoucher).toString();
                 t.setId(itemId);
@@ -879,7 +887,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             }
             if (StringUtils.isNotBlank(t.getDetailedSubjectCode())) {
                 t.setSubjectCode(t.getDetailedSubjectCode());
-            } else if (StringUtils.isNotBlank(t.getSubjectCode())) {
+            } else if (StringUtils.isBlank(t.getSubjectCode())
+                    && StringUtils.isNotBlank(t.getSubjectName())
+                    && t.getSubjectName().contains("-")) {
                 t.setSubjectCode(t.getSubjectName().split("-")[0]);
             }
             t.setVoucherDate(booksVoucher.getVoucherDate());
@@ -935,8 +945,19 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
     private void enrichItemVos(List<VoucherItemVo> voucherItemVos,
                                List<VoucherAuxiliary> voucherAuxiliaries) {
+        Map<String, BookSubject> subjectCache = new HashMap<>();
         // 辅助核算数据
         for (VoucherItemVo voucherItemVo : voucherItemVos) {
+            if (SubjectDisplayNameUtils.needsSubjectNameFix(voucherItemVo.getSubjectName())
+                    && StringUtils.isNotBlank(voucherItemVo.getSubjectId())) {
+                BookSubject subject = subjectCache.computeIfAbsent(
+                        voucherItemVo.getSubjectId(),
+                        bookSubjectService::getById
+                );
+                if (subject != null) {
+                    voucherItemVo.setSubjectName(SubjectDisplayNameUtils.formatVoucherSubjectName(subject));
+                }
+            }
             List<VoucherItemAuxiliaryDto> auxiliary = new ArrayList<>();
             voucherAuxiliaries.stream()
                     .filter(t -> t.getVoucherItemId().equals(voucherItemVo.getId()))
@@ -957,6 +978,86 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                     });
             voucherItemVo.setAuxiliary(auxiliary);
         }
+    }
+
+    private void prepareVoucherItem(VoucherItemChangeDto item) {
+        item.setSummary(SubjectDisplayNameUtils.normalizeSummary(item.getSummary()));
+        if (StringUtils.isNotBlank(item.getSubjectId())) {
+            BookSubject subject = bookSubjectService.getById(item.getSubjectId());
+            if (subject != null) {
+                if (StringUtils.isNotBlank(subject.getCode())) {
+                    item.setSubjectCode(subject.getCode());
+                }
+                if (SubjectDisplayNameUtils.needsSubjectNameFix(item.getSubjectName())) {
+                    item.setSubjectName(SubjectDisplayNameUtils.formatVoucherSubjectName(subject));
+                }
+            }
+        }
+    }
+
+    private Message<String> validateItemsForSubmit(List<VoucherItemChangeDto> items) {
+        Message<String> saveValidation = validateItemsForSave(items);
+        if (saveValidation.getCode() != Message.SUCCESS) {
+            return saveValidation;
+        }
+        for (VoucherItemChangeDto item : filterValidVoucherItems(items)) {
+            prepareVoucherItem(item);
+        }
+        return new Message<>(Message.SUCCESS);
+    }
+
+    private Message<String> validateItemsForSave(List<VoucherItemChangeDto> items) {
+        List<VoucherItemChangeDto> validItems = filterValidVoucherItems(items);
+        if (validItems.isEmpty()) {
+            return Message.failed("凭证明细不能为空");
+        }
+        if (validItems.size() < 2) {
+            return Message.failed("至少需要两条分录");
+        }
+        boolean hasSummary = validItems.stream()
+                .map(item -> SubjectDisplayNameUtils.normalizeSummary(item.getSummary()))
+                .anyMatch(StringUtils::isNotBlank);
+        if (!hasSummary) {
+            return Message.failed("请至少输入一项摘要");
+        }
+
+        BigDecimal debitTotal = BigDecimal.ZERO;
+        BigDecimal creditTotal = BigDecimal.ZERO;
+        for (VoucherItemChangeDto item : validItems) {
+            prepareVoucherItem(item);
+            if (StringUtils.isBlank(item.getSubjectId())) {
+                return Message.failed("存在未选择科目的分录");
+            }
+            if (isBlankAmount(item.getDebitAmount()) && isBlankAmount(item.getCreditAmount())) {
+                return Message.failed("存在未填写金额的分录");
+            }
+            if (item.getDebitAmount() != null) {
+                debitTotal = debitTotal.add(item.getDebitAmount());
+            }
+            if (item.getCreditAmount() != null) {
+                creditTotal = creditTotal.add(item.getCreditAmount());
+            }
+        }
+        if (debitTotal.compareTo(creditTotal) != 0 || debitTotal.signum() == 0) {
+            return Message.failed("借贷不平衡");
+        }
+        return new Message<>(Message.SUCCESS);
+    }
+
+    private boolean isBlankAmount(BigDecimal amount) {
+        return amount == null || amount.signum() == 0;
+    }
+
+    private List<VoucherItemChangeDto> filterValidVoucherItems(List<VoucherItemChangeDto> items) {
+        if (CollectionUtils.isEmpty(items)) {
+            return List.of();
+        }
+        return items.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getSubjectId())
+                        || !isBlankAmount(item.getDebitAmount())
+                        || !isBlankAmount(item.getCreditAmount())
+                        || (item.getAuxiliary() != null && !item.getAuxiliary().isEmpty()))
+                .toList();
     }
 
     /**
@@ -988,9 +1089,6 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         return null;
     }
 
-    /**
-     * 凭证明细临时对象
-     */
     @Data
     @Builder
     @NoArgsConstructor

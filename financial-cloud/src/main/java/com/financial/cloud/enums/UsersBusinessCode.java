@@ -1,26 +1,28 @@
 package com.financial.cloud.enums;
 
+import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.exception.ErrorCode;
+
 import lombok.Getter;
 
 @Getter
-public enum UsersBusinessCode {
+public enum UsersBusinessCode implements ErrorCode {
 
-    USER_FORBIDDEN(500008, "账号被禁用"),
+    USER_VERIFY_MOBILE_ABSENT(500005, MessageKeys.User.VERIFY_MOBILE_ABSENT),
 
-    USERNAME_USED(500009, "该登录名称已被使用"),
+    USER_FORBIDDEN(500008, MessageKeys.User.FORBIDDEN),
 
-    MOBILE_USED(500010, "该手机号码已被使用"),
+    USERNAME_USED(500009, MessageKeys.User.USERNAME_USED),
 
-    EMAIL_USED(500011, "该邮箱地址已被使用"),
+    MOBILE_USED(500010, MessageKeys.User.MOBILE_USED),
 
-    USER_VERIFY_MOBILE_ABSENT(500005, "该手机号尚未绑定任何用户");
+    EMAIL_USED(500011, MessageKeys.User.EMAIL_USED);
 
-    final String msg;
-    final Integer code;
+    private final int code;
+    private final String messageKey;
 
-    UsersBusinessCode(Integer code, String msg) {
-        this.msg = msg;
+    UsersBusinessCode(int code, String messageKey) {
         this.code = code;
+        this.messageKey = messageKey;
     }
-
 }

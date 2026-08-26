@@ -27,6 +27,7 @@ import com.financial.cloud.domain.hr.Employee;
 import com.financial.cloud.domain.hr.EmployeeSalaryTemp;
 import com.financial.cloud.dto.hr.*;
 
+import com.financial.cloud.enums.HrErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.hr.EmployeeSalaryTempService;
@@ -109,7 +110,7 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
             List<ConfigInsuranceFund> configInsuranceFunds = configInsuranceFundMapper.selectList(Wrappers.<ConfigInsuranceFund>lambdaQuery()
                     .eq(ConfigInsuranceFund::getBookId, bookId));
             if (ObjectUtils.isEmpty(configInsuranceFunds)) {
-                throw new BusinessException(50001, "请在配置管理中添加社保公积金配置");
+                throw new BusinessException(HrErrorCode.INSURANCE_FUND_CONFIG_REQUIRED);
             } else {
                 configInsuranceFund = configInsuranceFunds.get(0);
             }
@@ -194,10 +195,10 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
                 employeeSalaryTemp.setBankName(employee.getBankName());
                 return employeeSalaryTemp;
             }
-            throw new BusinessException(50001, "查询不到该条员工数据");
+            throw new BusinessException(HrErrorCode.EMPLOYEE_NOT_FOUND);
         }
 
-        throw new BusinessException(50001, "查询不到该条数据");
+        throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
     }
     @Transactional
     public Message<String> update(SalaryDetailChangeDto dto) {
@@ -235,7 +236,7 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         List<ConfigInsuranceFund> configInsuranceFunds = configInsuranceFundMapper.selectList(Wrappers.<ConfigInsuranceFund>lambdaQuery()
                 .eq(ConfigInsuranceFund::getBookId, bookId));
         if (ObjectUtils.isEmpty(configInsuranceFunds)) {
-            throw new BusinessException(50001, "请在配置管理中添加社保公积金配置");
+            throw new BusinessException(HrErrorCode.INSURANCE_FUND_CONFIG_REQUIRED);
         } else {
             configInsuranceFund = configInsuranceFunds.get(0);
         }

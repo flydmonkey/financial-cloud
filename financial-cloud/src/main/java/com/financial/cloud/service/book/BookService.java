@@ -123,10 +123,7 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         }
         List<Book> list = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(list)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DUPLICATE_SETNAME_EXIST.getCode(),
-                    BookBusinessExceptionEnum.DUPLICATE_SETNAME_EXIST.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.DUPLICATE_SETNAME_EXIST);
         }
     }
     @Transactional
@@ -139,10 +136,7 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         wrapper.in(Book::getId, bookIds);
         List<Book> books = bookMapper.selectList(wrapper);
         if (ObjectUtils.isNotEmpty(books)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getCode(),
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE);
         }
 
         //删除关联科目

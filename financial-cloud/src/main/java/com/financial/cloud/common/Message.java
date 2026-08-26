@@ -90,4 +90,8 @@ public class Message<T> {
         return ResponseEntity.ok(this);
     }
 
+    public ResponseEntity<Message<T>> buildUnauthorizedResponse() {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(this);
+    }
+
 }

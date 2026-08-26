@@ -188,7 +188,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public Message<String> handleBusinessException(BusinessException e) {
-        log.error("业务自定义异常:{},{}",e.getCode(),e.getMessage(),e);
-        return new Message<>(e.getCode(),e.getMessage());
+        log.error("业务异常: code={}", e.getCode(), e);
+        return new Message<>(e.getCode(), e.resolveMessage());
     }
 }

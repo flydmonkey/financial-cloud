@@ -13,6 +13,7 @@ import com.financial.cloud.dto.config.ConfigSalaryJson;
 import com.financial.cloud.dto.config.ConfigSalaryFormulaVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.enums.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.ConfigErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.config.ConfigSalaryFormulaMapper;
 import com.financial.cloud.service.config.ConfigSalaryFormulaService;
@@ -102,7 +103,7 @@ public class ConfigSalaryFormulaService extends ServiceImpl<ConfigSalaryFormulaM
         }
         List<ConfigSalaryFormula> list = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(list)) {
-            throw new BusinessException(50001, "薪资计算公式的规则名称不能重复，请修改");
+            throw new BusinessException(ConfigErrorCode.SALARY_FORMULA_NAME_DUPLICATE);
         }
     }
     @Transactional
@@ -129,9 +130,7 @@ public class ConfigSalaryFormulaService extends ServiceImpl<ConfigSalaryFormulaM
 
         List<ConfigSalaryFormula> formulas = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(formulas)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getCode(),
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE);
         }
     }
 }

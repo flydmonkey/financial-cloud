@@ -7,6 +7,7 @@ import com.financial.cloud.domain.statement.StatementCashFlow;
 import com.financial.cloud.dto.voucher.VoucherItemCashFlowDto;
 import com.financial.cloud.dto.voucher.VoucherItemPageDto;
 import com.financial.cloud.dto.voucher.VoucherItemVo;
+import com.financial.cloud.enums.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementCashFlowService;
@@ -43,7 +44,7 @@ public class StatementCashFlowController {
         String voucherDate = dto.getVoucherDate();
         String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
         if (!currentTerm.equals(voucherDate)) {
-            throw new BusinessException(510001, "不能修改非当前账套期间的凭证项的现金流量项");
+            throw new BusinessException(StatementErrorCode.CASH_FLOW_MODIFY_FORBIDDEN);
         }
         return voucherItemCashFlowService.specifyCashFlowItems(dto);
     }

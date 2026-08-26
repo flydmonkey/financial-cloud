@@ -267,16 +267,21 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         return new Message<>(Message.SUCCESS, booksVoucherVo);
     }
 
-    private Map<String, VoucherVo> queryByIds(Collection<String> ids) {
+    private record VoucherBatchLoad(
+            Map<String, VoucherVo> vouchers,
+            Map<String, List<VoucherAuxiliary>> auxiliariesByVoucher) {
+    }
+
+    private VoucherBatchLoad loadVouchers(Collection<String> ids) {
         if (ids == null || ids.isEmpty()) {
-            return Map.of();
+            return new VoucherBatchLoad(Map.of(), Map.of());
         }
         List<String> idList = ids.stream()
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         if (idList.isEmpty()) {
-            return Map.of();
+            return new VoucherBatchLoad(Map.of(), Map.of());
         }
 
         Map<String, VoucherVo> vouchersById = BeanUtil.copyToList(baseMapper.selectBatchIds(idList), VoucherVo.class).stream()
@@ -286,7 +291,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                 .filter(Objects::nonNull)
                 .toList();
         if (vouchers.isEmpty()) {
-            return Map.of();
+            return new VoucherBatchLoad(Map.of(), Map.of());
         }
 
         List<String> voucherIds = vouchers.stream()
@@ -322,7 +327,11 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             voucher.setItems(itemVos);
             result.put(voucher.getId(), voucher);
         }
-        return result;
+        return new VoucherBatchLoad(result, auxiliariesByVoucher);
+    }
+
+    private Map<String, VoucherVo> queryByIds(Collection<String> ids) {
+        return loadVouchers(ids).vouchers();
     }
 
     /**
@@ -357,7 +366,11 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> submit(VoucherChangeDto dto, boolean update) {
-        if (StringUtils.isNotBlank(dto.getId())) {
+        return submit(dto, update, null, false);
+    }
+
+    private Message<String> submit(VoucherChangeDto dto, boolean update, Book book, boolean skipDraftLoad) {
+        if (StringUtils.isNotBlank(dto.getId()) && !skipDraftLoad) {
             Voucher voucher = baseMapper.selectById(dto.getId());
             if (voucher == null) {
                 return Message.failed("凭证不存在");
@@ -388,8 +401,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return Message.failed("已暂存，非当前期不允许提交凭证");
         }
 
-        Book book = bookMapper.selectById(dto.getBookId());
-        if (VoucherReviewedOnOffEnum.ON.getCode().equals(book.getVoucherReviewed())) {
+        Book resolvedBook = book != null ? book : bookMapper.selectById(dto.getBookId());
+        if (VoucherReviewedOnOffEnum.ON.getCode().equals(resolvedBook.getVoucherReviewed())) {
             // 再提交创建审核信息,分配审批人，创建审批记录
             dto.setStatus(VoucherStatusEnum.UNDER_REVIEW.getValue());
             // Todo 创建审批记录...
@@ -422,12 +435,19 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return Message.failed("请选择要提交的凭证");
         }
         Map<String, VoucherVo> voucherMap = queryByIds(ids);
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            return Message.failed("账套不存在");
+        }
         int count = 0;
         // 遍历处理，保证每一个凭证顺序提交
         for (String id : ids) {
             VoucherVo voucherVo = voucherMap.get(id);
             if (voucherVo == null) {
                 return Message.failed("凭证不存在");
+            }
+            if (!VoucherStatusEnum.DRAFT.getValue().equals(voucherVo.getStatus())) {
+                continue;
             }
             VoucherChangeDto dto = VoucherChangeDto.builder().build();
             BeanUtils.copyProperties(voucherVo, dto);
@@ -444,7 +464,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             }).toList();
             dto.setItems(voucherItemChangeDtos);
 
-            Message<String> submit = submit(dto, false);
+            Message<String> submit = submit(dto, false, book, true);
             if (submit.getCode() != Message.SUCCESS) {
                 return new Message<>(submit.getCode(), submit.getMessage() + " 成功提交" + count + "条。");
             }
@@ -573,8 +593,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         booksVoucher.setWord(word);
 
-        Voucher dataVoucher = queryById(currentId).getData();
-        if (!VoucherStatusEnum.DRAFT.getValue().equals(dataVoucher.getStatus())) {
+        if (!VoucherStatusEnum.DRAFT.getValue().equals(currentVoucher.getStatus())) {
             return new Message<>(Message.FAIL, "当前不允许修改");
         }
 
@@ -754,11 +773,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         List<Voucher> booksVouchers = baseMapper.selectList(lqw);
         if (!booksVouchers.isEmpty()) {
             List<String> voucherIds = booksVouchers.stream().map(Voucher::getId).toList();
-            Map<String, VoucherVo> voucherMap = queryByIds(voucherIds);
-            Map<String, List<VoucherAuxiliary>> auxiliariesByVoucher = voucherItemAuxiliaryMapper.selectList(
-                            Wrappers.<VoucherAuxiliary>lambdaQuery().in(VoucherAuxiliary::getVoucherId, voucherIds))
-                    .stream()
-                    .collect(Collectors.groupingBy(VoucherAuxiliary::getVoucherId));
+            VoucherBatchLoad batchLoad = loadVouchers(voucherIds);
+            Map<String, VoucherVo> voucherMap = batchLoad.vouchers();
+            Map<String, List<VoucherAuxiliary>> auxiliariesByVoucher = batchLoad.auxiliariesByVoucher();
             for (Voucher t : booksVouchers) {
                 VoucherVo booksVoucher = voucherMap.get(t.getId());
                 if (booksVoucher == null) {
@@ -946,7 +963,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     private Integer getLatestWordNum(String bookId, String head, Integer year, Integer month) {
         if (StringUtils.isEmpty(head) || year == null) {
-            throw new ServiceException("凭证子头或时间参数异常");
+            throw new ServiceException(VoucherErrorCode.ITEM_OR_TIME_INVALID);
         }
 
         LambdaQueryWrapper<VoucherWord> wordLambdaQueryWrapper = Wrappers.lambdaQuery();

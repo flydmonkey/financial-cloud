@@ -10,6 +10,7 @@ import java.util.List;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.dto.idm.UserInfoPageDto;
+import com.financial.cloud.constants.MessageKeys;
 import com.financial.cloud.context.WebContext;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -91,10 +92,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
         }
         List<UserInfo> query = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(query)) {
-            throw new BusinessException(
-                    UsersBusinessCode.USERNAME_USED.getCode(),
-                    UsersBusinessCode.USERNAME_USED.getMsg()
-            );
+            throw new BusinessException(UsersBusinessCode.USERNAME_USED);
         }
     }
 
@@ -114,10 +112,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
         }
         List<UserInfo> query = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(query)) {
-            throw new BusinessException(
-                    UsersBusinessCode.MOBILE_USED.getCode(),
-                    UsersBusinessCode.MOBILE_USED.getMsg()
-            );
+            throw new BusinessException(UsersBusinessCode.MOBILE_USED);
         }
     }
 
@@ -138,10 +133,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
         }
         List<UserInfo> query = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(query)) {
-            throw new BusinessException(
-                    UsersBusinessCode.EMAIL_USED.getCode(),
-                    UsersBusinessCode.EMAIL_USED.getMsg()
-            );
+            throw new BusinessException(UsersBusinessCode.EMAIL_USED);
         }
     }
     @Transactional
@@ -247,15 +239,15 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
                     if(StringUtils.isNotBlank(changePassword.getOldPassword())&&
                             passwordEncoder.matches(changePassword.getPassword(), userInfo.getPassword())) {
                         WebContext.setAttribute(PasswordPolicyValidatorService.PASSWORD_POLICY_VALIDATE_RESULT,
-                                WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_MATCH"));
+                                WebContext.getI18nValue(MessageKeys.PasswordPolicy.OLD_PASSWORD_MATCH));
                     }else {
                         WebContext.setAttribute(PasswordPolicyValidatorService.PASSWORD_POLICY_VALIDATE_RESULT,
-                                WebContext.getI18nValue("PasswordPolicy.OLD_PASSWORD_NOT_MATCH"));
+                                WebContext.getI18nValue(MessageKeys.PasswordPolicy.OLD_PASSWORD_NOT_MATCH));
                     }
                 }
             }else {
                 WebContext.setAttribute(PasswordPolicyValidatorService.PASSWORD_POLICY_VALIDATE_RESULT,
-                        WebContext.getI18nValue("PasswordPolicy.CONFIRMPASSWORD_NOT_MATCH"));
+                        WebContext.getI18nValue(MessageKeys.PasswordPolicy.CONFIRM_PASSWORD_NOT_MATCH));
             }
         } catch (Exception e) {
             throw new BusinessException(50001, e.getMessage());

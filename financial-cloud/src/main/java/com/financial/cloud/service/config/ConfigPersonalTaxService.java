@@ -9,6 +9,7 @@ import com.financial.cloud.domain.config.ConfigPersonalTax;
 import com.financial.cloud.dto.config.ConfigPersonalTaxChangeDto;
 import com.financial.cloud.dto.config.ConfigPersonalTaxPageDto;
 import com.financial.cloud.dto.common.ListIdsDto;
+import com.financial.cloud.enums.ConfigErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.config.ConfigPersonalTaxMapper;
 import com.financial.cloud.service.config.ConfigPersonalTaxService;
@@ -40,11 +41,11 @@ public class ConfigPersonalTaxService extends ServiceImpl<ConfigPersonalTaxMappe
         Integer maxNum = dto.getMaxNum();
         Integer minNum = dto.getMinNum();
         if (Objects.nonNull(maxNum) && minNum >= maxNum) {
-            throw new BusinessException(50001, "所得额区间不符合规范");
+            throw new BusinessException(ConfigErrorCode.PERSONAL_TAX_RANGE_INVALID);
         }
 
         if (Objects.isNull(maxNum) && Objects.isNull(minNum)) {
-            throw new BusinessException(50001, "所得额区间不符合规范");
+            throw new BusinessException(ConfigErrorCode.PERSONAL_TAX_RANGE_INVALID);
         }
     }
     @Transactional
@@ -98,7 +99,7 @@ public class ConfigPersonalTaxService extends ServiceImpl<ConfigPersonalTaxMappe
         }
         List<ConfigPersonalTax> list = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(list)) {
-            throw new BusinessException(50001, "新增失败，层级重复");
+            throw new BusinessException(ConfigErrorCode.PERSONAL_TAX_LEVEL_DUPLICATE);
         }
     }
 

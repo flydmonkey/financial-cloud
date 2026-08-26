@@ -2,6 +2,7 @@ package com.financial.cloud.service.security;
 
 import java.util.Locale;
 
+import com.financial.cloud.constants.MessageKeys;
 import org.passay.MessageResolver;
 import org.passay.PropertiesMessageResolver;
 import org.passay.RuleResultDetail;
@@ -46,7 +47,9 @@ public class PasswordPolicyMessageResolver  implements MessageResolver{
     public String resolve(final RuleResultDetail detail)
     {
       try {
-        return this.messageSourceAccessor.getMessage("PasswordPolicy."+detail.getErrorCode(), detail.getValues());
+        return this.messageSourceAccessor.getMessage(
+                MessageKeys.PasswordPolicy.passay(detail.getErrorCode()),
+                detail.getValues());
       } catch (NoSuchMessageException e) {
         return this.fallbackMessageResolver.resolve(detail);
       }

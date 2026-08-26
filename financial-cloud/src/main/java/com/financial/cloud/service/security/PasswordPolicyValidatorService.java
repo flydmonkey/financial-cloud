@@ -18,6 +18,7 @@ import com.financial.cloud.domain.security.ConfigPasswordPolicy;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.security.ConfigPasswordPolicyService;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
+import com.financial.cloud.enums.ConfigErrorCode;
 import com.financial.cloud.context.WebContext;
 
 @Slf4j
@@ -83,7 +84,8 @@ public class PasswordPolicyValidatorService{
                log.debug("Rule Message {}" , msg);
            }
            WebContext.setAttribute(PasswordPolicyValidatorService.PASSWORD_POLICY_VALIDATE_RESULT, passwordPolicyMessage);
-           throw new BusinessException(400, String.valueOf(passwordPolicyMessage));
+           throw new BusinessException(ConfigErrorCode.PASSWORD_POLICY_NOT_CONFIGURED.getCode(),
+                   String.valueOf(passwordPolicyMessage));
        }
    }
 

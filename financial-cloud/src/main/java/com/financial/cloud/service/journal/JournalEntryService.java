@@ -19,6 +19,7 @@ import com.financial.cloud.dto.voucher.GenerateVoucherDto;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
 import com.financial.cloud.enums.VoucherStatusEnum;
+import com.financial.cloud.enums.JournalErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.journal.JournalEntryMapper;
@@ -81,7 +82,7 @@ public class JournalEntryService extends ServiceImpl<JournalEntryMapper, Journal
         	journalEntry.setIncome(null);
         	//支出
         	if(journalAccount.getBalance().subtract(journalEntry.getExpenditure()).doubleValue() < 0 ) {
-        		throw new BusinessException(10001,"余额不足！");
+        		throw new BusinessException(JournalErrorCode.INSUFFICIENT_BALANCE);
         	}
         	journalAccountService.expenditure(journalEntry.getAccId(), journalEntry.getExpenditure());
         }

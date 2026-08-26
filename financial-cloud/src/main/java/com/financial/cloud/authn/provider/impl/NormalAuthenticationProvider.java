@@ -15,6 +15,7 @@ import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.captcha.HutoolCaptchaService;
 import com.financial.cloud.constants.ConstsCaptchaType;
 import com.financial.cloud.constants.ConstsLoginType;
+import com.financial.cloud.constants.MessageKeys;
 import com.financial.cloud.common.client.ClientResolve;
 import com.financial.cloud.domain.security.ConfigLoginPolicy;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -86,13 +87,13 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
 	        	authenticationRealm.insertLoginHistory(userInfo,client, ConstsLoginType.NORMAL, "", "xe00000004", WebConstants.LOGIN_RESULT.PASSWORD_ERROE);
 	            if(userInfo.getBadPasswordCount()>=(configLoginPolicy.getPasswordAttempts())) {
 	                throw new BadCredentialsException(
-	                        WebContext.getI18nValue("login.error.password.attempts",
+	                        WebContext.getI18nValue(MessageKeys.Login.ERROR_PASSWORD_ATTEMPTS,
 	                                new Object[]{
 	                                        userInfo.getBadPasswordCount() ,
 	                                        configLoginPolicy.getLoginAttempts(),
 	                                        configLoginPolicy.getLockInterval()}));
 	            }else {
-	                throw new BadCredentialsException(WebContext.getI18nValue("login.error.password"));
+	                throw new BadCredentialsException(WebContext.getI18nValue(MessageKeys.Login.ERROR_PASSWORD));
 	            }
 	        }
 
@@ -132,7 +133,7 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
     protected void captchaValid(String state ,String captcha) {
         // for basic
     	if(!hutoolCaptchaService.validate(state, captcha)) {
-    		throw new BadCredentialsException(WebContext.getI18nValue("login.error.captcha"));
+    		throw new BadCredentialsException(WebContext.getI18nValue(MessageKeys.Login.ERROR_CAPTCHA));
     	}
     }
 }

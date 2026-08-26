@@ -153,10 +153,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
                 .eq(BookSubject::getBookId, bookId)
                 .like(BookSubject::getIdPath, currentId));
         if (subjectsSon.stream().anyMatch(subject -> Objects.equals(parentId, subject.getId()))) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getCode(),
-                    BookBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.ILLEGAL_MOVE_ORG);
         }
 
         BookSubject subject = new BookSubject();
@@ -235,10 +232,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         wrapper.eq(BookSubject::getParentId, id).eq(BookSubject::getStatus, 1);
         List<BookSubject> subjects = bookSubjectMapper.selectList(wrapper);
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_ACTIVE.getCode(),
-                    "请先禁用当前账套下的活跃子科目"
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.BOOK_SUB_SUBJECTS_ACTIVE);
         }
     }
 
@@ -247,9 +241,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         if (StringUtils.isNotBlank(parentId)) {
             BookSubject parent = super.getById(parentId);
             if (Objects.nonNull(parent) && 0 == parent.getStatus()) {
-                throw new BusinessException(
-                        BookBusinessExceptionEnum.PARENT_ORGS_FORBIDDEN.getCode(),
-                        BookBusinessExceptionEnum.PARENT_ORGS_FORBIDDEN.getMsg());
+                throw new BusinessException(BookBusinessExceptionEnum.PARENT_ORGS_FORBIDDEN);
             }
         }
     }
@@ -272,16 +264,10 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         if (ObjectUtils.isNotEmpty(duplicates)) {
             for (BookSubject duplicate : duplicates) {
                 if (duplicate.getName().equals(name)) {
-                    throw new BusinessException(
-                            BookBusinessExceptionEnum.DUPLICATE_SUBJECTS_EXIST.getCode(),
-                            "当前账套下已存在相同的科目名称，请重新输入"
-                    );
+                    throw new BusinessException(BookBusinessExceptionEnum.BOOK_DUPLICATE_SUBJECTS_EXIST);
                 }
                 if (duplicate.getCode().equals(code)) {
-                    throw new BusinessException(
-                            BookBusinessExceptionEnum.DUPLICATE_SUBJECTSCODE_EXIST.getCode(),
-                            "当前账套下已存在相同的科目编码，请重新输入"
-                    );
+                    throw new BusinessException(BookBusinessExceptionEnum.BOOK_DUPLICATE_SUBJECT_CODE_EXIST);
                 }
             }
         }
@@ -315,10 +301,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
      */
     private String generateIdPathRecursive(String parentId, int depth) {
         if (depth > 9) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DUPLICATE_DEEP_LIMIT.getCode(),
-                    BookBusinessExceptionEnum.DUPLICATE_DEEP_LIMIT.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.DUPLICATE_DEEP_LIMIT);
         }
 
         if (StringUtils.isBlank(parentId) || "0".equals(parentId)) {
@@ -350,9 +333,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         // 科目已有凭证，不能删除。
         boolean hasVoucher = subjectBalanceService.hasVoucher(dto.getBookId(), listIds);
         if (hasVoucher) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DELETE_HAS_VOUCHER.getCode(),
-                    BookBusinessExceptionEnum.DELETE_HAS_VOUCHER.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.DELETE_HAS_VOUCHER);
         }
 
         LambdaQueryWrapper<BookSubject> wrapper = new LambdaQueryWrapper<>();
@@ -374,9 +355,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
 
         List<BookSubject> subjects = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getCode(),
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE);
         }
     }
 
@@ -385,9 +364,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         wrapper.in(BookSubject::getParentId, ids);
         List<BookSubject> subjects = bookSubjectMapper.selectList(wrapper);
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_EXISTS.getCode(),
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_EXISTS.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.SUB_SUBJECTS_EXISTS);
         }
     }
 
@@ -404,7 +381,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         List<BookSubject> subjects = bookSubjectMapper.selectList(wrapper);
 
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(510001, "当前层级科目含有子科目，无法设置辅助核算");
+            throw new BusinessException(BookBusinessExceptionEnum.ASSIST_ACC_HAS_CHILDREN);
         }
     }
 
@@ -426,7 +403,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         // 直接使用count查询，无需获取完整对象列表
         long count = super.count(wrapper);
         if (count > 0) {
-            throw new BusinessException(510001, "所选父级科目已设置辅助核算，无法选择该父级科目");
+            throw new BusinessException(BookBusinessExceptionEnum.ASSIST_ACC_PARENT_HAS_ASSIST);
         }
     }
 

@@ -254,10 +254,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
                 .eq(StandardSubject::getStandardId, standardId)
                 .like(StandardSubject::getIdPath, currentId));
         if (subjectsSon.stream().anyMatch(subject -> Objects.equals(parentId, subject.getId()))) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getCode(),
-                    BookBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.ILLEGAL_MOVE_ORG);
         }
 
         StandardSubject subject = new StandardSubject();
@@ -357,16 +354,10 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
         if (ObjectUtils.isNotEmpty(duplicates)) {
             for (StandardSubject duplicate : duplicates) {
                 if (duplicate.getName().equals(name)) {
-                    throw new BusinessException(
-                            BookBusinessExceptionEnum.DUPLICATE_SUBJECTS_EXIST.getCode(),
-                            BookBusinessExceptionEnum.DUPLICATE_SUBJECTS_EXIST.getMsg()
-                    );
+                    throw new BusinessException(BookBusinessExceptionEnum.DUPLICATE_SUBJECTS_EXIST);
                 }
                 if (duplicate.getCode().equals(code)) {
-                    throw new BusinessException(
-                            BookBusinessExceptionEnum.DUPLICATE_SUBJECTSCODE_EXIST.getCode(),
-                            BookBusinessExceptionEnum.DUPLICATE_SUBJECTSCODE_EXIST.getMsg()
-                    );
+                    throw new BusinessException(BookBusinessExceptionEnum.DUPLICATE_SUBJECTSCODE_EXIST);
                 }
             }
         }
@@ -400,10 +391,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
      */
     private String generateIdPathRecursive(String parentId, int depth) {
         if (depth > 9) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DUPLICATE_DEEP_LIMIT.getCode(),
-                    BookBusinessExceptionEnum.DUPLICATE_DEEP_LIMIT.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.DUPLICATE_DEEP_LIMIT);
         }
 
         if (StringUtils.isBlank(parentId) || "0".equals(parentId)) {
@@ -436,9 +424,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
         	.eq(StandardSubject::getStandardId, standardId);
         List<StandardSubject> subjects = standardSubjectMapper.selectList(wrapper);
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_EXISTS.getCode(),
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_EXISTS.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.SUB_SUBJECTS_EXISTS);
         }
     }
 
@@ -457,9 +443,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
 
         List<StandardSubject> subjects = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getCode(),
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE);
         }
     }
 
@@ -478,9 +462,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
         		.eq(StandardSubject::getStandardId, standardId);
         List<StandardSubject> subjects = standardSubjectMapper.selectList(wrapper);
         if (ObjectUtils.isNotEmpty(subjects)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_ACTIVE.getCode(),
-                    BookBusinessExceptionEnum.SUB_SUBJECTS_ACTIVE.getMsg());
+            throw new BusinessException(BookBusinessExceptionEnum.SUB_SUBJECTS_ACTIVE);
         }
     }
 
@@ -496,9 +478,7 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
         if (StringUtils.isNotBlank(parentId)) {
             StandardSubject parent = super.getById(parentId);
             if (Objects.nonNull(parent) && 0 == parent.getStatus()) {
-                throw new BusinessException(
-                        BookBusinessExceptionEnum.PARENT_ORGS_FORBIDDEN.getCode(),
-                        BookBusinessExceptionEnum.PARENT_ORGS_FORBIDDEN.getMsg());
+                throw new BusinessException(BookBusinessExceptionEnum.PARENT_ORGS_FORBIDDEN);
             }
         }
     }

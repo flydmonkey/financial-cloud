@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.constants.ConstsStatus;
+import com.financial.cloud.constants.MessageKeys;
 import com.financial.cloud.dto.auth.ChangePassword;
 import com.financial.cloud.domain.permissions.SessionList;
 import com.financial.cloud.dto.book.BookVo;
@@ -126,7 +127,7 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
              }else {
             	 updateLockUser(userInfo);
                  throw new BadCredentialsException(
-                         WebContext.getI18nValue("login.error.attempts",
+                         WebContext.getI18nValue(MessageKeys.Login.ERROR_ATTEMPTS,
                                  new Object[]{userInfo.getLoginFailedCount(),configLoginPolicy.getLockInterval()})
                          );
              }
@@ -136,14 +137,14 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
          if(userInfo.getIsLocked()==ConstsStatus.LOCK) {
              throw new BadCredentialsException(
                                  userInfo.getUsername()+ " "+
-                                 WebContext.getI18nValue("login.error.locked")
+                                 WebContext.getI18nValue(MessageKeys.Login.ERROR_LOCKED)
                                  );
          }
          // inactive
          if(userInfo.getStatus()!=ConstsStatus.ACTIVE) {
              throw new BadCredentialsException(
                                  userInfo.getUsername()+
-                                 WebContext.getI18nValue("login.error.inactive")
+                                 WebContext.getI18nValue(MessageKeys.Login.ERROR_INACTIVE)
                                  );
          }
 

@@ -9,6 +9,7 @@ import com.financial.cloud.domain.book.BookSubject;
 import com.financial.cloud.domain.standard.StandardSubjectCashFlow;
 import com.financial.cloud.dto.standard.StandardSubjectCashFlowDto;
 import com.financial.cloud.dto.standard.StandardSubjectCashFlowVo;
+import com.financial.cloud.enums.StandardErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookSubjectMapper;
 import com.financial.cloud.repository.standard.StandardSubjectCashFlowMapper;
@@ -46,7 +47,7 @@ public class StandardSubjectCashFlowService extends ServiceImpl<StandardSubjectC
                         .eq(BookSubject::getCode, subjectCode))
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(50001, "无法获取所选择的科目"));
+                .orElseThrow(() -> new BusinessException(StandardErrorCode.SUBJECT_NOT_FOUND));
 
         final String subjectId = subject.getId();
 
@@ -56,7 +57,7 @@ public class StandardSubjectCashFlowService extends ServiceImpl<StandardSubjectC
                 .like(BookSubject::getIdPath, subjectId));
 
         if (hasChildSubjects) {
-            throw new BusinessException(50001, "当前层级无法设置科目默认现金流量项目，请选择最下级的会计科目");
+            throw new BusinessException(StandardErrorCode.CASH_FLOW_LEAF_SUBJECT_REQUIRED);
         }
 
         // 查询已经存在的关系

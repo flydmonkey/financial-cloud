@@ -1,42 +1,55 @@
 package com.financial.cloud.exception;
 
 public class BusinessException extends RuntimeException {
-	private static final long serialVersionUID = 956367551874464320L;
 
-	/**
-     * 异常编码
-     */
-    private Integer code;
+    private static final long serialVersionUID = 956367551874464320L;
+
+    private final int code;
+    private final Object[] messageArgs;
+    private final String messageOverride;
+
+    public BusinessException(ErrorCode errorCode) {
+        this(errorCode, (Object[]) null);
+    }
+
+    public BusinessException(ErrorCode errorCode, Object... messageArgs) {
+        super(errorCode.getMessageKey());
+        this.code = errorCode.getCode();
+        this.messageArgs = messageArgs;
+        this.messageOverride = null;
+    }
 
     /**
-     * 异常消息
+     * For errors whose message is already resolved at throw time (e.g. Passay output).
      */
-    private String message;
-
-
-    public BusinessException() {
-        super();
-    }
-
-    public BusinessException(Integer code, String message) {
-        this.message = message;
+    public BusinessException(int code, String messageOverride) {
+        super(messageOverride);
         this.code = code;
+        this.messageArgs = null;
+        this.messageOverride = messageOverride;
     }
 
-    public Integer getCode() {
+    public int getCode() {
         return code;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
+    public Object[] getMessageArgs() {
+        return messageArgs;
+    }
+
+    public String getMessageOverride() {
+        return messageOverride;
+    }
+
+    public String resolveMessage() {
+        if (messageOverride != null) {
+            return messageOverride;
+        }
+        return ExceptionMessageResolver.resolve(code, messageArgs);
     }
 
     @Override
     public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+        return resolveMessage();
     }
 }

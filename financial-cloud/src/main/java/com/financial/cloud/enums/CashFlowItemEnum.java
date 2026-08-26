@@ -1,5 +1,7 @@
 package com.financial.cloud.enums;
 
+import com.financial.cloud.enums.StatementErrorCode;
+import com.financial.cloud.exception.BusinessException;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -132,7 +134,7 @@ public enum CashFlowItemEnum {
                 return item;
             }
         }
-        throw new IllegalArgumentException("未知的现金流量项目代码: " + dbCode);
+        throw new BusinessException(StatementErrorCode.UNKNOWN_CASH_FLOW_CODE, dbCode);
     }
 
     /**

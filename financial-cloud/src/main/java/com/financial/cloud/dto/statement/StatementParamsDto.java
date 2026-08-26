@@ -1,6 +1,8 @@
 package com.financial.cloud.dto.statement;
 
 import com.financial.cloud.common.PageQuery;
+import com.financial.cloud.enums.StatementErrorCode;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.enums.CounterTypeEnum;
 import com.financial.cloud.enums.StatementPeriodTypeEnum;
 import com.financial.cloud.util.DateUtils;
@@ -96,7 +98,7 @@ public class StatementParamsDto extends PageQuery {
 
     public void parse() {
         if (StringUtils.isEmpty(bookId)) {
-            throw new IllegalArgumentException("账套参数为空");
+            throw new BusinessException(StatementErrorCode.BOOK_ID_EMPTY);
         }
         if (StringUtils.isEmpty(countType)) {
             this.countType = CounterTypeEnum.SUM.name();
@@ -219,29 +221,31 @@ public class StatementParamsDto extends PageQuery {
                 }
             } else {
                 if (!StatementPeriodTypeEnum.BETWEEN_MONTH.getValue().equals(this.periodType)) {
-                    throw new IllegalArgumentException("无效的统计类型：" + this.periodType);
+                    throw new BusinessException(StatementErrorCode.INVALID_PERIOD_TYPE, periodType);
                 }
             }
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
+            throw new BusinessException(StatementErrorCode.INVALID_PERIOD_TYPE, periodType);
         }
     }
 
-    private int parseQuarter(String quarterStr) throws IllegalArgumentException {
+    private int parseQuarter(String quarterStr) {
         return switch (quarterStr.toUpperCase()) {
             case "Q1" -> 1;
             case "Q2" -> 2;
             case "Q3" -> 3;
             case "Q4" -> 4;
-            default -> throw new IllegalArgumentException("无效的季度标识：" + quarterStr);
+            default -> throw new BusinessException(StatementErrorCode.INVALID_QUARTER, quarterStr);
         };
     }
 
-    private int parseHalfYear(String halfStr) throws IllegalArgumentException {
+    private int parseHalfYear(String halfStr) {
         return switch (halfStr.toUpperCase()) {
             case "H1" -> 1;
             case "H2" -> 2;
-            default -> throw new IllegalArgumentException("无效的季度标识：" + halfStr);
+            default -> throw new BusinessException(StatementErrorCode.INVALID_HALF_YEAR, halfStr);
         };
     }
 
@@ -255,7 +259,7 @@ public class StatementParamsDto extends PageQuery {
     public List<String> getAllMonths(String currentMonth) {
         List<String> months = new ArrayList<>();
         if (dateRange == null || dateRange.length != 2) {
-            throw new IllegalArgumentException("dateRange must contain exactly two elements: start and end.");
+            throw new BusinessException(StatementErrorCode.DATE_RANGE_SIZE);
         }
 
         YearMonth start = YearMonth.parse(dateRange[0]);
@@ -265,7 +269,7 @@ public class StatementParamsDto extends PageQuery {
                 : YearMonth.parse(currentMonth);
 
         if (start.isAfter(end)) {
-            throw new IllegalArgumentException("Start date must be before or equal to end date.");
+            throw new BusinessException(StatementErrorCode.START_DATE_AFTER_END);
         }
 
         YearMonth current = start;

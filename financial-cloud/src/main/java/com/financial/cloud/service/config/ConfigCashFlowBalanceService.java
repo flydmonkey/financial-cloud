@@ -10,6 +10,7 @@ import com.financial.cloud.domain.config.ConfigCashFlowBalance;
 import com.financial.cloud.dto.config.ConfigCashFlowChangeDto;
 import com.financial.cloud.dto.config.ConfigCashFlowPageDto;
 import com.financial.cloud.dto.report.CashFlowSubjectBalanceVo;
+import com.financial.cloud.enums.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookInitBalanceMapper;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
@@ -124,7 +125,7 @@ public class ConfigCashFlowBalanceService extends ServiceImpl<ConfigCashFlowBala
         List<ConfigCashFlowBalance> list = super.list(wrapper);
 
         if (ObjectUtils.isEmpty(list)) {
-            throw new BusinessException(510001, "请执行现金流量初始化金额配置sql语句");
+            throw new BusinessException(StatementErrorCode.CASH_FLOW_SQL_REQUIRED);
         }
 
         return Message.ok(list);
@@ -147,7 +148,7 @@ public class ConfigCashFlowBalanceService extends ServiceImpl<ConfigCashFlowBala
             List<ConfigCashFlowBalance> configList = this.getBaseMapper().selectList(Wrappers.<ConfigCashFlowBalance>lambdaQuery()
                     .isNull(ConfigCashFlowBalance::getBookId));
             if (ObjectUtils.isEmpty(configList)) {
-                throw new BusinessException(510001, "请执行现金流量初始化金额配置sql语句");
+                throw new BusinessException(StatementErrorCode.CASH_FLOW_SQL_REQUIRED);
             } else {
                 // 使用Java 17特性优化批量复制并设置bookId
                 CopyOptions copyOptions = CopyOptions.create()

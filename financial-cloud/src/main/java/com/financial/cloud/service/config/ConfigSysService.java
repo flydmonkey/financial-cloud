@@ -7,6 +7,8 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.common.PageQuery;
 import com.financial.cloud.domain.config.ConfigSys;
 import com.financial.cloud.dto.common.ListIdsDto;
+import com.financial.cloud.enums.ConfigErrorCode;
+import com.financial.cloud.enums.CommonErrorCode;
 import com.financial.cloud.enums.YesNoEnum;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.repository.config.ConfigSysMapper;
@@ -111,7 +113,7 @@ public class ConfigSysService{
     public String getCurrentTerm(String bookId) {
         String currentTerm = this.selectConfigByKey(bookId, ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT);
         if (StringUtils.isEmpty(currentTerm)) {
-            throw new ServiceException("账套未初始化：“当前账期”参数异常");
+            throw new ServiceException(ConfigErrorCode.BOOK_NOT_INIT_CURRENT_PERIOD);
         }
         return currentTerm;
     }
@@ -154,7 +156,7 @@ public class ConfigSysService{
     public String getTermStart(String bookId) {
         String term = this.selectConfigByKey(bookId, ConstsSysConfig.SYS_PAYMENT_TERM_START);
         if (StringUtils.isEmpty(term)) {
-            throw new ServiceException("账套未初始化：“初始账期”参数异常");
+            throw new ServiceException(ConfigErrorCode.BOOK_NOT_INIT_INITIAL_PERIOD);
         }
         return term;
     }
@@ -232,7 +234,7 @@ public class ConfigSysService{
         if (row > 0) {
             return Message.ok(config.getConfigValue());
         }
-        throw new ServiceException("操作失败");
+        throw new ServiceException(CommonErrorCode.OPERATION_FAILED);
     }
 
     /**
@@ -253,7 +255,7 @@ public class ConfigSysService{
         if (row > 0) {
             return Message.ok(config.getConfigValue());
         }
-        throw new ServiceException("操作失败");
+        throw new ServiceException(CommonErrorCode.OPERATION_FAILED);
     }
 
 
@@ -266,7 +268,7 @@ public class ConfigSysService{
         for (String configId : configIds.getListIds()) {
             ConfigSys config = getById(configId).getData();
             if (StringUtils.equals(YesNoEnum.y.name(), config.getConfigType())) {
-                throw new ServiceException(String.format("内置参数【%1$s】不能删除 ", config.getConfigKey()));
+                throw new ServiceException(ConfigErrorCode.BUILTIN_PARAM_CANNOT_DELETE, config.getConfigKey());
             }
         }
         baseMapper.deleteByIds(Arrays.asList(configIds));
@@ -297,7 +299,7 @@ public class ConfigSysService{
         data.forEach(t -> maps.put(t.getConfigKey(), t.getConfigValue()));
         for (String booksKey : BOOKS_KEYS) {
             if (!maps.containsKey(booksKey)) {
-                throw new ServiceException(String.format("账套【%1$s】缺少参数【%2$s】", bookId, booksKey));
+                throw new ServiceException(ConfigErrorCode.BOOK_MISSING_PARAM, bookId, booksKey);
             }
         }
         return Message.ok(data);

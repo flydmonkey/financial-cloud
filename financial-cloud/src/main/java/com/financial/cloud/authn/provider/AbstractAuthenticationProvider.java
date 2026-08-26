@@ -18,6 +18,7 @@ import com.financial.cloud.authn.session.Session;
 import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.authn.support.AuthorizationUtils;
 import com.financial.cloud.constants.ConstsLoginType;
+import com.financial.cloud.constants.MessageKeys;
 import com.financial.cloud.constants.ConstsRoles;
 import com.financial.cloud.constants.ConstsStatus;
 import com.financial.cloud.common.client.ClientResolve;
@@ -139,7 +140,7 @@ public abstract class AbstractAuthenticationProvider {
      */
     protected boolean emptyPasswordValid(String password) {
         if (null == password || "".equals(password)) {
-            throw new BadCredentialsException(WebContext.getI18nValue("login.error.password.null"));
+            throw new BadCredentialsException(WebContext.getI18nValue(MessageKeys.Login.ERROR_PASSWORD_NULL));
         }
         return true;
     }
@@ -152,7 +153,7 @@ public abstract class AbstractAuthenticationProvider {
      */
     protected boolean emptyEmailValid(String email) {
         if (null == email || "".equals(email)) {
-            throw new BadCredentialsException("login.error.email.null");
+            throw new BadCredentialsException(WebContext.getI18nValue(MessageKeys.Login.ERROR_EMAIL_NULL));
         }
         return true;
     }
@@ -165,14 +166,14 @@ public abstract class AbstractAuthenticationProvider {
      */
     protected boolean emptyUsernameValid(String username) {
         if (null == username || "".equals(username)) {
-            throw new BadCredentialsException(WebContext.getI18nValue("login.error.username.null"));
+            throw new BadCredentialsException(WebContext.getI18nValue(MessageKeys.Login.ERROR_USERNAME_NULL));
         }
         return true;
     }
 
     protected boolean statusValid(LoginCredential loginCredential , UserInfo userInfo,ClientResolve client) {
         if (null == userInfo) {
-            String i18nMessage = WebContext.getI18nValue("login.error.username");
+            String i18nMessage = WebContext.getI18nValue(MessageKeys.Login.ERROR_USERNAME);
             log.debug("login user {} not in this System {}." ,loginCredential.getUsername(), i18nMessage);
             UserInfo loginUser = new UserInfo(loginCredential.getUsername());
             loginUser.setId(WebContext.genId());

@@ -33,6 +33,7 @@ import com.financial.cloud.dto.voucher.VoucherItemVo;
 import com.financial.cloud.enums.CashFlowItemEnum;
 import com.financial.cloud.enums.VoucherStatusEnum;
 import com.financial.cloud.enums.YesNoEnum;
+import com.financial.cloud.enums.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
@@ -274,7 +275,7 @@ public class StatementReportService{
         //获取项目名称
         List<ConfigCashFlowBalance> configCashFlowBalances = configCashFlowBalanceMapper.selectList(configCashFlowBalanceLambdaQueryWrapper);
         if (configCashFlowBalances.isEmpty()) {
-            throw new BusinessException(510001, "请先生成现金流量初始余额配置");
+            throw new BusinessException(StatementErrorCode.CASH_FLOW_INIT_REQUIRED);
         }
 
         //根据全年获取指定项目金额

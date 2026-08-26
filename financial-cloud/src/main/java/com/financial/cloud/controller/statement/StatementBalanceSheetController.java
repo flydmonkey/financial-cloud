@@ -5,6 +5,7 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.statement.StatementBalanceSheet;
 import com.financial.cloud.dto.statement.StatementParamsDto;
+import com.financial.cloud.enums.StatementErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -55,9 +56,9 @@ public class StatementBalanceSheetController {
 
     private void validParams(StatementParamsDto dto) {
         if (StringUtils.isEmpty(dto.getPeriodType())) {
-            throw new ServiceException("统计类型参数为空");
+            throw new ServiceException(StatementErrorCode.PERIOD_TYPE_EMPTY);
         } else if (StringUtils.isEmpty(dto.getReportDate())) {
-            throw new ServiceException("统计日期参数为空");
+            throw new ServiceException(StatementErrorCode.REPORT_DATE_EMPTY);
         }
     }
 }

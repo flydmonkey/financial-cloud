@@ -44,9 +44,5 @@ public class LoginConfigDto{
 	 * 默认跳转地址
 	 */
 	String redirectUri;
-	
-	String secretKey;
-	
-	String secretPublicKey;
 
 }

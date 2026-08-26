@@ -1,6 +1,7 @@
 package com.financial.cloud.util;
 
-import cn.hutool.core.exceptions.UtilException;
+import com.financial.cloud.enums.CommonErrorCode;
+import com.financial.cloud.exception.BusinessException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -27,7 +28,7 @@ public class SqlUtil {
      */
     public static String escapeOrderBySql(String value) {
         if (StringUtils.isNotEmpty(value) && !isValidOrderBySql(value)) {
-            throw new UtilException("参数不符合规范，不能进行查询");
+            throw new BusinessException(CommonErrorCode.PARAM_INVALID_FOR_QUERY);
         }
         return value;
     }
@@ -49,7 +50,7 @@ public class SqlUtil {
         String[] sqlKeywords = StringUtils.split(SQL_REGEX, "\\|");
         for (String sqlKeyword : sqlKeywords) {
             if (StringUtils.indexOfIgnoreCase(value, sqlKeyword) > -1) {
-                throw new UtilException("参数存在SQL注入风险");
+                throw new BusinessException(CommonErrorCode.SQL_INJECTION_RISK);
             }
         }
     }

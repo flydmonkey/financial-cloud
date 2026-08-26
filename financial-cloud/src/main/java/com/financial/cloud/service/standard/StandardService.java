@@ -18,6 +18,7 @@ import com.financial.cloud.domain.standard.StandardSubject;
 import com.financial.cloud.dto.standard.StandardChangeDto;
 import com.financial.cloud.dto.standard.StandardPageDto;
 import com.financial.cloud.enums.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.StandardErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.standard.StandardMapper;
 import com.financial.cloud.repository.book.BookMapper;
@@ -70,10 +71,7 @@ public class StandardService extends ServiceImpl<StandardMapper, Standard>{
             wrapper.eq(Book::getStandardId, dto.getId());
             List<Book> books = bookMapper.selectList(wrapper);
             if (ObjectUtils.isNotEmpty(books)) {
-                throw new BusinessException(
-                        500000,
-                        String.format("当前会计制度已被账套: %s 所使用, 请先移除后再禁用", books.get(0).getName())
-                );
+                throw new BusinessException(StandardErrorCode.USED_BY_BOOK, books.get(0).getName());
             }
         }
 
@@ -94,10 +92,7 @@ public class StandardService extends ServiceImpl<StandardMapper, Standard>{
         wrapper.eq(Standard::getStatus, 1);
         List<Standard> list = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(list)) {
-            throw new BusinessException(
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getCode(),
-                    BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE.getMsg()
-            );
+            throw new BusinessException(BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE);
         }
 
         //删除制度科目

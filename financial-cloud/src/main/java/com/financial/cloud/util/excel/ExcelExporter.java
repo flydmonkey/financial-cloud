@@ -1,5 +1,7 @@
 package com.financial.cloud.util.excel;
 
+import com.financial.cloud.enums.ExcelErrorCode;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.enums.BaseEnum;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -196,7 +198,7 @@ public class ExcelExporter {
                 break;
             }
         }
-        if (tplR < 0) throw new IllegalArgumentException("模板行未找到");
+        if (tplR < 0) throw new BusinessException(ExcelErrorCode.TEMPLATE_ROW_NOT_FOUND);
 
         int writeR = tplR;
         for (Object it : items) {
@@ -283,6 +285,10 @@ public class ExcelExporter {
     private static Object convertValueIfNeeded(Object obj, String prop, Object rawValue) {
         try {
             Field field = getFieldRecursive(obj.getClass(), prop);
+            if (field == null) {
+                log.warn("字段未找到：{}", prop);
+                return rawValue;
+            }
             ExcelExportCfg cfg = field.getAnnotation(ExcelExportCfg.class);
             if (cfg != null) {
                 // 对于BigDecimal类型，如果值为0，则转换为""
@@ -310,15 +316,13 @@ public class ExcelExporter {
                     return df.format(rawValue);
                 }
             }
-        } catch (NoSuchFieldException e) {
-            log.warn("字段未找到：{} {}", prop, e.getMessage());
         } catch (Exception e) {
             log.warn("枚举映射失败：{} {}", prop, e.getMessage());
         }
         return rawValue;
     }
 
-    private static Field getFieldRecursive(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+    private static Field getFieldRecursive(Class<?> clazz, String fieldName) {
         while (clazz != null) {
             try {
                 return clazz.getDeclaredField(fieldName);
@@ -326,7 +330,7 @@ public class ExcelExporter {
                 clazz = clazz.getSuperclass(); // 继续在父类中查找
             }
         }
-        throw new NoSuchFieldException("字段未找到：" + fieldName);
+        return null;
     }
 
     /**

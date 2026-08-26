@@ -27,7 +27,6 @@ public class FinancialCloudMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/login/**",
                         "/api/captcha",
-                        "/api/secretKey/**",
                         "/api/auth/token/refresh",
                         "/api/auth/entrypoint",
                         "/api/auth/refusedpoint",

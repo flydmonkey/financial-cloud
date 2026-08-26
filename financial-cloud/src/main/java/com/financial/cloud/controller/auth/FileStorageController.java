@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.util.List;
 
+import com.financial.cloud.enums.CommonErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -79,7 +80,7 @@ public class FileStorageController {
  		if(fileStorage != null && fileStorage.getDataStored() != null) {
  			return new Message<>(Base64ImageUtils.encodePngBytes(fileStorage.getDataStored()));
  		} else {
-			 throw new BusinessException(400, "File Not Found");
+			 throw new BusinessException(CommonErrorCode.FILE_NOT_FOUND);
 		}
  	}
 

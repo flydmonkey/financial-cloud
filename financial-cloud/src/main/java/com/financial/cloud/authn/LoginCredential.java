@@ -27,7 +27,6 @@ public class LoginCredential {
     String otpCaptcha;
     String remeberMe;
     String authType;
-    String secretKey;
     String deviceId;
     String state;
     String jwtToken;

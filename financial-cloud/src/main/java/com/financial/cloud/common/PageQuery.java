@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.NamingCase;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.financial.cloud.enums.CommonErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.util.SqlUtil;
 
@@ -104,7 +105,7 @@ public class PageQuery implements Serializable {
         String[] orderByArr = orderBy.split(SEPARATOR);
         String[] isAscArr = isAsc.split(SEPARATOR);
         if (isAscArr.length != 1 && isAscArr.length != orderByArr.length) {
-            throw new ServiceException("æåºåæ°æè¯¯");
+            throw new ServiceException(CommonErrorCode.SORT_PARAM_INVALID);
         }
 
         List<OrderItem> list = new ArrayList<>();
@@ -117,7 +118,7 @@ public class PageQuery implements Serializable {
             } else if ("desc".equals(isAscStr)) {
                 list.add(OrderItem.desc(orderByStr));
             } else {
-                throw new ServiceException("æåºåæ°æè¯¯");
+                throw new ServiceException(CommonErrorCode.SORT_PARAM_INVALID);
             }
         }
         return list;

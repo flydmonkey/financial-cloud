@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -31,6 +30,8 @@ import com.financial.cloud.common.Message;
 @RequestMapping(value = "/api/auth")
 public class AuthTokenRefreshPoint {
 
+	private static final String REFRESH_FAILED_MESSAGE = "Refresh Token Fail !";
+
 	private final AuthTokenService authTokenService;
 
 	private final SessionManager sessionManager;
@@ -47,22 +48,26 @@ public class AuthTokenRefreshPoint {
 		log.debug("try to refresh session");
 		try {
 			if (StringUtils.isBlank(refreshToken)) {
-				return new ResponseEntity<>("Refresh Token Fail !", HttpStatus.UNAUTHORIZED);
+				return unauthorized(REFRESH_FAILED_MESSAGE);
 			}
 			Session session = sessionManager.get(refreshToken);
 			if (session == null || session.getAuthentication() == null) {
 				log.debug("refresh session not found.");
-				return new ResponseEntity<>("Refresh Token Fail !", HttpStatus.UNAUTHORIZED);
+				return unauthorized(REFRESH_FAILED_MESSAGE);
 			}
 			sessionManager.refresh(refreshToken);
 			AuthJwt authJwt = authTokenService.genAuthJwt(session.getAuthentication());
 			if (authJwt != null) {
 				log.trace("Grant refreshed session {}", refreshToken);
-				return new Message<AuthJwt>(authJwt).buildResponse();
+				return new Message<>(authJwt).buildResponse();
 			}
 		} catch (Exception e) {
 			log.error("Refresh Exception !", e);
 		}
-		return new ResponseEntity<>("Refresh Token Fail !", HttpStatus.UNAUTHORIZED);
+		return unauthorized(REFRESH_FAILED_MESSAGE);
+	}
+
+	private ResponseEntity<Message<Void>> unauthorized(String message) {
+		return new Message<Void>(Message.UNAUTHORIZED, message).buildUnauthorizedResponse();
 	}
 }

@@ -1,46 +1,52 @@
 package com.financial.cloud.enums;
 
+import com.financial.cloud.constants.MessageKeys;
+import com.financial.cloud.exception.ErrorCode;
+
 import lombok.Getter;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/23 17:18
- */
 @Getter
-public enum BookBusinessExceptionEnum {
+public enum BookBusinessExceptionEnum implements ErrorCode {
 
-    ILLEGAL_MOVE_ORG(510001, "非法的移动操作"),
+    ILLEGAL_MOVE_ORG(510001, MessageKeys.Book.ILLEGAL_MOVE),
 
-    DUPLICATE_SUBJECTSCODE_EXIST(510002, "当前会计准则已存在相同的科目编码，请重新输入"),
+    DUPLICATE_SUBJECTSCODE_EXIST(510002, MessageKeys.Book.DUPLICATE_SUBJECT_CODE_EXIST),
 
-    SUB_SUBJECTS_EXISTS(510003, "请先移除/移动当前会计科目下的子科目"),
+    SUB_SUBJECTS_EXISTS(510003, MessageKeys.Book.SUB_SUBJECTS_EXISTS),
 
-    SUB_SUBJECTS_ACTIVE(510004, "请先禁用当前会计科目下的活跃子科目"),
+    SUB_SUBJECTS_ACTIVE(510004, MessageKeys.Book.SUB_SUBJECTS_ACTIVE),
 
-    PARENT_ORGS_FORBIDDEN(510005, "请先启用当前子科目的父级会计科目"),
+    PARENT_ORGS_FORBIDDEN(510005, MessageKeys.Book.PARENT_SUBJECT_FORBIDDEN),
 
-    DUPLICATE_DEEP_LIMIT(510006, "超出最大科目深度10级"),
+    DUPLICATE_DEEP_LIMIT(510006, MessageKeys.Book.DUPLICATE_DEEP_LIMIT),
 
-    DUPLICATE_SUBJECTS_EXIST(510007, "当前会计准则已存在相同的科目名称，请重新输入"),
+    DUPLICATE_SUBJECTS_EXIST(510007, MessageKeys.Book.DUPLICATE_SUBJECTS_EXIST),
 
-    DUPLICATE_SETNAME_EXIST(510008, "当前系统已存在相同的账套名称，请重新输入"),
+    DUPLICATE_SETNAME_EXIST(510008, MessageKeys.Book.DUPLICATE_SETNAME_EXIST),
 
-    ALREADY_STANDARD_USED(510009, "当前会计科目已被会计制度使用无法被禁用"),
+    ALREADY_STANDARD_USED(510009, MessageKeys.Book.ALREADY_STANDARD_USED),
 
-    ALREADY_SET_USED(510010, "当前会计科目已被账套使用无法被禁用"),
+    ALREADY_SET_USED(510010, MessageKeys.Book.ALREADY_SET_USED),
 
-    DISABLE_BEFORE_DELETE(510011, "请先禁用当前数据再进行删除操作"),
+    DISABLE_BEFORE_DELETE(510011, MessageKeys.Book.DISABLE_BEFORE_DELETE),
 
-    DELETE_HAS_VOUCHER(510012, "当前科目已被使用，不可删除");
+    DELETE_HAS_VOUCHER(510012, MessageKeys.Book.DELETE_HAS_VOUCHER),
 
-    final String msg;
+    BOOK_SUB_SUBJECTS_ACTIVE(510013, MessageKeys.Book.BOOK_SUB_SUBJECTS_ACTIVE),
 
-    final Integer code;
+    BOOK_DUPLICATE_SUBJECTS_EXIST(510014, MessageKeys.Book.BOOK_DUPLICATE_SUBJECTS_EXIST),
 
-    BookBusinessExceptionEnum(Integer code, String msg) {
-        this.msg = msg;
+    BOOK_DUPLICATE_SUBJECT_CODE_EXIST(510015, MessageKeys.Book.BOOK_DUPLICATE_SUBJECT_CODE_EXIST),
+
+    ASSIST_ACC_HAS_CHILDREN(510016, MessageKeys.Book.ASSIST_ACC_HAS_CHILDREN),
+
+    ASSIST_ACC_PARENT_HAS_ASSIST(510017, MessageKeys.Book.ASSIST_ACC_PARENT_HAS_ASSIST);
+
+    private final int code;
+    private final String messageKey;
+
+    BookBusinessExceptionEnum(int code, String messageKey) {
         this.code = code;
+        this.messageKey = messageKey;
     }
-
 }

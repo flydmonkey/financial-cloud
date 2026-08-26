@@ -40,6 +40,7 @@ import com.financial.cloud.dto.hr.SalaryDetailPageDto;
 import com.financial.cloud.dto.hr.SalarySummaryChangeDto;
 import com.financial.cloud.common.PeriodStr;
 import com.financial.cloud.dto.hr.TaxDeductionExportVo;
+import com.financial.cloud.enums.HrErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.config.ConfigSysService;
@@ -127,10 +128,10 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
                 employeeSalary.setEmployeeNumber(employee.getEmployeeNumber());
                 return employeeSalary;
             }
-            throw new BusinessException(50001, "查询不到该条员工数据");
+            throw new BusinessException(HrErrorCode.EMPLOYEE_NOT_FOUND);
         }
 
-        throw new BusinessException(50001, "查询不到该条数据");
+        throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
     }
 	public EmployeeSalarySummary selectSalarySummary(SalarySummaryChangeDto dto) {
 		return employeeSalaryMapper.selectSalarySummary(dto);
@@ -138,7 +139,7 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     public Message<String> exportTaxItems(SalaryDetailPageDto dto, HttpServletResponse response) {
         List<TaxDeductionExportVo> taxDeductionExportVos = employeeSalaryMapper.exportGetSalaryDetail(dto);
         if (ObjectUtils.isEmpty(taxDeductionExportVos)) {
-            throw new BusinessException(510001, "暂无数据");
+            throw new BusinessException(HrErrorCode.NO_DATA);
         }
         Workbook workbook = null;
         try {

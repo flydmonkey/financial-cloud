@@ -135,10 +135,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         }
         String currentId = organization.getId();
         if (Objects.equals(parentId, currentId)) {
-            throw new BusinessException(
-                    OrgsBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getCode(),
-                    OrgsBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getMsg()
-            );
+            throw new BusinessException(OrgsBusinessExceptionEnum.ILLEGAL_MOVE_ORG);
         }
 
         //修改当前组织
@@ -148,10 +145,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         queryWrapper.ne(Organizations::getId, currentId);
         List<Organizations> orgInfos = super.list(queryWrapper);
         if (orgInfos.stream().anyMatch(orgInfo -> Objects.equals(parentId, orgInfo.getId()))) {
-            throw new BusinessException(
-                    OrgsBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getCode(),
-                    OrgsBusinessExceptionEnum.ILLEGAL_MOVE_ORG.getMsg()
-            );
+            throw new BusinessException(OrgsBusinessExceptionEnum.ILLEGAL_MOVE_ORG);
         }
         //设置当前节点ID路径和名称路径
         organization.setCodePath(generateIdPath(parentId, currentId));
@@ -205,10 +199,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         wrapper.eq(Organizations::getOrgName, orgName);
         List<Organizations> organizationsList = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(organizationsList)) {
-            throw new BusinessException(
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGS_EXIST.getCode(),
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGS_EXIST.getMsg()
-            );
+            throw new BusinessException(OrgsBusinessExceptionEnum.DUPLICATE_ORGS_EXIST);
         }
 
         //检查编码
@@ -217,10 +208,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         secondWrapper.eq(Organizations::getOrgCode, orgCode);
         List<Organizations> secondOrgs = super.list(secondWrapper);
         if (ObjectUtils.isNotEmpty(secondOrgs)) {
-            throw new BusinessException(
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGSCODE_EXIST.getCode(),
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGSCODE_EXIST.getMsg()
-            );
+            throw new BusinessException(OrgsBusinessExceptionEnum.DUPLICATE_ORGSCODE_EXIST);
         }
     }
 
@@ -244,10 +232,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         wrapper.notIn(Organizations::getId, id);
         List<Organizations> organizationsList = super.list(wrapper);
         if (ObjectUtils.isNotEmpty(organizationsList)) {
-            throw new BusinessException(
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGS_EXIST.getCode(),
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGS_EXIST.getMsg()
-            );
+            throw new BusinessException(OrgsBusinessExceptionEnum.DUPLICATE_ORGS_EXIST);
         }
 
         //检查编码
@@ -257,10 +242,7 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         secondWrapper.notIn(Organizations::getId, id);
         List<Organizations> secondOrgs = super.list(secondWrapper);
         if (ObjectUtils.isNotEmpty(secondOrgs)) {
-            throw new BusinessException(
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGSCODE_EXIST.getCode(),
-                    OrgsBusinessExceptionEnum.DUPLICATE_ORGSCODE_EXIST.getMsg()
-            );
+            throw new BusinessException(OrgsBusinessExceptionEnum.DUPLICATE_ORGSCODE_EXIST);
         }
     }
     public List<Tree<String>> tree(Organizations org) {

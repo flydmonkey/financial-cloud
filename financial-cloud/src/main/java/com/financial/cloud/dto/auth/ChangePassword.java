@@ -37,7 +37,6 @@ public class ChangePassword implements Serializable {
 	String bookId;
 	int passwordSetType;
 	String passwordLastSetTime;
-    String secretKey;
 
 	public ChangePassword(String username,String password) {
 		this.username = username;

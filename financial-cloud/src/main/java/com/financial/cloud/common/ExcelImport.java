@@ -1,6 +1,7 @@
 package com.financial.cloud.common;
 
-import com.financial.cloud.common.BaseEntity;
+import com.financial.cloud.enums.CommonErrorCode;
+import com.financial.cloud.exception.BusinessException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class ExcelImport extends BaseEntity {
         } else if (excelFile.getOriginalFilename().toLowerCase().endsWith(".xlsx")) {
             workbook = new XSSFWorkbook(inputStream);
         } else {
-            throw new RuntimeException("Excel suffix error.");
+            throw new BusinessException(CommonErrorCode.EXCEL_SUFFIX_ERROR);
         }
         return workbook;
     }

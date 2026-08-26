@@ -53,7 +53,7 @@ public final class WebContext {
     /**
      * clear session Message ,session id is Constants.MESSAGE
      * 
-     * @see WebConstants.MESSAGE
+     * @see WebConstants#CURRENT_MESSAGE
      */
     public static void clearMessage() {
         removeAttribute(WebConstants.CURRENT_MESSAGE);
@@ -401,16 +401,6 @@ public final class WebContext {
         }
         log.trace("RequestIpAddress: {}" , requestIpAddress);
         return requestIpAddress;
-    }
-    
-    /**
-     * captchaValid.
-     * @param captcha String
-     * @return
-     */
-    public static boolean captchaValid(String captcha) {
-    	String sessionKey =  (String)WebContext.getSession().getAttribute(WebConstants.KAPTCHA_SESSION_KEY);
-        return StringUtils.isNotBlank(sessionKey) && StringUtils.isNotBlank(captcha)  && captcha.equals(sessionKey);
     }
 
     /**

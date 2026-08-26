@@ -27,8 +27,5 @@ public class ApplicationConfig {
     
     @Value("${financial-cloud.job.cron.schedule:0 0 0/1 * * ?}") 
     String jobCronSchedule;
-    
-    @Value("${financial-cloud.job.session.listener:false}") 
-    boolean isJobSessionListener;
 
 }

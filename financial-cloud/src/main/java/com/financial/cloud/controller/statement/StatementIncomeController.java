@@ -5,6 +5,7 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.statement.StatementIncome;
 import com.financial.cloud.dto.statement.StatementParamsDto;
+import com.financial.cloud.enums.StatementErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.statement.StatementIncomeService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,9 +58,9 @@ public class StatementIncomeController {
 
     private void validParams(StatementParamsDto dto) {
         if (StringUtils.isEmpty(dto.getPeriodType())) {
-            throw new ServiceException("ç»è®¡ç±»ååæ°ä¸ºç©º");
+            throw new ServiceException(StatementErrorCode.PERIOD_TYPE_EMPTY);
         } else if (StringUtils.isEmpty(dto.getReportDate())) {
-            throw new ServiceException("ç»è®¡æ¥æåæ°ä¸ºç©º");
+            throw new ServiceException(StatementErrorCode.REPORT_DATE_EMPTY);
         }
     }
 }

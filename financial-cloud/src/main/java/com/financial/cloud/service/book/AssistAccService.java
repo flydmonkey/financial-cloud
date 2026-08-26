@@ -13,6 +13,7 @@ import com.financial.cloud.dto.book.AssistAccVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.dto.book.AssistAccChangeDto;
 import com.financial.cloud.dto.book.AssistAccPageDto;
+import com.financial.cloud.enums.AssistErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.repository.book.AssistAccMapper;
 import com.financial.cloud.service.book.AssistAccService;
@@ -132,7 +133,7 @@ public class AssistAccService extends ServiceImpl<AssistAccMapper, AssistAcc>{
         LambdaQueryWrapper<AssistAcc> lqw = buildQueryWrapper(dto);
         AssistAcc assistAcc = assistAccMapper.selectOne(lqw);
         if (assistAcc != null) {
-            throw new ServiceException("辅助核算项目编码重复");
+            throw new ServiceException(AssistErrorCode.CODE_DUPLICATE);
         }
     }
 }

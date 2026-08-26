@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.financial.cloud.constants.ConstsServiceMessage;
+import com.financial.cloud.constants.MessageKeys;
 import com.financial.cloud.exception.PasswordPolicyException;
 import com.financial.cloud.context.WebContext;
 
@@ -108,48 +109,48 @@ public class ConfigPasswordPolicy implements Serializable {
         String msg;
         if (minLength != 0) {
            // msg = "新密码长度为"+minLength+"-"+maxLength+"位";
-            msg =   WebContext.getI18nValue("PasswordPolicy.TOO_SHORT",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.TOO_SHORT,
                     new Object[]{minLength});
             policMessageList.add(msg);
         }
         if (maxLength != 0) {
             // msg = "新密码长度为"+minLength+"-"+maxLength+"位";
-            msg =   WebContext.getI18nValue("PasswordPolicy.TOO_LONG",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.TOO_LONG,
                     new Object[]{maxLength});
             policMessageList.add(msg);
         }
 
         if (lowerCase > 0) {
            //msg = "新密码至少需要包含"+lowerCase+"位【a-z】小写字母";
-            msg =   WebContext.getI18nValue("PasswordPolicy.INSUFFICIENT_LOWERCASE",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.INSUFFICIENT_LOWERCASE,
                     new Object[]{lowerCase});
             policMessageList.add(msg);
         }
 
         if (upperCase > 0) {
             //msg = "新密码至少需要包含"+upperCase+"位【A-Z】大写字母";
-            msg =   WebContext.getI18nValue("PasswordPolicy.INSUFFICIENT_UPPERCASE",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.INSUFFICIENT_UPPERCASE,
                     new Object[]{upperCase});
             policMessageList.add(msg);
         }
 
         if (digits > 0) {
             //msg = "新密码至少需要包含"+digits+"位【0-9】阿拉伯数字";
-            msg =   WebContext.getI18nValue("PasswordPolicy.INSUFFICIENT_DIGIT",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.INSUFFICIENT_DIGIT,
                     new Object[]{digits});
             policMessageList.add(msg);
         }
 
         if (specialChar > 0) {
             //msg = "新密码至少需要包含"+specialChar+"位特殊字符";
-            msg =   WebContext.getI18nValue("PasswordPolicy.INSUFFICIENT_SPECIAL",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.INSUFFICIENT_SPECIAL,
                     new Object[]{specialChar});
             policMessageList.add(msg);
         }
 
         if (expiration > 0) {
             //msg = "新密码有效期为"+expiration+"天";
-            msg =   WebContext.getI18nValue("PasswordPolicy.INSUFFICIENT_EXPIRES_DAY",
+            msg =   WebContext.getI18nValue(MessageKeys.PasswordPolicy.INSUFFICIENT_EXPIRES_DAYS,
                     new Object[]{expiration});
             policMessageList.add(msg);
         }

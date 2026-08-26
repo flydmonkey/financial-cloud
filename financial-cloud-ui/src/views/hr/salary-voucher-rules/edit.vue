@@ -1,53 +1,117 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="40%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="40%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" inline-message>
-        <el-form-item label="凭证类型" :required="true">
-          <el-select v-model="form.voucherType" style="width: 100%" @change="changeType">
-            <el-option v-for="item in voucherTypes" :label="item.label" :value="item.value"/>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+        inline-message
+      >
+        <el-form-item
+          label="凭证类型"
+          :required="true"
+        >
+          <el-select
+            v-model="form.voucherType"
+            style="width: 100%"
+            @change="changeType"
+          >
+            <el-option
+              v-for="item in voucherTypes"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="凭证字" :required="true">
-          <el-select v-model="form.wordHead" style="width: 100%" disabled>
-            <el-option v-for="item in wordHeads" :label="item.label" :value="item.value"/>
+        <el-form-item
+          label="凭证字"
+          :required="true"
+        >
+          <el-select
+            v-model="form.wordHead"
+            style="width: 100%"
+            disabled
+          >
+            <el-option
+              v-for="item in wordHeads"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="摘要" prop="summary" :required="true">
-          <el-input v-model="form.summary" placeholder="请输入摘要"/>
+        <el-form-item
+          label="摘要"
+          prop="summary"
+          :required="true"
+        >
+          <el-input
+            v-model="form.summary"
+            placeholder="请输入摘要"
+          />
         </el-form-item>
-        <el-form-item label="借/贷" prop="direction" :required="true">
+        <el-form-item
+          label="借/贷"
+          prop="direction"
+          :required="true"
+        >
           <el-radio-group v-model="form.direction">
-            <el-radio value="1">{{ t('subjectDebit') }}</el-radio>
-            <el-radio value="2">{{ t('subjectCredit') }}</el-radio>
+            <el-radio value="1">
+              {{ t('subjectDebit') }}
+            </el-radio>
+            <el-radio value="2">
+              {{ t('subjectCredit') }}
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item prop="subjectId" label="科目" :required="true">
-          <el-cascader style="width: 100%" filterable
-                       v-model="form.subjectId"
-                       :options="deptOptions"
-                       :props="defaultProps"
-                       />
+        <el-form-item
+          prop="subjectId"
+          label="科目"
+          :required="true"
+        >
+          <el-cascader
+            v-model="form.subjectId"
+            style="width: 100%"
+            filterable
+            :options="deptOptions"
+            :props="defaultProps"
+          />
         </el-form-item>
-        <el-form-item prop="status" :label="$t('jbx.text.status.status')" :required="true">
+        <el-form-item
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+          :required="true"
+        >
           <el-switch
-              :width="44"
-              v-model="form.status"
-              :active-value="1"
-              :inactive-value="0"
-              active-icon-class="el-icon-close"
-              inactive-icon-class="el-icon-check">
-          </el-switch>
+            v-model="form.status"
+            :width="44"
+            :active-value="1"
+            :inactive-value="0"
+            active-icon-class="el-icon-close"
+            inactive-icon-class="el-icon-check"
+          />
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

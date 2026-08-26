@@ -16,7 +16,7 @@ export function validateFields(component : any, fieldsToValidate : any, form : a
                 });
             })
         ).then((validationResults: any) => {
-            let valid: any = validationResults.every((isValid: any) => isValid);
+            const valid: any = validationResults.every((isValid: any) => isValid);
             resolve(valid);
         }).catch((error: any) => {
             reject(error);
@@ -215,11 +215,11 @@ export const validatePass: any = (rule: any, value: any, callback: any, policy: 
         return;
     }
 
-    let data: any = policy;
-    let errors: any = [];
+    const data: any = policy;
+    const errors: any = [];
 
     if (data.minLength !== 0 && data.maxLength !== 0) {
-        let inputLength: any = value.length;
+        const inputLength: any = value.length;
         if (inputLength < data.minLength || inputLength > data.maxLength) {
             errors.push(`密码长度需要在${data.minLength}-${data.maxLength}之间`);
         }

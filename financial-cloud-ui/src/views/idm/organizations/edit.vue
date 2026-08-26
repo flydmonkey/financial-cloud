@@ -1,103 +1,202 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="45%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="45%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="orgRef" label-width="110px" inline-message>
-        <el-tabs v-model="activeName" :stretch="true">
-          <el-tab-pane :label="$t('jbx.organizations.tabBasic')" name="first">
-            <el-form-item prop="orgCode" :label="$t('jbx.organizations.code')" :required="true">
-              <el-input v-model="form.orgCode"/>
+      <el-form
+        ref="orgRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
+        <el-tabs
+          v-model="activeName"
+          :stretch="true"
+        >
+          <el-tab-pane
+            :label="$t('jbx.organizations.tabBasic')"
+            name="first"
+          >
+            <el-form-item
+              prop="orgCode"
+              :label="$t('jbx.organizations.code')"
+              :required="true"
+            >
+              <el-input v-model="form.orgCode" />
             </el-form-item>
-            <el-form-item prop="orgName" :label="$t('jbx.organizations.name')" :required="true">
-              <el-input v-model="form.orgName"/>
+            <el-form-item
+              prop="orgName"
+              :label="$t('jbx.organizations.name')"
+              :required="true"
+            >
+              <el-input v-model="form.orgName" />
             </el-form-item>
-            <el-form-item prop="fullName" :label="$t('jbx.organizations.fullName')" :required="true">
-              <el-input v-model="form.fullName"/>
+            <el-form-item
+              prop="fullName"
+              :label="$t('jbx.organizations.fullName')"
+              :required="true"
+            >
+              <el-input v-model="form.fullName" />
             </el-form-item>
-            <el-form-item prop="type" :label="$t('jbx.organizations.type')" :required="true">
-              <el-select v-model="form.type" clearable>
+            <el-form-item
+              prop="type"
+              :label="$t('jbx.organizations.type')"
+              :required="true"
+            >
+              <el-select
+                v-model="form.type"
+                clearable
+              >
                 <el-option
-                    v-for="dict in orgType"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
+                  v-for="dict in orgType"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
                 />
               </el-select>
             </el-form-item>
-            <el-form-item prop="parentId" :label="$t('jbx.organizations.parentName')">
+            <el-form-item
+              prop="parentId"
+              :label="$t('jbx.organizations.parentName')"
+            >
               <el-tree-select
-                  v-model="form.parentId"
-                  :data="deptOptions"
-                  :props="defaultProps"
-                  check-strictly
-                  value-key="id"
-                  :placeholder="t('org.placeholder.parent')"
-                  @change="handleTreeChange"
+                v-model="form.parentId"
+                :data="deptOptions"
+                :props="defaultProps"
+                check-strictly
+                value-key="id"
+                :placeholder="t('org.placeholder.parent')"
+                @change="handleTreeChange"
               />
             </el-form-item>
-            <el-form-item :label="$t('jbx.text.sortIndex')" prop="sortIndex">
-              <el-input-number v-model="form.sortIndex" :min="0" :max="100000"></el-input-number>
+            <el-form-item
+              :label="$t('jbx.text.sortIndex')"
+              prop="sortIndex"
+            >
+              <el-input-number
+                v-model="form.sortIndex"
+                :min="0"
+                :max="100000"
+              />
             </el-form-item>
-            <el-form-item prop="status" :label="$t('jbx.text.status.status')">
+            <el-form-item
+              prop="status"
+              :label="$t('jbx.text.status.status')"
+            >
               <el-switch
-                  :width="44"
-                  v-model="form.status"
-                  :active-value="1"
-                  :inactive-value="0"
-                  active-icon-class="el-icon-close"
-                  inactive-icon-class="el-icon-check">
-              </el-switch>
+                v-model="form.status"
+                :width="44"
+                :active-value="1"
+                :inactive-value="0"
+                active-icon-class="el-icon-close"
+                inactive-icon-class="el-icon-check"
+              />
             </el-form-item>
           </el-tab-pane>
-          <el-tab-pane :label="$t('jbx.organizations.tabExtra')" name="second">
-            <el-form-item prop="codePath" :label="$t('jbx.organizations.codePath')">
-              <el-input v-model="form.codePath"/>
+          <el-tab-pane
+            :label="$t('jbx.organizations.tabExtra')"
+            name="second"
+          >
+            <el-form-item
+              prop="codePath"
+              :label="$t('jbx.organizations.codePath')"
+            >
+              <el-input v-model="form.codePath" />
             </el-form-item>
-            <el-form-item prop="namePath" :label="$t('jbx.organizations.namePath')">
-              <el-input v-model="form.namePath"/>
+            <el-form-item
+              prop="namePath"
+              :label="$t('jbx.organizations.namePath')"
+            >
+              <el-input v-model="form.namePath" />
             </el-form-item>
-            <el-form-item prop="level" :label="$t('jbx.organizations.level')">
-              <el-input v-model="form.level"/>
+            <el-form-item
+              prop="level"
+              :label="$t('jbx.organizations.level')"
+            >
+              <el-input v-model="form.level" />
             </el-form-item>
-            <el-form-item prop="division" :label="$t('jbx.organizations.division')">
-              <el-input v-model="form.division"/>
-            </el-form-item>
-          </el-tab-pane>
-          <el-tab-pane :label="$t('jbx.organizations.tabAddress')" name="third">
-            <el-form-item prop="country" :label="$t('jbx.organizations.country')">
-              <el-input v-model="form.country"/>
-            </el-form-item>
-            <el-form-item prop="region" :label="$t('jbx.organizations.region')">
-              <el-input v-model="form.region"/>
-            </el-form-item>
-            <el-form-item prop="locality" :label="$t('jbx.organizations.locality')">
-              <el-input v-model="form.locality"/>
-            </el-form-item>
-            <el-form-item prop="street" :label="$t('jbx.organizations.street')">
-              <el-input v-model="form.street"/>
-            </el-form-item>
-            <el-form-item prop="address" :label="$t('jbx.organizations.address')">
-              <el-input v-model="form.address"/>
+            <el-form-item
+              prop="division"
+              :label="$t('jbx.organizations.division')"
+            >
+              <el-input v-model="form.division" />
             </el-form-item>
           </el-tab-pane>
-          <el-tab-pane :label="$t('jbx.organizations.tabContact')" name="fourth">
-            <el-form-item prop="contact" :label="$t('jbx.organizations.contact')">
-              <el-input v-model="form.contact"/>
+          <el-tab-pane
+            :label="$t('jbx.organizations.tabAddress')"
+            name="third"
+          >
+            <el-form-item
+              prop="country"
+              :label="$t('jbx.organizations.country')"
+            >
+              <el-input v-model="form.country" />
             </el-form-item>
-            <el-form-item prop="phone" :label="$t('jbx.organizations.phone')">
-              <el-input v-model="form.phone"/>
+            <el-form-item
+              prop="region"
+              :label="$t('jbx.organizations.region')"
+            >
+              <el-input v-model="form.region" />
             </el-form-item>
-            <el-form-item prop="email" :label="$t('jbx.organizations.email')">
-              <el-input v-model="form.email"/>
+            <el-form-item
+              prop="locality"
+              :label="$t('jbx.organizations.locality')"
+            >
+              <el-input v-model="form.locality" />
             </el-form-item>
-            <el-form-item prop="fax" :label="$t('jbx.organizations.fax')">
-              <el-input v-model="form.fax"/>
+            <el-form-item
+              prop="street"
+              :label="$t('jbx.organizations.street')"
+            >
+              <el-input v-model="form.street" />
             </el-form-item>
-            <el-form-item prop="postalCode" :label="$t('jbx.organizations.postalCode')">
-              <el-input v-model="form.postalCode"/>
+            <el-form-item
+              prop="address"
+              :label="$t('jbx.organizations.address')"
+            >
+              <el-input v-model="form.address" />
+            </el-form-item>
+          </el-tab-pane>
+          <el-tab-pane
+            :label="$t('jbx.organizations.tabContact')"
+            name="fourth"
+          >
+            <el-form-item
+              prop="contact"
+              :label="$t('jbx.organizations.contact')"
+            >
+              <el-input v-model="form.contact" />
+            </el-form-item>
+            <el-form-item
+              prop="phone"
+              :label="$t('jbx.organizations.phone')"
+            >
+              <el-input v-model="form.phone" />
+            </el-form-item>
+            <el-form-item
+              prop="email"
+              :label="$t('jbx.organizations.email')"
+            >
+              <el-input v-model="form.email" />
+            </el-form-item>
+            <el-form-item
+              prop="fax"
+              :label="$t('jbx.organizations.fax')"
+            >
+              <el-input v-model="form.fax" />
+            </el-form-item>
+            <el-form-item
+              prop="postalCode"
+              :label="$t('jbx.organizations.postalCode')"
+            >
+              <el-input v-model="form.postalCode" />
             </el-form-item>
           </el-tab-pane>
         </el-tabs>
@@ -105,8 +204,15 @@
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

@@ -2,15 +2,26 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true"
-                 @submit.native.prevent>
-          <el-form-item :label="t('subjectCategory')" style="width: 220px;">
-            <el-select v-model="queryParams.category" clearable @change="handleQuery">
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
+          <el-form-item
+            :label="t('subjectCategory')"
+            style="width: 220px;"
+          >
+            <el-select
+              v-model="queryParams.category"
+              clearable
+              @change="handleQuery"
+            >
               <el-option
-                  v-for="dict in subjects_category"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
+                v-for="dict in subjects_category"
+                :key="dict.value"
+                :label="dict.label"
+                :value="dict.value"
               />
             </el-select>
             <!--
@@ -23,75 +34,143 @@
           </el-form-item>
           <el-form-item :label="t('subjectCode')">
             <el-input
-                v-model="queryParams.code"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.code"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item :label="t('subjectName')">
             <el-input
-                v-model="queryParams.name"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.name"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
-      </el-card>
-      <el-card class="common-card">
+    </el-card>
+    <el-card class="common-card">
       <div class="button-top">
         <el-button
-            @click="handleAdd"
-            type="primary">
+          type="primary"
+          @click="handleAdd"
+        >
           新增科目
         </el-button>
         <el-button
-            @click="handleReorgDisplayName"
-            type="primary">
+          type="primary"
+          @click="handleReorgDisplayName"
+        >
           重组全称
         </el-button>
         <el-button
-            :disabled="ids.length === 0"
-            @click="handleRemove"
-            type="danger">
+          :disabled="ids.length === 0"
+          type="danger"
+          @click="handleRemove"
+        >
           批量移除
         </el-button>
       </div>
-      <el-table v-loading="loading" :data="subjectsList" border @selection-change="handleSelectionChange"
-                :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-                row-key="id"
-                height="730">
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column prop="code" :label="t('subjectCode')" align="left" width="140"
-                         :show-overflow-tooltip="true">
-        </el-table-column>
-        <el-table-column prop="name" :label="t('subjectName')" align="left" min-width="100"
-                         :show-overflow-tooltip="true">
+      <el-table
+        v-loading="loading"
+        :data="subjectsList"
+        border
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        row-key="id"
+        height="730"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          prop="code"
+          :label="t('subjectCode')"
+          align="left"
+          width="140"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="name"
+          :label="t('subjectName')"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
-            <el-tooltip :content="scope.row.displayName" placement="top" effect="light">{{ scope.row.name }}
+            <el-tooltip
+              :content="scope.row.displayName"
+              placement="top"
+              effect="light"
+            >
+              {{ scope.row.name }}
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column prop="category" :label="t('subjectCategory')" align="left" min-width="70">
+        <el-table-column
+          prop="category"
+          :label="t('subjectCategory')"
+          align="left"
+          min-width="70"
+        >
           <template #default="scope">
-            <dict-tag-number :options="subjects_category" :value="scope.row.category"/>
+            <dict-tag-number
+              :options="subjects_category"
+              :value="scope.row.category"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="direction" :label="t('subjectBalanceDirection')" align="center" min-width="50">
+        <el-table-column
+          prop="direction"
+          :label="t('subjectBalanceDirection')"
+          align="center"
+          min-width="50"
+        >
           <template #default="scope">
-            <el-tag type="warning" v-if="scope.row.direction == 0">{{ t('subjectDirectionNone') }}</el-tag>
-            <el-tag type="warning" v-if="scope.row.direction == 1">{{ t('subjectDebit') }}</el-tag>
-            <el-tag type="success" v-if="scope.row.direction == 2">{{ t('subjectCredit') }}</el-tag>
+            <el-tag
+              v-if="scope.row.direction == 0"
+              type="warning"
+            >
+              {{ t('subjectDirectionNone') }}
+            </el-tag>
+            <el-tag
+              v-if="scope.row.direction == 1"
+              type="warning"
+            >
+              {{ t('subjectDebit') }}
+            </el-tag>
+            <el-tag
+              v-if="scope.row.direction == 2"
+              type="success"
+            >
+              {{ t('subjectCredit') }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="balance" label="余额" align="center" width="100"></el-table-column>
-        <el-table-column prop="level" :label="t('subjectLevel')" align="center" min-width="45">
+        <el-table-column
+          prop="balance"
+          label="余额"
+          align="center"
+          width="100"
+        />
+        <el-table-column
+          prop="level"
+          :label="t('subjectLevel')"
+          align="center"
+          min-width="45"
+        >
           <template #default="scope">
             <span v-if="scope.row.level == 1">1</span>
             <span v-else-if="scope.row.level == 2">2</span>
@@ -99,146 +178,274 @@
             <span v-else>{{ t('textOther') }}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="currBookStore.assistAccEnabled" prop="auxiliary" :label="t('subjectAuxiliary')" align="center" min-width="70">
+        <el-table-column
+          v-if="currBookStore.assistAccEnabled"
+          prop="auxiliary"
+          :label="t('subjectAuxiliary')"
+          align="center"
+          min-width="70"
+        >
           <template #default="scope">
-            <dict-tag :options="subjects_auxiliary"
-                      :value="scope.row.auxiliary && scope.row.auxiliary.startsWith('[') ? JSON.parse(scope.row.auxiliary).map((t:any) => {return t.value}): ''"/>
+            <dict-tag
+              :options="subjects_auxiliary"
+              :value="scope.row.auxiliary && scope.row.auxiliary.startsWith('[') ? JSON.parse(scope.row.auxiliary).map((t:any) => {return t.value}): ''"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="parentName" :label="t('subjectParent')" align="center" min-width="100"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="status" :label="t('org.status')" align="center" min-width="40">
+        <el-table-column
+          prop="parentName"
+          :label="t('subjectParent')"
+          align="center"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="status"
+          :label="t('org.status')"
+          align="center"
+          min-width="40"
+        >
           <template #default="scope">
-                <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+            <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
+              class="success"
+            /></el-icon></span>
+            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" width="80" align="center" fixed="right">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          width="80"
+          align="center"
+          fixed="right"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="移除">
-              <el-button link icon="Delete" type="danger" @click="onDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="onDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
-       </el-card>
-      <!--      <pagination-->
-      <!--          v-show="total > 0"-->
-      <!--          :total="total"-->
-      <!--          v-model:page="queryParams.pageNumber"-->
-      <!--          v-model:limit="queryParams.pageSize"-->
-      <!--          :page-sizes="queryParams.pageSizeOptions"-->
-      <!--          @pagination="getList"-->
-      <!--      />-->
+    </el-card>
+    <!--      <pagination-->
+    <!--          v-show="total > 0"-->
+    <!--          :total="total"-->
+    <!--          v-model:page="queryParams.pageNumber"-->
+    <!--          v-model:limit="queryParams.pageSize"-->
+    <!--          :page-sizes="queryParams.pageSizeOptions"-->
+    <!--          @pagination="getList"-->
+    <!--      />-->
 
-      <el-drawer v-if="editFlag" v-model="editFlag" size="450px" :title="editTitle"
-                 :close-on-click-modal="false"
-                 @close="cancel">
-        <template #header>
-          <h4>{{ editTitle }}</h4>
-        </template>
+    <el-drawer
+      v-if="editFlag"
+      v-model="editFlag"
+      size="450px"
+      :title="editTitle"
+      :close-on-click-modal="false"
+      @close="cancel"
+    >
+      <template #header>
+        <h4>{{ editTitle }}</h4>
+      </template>
 
-        <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" inline-message>
-          <el-form-item prop="category" :label="$t('subjectCategory')" :required="true">
-            <el-select v-model="form.category" clearable>
-              <el-option
-                  v-for="dict in subjects_category"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item prop="code" :label="t('subjectCode')" :required="true">
-            <el-input v-model="form.code"/>
-          </el-form-item>
-          <el-form-item prop="name" :label="t('subjectName')" :required="true">
-            <el-input v-model="form.name"/>
-          </el-form-item>
-          <el-form-item prop="displayName" :label="t('subjectDisplayName')">
-            <el-input v-model="form.displayName" disabled/>
-          </el-form-item>
-          <el-form-item prop="pinyinCode" :label="t('subjectPinyinCode')">
-            <el-input v-model="form.pinyinCode"/>
-          </el-form-item>
-          <el-form-item prop="pinyinDisplayCode" :label="t('subjectPinyinDisplayCode')">
-            <el-input v-model="form.pinyinDisplayCode" disabled/>
-          </el-form-item>
-          <el-form-item prop="direction" :label="$t('subjectBalanceDirection')">
-            <el-radio-group :disabled="form.hasVoucher" v-model="form.direction">
-              <el-radio value="0">{{ t('subjectDirectionNone') }}</el-radio>
-              <el-radio value="1">{{ t('subjectDebit') }}</el-radio>
-              <el-radio value="2">{{ t('subjectCredit') }}</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item v-if="currBookStore.assistAccEnabled" prop="auxiliary" :label="$t('subjectAuxiliary')">
-            <el-select :disabled="form.hasVoucher" v-model="form.auxiliary" clearable multiple>
-              <template #header>
-                <div style="display: flex;justify-content: space-between;padding: 0 40px 0 10px">
-                  <span>类型名称</span>
-                  <span>是否必填</span>
-                </div>
-              </template>
-              <el-option
-                  v-for="dict in subjects_category_dicts"
-                  :key="dict.id"
-                  :label="dict.label"
-                  value-key="value"
-                  :value="dict">
-                <span style="float: left">{{ dict.label }}</span>
-                <el-switch @click.stop
-                           style="float: right;color: var(--el-text-color-secondary);margin-right: 10px;"
-                           v-model="dict.must" @change="handle_subjects_category_dicts(dict)"/>
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item prop="classify" :label="t('subjectClassify')">
-            <el-input v-model="form.classify"/>
-          </el-form-item>
-          <el-form-item prop="scope" :label="t('subjectScope')">
-            <el-input v-model="form.scope"/>
-          </el-form-item>
-          <el-form-item prop="parentId" :label="$t('subjectParent')">
-            <el-tree-select
-                ref="resTreeRef"
-                v-model="form.parentId"
-                :data="deptOptions"
-                :props="defaultProps"
-                check-strictly
-                value-key="id"
-                show-checkbox
-                clearable
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
+        <el-form-item
+          prop="category"
+          :label="$t('subjectCategory')"
+          :required="true"
+        >
+          <el-select
+            v-model="form.category"
+            clearable
+          >
+            <el-option
+              v-for="dict in subjects_category"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
             />
-          </el-form-item>
-          <el-form-item prop="isCash" label="是否为现金科目">
-            <el-radio-group v-model="form.isCash" :disabled="form.hasVoucher">
-              <el-radio :value="1">是</el-radio>
-              <el-radio :value="0">否</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item prop="status" :label="$t('jbx.text.status.status')">
-            <el-switch
-                :width="44"
-                v-model="form.status"
-                :active-value="1"
-                :inactive-value="0"
-                active-icon-class="el-icon-close"
-                inactive-icon-class="el-icon-check">
-            </el-switch>
-          </el-form-item>
-        </el-form>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          prop="code"
+          :label="t('subjectCode')"
+          :required="true"
+        >
+          <el-input v-model="form.code" />
+        </el-form-item>
+        <el-form-item
+          prop="name"
+          :label="t('subjectName')"
+          :required="true"
+        >
+          <el-input v-model="form.name" />
+        </el-form-item>
+        <el-form-item
+          prop="displayName"
+          :label="t('subjectDisplayName')"
+        >
+          <el-input
+            v-model="form.displayName"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item
+          prop="pinyinCode"
+          :label="t('subjectPinyinCode')"
+        >
+          <el-input v-model="form.pinyinCode" />
+        </el-form-item>
+        <el-form-item
+          prop="pinyinDisplayCode"
+          :label="t('subjectPinyinDisplayCode')"
+        >
+          <el-input
+            v-model="form.pinyinDisplayCode"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item
+          prop="direction"
+          :label="$t('subjectBalanceDirection')"
+        >
+          <el-radio-group
+            v-model="form.direction"
+            :disabled="form.hasVoucher"
+          >
+            <el-radio value="0">
+              {{ t('subjectDirectionNone') }}
+            </el-radio>
+            <el-radio value="1">
+              {{ t('subjectDebit') }}
+            </el-radio>
+            <el-radio value="2">
+              {{ t('subjectCredit') }}
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item
+          v-if="currBookStore.assistAccEnabled"
+          prop="auxiliary"
+          :label="$t('subjectAuxiliary')"
+        >
+          <el-select
+            v-model="form.auxiliary"
+            :disabled="form.hasVoucher"
+            clearable
+            multiple
+          >
+            <template #header>
+              <div style="display: flex;justify-content: space-between;padding: 0 40px 0 10px">
+                <span>类型名称</span>
+                <span>是否必填</span>
+              </div>
+            </template>
+            <el-option
+              v-for="dict in subjects_category_dicts"
+              :key="dict.id"
+              :label="dict.label"
+              value-key="value"
+              :value="dict"
+            >
+              <span style="float: left">{{ dict.label }}</span>
+              <el-switch
+                v-model="dict.must"
+                style="float: right;color: var(--el-text-color-secondary);margin-right: 10px;"
+                @click.stop
+                @change="handle_subjects_category_dicts(dict)"
+              />
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          prop="classify"
+          :label="t('subjectClassify')"
+        >
+          <el-input v-model="form.classify" />
+        </el-form-item>
+        <el-form-item
+          prop="scope"
+          :label="t('subjectScope')"
+        >
+          <el-input v-model="form.scope" />
+        </el-form-item>
+        <el-form-item
+          prop="parentId"
+          :label="$t('subjectParent')"
+        >
+          <el-tree-select
+            ref="resTreeRef"
+            v-model="form.parentId"
+            :data="deptOptions"
+            :props="defaultProps"
+            check-strictly
+            value-key="id"
+            show-checkbox
+            clearable
+          />
+        </el-form-item>
+        <el-form-item
+          prop="isCash"
+          label="是否为现金科目"
+        >
+          <el-radio-group
+            v-model="form.isCash"
+            :disabled="form.hasVoucher"
+          >
+            <el-radio :value="1">
+              是
+            </el-radio>
+            <el-radio :value="0">
+              否
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+        >
+          <el-switch
+            v-model="form.status"
+            :width="44"
+            :active-value="1"
+            :inactive-value="0"
+            active-icon-class="el-icon-close"
+            inactive-icon-class="el-icon-check"
+          />
+        </el-form-item>
+      </el-form>
 
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="cancel">{{ $t('systemCancel') }}</el-button>
-            <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
-          </div>
-        </template>
-      </el-drawer>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancel">
+            {{ $t('systemCancel') }}
+          </el-button>
+          <el-button
+            type="primary"
+            @click="submitForm"
+          >
+            {{ t('org.confirm') }}
+          </el-button>
+        </div>
+      </template>
+    </el-drawer>
   </div>
 </template>
 <script setup lang="ts">

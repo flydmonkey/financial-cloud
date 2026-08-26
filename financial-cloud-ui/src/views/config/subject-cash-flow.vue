@@ -1,9 +1,15 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="20" class="main-container">
-      <el-col :span="8" class="scrollable-content">
+    <el-row
+      :gutter="20"
+      class="main-container"
+    >
+      <el-col
+        :span="8"
+        class="scrollable-content"
+      >
         <el-card class="common-card scroll-inner">
-<!--          <el-row>
+          <!--          <el-row>
             <el-form :model="queryParams" ref="queryRef" :inline="true"
                      @submit.native.prevent>
               <el-form-item label="会计准则">
@@ -24,37 +30,49 @@
           <el-row class="scroll-tree">
             <template v-if="deptOptions && deptOptions.length > 0">
               <el-tree
-                  highlight-current
-                  ref="resTreeRef"
-                  :data="deptOptions"
-                  :props="defaultProps"
-                  check-strictly
-                  @node-click="handleNodeClick"
-                  value-key="id"
-                  v-slot="{ node, data }"
+                ref="resTreeRef"
+                v-slot="{ node, data }"
+                highlight-current
+                :data="deptOptions"
+                :props="defaultProps"
+                check-strictly
+                value-key="id"
+                @node-click="handleNodeClick"
               >
                 <span>
                   <span v-if="node.label.length <= 20">{{ node.label }}</span>
                   <span v-else>
-                    <el-tooltip effect="dark" :content="node.label" placement="right">
-                    <span>{{ node.label.slice(0, 20) + '...' }}</span>
-                  </el-tooltip>
+                    <el-tooltip
+                      effect="dark"
+                      :content="node.label"
+                      placement="right"
+                    >
+                      <span>{{ node.label.slice(0, 20) + '...' }}</span>
+                    </el-tooltip>
                   </span>
                 </span>
               </el-tree>
             </template>
             <template v-else>
-              <div class="no-data-tip">暂无数据</div>
+              <div class="no-data-tip">
+                暂无数据
+              </div>
             </template>
           </el-row>
         </el-card>
       </el-col>
-      <el-col :span="16" class="fixed-sidebar">
+      <el-col
+        :span="16"
+        class="fixed-sidebar"
+      >
         <el-card class="common-card sidebar-inner">
           <el-row>
-            <div v-if="currentSubjectName" style="font-size: 18px">
+            <div
+              v-if="currentSubjectName"
+              style="font-size: 18px"
+            >
               {{ currentSubjectName ? `【${currentSubjectName}】` : '' }}
-              <hr style="border: none; border-top: 1px solid #ccc; margin-top: 8px;"/>
+              <hr style="border: none; border-top: 1px solid #ccc; margin-top: 8px;">
             </div>
           </el-row>
           <el-row>
@@ -63,33 +81,69 @@
             </div>
           </el-row>
           <el-row class="mt10">
-            <el-radio-group v-model="direction" @change="changeDirection">
-              <el-radio label="借方" :value="1" border></el-radio>
-              <el-radio label="贷方" :value="2" border></el-radio>
+            <el-radio-group
+              v-model="direction"
+              @change="changeDirection"
+            >
+              <el-radio
+                label="借方"
+                :value="1"
+                border
+              />
+              <el-radio
+                label="贷方"
+                :value="2"
+                border
+              />
             </el-radio-group>
           </el-row>
           <el-row class="main-row">
             <span class="common-font">现金流量主表项目</span>
-            <el-table :data="mainTableList" class="main-table"
-                      @select="handleSelect"
-                      ref="singleTable">
-              <el-table-column type="selection" width="55"></el-table-column>
-              <el-table-column prop="itemName" align="left">
-              </el-table-column>
+            <el-table
+              ref="singleTable"
+              :data="mainTableList"
+              class="main-table"
+              @select="handleSelect"
+            >
+              <el-table-column
+                type="selection"
+                width="55"
+              />
+              <el-table-column
+                prop="itemName"
+                align="left"
+              />
             </el-table>
           </el-row>
           <el-row class="main-row">
             <span class="common-font">现金流量补充资料项目</span>
-            <el-table :data="supplementaryList" class="main-table"
-                      @select="handleSelectSupple"
-                      ref="singleTableSupple">
-              <el-table-column type="selection" width="55"></el-table-column>
-              <el-table-column prop="itemName" align="left">
-              </el-table-column>
+            <el-table
+              ref="singleTableSupple"
+              :data="supplementaryList"
+              class="main-table"
+              @select="handleSelectSupple"
+            >
+              <el-table-column
+                type="selection"
+                width="55"
+              />
+              <el-table-column
+                prop="itemName"
+                align="left"
+              />
             </el-table>
           </el-row>
-          <el-row class="mt10" justify="end">
-            <el-button type="primary" @click="submit" :disabled="currentSubjectName === ''">保存</el-button>
+          <el-row
+            class="mt10"
+            justify="end"
+          >
+            <el-button
+              type="primary"
+              :disabled="currentSubjectName === ''"
+              @click="submit"
+            >
+              保存
+            </el-button>
           </el-row>
         </el-card>
       </el-col>

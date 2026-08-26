@@ -3,47 +3,100 @@
   <div class="app-container">
     <el-card class="common-card">
       <el-tabs
-          v-model="activeName"
-          type="card"
-          class="demo-tabs"
-          @tab-click="handleClick"
+        v-model="activeName"
+        type="card"
+        class="demo-tabs"
+        @tab-click="handleClick"
       >
-        <el-tab-pane label="期末处理" name="carry-forward">carry</el-tab-pane>
-        <el-tab-pane label="结账" name="settle-period">settle</el-tab-pane>
-        <el-tab-pane label="结账列表" name="settle-list">
+        <el-tab-pane
+          label="期末处理"
+          name="carry-forward"
+        >
+          carry
+        </el-tab-pane>
+        <el-tab-pane
+          label="结账"
+          name="settle-period"
+        >
+          settle
+        </el-tab-pane>
+        <el-tab-pane
+          label="结账列表"
+          name="settle-list"
+        >
           <div class="queryForm">
-            <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="68px">
-
-              <el-form-item label="选择年度" prop="reportDate"
-                            v-if="queryParams.periodType === 'year'">
+            <el-form
+              ref="queryRef"
+              :model="queryParams"
+              :inline="true"
+              label-width="68px"
+            >
+              <el-form-item
+                v-if="queryParams.periodType === 'year'"
+                label="选择年度"
+                prop="reportDate"
+              >
                 <el-date-picker
-                    @change="handleQuery"
-                    v-model="queryParams.date"
-                    type="year"
-                    style="width: 100px"
-                    :clearable="false"
-                    value-format="YYYY"
-                    placeholder="选择年">
-                </el-date-picker>
+                  v-model="queryParams.date"
+                  type="year"
+                  style="width: 100px"
+                  :clearable="false"
+                  value-format="YYYY"
+                  placeholder="选择年"
+                  @change="handleQuery"
+                />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="handleQuery">查询</el-button>
+                <el-button
+                  type="primary"
+                  @click="handleQuery"
+                >
+                  查询
+                </el-button>
               </el-form-item>
             </el-form>
           </div>
-          <el-table v-loading="loading" :data="list" @selection-change="handleSelectionChange">
-            <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column label="月份" align="center" prop="period">
+          <el-table
+            v-loading="loading"
+            :data="list"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column
+              type="selection"
+              width="55"
+              align="center"
+            />
+            <el-table-column
+              label="月份"
+              align="center"
+              prop="period"
+            >
               <template #default="scope">
                 {{ scope.row.period }} 月
               </template>
             </el-table-column>
-            <el-table-column :label="$t('jbx.text.status.status')" align="center" prop="status">
+            <el-table-column
+              :label="$t('jbx.text.status.status')"
+              align="center"
+              prop="status"
+            >
               <template #default="scope">
-                <span v-if="scope.row.status == 6"><el-icon color="green" size="24"><CircleCheck/></el-icon></span>
-                <span v-if="scope.row.status == 4"><el-icon color="#808080" size="24"><WarningFilled/></el-icon></span>
-                <span v-if="scope.row.status == 1"><el-icon color="#67C23A" size="24"><Promotion/></el-icon></span>
-                <span v-if="scope.row.status == 2"><el-icon color="#E6A23C" size="24"><Clock/></el-icon></span>
+                <span v-if="scope.row.status == 6"><el-icon
+                  color="green"
+                  size="24"
+                ><CircleCheck /></el-icon></span>
+                <span v-if="scope.row.status == 4"><el-icon
+                  color="#808080"
+                  size="24"
+                ><WarningFilled /></el-icon></span>
+                <span v-if="scope.row.status == 1"><el-icon
+                  color="#67C23A"
+                  size="24"
+                ><Promotion /></el-icon></span>
+                <span v-if="scope.row.status == 2"><el-icon
+                  color="#E6A23C"
+                  size="24"
+                ><Clock /></el-icon></span>
               </template>
             </el-table-column>
             <!--
@@ -59,13 +112,12 @@
             -->
           </el-table>
           <pagination
-              v-show="total > 0"
-              :total="total"
-              v-model:page="queryParams.pageNumber"
-              v-model:limit="queryParams.pageSize"
-              @pagination="getList"
+            v-show="total > 0"
+            v-model:page="queryParams.pageNumber"
+            v-model:limit="queryParams.pageSize"
+            :total="total"
+            @pagination="getList"
           />
-
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -102,7 +154,7 @@ const data = reactive({
   queryParams: {
     periodType: 'year',
     date: currentTerm,
-    year: (currentTerm + "").substring(0, 4),
+    year: (currentTerm.value + "").substring(0, 4),
     pageNumber: 1,
     pageSize: 10,
     providerName: undefined

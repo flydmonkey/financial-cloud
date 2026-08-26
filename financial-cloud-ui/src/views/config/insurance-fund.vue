@@ -1,14 +1,25 @@
 <template>
   <div class="app-container">
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="80px"
+    >
       <el-card class="common-card query-box">
         <template #header>
           <div>基础信息</div>
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="缴纳基数" prop="payBase">
-              <el-input-number v-model="form.payBase" style="width: 180px">
+            <el-form-item
+              label="缴纳基数"
+              prop="payBase"
+            >
+              <el-input-number
+                v-model="form.payBase"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -16,12 +27,18 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="公司费用合计：" label-width="110">
+            <el-form-item
+              label="公司费用合计："
+              label-width="110"
+            >
               <b>{{ form.payBaseBusiness }}<span>元</span></b>
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人费用合计：" label-width="110">
+            <el-form-item
+              label="个人费用合计："
+              label-width="110"
+            >
               <b>{{ form.payBasePersonal }}<span>元</span></b>
             </el-form-item>
           </el-col>
@@ -33,13 +50,16 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="企业比例" prop="endowmentBusiness">
+            <el-form-item
+              label="企业比例"
+              prop="endowmentBusiness"
+            >
               <el-input-number
-                  v-model="form.endowmentBusiness"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px"
+                v-model="form.endowmentBusiness"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
               >
                 <template #suffix>
                   <span>%</span>
@@ -48,13 +68,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人比例" prop="endowmentPersonal">
+            <el-form-item
+              label="个人比例"
+              prop="endowmentPersonal"
+            >
               <el-input-number
-                  v-model="form.endowmentPersonal"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.endowmentPersonal"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -62,9 +86,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="公司费用" prop="endowmentBusinessFee">
-              <el-input-number v-model="form.endowmentBusinessFee" style="width: 180px"
-                               disabled
+            <el-form-item
+              label="公司费用"
+              prop="endowmentBusinessFee"
+            >
+              <el-input-number
+                v-model="form.endowmentBusinessFee"
+                style="width: 180px"
+                disabled
               >
                 <template #suffix>
                   <span>元</span>
@@ -73,8 +102,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人费用" prop="endowmentPersonalFee">
-              <el-input-number v-model="form.endowmentPersonalFee" style="width: 180px" disabled>
+            <el-form-item
+              label="个人费用"
+              prop="endowmentPersonalFee"
+            >
+              <el-input-number
+                v-model="form.endowmentPersonalFee"
+                style="width: 180px"
+                disabled
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -89,13 +125,17 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="企业比例" prop="medicalBusiness">
+            <el-form-item
+              label="企业比例"
+              prop="medicalBusiness"
+            >
               <el-input-number
-                  v-model="form.medicalBusiness"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.medicalBusiness"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -103,13 +143,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人比例" prop="medicalPersonal">
+            <el-form-item
+              label="个人比例"
+              prop="medicalPersonal"
+            >
               <el-input-number
-                  v-model="form.medicalPersonal"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.medicalPersonal"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -117,9 +161,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="公司费用" prop="medicalBusinessFee">
-              <el-input-number v-model="form.medicalBusinessFee" style="width: 180px"
-                               disabled
+            <el-form-item
+              label="公司费用"
+              prop="medicalBusinessFee"
+            >
+              <el-input-number
+                v-model="form.medicalBusinessFee"
+                style="width: 180px"
+                disabled
               >
                 <template #suffix>
                   <span>元</span>
@@ -128,8 +177,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人费用" prop="medicalPersonalFee">
-              <el-input-number v-model="form.medicalPersonalFee" style="width: 180px" disabled>
+            <el-form-item
+              label="个人费用"
+              prop="medicalPersonalFee"
+            >
+              <el-input-number
+                v-model="form.medicalPersonalFee"
+                style="width: 180px"
+                disabled
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -144,13 +200,17 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="企业比例" prop="unemploymentBusiness">
+            <el-form-item
+              label="企业比例"
+              prop="unemploymentBusiness"
+            >
               <el-input-number
-                  v-model="form.unemploymentBusiness"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.unemploymentBusiness"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -158,13 +218,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人比例" prop="unemploymentPersonal">
+            <el-form-item
+              label="个人比例"
+              prop="unemploymentPersonal"
+            >
               <el-input-number
-                  v-model="form.unemploymentPersonal"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.unemploymentPersonal"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -172,9 +236,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="公司费用" prop="unemploymentBusinessFee">
-              <el-input-number v-model="form.unemploymentBusinessFee" style="width: 180px"
-                               disabled
+            <el-form-item
+              label="公司费用"
+              prop="unemploymentBusinessFee"
+            >
+              <el-input-number
+                v-model="form.unemploymentBusinessFee"
+                style="width: 180px"
+                disabled
               >
                 <template #suffix>
                   <span>元</span>
@@ -183,8 +252,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人费用" prop="unemploymentPersonalFee">
-              <el-input-number v-model="form.unemploymentPersonalFee" style="width: 180px" disabled>
+            <el-form-item
+              label="个人费用"
+              prop="unemploymentPersonalFee"
+            >
+              <el-input-number
+                v-model="form.unemploymentPersonalFee"
+                style="width: 180px"
+                disabled
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -199,13 +275,17 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="企业比例" prop="employmentInjuryBusiness">
+            <el-form-item
+              label="企业比例"
+              prop="employmentInjuryBusiness"
+            >
               <el-input-number
-                  v-model="form.employmentInjuryBusiness"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.employmentInjuryBusiness"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -213,13 +293,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人比例" prop="employmentInjuryPersonal">
+            <el-form-item
+              label="个人比例"
+              prop="employmentInjuryPersonal"
+            >
               <el-input-number
-                  v-model="form.employmentInjuryPersonal"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.employmentInjuryPersonal"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -228,8 +312,10 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="公司费用">
-              <el-input-number v-model="form.employmentInjuryBusinessFee" style="width: 180px"
-                               disabled
+              <el-input-number
+                v-model="form.employmentInjuryBusinessFee"
+                style="width: 180px"
+                disabled
               >
                 <template #suffix>
                   <span>元</span>
@@ -239,7 +325,11 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="个人费用">
-              <el-input-number v-model="form.employmentInjuryPersonalFee" style="width: 180px" disabled>
+              <el-input-number
+                v-model="form.employmentInjuryPersonalFee"
+                style="width: 180px"
+                disabled
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -254,13 +344,17 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="企业比例" prop="maternityBusiness">
+            <el-form-item
+              label="企业比例"
+              prop="maternityBusiness"
+            >
               <el-input-number
-                  v-model="form.maternityBusiness"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.maternityBusiness"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -268,13 +362,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人比例" prop="maternityPersonal">
+            <el-form-item
+              label="个人比例"
+              prop="maternityPersonal"
+            >
               <el-input-number
-                  v-model="form.maternityPersonal"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.maternityPersonal"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -283,8 +381,10 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="公司费用">
-              <el-input-number v-model="form.maternityBusinessFee" style="width: 180px"
-                               disabled
+              <el-input-number
+                v-model="form.maternityBusinessFee"
+                style="width: 180px"
+                disabled
               >
                 <template #suffix>
                   <span>元</span>
@@ -293,8 +393,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人费用" prop="unemploymentPersonalFee">
-              <el-input-number v-model="form.maternityPersonalFee" style="width: 180px" disabled>
+            <el-form-item
+              label="个人费用"
+              prop="unemploymentPersonalFee"
+            >
+              <el-input-number
+                v-model="form.maternityPersonalFee"
+                style="width: 180px"
+                disabled
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -310,7 +417,10 @@
         <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item label="公司费用">
-              <el-input-number v-model="form.seriousMedicalBusiness" style="width: 180px">
+              <el-input-number
+                v-model="form.seriousMedicalBusiness"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -319,7 +429,10 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="个人费用">
-              <el-input-number v-model="form.seriousMedicalPersonal" style="width: 180px">
+              <el-input-number
+                v-model="form.seriousMedicalPersonal"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -334,13 +447,17 @@
         </template>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-form-item label="企业比例" prop="providentFundSupBusiness">
+            <el-form-item
+              label="企业比例"
+              prop="providentFundSupBusiness"
+            >
               <el-input-number
-                  v-model="form.providentFundSupBusiness"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.providentFundSupBusiness"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -348,13 +465,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="个人比例" prop="providentFundSupPersonal">
+            <el-form-item
+              label="个人比例"
+              prop="providentFundSupPersonal"
+            >
               <el-input-number
-                  v-model="form.providentFundSupPersonal"
-                  :min="0"
-                  :max="100"
-                  :precision="1"
-                  style="width: 180px">
+                v-model="form.providentFundSupPersonal"
+                :min="0"
+                :max="100"
+                :precision="1"
+                style="width: 180px"
+              >
                 <template #suffix>
                   <span>%</span>
                 </template>
@@ -363,8 +484,10 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="公司费用">
-              <el-input-number v-model="form.providentFundSupBusinessFee" style="width: 180px"
-                               disabled
+              <el-input-number
+                v-model="form.providentFundSupBusinessFee"
+                style="width: 180px"
+                disabled
               >
                 <template #suffix>
                   <span>元</span>
@@ -374,7 +497,11 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="个人费用">
-              <el-input-number v-model="form.providentFundSupPersonalFee" style="width: 180px" disabled>
+              <el-input-number
+                v-model="form.providentFundSupPersonalFee"
+                style="width: 180px"
+                disabled
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
@@ -386,7 +513,12 @@
     </el-form>
 
     <div class="dialog-footer">
-      <el-button type="primary" @click="submitForm">{{ $t('jbx.text.submit') }}</el-button>
+      <el-button
+        type="primary"
+        @click="submitForm"
+      >
+        {{ $t('jbx.text.submit') }}
+      </el-button>
     </div>
   </div>
 </template>
@@ -452,7 +584,7 @@ const data: any = reactive({
 const {form, rules} = toRefs(data);
 const loading: any = ref(true);
 
-function percentValue(feeValue: number, percentValue: number): Number {
+function percentValue(feeValue: number, percentValue: number): number {
   return Math.round(Number((feeValue * percentValue).toFixed(3))) / 100;
 }
 

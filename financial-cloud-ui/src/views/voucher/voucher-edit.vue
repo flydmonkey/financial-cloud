@@ -1,28 +1,58 @@
 <template>
-  <div class="app-container" @keydown="handleKeydown">
+  <div
+    class="app-container"
+    @keydown="handleKeydown"
+  >
     <!--  功能区左侧  -->
-    <div v-if="!isPrintMode" class="top-funs top-funs-left" :class="{topFunsUpdate: !!formData.id && props.dialog}">
-      <span class="bottom-counts-item" :class="{isNotPh: !loanBalance()}">
+    <div
+      v-if="!isPrintMode"
+      class="top-funs top-funs-left"
+      :class="{topFunsUpdate: !!formData.id && props.dialog}"
+    >
+      <span
+        class="bottom-counts-item"
+        :class="{isNotPh: !loanBalance()}"
+      >
         借贷平衡：{{ loanBalance() ? "是" : "否" }}</span>
     </div>
     <!--  功能区  -->
-    <div v-if="!isPrintMode" class="top-funs" :style="{top: auto? '204px' : '80px'}">
-      <el-button v-if="props.edit" @click="onAddItem">
+    <div
+      v-if="!isPrintMode"
+      class="top-funs"
+      :style="{top: auto? '204px' : '80px'}"
+    >
+      <el-button
+        v-if="props.edit"
+        @click="onAddItem"
+      >
         添加一项
       </el-button>
-      <el-tooltip v-if="props.edit" content="确保总账科目对应的金额已正确录入！">
-        <el-button v-loading="submitButtonLoading" @click="onSubmitDraft">
+      <el-tooltip
+        v-if="props.edit"
+        content="确保总账科目对应的金额已正确录入！"
+      >
+        <el-button
+          v-loading="submitButtonLoading"
+          @click="onSubmitDraft"
+        >
           暂存
         </el-button>
       </el-tooltip>
       <el-tooltip
-          v-if="props.edit && formData.voucherDate && formData.voucherDate.startsWith(currBookStore.termCurrent)"
-          content="确保总账科目对应的金额已正确录入！">
-        <el-button v-loading="submitButtonLoading" @click="onSubmit">
+        v-if="props.edit && formData.voucherDate && formData.voucherDate.startsWith(currBookStore.termCurrent)"
+        content="确保总账科目对应的金额已正确录入！"
+      >
+        <el-button
+          v-loading="submitButtonLoading"
+          @click="onSubmit"
+        >
           提交
         </el-button>
       </el-tooltip>
-      <el-tooltip v-if="props.edit && !props.dialog" content="清空当前数据，建立新的凭证信息！">
+      <el-tooltip
+        v-if="props.edit && !props.dialog"
+        content="清空当前数据，建立新的凭证信息！"
+      >
         <el-button @click="onReset">
           新增凭证
         </el-button>
@@ -31,376 +61,654 @@
         打印
       </el-button>
     </div>
-    <div ref="printMe" class="printable-content" id="printable-content"
-         @click="closeOverlayOnly"
-         :style="printContentStyle">
-      <div v-for="(sheetData, sheetIndex) in tableSheets"
-           :key="sheetIndex"
-           class="voucher-print-sheet">
-      <!--   标题头   -->
-      <div class="header-title">
-        <span class="header-title-text">
-          <span class="text">记&nbsp;&nbsp;&nbsp;账&nbsp;&nbsp;&nbsp;凭&nbsp;&nbsp;&nbsp;证</span>
-        </span>
-        <span class="header-title-time">
-          <el-date-picker v-if="!isReadonlyDisplay"
-                          class="header-title-date"
-                          :clearable="false"
-                          :disabled-date="isCurrentOrFutureMonth"
-                          v-model="formData.voucherDate"
-                          type="date" placeholder="选择日期"
-                          value-format="YYYY-MM-DD" format="YYYY年MM月DD日"
-                          :shortcuts="shortcuts"
-                          @change="handleVoucherDate"></el-date-picker>
-          <span v-else>{{ formatVoucherDateChinese() }}</span>
-        </span>
-      </div>
-      <!-- 公司信息部分 -->
-      <div class="company-info">
-        <div class="company-info-left company-info-item no-border-input">
-          <div class="company-info-item">
-            <span>公司名称：</span>
-            <!--            <el-input v-if="!isPrintMode"-->
-            <!--                      style="width: 300px" :input-style="{}"-->
-            <!--                      v-model="formData.companyName"/>-->
-            <span>{{ formData.companyName }}</span>
-          </div>
+    <div
+      id="printable-content"
+      ref="printMe"
+      class="printable-content"
+      :style="printContentStyle"
+      @click="closeOverlayOnly"
+    >
+      <div
+        v-for="(sheetData, sheetIndex) in tableSheets"
+        :key="sheetIndex"
+        class="voucher-print-sheet"
+      >
+        <!--   标题头   -->
+        <div class="header-title">
+          <span class="header-title-text">
+            <span class="text">记&nbsp;&nbsp;&nbsp;账&nbsp;&nbsp;&nbsp;凭&nbsp;&nbsp;&nbsp;证</span>
+          </span>
+          <span class="header-title-time">
+            <el-date-picker
+              v-if="!isReadonlyDisplay"
+              v-model="formData.voucherDate"
+              class="header-title-date"
+              :clearable="false"
+              :disabled-date="isCurrentOrFutureMonth"
+              type="date"
+              placeholder="选择日期"
+              value-format="YYYY-MM-DD"
+              format="YYYY年MM月DD日"
+              :shortcuts="shortcuts"
+              @change="handleVoucherDate"
+            />
+            <span v-else>{{ formatVoucherDateChinese() }}</span>
+          </span>
         </div>
-        <div class="company-info-right">
-          <div class="company-info-item">
-            <div v-if="!isReadonlyDisplay" class="no-border-input input-number voucher-word-num">
-              <span>凭证编号：</span>
-              <el-select v-model="formData.wordHead" placeholder="字头"
-                         style="width: 50px" size="small" @change="handleWordHead">
-                <el-option label="记" value="记"/>
-                <el-option label="收" value="收"/>
-                <el-option label="付" value="付"/>
-                <el-option label="转" value="转"/>
-              </el-select>
-              <el-input-number style="width: 90px"
-                               v-model="formData.wordNum"
-                               :min="1"
-                               :max="9999"
-                               size="small"/>
-              <span>号</span>
-              <span class="voucher-page-indicator">{{ formatVoucherPageIndicator(sheetIndex) }}</span>
+        <!-- 公司信息部分 -->
+        <div class="company-info">
+          <div class="company-info-left company-info-item no-border-input">
+            <div class="company-info-item">
+              <span>公司名称：</span>
+              <!--            <el-input v-if="!isPrintMode"-->
+              <!--                      style="width: 300px" :input-style="{}"-->
+              <!--                      v-model="formData.companyName"/>-->
+              <span>{{ formData.companyName }}</span>
             </div>
-            <span v-if="isReadonlyDisplay">
-               {{ formatVoucherWordNum() }} {{ formatVoucherPageIndicator(sheetIndex) }}
-            </span>
+          </div>
+          <div class="company-info-right">
+            <div class="company-info-item">
+              <div
+                v-if="!isReadonlyDisplay"
+                class="no-border-input input-number voucher-word-num"
+              >
+                <span>凭证编号：</span>
+                <el-select
+                  v-model="formData.wordHead"
+                  placeholder="字头"
+                  style="width: 50px"
+                  size="small"
+                  @change="handleWordHead"
+                >
+                  <el-option
+                    label="记"
+                    value="记"
+                  />
+                  <el-option
+                    label="收"
+                    value="收"
+                  />
+                  <el-option
+                    label="付"
+                    value="付"
+                  />
+                  <el-option
+                    label="转"
+                    value="转"
+                  />
+                </el-select>
+                <el-input-number
+                  v-model="formData.wordNum"
+                  style="width: 90px"
+                  :min="1"
+                  :max="9999"
+                  size="small"
+                />
+                <span>号</span>
+                <span class="voucher-page-indicator">{{ formatVoucherPageIndicator(sheetIndex) }}</span>
+              </div>
+              <span v-if="isReadonlyDisplay">
+                {{ formatVoucherWordNum() }} {{ formatVoucherPageIndicator(sheetIndex) }}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-      <!--  中间表格区域  -->
-      <div class="voucher-sheet" @click.stop>
-        <table v-if="isPrintMode" class="rv-table rv-print-table">
-          <colgroup>
-            <col class="rv-col-summary" style="width:20%"/>
-            <template v-if="bookAuxiliaryEnabled">
-              <col class="rv-col-subject" style="width:30%"/>
-              <col class="rv-col-auxiliary" style="width:16%"/>
-            </template>
-            <col v-else class="rv-col-subject" style="width:44%"/>
-            <col class="rv-col-amount" style="width:18%"/>
-            <col class="rv-col-amount" style="width:18%"/>
-          </colgroup>
-          <thead>
-            <template v-if="bookAuxiliaryEnabled">
-              <tr class="rv-table-header-row">
-                <th class="rv-table-header-cell rv-col-summary" rowspan="2">摘要</th>
-                <th class="rv-table-header-cell" colspan="2">会计科目</th>
-                <th class="rv-table-header-cell rv-col-amount" rowspan="2">借方金额</th>
-                <th class="rv-table-header-cell rv-col-amount" rowspan="2">贷方金额</th>
-              </tr>
-              <tr class="rv-table-header-row">
-                <th class="rv-table-header-cell rv-col-subject">科目</th>
-                <th class="rv-table-header-cell rv-col-auxiliary">辅助核算</th>
-              </tr>
-            </template>
-            <tr v-else class="rv-table-header-row">
-              <th class="rv-table-header-cell rv-col-summary">摘要</th>
-              <th class="rv-table-header-cell rv-col-subject">会计科目</th>
-              <th class="rv-table-header-cell rv-col-amount">借方金额</th>
-              <th class="rv-table-header-cell rv-col-amount">贷方金额</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, rowIndex) in sheetData"
-                :key="`${sheetIndex}-${rowIndex}-${row.id}-${row.summary}`"
-                :class="tableRowClassName({ row })">
-              <td class="rv-table-cell rv-col-summary">
-                <template v-if="isGrandTotalRow(row)">
-                  <span class="voucher-footer-label">{{ formatReceiptNumText() }}</span>
-                </template>
-                <span v-else-if="isTotalRow(row) || isCarryForwardRow(row)">{{ row.summary }}</span>
-                <span v-else class="voucher-cell-text">{{ row.summary }}</span>
-              </td>
+        <!--  中间表格区域  -->
+        <div
+          class="voucher-sheet"
+          @click.stop
+        >
+          <table
+            v-if="isPrintMode"
+            class="rv-table rv-print-table"
+          >
+            <colgroup>
+              <col
+                class="rv-col-summary"
+                style="width:20%"
+              >
               <template v-if="bookAuxiliaryEnabled">
-                <td class="rv-table-cell rv-col-subject">
-                  <span v-if="isGrandTotalRow(row)" class="voucher-grand-total-label">
-                    <span class="voucher-grand-total-fixed">合计</span>
-                    <span v-if="amountInChineseUpper" class="voucher-grand-total-amount">{{ amountInChineseUpper }}</span>
-                  </span>
-                  <span v-else-if="!isTotalRow(row)" class="voucher-cell-text">{{ getSubjectNameByRow(row) }}</span>
-                </td>
-                <td class="rv-table-cell rv-col-auxiliary">
-                  <span v-if="!isTotalRow(row)" class="voucher-cell-text">{{ getSubjectDetailNameByRow(row) }}</span>
-                </td>
+                <col
+                  class="rv-col-subject"
+                  style="width:30%"
+                >
+                <col
+                  class="rv-col-auxiliary"
+                  style="width:16%"
+                >
               </template>
-              <td v-else class="rv-table-cell rv-col-subject">
-                <span v-if="isGrandTotalRow(row)" class="voucher-grand-total-label">
-                  <span class="voucher-grand-total-fixed">合计</span>
-                  <span v-if="amountInChineseUpper" class="voucher-grand-total-amount">{{ amountInChineseUpper }}</span>
-                </span>
-                <span v-else-if="!isTotalRow(row)" class="voucher-cell-text">{{ getSubjectNameByRow(row) }}</span>
-              </td>
-              <td class="rv-table-cell rv-col-amount">
-                <span v-if="isTotalRow(row)" class="voucher-cell-amount-text">{{ formatAmount(row.debitAmount) }}</span>
-                <span v-else class="voucher-cell-amount-text" :class="{ redWord: isRedWord(row.debitAmount) }">
-                  {{ formatAmountRed(row.debitAmount) }}
-                </span>
-              </td>
-              <td class="rv-table-cell rv-col-amount">
-                <span v-if="isTotalRow(row)" class="voucher-cell-amount-text">{{ formatAmount(row.creditAmount) }}</span>
-                <span v-else class="voucher-cell-amount-text" :class="{ redWord: isRedWord(row.creditAmount) }">
-                  {{ formatAmountRed(row.creditAmount) }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <el-table v-else :ref="sheetIndex === 0 ? 'rvTableRef' : undefined"
-                    :data="sheetData"
-                    @row-contextmenu="rowContextmenu"
-                    @cell-click="cellClick"
-                    @header-click="headerClick"
-                    :row-class-name="tableRowClassName"
-                    header-row-class-name="rv-table-header-row"
-                    header-cell-class-name="rv-table-header-cell"
-                    :cell-class-name="tableCellClassName"
-                    class="rv-table">
-            <el-table-column prop="summary" align="left" header-align="center" label="摘要"
-                             class-name="rv-col-summary"
-                             label-class-name="rv-col-summary"
-                             :min-width="isPrintMode ? SUMMARY_COL_PRINT_WIDTH : 192"
-                             :width="isPrintMode ? SUMMARY_COL_PRINT_WIDTH : undefined">
+              <col
+                v-else
+                class="rv-col-subject"
+                style="width:44%"
+              >
+              <col
+                class="rv-col-amount"
+                style="width:18%"
+              >
+              <col
+                class="rv-col-amount"
+                style="width:18%"
+              >
+            </colgroup>
+            <thead>
+              <template v-if="bookAuxiliaryEnabled">
+                <tr class="rv-table-header-row">
+                  <th
+                    class="rv-table-header-cell rv-col-summary"
+                    rowspan="2"
+                  >
+                    摘要
+                  </th>
+                  <th
+                    class="rv-table-header-cell"
+                    colspan="2"
+                  >
+                    会计科目
+                  </th>
+                  <th
+                    class="rv-table-header-cell rv-col-amount"
+                    rowspan="2"
+                  >
+                    借方金额
+                  </th>
+                  <th
+                    class="rv-table-header-cell rv-col-amount"
+                    rowspan="2"
+                  >
+                    贷方金额
+                  </th>
+                </tr>
+                <tr class="rv-table-header-row">
+                  <th class="rv-table-header-cell rv-col-subject">
+                    科目
+                  </th>
+                  <th class="rv-table-header-cell rv-col-auxiliary">
+                    辅助核算
+                  </th>
+                </tr>
+              </template>
+              <tr
+                v-else
+                class="rv-table-header-row"
+              >
+                <th class="rv-table-header-cell rv-col-summary">
+                  摘要
+                </th>
+                <th class="rv-table-header-cell rv-col-subject">
+                  会计科目
+                </th>
+                <th class="rv-table-header-cell rv-col-amount">
+                  借方金额
+                </th>
+                <th class="rv-table-header-cell rv-col-amount">
+                  贷方金额
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, rowIndex) in sheetData"
+                :key="`${sheetIndex}-${rowIndex}-${row.id}-${row.summary}`"
+                :class="tableRowClassName({ row })"
+              >
+                <td class="rv-table-cell rv-col-summary">
+                  <template v-if="isGrandTotalRow(row)">
+                    <span class="voucher-footer-label">{{ formatReceiptNumText() }}</span>
+                  </template>
+                  <span v-else-if="isTotalRow(row) || isCarryForwardRow(row)">{{ row.summary }}</span>
+                  <span
+                    v-else
+                    class="voucher-cell-text"
+                  >{{ row.summary }}</span>
+                </td>
+                <template v-if="bookAuxiliaryEnabled">
+                  <td class="rv-table-cell rv-col-subject">
+                    <span
+                      v-if="isGrandTotalRow(row)"
+                      class="voucher-grand-total-label"
+                    >
+                      <span class="voucher-grand-total-fixed">合计</span>
+                      <span
+                        v-if="amountInChineseUpper"
+                        class="voucher-grand-total-amount"
+                      >{{ amountInChineseUpper }}</span>
+                    </span>
+                    <span
+                      v-else-if="!isTotalRow(row)"
+                      class="voucher-cell-text"
+                    >{{ getSubjectNameByRow(row) }}</span>
+                  </td>
+                  <td class="rv-table-cell rv-col-auxiliary">
+                    <span
+                      v-if="!isTotalRow(row)"
+                      class="voucher-cell-text"
+                    >{{ getSubjectDetailNameByRow(row) }}</span>
+                  </td>
+                </template>
+                <td
+                  v-else
+                  class="rv-table-cell rv-col-subject"
+                >
+                  <span
+                    v-if="isGrandTotalRow(row)"
+                    class="voucher-grand-total-label"
+                  >
+                    <span class="voucher-grand-total-fixed">合计</span>
+                    <span
+                      v-if="amountInChineseUpper"
+                      class="voucher-grand-total-amount"
+                    >{{ amountInChineseUpper }}</span>
+                  </span>
+                  <span
+                    v-else-if="!isTotalRow(row)"
+                    class="voucher-cell-text"
+                  >{{ getSubjectNameByRow(row) }}</span>
+                </td>
+                <td class="rv-table-cell rv-col-amount">
+                  <span
+                    v-if="isTotalRow(row)"
+                    class="voucher-cell-amount-text"
+                  >{{ formatAmount(row.debitAmount) }}</span>
+                  <span
+                    v-else
+                    class="voucher-cell-amount-text"
+                    :class="{ redWord: isRedWord(row.debitAmount) }"
+                  >
+                    {{ formatAmountRed(row.debitAmount) }}
+                  </span>
+                </td>
+                <td class="rv-table-cell rv-col-amount">
+                  <span
+                    v-if="isTotalRow(row)"
+                    class="voucher-cell-amount-text"
+                  >{{ formatAmount(row.creditAmount) }}</span>
+                  <span
+                    v-else
+                    class="voucher-cell-amount-text"
+                    :class="{ redWord: isRedWord(row.creditAmount) }"
+                  >
+                    {{ formatAmountRed(row.creditAmount) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <el-table
+            v-else
+            :ref="sheetIndex === 0 ? 'rvTableRef' : undefined"
+            :data="sheetData"
+            :row-class-name="tableRowClassName"
+            header-row-class-name="rv-table-header-row"
+            header-cell-class-name="rv-table-header-cell"
+            :cell-class-name="tableCellClassName"
+            class="rv-table"
+            @row-contextmenu="rowContextmenu"
+            @cell-click="cellClick"
+            @header-click="headerClick"
+          >
+            <el-table-column
+              prop="summary"
+              align="left"
+              header-align="center"
+              label="摘要"
+              class-name="rv-col-summary"
+              label-class-name="rv-col-summary"
+              :min-width="isPrintMode ? SUMMARY_COL_PRINT_WIDTH : 192"
+              :width="isPrintMode ? SUMMARY_COL_PRINT_WIDTH : undefined"
+            >
               <template #default="scope">
                 <template v-if="isGrandTotalRow(scope.row)">
-                  <div v-if="props.edit && !isPrintMode" class="no-border-input receipt-num-cell voucher-footer-label">
+                  <div
+                    v-if="props.edit && !isPrintMode"
+                    class="no-border-input receipt-num-cell voucher-footer-label"
+                  >
                     <span>附件 </span>
-                    <el-input style="width: 40px" :input-style="{textAlign: 'center'}"
-                              v-model="formData.receiptNum"/>
+                    <el-input
+                      v-model="formData.receiptNum"
+                      style="width: 40px"
+                      :input-style="{textAlign: 'center'}"
+                    />
                     <span> 张</span>
                   </div>
-                  <span v-else class="voucher-footer-label">{{ formatReceiptNumText() }}</span>
+                  <span
+                    v-else
+                    class="voucher-footer-label"
+                  >{{ formatReceiptNumText() }}</span>
                 </template>
                 <span v-else-if="isTotalRow(scope.row)">{{ scope.row.summary }}</span>
-                <el-input v-else-if="showCellInput(scope.row)"
-                          type="textarea"
-                          :rows="2"
-                          resize="none"
-                          class="voucher-cell-input"
-                          :class="{ 'voucher-cell-readonly': !isCellEditable(scope.row) }"
-                          v-model="scope.row.summary"
-                          :readonly="!isCellEditable(scope.row)"
-                          :input-style="voucherCellInputStyle"
-                          @keydown="isCellEditable(scope.row) && handleInputKeydown($event, scope, 0)"
-                          :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-0`)"></el-input>
-                <span v-else class="voucher-cell-text">{{ scope.row.summary }}</span>
+                <el-input
+                  v-else-if="showCellInput(scope.row)"
+                  :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-0`)"
+                  v-model="scope.row.summary"
+                  type="textarea"
+                  :rows="2"
+                  resize="none"
+                  class="voucher-cell-input"
+                  :class="{ 'voucher-cell-readonly': !isCellEditable(scope.row) }"
+                  :readonly="!isCellEditable(scope.row)"
+                  :input-style="voucherCellInputStyle"
+                  @keydown="isCellEditable(scope.row) && handleInputKeydown($event, scope, 0)"
+                />
+                <span
+                  v-else
+                  class="voucher-cell-text"
+                >{{ scope.row.summary }}</span>
               </template>
             </el-table-column>
             <template v-if="bookAuxiliaryEnabled">
-              <el-table-column align="left" header-align="center" label="会计科目">
-                <el-table-column prop="subjectId" align="left" header-align="center" label="科目"
-                                 class-name="rv-col-subject"
-                                 :min-width="isPrintMode ? SUBJECT_WITH_AUX_COL_PRINT_WIDTH : 238"
-                                 :width="isPrintMode ? SUBJECT_WITH_AUX_COL_PRINT_WIDTH : undefined">
+              <el-table-column
+                align="left"
+                header-align="center"
+                label="会计科目"
+              >
+                <el-table-column
+                  prop="subjectId"
+                  align="left"
+                  header-align="center"
+                  label="科目"
+                  class-name="rv-col-subject"
+                  :min-width="isPrintMode ? SUBJECT_WITH_AUX_COL_PRINT_WIDTH : 238"
+                  :width="isPrintMode ? SUBJECT_WITH_AUX_COL_PRINT_WIDTH : undefined"
+                >
                   <template #default="scope">
-                    <span v-if="isGrandTotalRow(scope.row)" class="voucher-grand-total-label">
+                    <span
+                      v-if="isGrandTotalRow(scope.row)"
+                      class="voucher-grand-total-label"
+                    >
                       <span class="voucher-grand-total-fixed">合计</span>
-                      <span v-if="amountInChineseUpper" class="voucher-grand-total-amount">{{ amountInChineseUpper }}</span>
+                      <span
+                        v-if="amountInChineseUpper"
+                        class="voucher-grand-total-amount"
+                      >{{ amountInChineseUpper }}</span>
                     </span>
-                    <el-cascader v-else-if="isCellEditable(scope.row)"
-                                 class="voucher-cell-input voucher-cell-cascader"
-                                 style="width: 100%" filterable clearable
-                                 placeholder=""
-                                 :show-all-levels="false"
-                                 :model-value="resolveSubjectCascaderValue(scope.row)"
-                                 :options="subjectList"
-                                 :props="cascaderSubjectProps"
-                                 @change="handleSubjectChange(scope, $event)"
-                                 @clear="handleSubjectClear(scope)"
-                                 @mousedown.capture="handleSubjectCascaderMouseDown"
-                                 @keydown="handleCascaderKeydown($event, scope, 1)"
-                                 :ref="(el) => setRef(el, `cascader-${scope.$index}-1`)"
-                                 :filter-method="cascaderSubjectProps.filterMethod"/>
-                    <el-input v-else-if="showCellInput(scope.row)"
-                              type="textarea"
-                              :rows="2"
-                              resize="none"
-                              readonly
-                              class="voucher-cell-input voucher-cell-readonly"
-                              :model-value="getSubjectName(scope)"
-                              :input-style="voucherCellInputStyle"/>
-                    <span v-else class="voucher-cell-text">{{ getSubjectName(scope) }}</span>
+                    <el-cascader
+                      v-else-if="isCellEditable(scope.row)"
+                      class="voucher-cell-input voucher-cell-cascader"
+                      style="width: 100%"
+                      filterable
+                      clearable
+                      :ref="(el) => setRef(el, `cascader-${scope.$index}-1`)"
+                      placeholder=""
+                      :show-all-levels="false"
+                      :model-value="resolveSubjectCascaderValue(scope.row)"
+                      :options="subjectList"
+                      :props="cascaderSubjectProps"
+                      :filter-method="cascaderSubjectProps.filterMethod"
+                      @change="handleSubjectChange(scope, $event)"
+                      @clear="handleSubjectClear(scope)"
+                      @mousedown.capture="handleSubjectCascaderMouseDown"
+                      @keydown="handleCascaderKeydown($event, scope, 1)"
+                    />
+                    <el-input
+                      v-else-if="showCellInput(scope.row)"
+                      type="textarea"
+                      :rows="2"
+                      resize="none"
+                      readonly
+                      class="voucher-cell-input voucher-cell-readonly"
+                      :model-value="getSubjectName(scope)"
+                      :input-style="voucherCellInputStyle"
+                    />
+                    <span
+                      v-else
+                      class="voucher-cell-text"
+                    >{{ getSubjectName(scope) }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="auxiliary" align="left" header-align="center" label="辅助核算"
-                                 :min-width="isPrintMode ? AUX_COL_PRINT_WIDTH : 180"
-                                 :width="isPrintMode ? AUX_COL_PRINT_WIDTH : undefined">
+                <el-table-column
+                  prop="auxiliary"
+                  align="left"
+                  header-align="center"
+                  label="辅助核算"
+                  :min-width="isPrintMode ? AUX_COL_PRINT_WIDTH : 180"
+                  :width="isPrintMode ? AUX_COL_PRINT_WIDTH : undefined"
+                >
                   <template #default="scope">
                     <template v-if="!isTotalRow(scope.row)">
-                      <el-popover v-if="isCellEditable(scope.row)" title="辅助核算" :width="400" trigger="click"
-                                  :visible="auxiliaryVisible[scope.$index]">
+                      <el-popover
+                        v-if="isCellEditable(scope.row)"
+                        title="辅助核算"
+                        :width="400"
+                        trigger="click"
+                        :visible="auxiliaryVisible[scope.$index]"
+                      >
                         <template #reference>
-                          <el-input readonly
-                                    type="textarea"
-                                    :rows="2"
-                                    resize="none"
-                                    class="voucher-cell-input"
-                                    :input-style="voucherCellInputStyle"
-                                    :value="getSubjectDetailName(scope)"
-                                    @click="handleAuxiliaryShow(scope)"
-                                    @keydown="handleInputKeydown($event, scope, 2)"
-                                    :ref="(el) => setRef(el, `input-${scope.$index}-2`)"></el-input>
+                          <el-input
+                            :ref="(el) => setRef(el, `input-${scope.$index}-2`)"
+                            readonly
+                            type="textarea"
+                            :rows="2"
+                            resize="none"
+                            class="voucher-cell-input"
+                            :input-style="voucherCellInputStyle"
+                            :value="getSubjectDetailName(scope)"
+                            @click="handleAuxiliaryShow(scope)"
+                            @keydown="handleInputKeydown($event, scope, 2)"
+                          />
                         </template>
                         <template #default>
                           <div>
                             <select-auxiliary
-                                :show="auxiliaryVisible[scope.$index]"
-                                :subjectId="scope.row.subjectId"
-                                :auxiliary="subjectKeyItem[scope.row.subjectCode]?.auxiliary"
-                                v-model="scope.row.auxiliary"></select-auxiliary>
+                              v-model="scope.row.auxiliary"
+                              :show="auxiliaryVisible[scope.$index]"
+                              :subject-id="scope.row.subjectId"
+                              :auxiliary="subjectKeyItem[scope.row.subjectCode]?.auxiliary"
+                            />
                           </div>
                         </template>
                       </el-popover>
-                      <el-input v-else-if="showCellInput(scope.row)"
-                                type="textarea"
-                                :rows="2"
-                                resize="none"
-                                readonly
-                                class="voucher-cell-input voucher-cell-readonly"
-                                :model-value="getSubjectDetailName(scope)"
-                                :input-style="voucherCellInputStyle"/>
-                      <span v-else class="voucher-cell-text">{{ getSubjectDetailName(scope) }}</span>
+                      <el-input
+                        v-else-if="showCellInput(scope.row)"
+                        type="textarea"
+                        :rows="2"
+                        resize="none"
+                        readonly
+                        class="voucher-cell-input voucher-cell-readonly"
+                        :model-value="getSubjectDetailName(scope)"
+                        :input-style="voucherCellInputStyle"
+                      />
+                      <span
+                        v-else
+                        class="voucher-cell-text"
+                      >{{ getSubjectDetailName(scope) }}</span>
                     </template>
                   </template>
                 </el-table-column>
               </el-table-column>
             </template>
-            <el-table-column v-else prop="subjectId" align="left" header-align="center" label="会计科目"
-                             class-name="rv-col-subject"
-                             :min-width="isPrintMode ? SUBJECT_COL_PRINT_WIDTH : 238"
-                             :width="isPrintMode ? SUBJECT_COL_PRINT_WIDTH : undefined">
+            <el-table-column
+              v-else
+              prop="subjectId"
+              align="left"
+              header-align="center"
+              label="会计科目"
+              class-name="rv-col-subject"
+              :min-width="isPrintMode ? SUBJECT_COL_PRINT_WIDTH : 238"
+              :width="isPrintMode ? SUBJECT_COL_PRINT_WIDTH : undefined"
+            >
               <template #default="scope">
-                <span v-if="isGrandTotalRow(scope.row)" class="voucher-grand-total-label">
+                <span
+                  v-if="isGrandTotalRow(scope.row)"
+                  class="voucher-grand-total-label"
+                >
                   <span class="voucher-grand-total-fixed">合计</span>
-                  <span v-if="amountInChineseUpper" class="voucher-grand-total-amount">{{ amountInChineseUpper }}</span>
+                  <span
+                    v-if="amountInChineseUpper"
+                    class="voucher-grand-total-amount"
+                  >{{ amountInChineseUpper }}</span>
                 </span>
-                <el-cascader v-else-if="isCellEditable(scope.row)"
-                             class="voucher-cell-input voucher-cell-cascader"
-                             style="width: 100%" filterable clearable
-                             placeholder=""
-                             :show-all-levels="false"
-                             :model-value="resolveSubjectCascaderValue(scope.row)"
-                             :options="subjectList"
-                             :props="cascaderSubjectProps"
-                             @change="handleSubjectChange(scope, $event)"
-                             @clear="handleSubjectClear(scope)"
-                             @mousedown.capture="handleSubjectCascaderMouseDown"
-                             @keydown="handleCascaderKeydown($event, scope, 1)"
-                             :ref="(el) => setRef(el, `cascader-${scope.$index}-1`)"
-                             :filter-method="cascaderSubjectProps.filterMethod"/>
-                <el-input v-else-if="showCellInput(scope.row)"
-                          type="textarea"
-                          :rows="2"
-                          resize="none"
-                          readonly
-                          class="voucher-cell-input voucher-cell-readonly"
-                          :model-value="getSubjectName(scope)"
-                          :input-style="voucherCellInputStyle"/>
-                <span v-else class="voucher-cell-text">{{ getSubjectName(scope) }}</span>
+                <el-cascader
+                  v-else-if="isCellEditable(scope.row)"
+                  class="voucher-cell-input voucher-cell-cascader"
+                  style="width: 100%"
+                  filterable
+                  clearable
+                  :ref="(el) => setRef(el, `cascader-${scope.$index}-1`)"
+                  placeholder=""
+                  :show-all-levels="false"
+                  :model-value="resolveSubjectCascaderValue(scope.row)"
+                  :options="subjectList"
+                  :props="cascaderSubjectProps"
+                  :filter-method="cascaderSubjectProps.filterMethod"
+                  @change="handleSubjectChange(scope, $event)"
+                  @clear="handleSubjectClear(scope)"
+                  @mousedown.capture="handleSubjectCascaderMouseDown"
+                  @keydown="handleCascaderKeydown($event, scope, 1)"
+                />
+                <el-input
+                  v-else-if="showCellInput(scope.row)"
+                  type="textarea"
+                  :rows="2"
+                  resize="none"
+                  readonly
+                  class="voucher-cell-input voucher-cell-readonly"
+                  :model-value="getSubjectName(scope)"
+                  :input-style="voucherCellInputStyle"
+                />
+                <span
+                  v-else
+                  class="voucher-cell-text"
+                >{{ getSubjectName(scope) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="debitAmount" align="right" header-align="center" label="借方金额"
-                             class-name="rv-col-amount"
-                             :min-width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : 130"
-                             :width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : undefined">
+            <el-table-column
+              prop="debitAmount"
+              align="right"
+              header-align="center"
+              label="借方金额"
+              class-name="rv-col-amount"
+              :min-width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : 130"
+              :width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : undefined"
+            >
               <template #default="scope">
-                <span v-if="isTotalRow(scope.row)" class="voucher-cell-amount-text">{{ formatAmount(scope.row.debitAmount) }}</span>
-                <el-input v-else-if="showCellInput(scope.row)"
-                          class="voucher-cell-input voucher-cell-amount"
-                          :class="{redWord: isRedWord(scope.row.debitAmount), 'voucher-cell-readonly': !isCellEditable(scope.row)}"
-                          v-model="scope.row.debitAmount"
-                          :readonly="!isCellEditable(scope.row)"
-                          :input-style="voucherCellInputStyle"
-                          :formatter="amountInputFormatter"
-                          :parser="amountInputParser"
-                          @input="isCellEditable(scope.row) && recalculateTotals()"
-                          @change="isCellEditable(scope.row) && createTableData(scope.row, 1)"
-                          @keydown="isCellEditable(scope.row) && handleInputKeydown($event, scope, bookAuxiliaryEnabled ? 3 : 2)"
-                          :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 3 : 2}`)"></el-input>
-                <span v-else class="voucher-cell-amount-text" :class="{redWord:isRedWord(scope.row.debitAmount)}">
+                <span
+                  v-if="isTotalRow(scope.row)"
+                  class="voucher-cell-amount-text"
+                >{{ formatAmount(scope.row.debitAmount) }}</span>
+                <el-input
+                  v-else-if="showCellInput(scope.row)"
+                  v-model="scope.row.debitAmount"
+                  :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 3 : 2}`)"
+                  class="voucher-cell-input voucher-cell-amount"
+                  :class="{redWord: isRedWord(scope.row.debitAmount), 'voucher-cell-readonly': !isCellEditable(scope.row)}"
+                  :readonly="!isCellEditable(scope.row)"
+                  :input-style="voucherCellInputStyle"
+                  :formatter="amountInputFormatter"
+                  :parser="amountInputParser"
+                  @input="isCellEditable(scope.row) && recalculateTotals()"
+                  @change="isCellEditable(scope.row) && createTableData(scope.row, 1)"
+                  @keydown="isCellEditable(scope.row) && handleInputKeydown($event, scope, bookAuxiliaryEnabled ? 3 : 2)"
+                />
+                <span
+                  v-else
+                  class="voucher-cell-amount-text"
+                  :class="{redWord:isRedWord(scope.row.debitAmount)}"
+                >
                   {{ formatAmountRed(scope.row.debitAmount) }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="creditAmount" align="right" header-align="center" label="贷方金额"
-                             class-name="rv-col-amount"
-                             :min-width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : 130"
-                             :width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : undefined">
+            <el-table-column
+              prop="creditAmount"
+              align="right"
+              header-align="center"
+              label="贷方金额"
+              class-name="rv-col-amount"
+              :min-width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : 130"
+              :width="isPrintMode ? AMOUNT_COL_PRINT_WIDTH : undefined"
+            >
               <template #default="scope">
-                <span v-if="isTotalRow(scope.row)" class="voucher-cell-amount-text">{{ formatAmount(scope.row.creditAmount) }}</span>
-                <el-input v-else-if="showCellInput(scope.row)"
-                          class="voucher-cell-input voucher-cell-amount"
-                          :class="{redWord: isRedWord(scope.row.creditAmount), 'voucher-cell-readonly': !isCellEditable(scope.row)}"
-                          v-model="scope.row.creditAmount"
-                          :readonly="!isCellEditable(scope.row)"
-                          :input-style="voucherCellInputStyle"
-                          :formatter="amountInputFormatter"
-                          :parser="amountInputParser"
-                          @input="isCellEditable(scope.row) && recalculateTotals()"
-                          @change="isCellEditable(scope.row) && createTableData(scope.row, 2)"
-                          @keydown="isCellEditable(scope.row) && handleInputKeydown($event, scope, bookAuxiliaryEnabled ? 4 : 3)"
-                          :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 4 : 3}`)"></el-input>
-                <span v-else class="voucher-cell-amount-text" :class="{redWord:isRedWord(scope.row.creditAmount)}">
+                <span
+                  v-if="isTotalRow(scope.row)"
+                  class="voucher-cell-amount-text"
+                >{{ formatAmount(scope.row.creditAmount) }}</span>
+                <el-input
+                  v-else-if="showCellInput(scope.row)"
+                  v-model="scope.row.creditAmount"
+                  :ref="(el) => isCellEditable(scope.row) && setRef(el, `input-${scope.$index}-${bookAuxiliaryEnabled ? 4 : 3}`)"
+                  class="voucher-cell-input voucher-cell-amount"
+                  :class="{redWord: isRedWord(scope.row.creditAmount), 'voucher-cell-readonly': !isCellEditable(scope.row)}"
+                  :readonly="!isCellEditable(scope.row)"
+                  :input-style="voucherCellInputStyle"
+                  :formatter="amountInputFormatter"
+                  :parser="amountInputParser"
+                  @input="isCellEditable(scope.row) && recalculateTotals()"
+                  @change="isCellEditable(scope.row) && createTableData(scope.row, 2)"
+                  @keydown="isCellEditable(scope.row) && handleInputKeydown($event, scope, bookAuxiliaryEnabled ? 4 : 3)"
+                />
+                <span
+                  v-else
+                  class="voucher-cell-amount-text"
+                  :class="{redWord:isRedWord(scope.row.creditAmount)}"
+                >
                   {{ formatAmountRed(scope.row.creditAmount) }}
                 </span>
               </template>
             </el-table-column>
           </el-table>
-      </div>
-      <!--   审核人信息   -->
-      <div class="apply-info">
-        <div class="apply-info-item">
-          <span>会计主管：</span>
-          <span>{{ formData.managerName }}</span>
         </div>
-        <div class="apply-info-item">
-          <span>过账：</span>
-          <span>{{ formData.senderName }}</span>
+        <!--   审核人信息   -->
+        <div class="apply-info">
+          <div class="apply-info-item">
+            <span>会计主管：</span>
+            <span>{{ formData.managerName }}</span>
+          </div>
+          <div class="apply-info-item">
+            <span>过账：</span>
+            <span>{{ formData.senderName }}</span>
+          </div>
+          <div class="apply-info-item">
+            <span>复核：</span>
+            <span>{{ formData.auditMemberName }}</span>
+          </div>
+          <div class="apply-info-item">
+            <span>制单：</span>
+            <span>{{ formData.createdName }}</span>
+          </div>
         </div>
-        <div class="apply-info-item">
-          <span>复核：</span>
-          <span>{{ formData.auditMemberName }}</span>
-        </div>
-        <div class="apply-info-item">
-          <span>制单：</span>
-          <span>{{ formData.createdName }}</span>
-        </div>
-      </div>
       </div>
     </div>
     <!-- 右键功能区域 -->
-    <div v-if="visibleContextmenu && !isPrintMode" class="contextmenu"
-         :style="{ left: leftMenu + 'px', top: topMenu + 'px' }">
-      <el-button :disabled="currentRow.cfg_index === 0" plain @click="handleMoveUp">向上移动</el-button>
-      <el-button :disabled="currentRow.cfg_index === formData.items.length - 1" plain @click="handleMoveDown">向下移动
+    <div
+      v-if="visibleContextmenu && !isPrintMode"
+      class="contextmenu"
+      :style="{ left: leftMenu + 'px', top: topMenu + 'px' }"
+    >
+      <el-button
+        :disabled="currentRow.cfg_index === 0"
+        plain
+        @click="handleMoveUp"
+      >
+        向上移动
       </el-button>
-      <el-button :disabled="currentRow.cfg_index === 0" plain @click="handleMoveToStart">移至首位</el-button>
-      <el-button :disabled="currentRow.cfg_index === formData.items.length - 1" plain @click="handleMoveToEnd">移至末尾
+      <el-button
+        :disabled="currentRow.cfg_index === formData.items.length - 1"
+        plain
+        @click="handleMoveDown"
+      >
+        向下移动
       </el-button>
-      <el-button plain @click="handleDelete">删除本项</el-button>
+      <el-button
+        :disabled="currentRow.cfg_index === 0"
+        plain
+        @click="handleMoveToStart"
+      >
+        移至首位
+      </el-button>
+      <el-button
+        :disabled="currentRow.cfg_index === formData.items.length - 1"
+        plain
+        @click="handleMoveToEnd"
+      >
+        移至末尾
+      </el-button>
+      <el-button
+        plain
+        @click="handleDelete"
+      >
+        删除本项
+      </el-button>
     </div>
   </div>
 </template>

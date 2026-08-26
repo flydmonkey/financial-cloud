@@ -1,9 +1,15 @@
 <template>
   <div class="slider-bar">
     <!-- 条形图 -->
-    <div class="bar-container" :style="{ borderRadius: borderRadius }">
-      <div class="bar-progress" :style="progressStyle"></div>
-      <div class="bar-divider"></div>
+    <div
+      class="bar-container"
+      :style="{ borderRadius: borderRadius }"
+    >
+      <div
+        class="bar-progress"
+        :style="progressStyle"
+      />
+      <div class="bar-divider" />
     </div>
 
     <!-- 标签 -->

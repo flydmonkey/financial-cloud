@@ -1,19 +1,31 @@
 <template>
   <div class="app-container">
     <el-card class="common-card">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-        <el-form-item :label="$t('jbx.employeetaxdeduction.idCardNo') + '：'" prop="idCardNo">
+      <el-form
+        v-show="showSearch"
+        ref="queryRef"
+        :model="queryParams"
+        :inline="true"
+      >
+        <el-form-item
+          :label="$t('jbx.employeetaxdeduction.idCardNo') + '：'"
+          prop="idCardNo"
+        >
           <el-input
-              v-model="queryParams.idCardNo"
-              placeholder=""
-              clearable
-              style="width: 240px"
-              @keyup.enter.native="handleQuery"
+            v-model="queryParams.idCardNo"
+            placeholder=""
+            clearable
+            style="width: 240px"
+            @keyup.enter.native="handleQuery"
           />
         </el-form-item>
         <el-form-item>
-          <el-button @click="handleQuery">{{ $t('jbx.text.query') }}</el-button>
-          <el-button @click="resetQuery">{{ $t('jbx.text.reset') }}</el-button>
+          <el-button @click="handleQuery">
+            {{ $t('jbx.text.query') }}
+          </el-button>
+          <el-button @click="resetQuery">
+            {{ $t('jbx.text.reset') }}
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -21,37 +33,93 @@
       <div class="btn-form">
         <div>
           <el-button
-              type="primary"
-              @click="handleAdd"
-          >{{ $t('jbx.text.add') }}
+            type="primary"
+            @click="handleAdd"
+          >
+            {{ $t('jbx.text.add') }}
           </el-button>
           <el-button
-              type="danger"
-              :disabled="multiple"
-              @click="handleDelete"
-          >{{ $t('jbx.text.delete') }}
+            type="danger"
+            :disabled="multiple"
+            @click="handleDelete"
+          >
+            {{ $t('jbx.text.delete') }}
           </el-button>
         </div>
         <div class="btn-form-right">
-          <el-button @click="importVisible = true">{{ $t('jbx.text.import') }}</el-button>
+          <el-button @click="importVisible = true">
+            {{ $t('jbx.text.import') }}
+          </el-button>
         </div>
       </div>
 
-      <el-table v-loading="loading" :data="list" border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.employeeNo')" align="center" prop="employeeNo"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.employeeName')" align="center" prop="employeeName"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.idCardType')" align="center" prop="idCardType"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.idCardNo')" align="center" prop="idCardNo"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.education')" align="center" prop="education"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.continuingEducation')" align="center"
-                         prop="continuingEducation"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.medical')" align="center" prop="medical"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.housingLoan')" align="center" prop="housingLoan"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.rent')" align="center" prop="rent"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.elderlyCare')" align="center" prop="elderlyCare"/>
-        <el-table-column :label="$t('jbx.employeetaxdeduction.infantsCare')" align="center" prop="infantsCare"
-                         width="140"/>
+      <el-table
+        v-loading="loading"
+        :data="list"
+        border
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.employeeNo')"
+          align="center"
+          prop="employeeNo"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.employeeName')"
+          align="center"
+          prop="employeeName"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.idCardType')"
+          align="center"
+          prop="idCardType"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.idCardNo')"
+          align="center"
+          prop="idCardNo"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.education')"
+          align="center"
+          prop="education"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.continuingEducation')"
+          align="center"
+          prop="continuingEducation"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.medical')"
+          align="center"
+          prop="medical"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.housingLoan')"
+          align="center"
+          prop="housingLoan"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.rent')"
+          align="center"
+          prop="rent"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.elderlyCare')"
+          align="center"
+          prop="elderlyCare"
+        />
+        <el-table-column
+          :label="$t('jbx.employeetaxdeduction.infantsCare')"
+          align="center"
+          prop="infantsCare"
+          width="140"
+        />
         <!--
         <el-table-column :label="$t('jbx.employeetaxdeduction.individualPension')" align="center" prop="individualPension"/>
         <el-table-column :label="$t('jbx.employeetaxdeduction.enterprisePension')" align="center" prop="enterprisePension"/>
@@ -61,101 +129,249 @@
         <el-table-column :label="$t('jbx.employeetaxdeduction.others')" align="center" prop="others"/>
         </el-table-column>
         -->
-        <el-table-column :label="$t('jbx.text.action')" align="center"
-                         class-name="small-padding fixed-width" width="80" fixed="right">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          align="center"
+          class-name="small-padding fixed-width"
+          width="80"
+          fixed="right"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="移除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        @pagination="getList"
       />
     </el-card>
     <!-- 添加或修改参数配置对话框 -->
-    <el-drawer v-model="open" append-to-body
-               :close-on-click-modal="false" size="600px">
+    <el-drawer
+      v-model="open"
+      append-to-body
+      :close-on-click-modal="false"
+      size="600px"
+    >
       <template #header>
         <h4>{{ title }}</h4>
       </template>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="150px">
-        <el-tabs model-value="first" class="demo-tabs">
-          <el-tab-pane label="基本信息" name="first">
-            <el-form-item :label="$t('jbx.employeetaxdeduction.employeeNo')" prop="employeeNo" :required="true">
-              <el-input v-model="form.employeeNo" placeholder=""/>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="150px"
+      >
+        <el-tabs
+          model-value="first"
+          class="demo-tabs"
+        >
+          <el-tab-pane
+            label="基本信息"
+            name="first"
+          >
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.employeeNo')"
+              prop="employeeNo"
+              :required="true"
+            >
+              <el-input
+                v-model="form.employeeNo"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.employeeName')" prop="employeeName" :required="true">
-              <el-input v-model="form.employeeName" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.employeeName')"
+              prop="employeeName"
+              :required="true"
+            >
+              <el-input
+                v-model="form.employeeName"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.idCardType')" prop="idCardType" :required="true">
-              <el-input v-model="form.idCardType" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.idCardType')"
+              prop="idCardType"
+              :required="true"
+            >
+              <el-input
+                v-model="form.idCardType"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.idCardNo')" prop="idCardNo" :required="true">
-              <el-input v-model="form.idCardNo" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.idCardNo')"
+              prop="idCardNo"
+              :required="true"
+            >
+              <el-input
+                v-model="form.idCardNo"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.education')" prop="education">
-              <el-input v-model="form.education" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.education')"
+              prop="education"
+            >
+              <el-input
+                v-model="form.education"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.continuingEducation')" prop="continuingEducation">
-              <el-input v-model="form.continuingEducation" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.continuingEducation')"
+              prop="continuingEducation"
+            >
+              <el-input
+                v-model="form.continuingEducation"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.medical')" prop="medical">
-              <el-input v-model="form.medical" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.medical')"
+              prop="medical"
+            >
+              <el-input
+                v-model="form.medical"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.housingLoan')" prop="housingLoan">
-              <el-input v-model="form.housingLoan" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.housingLoan')"
+              prop="housingLoan"
+            >
+              <el-input
+                v-model="form.housingLoan"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.rent')" prop="rent">
-              <el-input v-model="form.rent" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.rent')"
+              prop="rent"
+            >
+              <el-input
+                v-model="form.rent"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.elderlyCare')" prop="elderlyCare">
-              <el-input v-model="form.elderlyCare" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.elderlyCare')"
+              prop="elderlyCare"
+            >
+              <el-input
+                v-model="form.elderlyCare"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.infantsCare')" prop="infantsCare">
-              <el-input v-model="form.infantsCare" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.infantsCare')"
+              prop="infantsCare"
+            >
+              <el-input
+                v-model="form.infantsCare"
+                placeholder=""
+              />
             </el-form-item>
           </el-tab-pane>
-          <el-tab-pane label="扩展信息" name="second">
-            <el-form-item :label="$t('jbx.employeetaxdeduction.individualPension')" prop="individualPension">
-              <el-input v-model="form.individualPension" placeholder=""/>
+          <el-tab-pane
+            label="扩展信息"
+            name="second"
+          >
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.individualPension')"
+              prop="individualPension"
+            >
+              <el-input
+                v-model="form.individualPension"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.enterprisePension')" prop="enterprisePension">
-              <el-input v-model="form.enterprisePension" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.enterprisePension')"
+              prop="enterprisePension"
+            >
+              <el-input
+                v-model="form.enterprisePension"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.commercialHealth')" prop="commercialHealth">
-              <el-input v-model="form.commercialHealth" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.commercialHealth')"
+              prop="commercialHealth"
+            >
+              <el-input
+                v-model="form.commercialHealth"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.deferredPension')" prop="deferredPension">
-              <el-input v-model="form.deferredPension" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.deferredPension')"
+              prop="deferredPension"
+            >
+              <el-input
+                v-model="form.deferredPension"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.donationAllowed')" prop="donationAllowed">
-              <el-input v-model="form.donationAllowed" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.donationAllowed')"
+              prop="donationAllowed"
+            >
+              <el-input
+                v-model="form.donationAllowed"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.employeetaxdeduction.others')" prop="others">
-              <el-input v-model="form.others" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.employeetaxdeduction.others')"
+              prop="others"
+            >
+              <el-input
+                v-model="form.others"
+                placeholder=""
+              />
             </el-form-item>
           </el-tab-pane>
         </el-tabs>
       </el-form>
       <template #footer>
         <div style="flex: auto">
-          <el-button @click="cancel">{{ $t('jbx.text.close') }}</el-button>
-          <el-button type="primary" @click="submitForm">{{ $t('jbx.text.submit') }}</el-button>
+          <el-button @click="cancel">
+            {{ $t('jbx.text.close') }}
+          </el-button>
+          <el-button
+            type="primary"
+            @click="submitForm"
+          >
+            {{ $t('jbx.text.submit') }}
+          </el-button>
         </div>
       </template>
     </el-drawer>
 
-    <import-upload :import-visible="importVisible" :http-request="importExcel"
-                   @cancel="importVisible = false"></import-upload>
+    <import-upload
+      :import-visible="importVisible"
+      :http-request="importExcel"
+      @cancel="importVisible = false"
+    />
   </div>
 </template>
 

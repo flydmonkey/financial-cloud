@@ -1,14 +1,28 @@
 <template>
-  <el-card shadow="hover" header-class="el-card-header">
+  <el-card
+    shadow="hover"
+    header-class="el-card-header"
+  >
     <template #header>
       <div class="card-title">
         <span>增值税及附加</span>
-        <el-select disabled style="width: 120px" v-model="queryParams.accountPeriod" placeholder="">
+        <el-select
+          v-model="queryParams.accountPeriod"
+          disabled
+          style="width: 120px"
+          placeholder=""
+        >
           <template #label>
             <span>{{ accountPeriod }}</span>
           </template>
-          <template v-for="(item, index) in statistics_period" :key="index">
-            <el-option :label="item.label" :value="item.value"></el-option>
+          <template
+            v-for="(item, index) in statistics_period"
+            :key="index"
+          >
+            <el-option
+              :label="item.label"
+              :value="item.value"
+            />
           </template>
         </el-select>
       </div>
@@ -19,24 +33,31 @@
         <div>
           <div class="flex justify-items-center">
             <span>预计应交税费</span>
-            <el-tooltip content=""
-                        placement="top">
+            <el-tooltip
+              content=""
+              placement="top"
+            >
               <template #content>
-              <span>
-                本期预计应交税费=税金及附加+所得税费用
-              </span>
+                <span>
+                  本期预计应交税费=税金及附加+所得税费用
+                </span>
               </template>
               <el-icon>
-                <Warning/>
+                <Warning />
               </el-icon>
             </el-tooltip>
           </div>
-          <div class="bold">{{ formatAmount(resData.balance) }}</div>
-<!--          <div>预计增值税税负率：0.05%</div>-->
+          <div class="bold">
+            {{ formatAmount(resData.balance) }}
+          </div>
+          <!--          <div>预计增值税税负率：0.05%</div>-->
         </div>
       </div>
 
-      <div ref="chartRef" style="width: 100%; height: 300px"></div>
+      <div
+        ref="chartRef"
+        style="width: 100%; height: 300px"
+      />
     </div>
   </el-card>
 </template>

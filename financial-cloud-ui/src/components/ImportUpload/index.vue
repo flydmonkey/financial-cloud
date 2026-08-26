@@ -1,18 +1,24 @@
 <template>
-  <el-dialog title="导入" v-model="importVisible" size="800px" append-to-body
-  @close="cancel">
+  <el-dialog
+    v-model="importVisible"
+    title="导入"
+    size="800px"
+    append-to-body
+    @close="cancel"
+  >
     <div>
       <el-upload
-          ref="importUploadRef"
-          :auto-upload="props.autoUpload"
-          :multiple="false"
-          drag
-          accept=".xls,.xlsx"
-          :before-upload="beforeUpload"
-          name="excelFile"
-          :http-request="props.httpRequest">
+        ref="importUploadRef"
+        :auto-upload="props.autoUpload"
+        :multiple="false"
+        drag
+        accept=".xls,.xlsx"
+        :before-upload="beforeUpload"
+        name="excelFile"
+        :http-request="props.httpRequest"
+      >
         <el-icon class="el-icon--upload">
-          <upload-filled/>
+          <upload-filled />
         </el-icon>
         <div class="el-upload__text">
           将文件拖动到这 <em>点击上传</em>
@@ -26,12 +32,18 @@
     </div>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="cancel">{{ $t('jbx.text.close') }}</el-button>
-        <el-button type="primary" @click="submit">{{ $t('jbx.text.submit') }}</el-button>
+        <el-button @click="cancel">
+          {{ $t('jbx.text.close') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submit"
+        >
+          {{ $t('jbx.text.submit') }}
+        </el-button>
       </div>
     </template>
   </el-dialog>
-
 </template>
 <script setup lang="ts">
 import {ref, toRefs, defineEmits} from "vue"

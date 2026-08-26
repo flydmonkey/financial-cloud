@@ -2,54 +2,111 @@
   <div class="home app-container">
     <div class="fir-data">
       <div class="fir-data-blue item">
-        <p class="fir-data1">{{ dashboard.activeUsers }}</p>
-        <p class="fir-data2">{{ $t('jbx.home.onlineUsers') }}</p>
-        <img src="../../assets/images/dashboard/download.png" alt="">
+        <p class="fir-data1">
+          {{ dashboard.activeUsers }}
+        </p>
+        <p class="fir-data2">
+          {{ $t('jbx.home.onlineUsers') }}
+        </p>
+        <img
+          src="../../assets/images/dashboard/download.png"
+          alt=""
+        >
       </div>
       <div class="fir-data-green item">
-        <p class="fir-data1">{{ dashboard.dayCount }}</p>
-        <p class="fir-data2">{{ $t('jbx.home.dayCount') }}</p>
-        <img src="../../assets/images/dashboard/download.png" alt="">
+        <p class="fir-data1">
+          {{ dashboard.dayCount }}
+        </p>
+        <p class="fir-data2">
+          {{ $t('jbx.home.dayCount') }}
+        </p>
+        <img
+          src="../../assets/images/dashboard/download.png"
+          alt=""
+        >
       </div>
       <div class="fir-data-orange item">
-        <p class="fir-data1">{{ dashboard.newUsers }}</p>
-        <p class="fir-data2">{{ $t('jbx.home.newUsers') }}</p>
-        <img src="../../assets/images/dashboard/download.png" alt="">
+        <p class="fir-data1">
+          {{ dashboard.newUsers }}
+        </p>
+        <p class="fir-data2">
+          {{ $t('jbx.home.newUsers') }}
+        </p>
+        <img
+          src="../../assets/images/dashboard/download.png"
+          alt=""
+        >
       </div>
       <div class="fir-data-pink item">
-        <p class="fir-data1">{{ dashboard.onlineUsers }}</p>
-        <p class="fir-data2">{{ $t('jbx.home.activeUsers') }}</p>
-        <img src="../../assets/images/dashboard/download.png" alt="">
+        <p class="fir-data1">
+          {{ dashboard.onlineUsers }}
+        </p>
+        <p class="fir-data2">
+          {{ $t('jbx.home.activeUsers') }}
+        </p>
+        <img
+          src="../../assets/images/dashboard/download.png"
+          alt=""
+        >
       </div>
     </div>
 
     <div class="sec app-container2">
-      <p class="title">{{ $t('jbx.home.dayAccessCount') }}</p>
-      <hr/>
-      <div id="main1" style="width: 100%;height:350px;"></div>
+      <p class="title">
+        {{ $t('jbx.home.dayAccessCount') }}
+      </p>
+      <hr>
+      <div
+        id="main1"
+        style="width: 100%;height:350px;"
+      />
     </div>
     <div class="thr app-container2">
-      <p class="title">{{ $t('jbx.home.monthAccessCount') }}</p>
-      <hr/>
-      <div id="main2" style="width: 100%;height:350px;"></div>
+      <p class="title">
+        {{ $t('jbx.home.monthAccessCount') }}
+      </p>
+      <hr>
+      <div
+        id="main2"
+        style="width: 100%;height:350px;"
+      />
     </div>
     <div class="four app-container2">
-      <p class="title">{{ $t('jbx.home.monthProvinceAccessCount') }}</p>
-      <hr/>
+      <p class="title">
+        {{ $t('jbx.home.monthProvinceAccessCount') }}
+      </p>
+      <hr>
       <div class="four-content">
         <el-row>
           <el-col :span="12">
-            <ChinaMap :data="dashboard"></ChinaMap>
+            <ChinaMap :data="dashboard" />
           </el-col>
           <el-col :span="12">
-            <el-table :data="dashboard.reportProvince" stripe style="width: 100%;height: 500px;">
-              <el-table-column prop="number" :label="$t('jbx.home.number')" align="center" width="150">
-              </el-table-column>
-              <el-table-column prop="province" :label="$t('jbx.home.province')" align="center">
-              </el-table-column>
-              <el-table-column prop="pv" :label="$t('jbx.home.accessPV')" align="center" width="150">
-              </el-table-column>
-              <el-empty slot="empty" description="暂无数据"></el-empty>
+            <el-table
+              :data="dashboard.reportProvince"
+              stripe
+              style="width: 100%;height: 500px;"
+            >
+              <el-table-column
+                prop="number"
+                :label="$t('jbx.home.number')"
+                align="center"
+                width="150"
+              />
+              <el-table-column
+                prop="province"
+                :label="$t('jbx.home.province')"
+                align="center"
+              />
+              <el-table-column
+                prop="pv"
+                :label="$t('jbx.home.accessPV')"
+                align="center"
+                width="150"
+              />
+              <template #empty>
+                <el-empty description="暂无数据" />
+              </template>
             </el-table>
           </el-col>
         </el-row>
@@ -57,27 +114,47 @@
     </div>
     <div class="last app-container2">
       <div class="five">
-        <p class="title">{{ $t('jbx.home.monthAppCount') }}</p>
-        <hr/>
-        <el-table :data="dashboard.reportApp" stripe style="width: 100%">
-          <el-table-column prop="reportName" :label="$t('jbx.home.appName')">
-          </el-table-column>
-          <el-table-column prop="reportCount" :label="$t('jbx.home.accessCount')">
-          </el-table-column>
+        <p class="title">
+          {{ $t('jbx.home.monthAppCount') }}
+        </p>
+        <hr>
+        <el-table
+          :data="dashboard.reportApp"
+          stripe
+          style="width: 100%"
+        >
+          <el-table-column
+            prop="reportName"
+            :label="$t('jbx.home.appName')"
+          />
+          <el-table-column
+            prop="reportCount"
+            :label="$t('jbx.home.accessCount')"
+          />
         </el-table>
       </div>
       <div class="five">
-        <p class="title">{{ $t('jbx.home.monthBrowserCount') }}</p>
-        <hr/>
-        <el-table :data="dashboard.reportBrowser" stripe style="width: 100%">
-          <el-table-column prop="reportName" :label="$t('jbx.home.browser')">
-          </el-table-column>
-          <el-table-column prop="reportCount" :label="$t('jbx.home.accessCount')">
-          </el-table-column>
+        <p class="title">
+          {{ $t('jbx.home.monthBrowserCount') }}
+        </p>
+        <hr>
+        <el-table
+          :data="dashboard.reportBrowser"
+          stripe
+          style="width: 100%"
+        >
+          <el-table-column
+            prop="reportName"
+            :label="$t('jbx.home.browser')"
+          />
+          <el-table-column
+            prop="reportCount"
+            :label="$t('jbx.home.accessCount')"
+          />
         </el-table>
       </div>
     </div>
-    <Footer></Footer>
+    <Footer />
   </div>
 </template>
 

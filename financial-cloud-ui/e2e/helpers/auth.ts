@@ -1,4 +1,5 @@
-import type {APIRequestContext} from '@playwright/test'
+import type {APIRequestContext, Page} from '@playwright/test'
+import {expect} from '@playwright/test'
 
 export const username = process.env.E2E_USERNAME || 'admin'
 export const password = process.env.E2E_PASSWORD || 'maxkey'
@@ -88,4 +89,26 @@ export async function getCurrentTerm(
     const configs = body.data || []
     const current = configs.find((item: any) => item.configKey === 'sys.payment.term.current')
     return current?.configValue || '2025-01'
+}
+
+export async function loginViaUi(page: Page) {
+    await page.goto('/login')
+    await page.locator('input[type="text"]').first().fill(username)
+    await page.locator('input[type="password"]').fill(password)
+    const routesReady = page.waitForResponse(
+        (resp) => resp.url().includes('/api/open/func/list') && resp.ok(),
+        {timeout: 30_000},
+    )
+    await page.locator('.login-btn').click()
+    await expect(page).not.toHaveURL(/\/login/, {timeout: 30_000})
+    await routesReady
+    await expect(page.locator('.sidebar-container').first()).toBeVisible({timeout: 15_000})
+}
+
+export async function expectPagesOpen(page: Page, paths: string[]) {
+    for (const path of paths) {
+        await page.goto(path, {waitUntil: 'networkidle'})
+        await expect(page.getByText('404错误')).toHaveCount(0)
+        await expect(page.locator('.app-container').first()).toBeVisible({timeout: 15_000})
+    }
 }

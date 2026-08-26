@@ -1,104 +1,193 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="55%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="55%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true"
-                 @submit.native.prevent>
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item :label="t('jbx.roles.member')">
             <el-input
-                v-model="queryParams.memberName"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.memberName"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
       <div class="button-top">
         <el-button
-            type="primary"
-            @click="handleAdd"
+          type="primary"
+          @click="handleAdd"
         >
           {{ $t('jbx.text.add') }}
         </el-button>
-<!--        <el-button
+        <!--        <el-button
             @click="handleAddPost"
         >
           {{$t('jbx.roles.addPost')}}
         </el-button>-->
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="onBatchDelete"
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="onBatchDelete"
         >
           {{ $t('org.button.deleteBatch') }}
         </el-button>
       </div>
-      <el-table v-loading="loading" border :data="dataList" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column :label="$t('jbx.roles.type.type')" align="center" prop="type" min-width="70">
+      <el-table
+        v-loading="loading"
+        border
+        :data="dataList"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          :label="$t('jbx.roles.type.type')"
+          align="center"
+          prop="type"
+          min-width="70"
+        >
           <template #default="scope">
-            <dict-tag :options="role_members_type" :value="scope.row.type"></dict-tag>
+            <dict-tag
+              :options="role_members_type"
+              :value="scope.row.type"
+            />
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.roles.member')" align="center"
-                         :show-overflow-tooltip="true"
-                         prop="memberName" min-width="130"/>
-        <el-table-column :label="$t('jbx.users.jobTitle')"
-                         :show-overflow-tooltip="true"
-                         align="center" prop="jobTitle" min-width="120"/>
-        <el-table-column :label="$t('jbx.users.gender')" align="center" prop="gender" min-width="70">
+        <el-table-column
+          :label="$t('jbx.roles.member')"
+          align="center"
+          :show-overflow-tooltip="true"
+          prop="memberName"
+          min-width="130"
+        />
+        <el-table-column
+          :label="$t('jbx.users.jobTitle')"
+          :show-overflow-tooltip="true"
+          align="center"
+          prop="jobTitle"
+          min-width="120"
+        />
+        <el-table-column
+          :label="$t('jbx.users.gender')"
+          align="center"
+          prop="gender"
+          min-width="70"
+        >
           <template #default="scope">
-            <dict-tag :options="use_gender" :value="scope.row.gender"></dict-tag>
+            <dict-tag
+              :options="use_gender"
+              :value="scope.row.gender"
+            />
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.users.department')"
-                         :show-overflow-tooltip="true"
-                         align="center" prop="department" min-width="120"/>
-        <el-table-column :label="$t('jbx.history.systemlogsMessageaction')" align="center" width="80">
+        <el-table-column
+          :label="$t('jbx.users.department')"
+          :show-overflow-tooltip="true"
+          align="center"
+          prop="department"
+          min-width="120"
+        />
+        <el-table-column
+          :label="$t('jbx.history.systemlogsMessageaction')"
+          align="center"
+          width="80"
+        >
           <template #default="scope">
             <el-tooltip content="移除">
-              <el-button link icon="Delete" @click="handleDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
 
-      <el-dialog :title="dialogTitle" v-model="memberFlag" width="800px" append-to-body>
-        <selectRolemembers ref="selectMember" :open="memberFlag"
-                           @onSubmitSuccess="onSuccess"
-                           :table-id="formId" :title="title"></selectRolemembers>
+      <el-dialog
+        v-model="memberFlag"
+        :title="dialogTitle"
+        width="800px"
+        append-to-body
+      >
+        <selectRolemembers
+          ref="selectMember"
+          :open="memberFlag"
+          :table-id="formId"
+          :title="title"
+          @on-submit-success="onSuccess"
+        />
         <template #footer>
           <div class="dialog-footer">
-            <el-button type="primary" @click="confirmAdd">{{ t('jbx.text.confirm') }}</el-button>
-            <el-button @click="cancelAdd">{{ t('systemCancel') }}</el-button>
+            <el-button
+              type="primary"
+              @click="confirmAdd"
+            >
+              {{ t('jbx.text.confirm') }}
+            </el-button>
+            <el-button @click="cancelAdd">
+              {{ t('systemCancel') }}
+            </el-button>
           </div>
         </template>
       </el-dialog>
-      <el-dialog :title="dialogTitle" v-model="postFlag" width="800px" append-to-body>
-        <select-posts ref="selectPost" :open="postFlag"
-                           @onSubmitSuccess="onSuccess"
-                           :table-id="formId" :title="title"></select-posts>
+      <el-dialog
+        v-model="postFlag"
+        :title="dialogTitle"
+        width="800px"
+        append-to-body
+      >
+        <select-posts
+          ref="selectPost"
+          :open="postFlag"
+          :table-id="formId"
+          :title="title"
+          @on-submit-success="onSuccess"
+        />
         <template #footer>
           <div class="dialog-footer">
-            <el-button type="primary" @click="confirmAddPost">{{ t('jbx.text.confirm') }}</el-button>
-            <el-button @click="cancelAdd">{{ t('systemCancel') }}</el-button>
+            <el-button
+              type="primary"
+              @click="confirmAddPost"
+            >
+              {{ t('jbx.text.confirm') }}
+            </el-button>
+            <el-button @click="cancelAdd">
+              {{ t('systemCancel') }}
+            </el-button>
           </div>
         </template>
       </el-dialog>

@@ -1,36 +1,67 @@
 <template>
-    <div class="queryForm">
-      <el-form :model="queryParams" ref="queryForm" :inline="true" @submit.native.prevent>
-        <el-form-item label="角色名称">
-          <el-input
-              v-model="queryParams.roleName"
-              clearable
-              @keyup.enter.native="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-          <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <el-table v-loading="loading" :data="groupNoList" border @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="50" align="center"/>
-      <el-table-column prop="roleName" label="角色名称" min-width="100" align="center"/>
-      <el-table-column prop="category" label="角色类型" align="center" min-width="80">
-        <template #default="scope">
-          <dict-tag :options="group_category_options" :value="scope.row.category"/>
-        </template>
-      </el-table-column>
-    </el-table>
-    <pagination
-        v-show="total > 0"
-        :total="total"
-        v-model:page="queryParams.pageNumber"
-        v-model:limit="queryParams.pageSize"
-        :page-sizes="queryParams.pageSizeOptions"
-        @pagination="getList"
+  <div class="queryForm">
+    <el-form
+      ref="queryForm"
+      :model="queryParams"
+      :inline="true"
+      @submit.native.prevent
+    >
+      <el-form-item label="角色名称">
+        <el-input
+          v-model="queryParams.roleName"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button @click="handleQuery">
+          {{ t('org.button.query') }}
+        </el-button>
+        <el-button @click="resetQuery">
+          {{ t('org.button.reset') }}
+        </el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+  <el-table
+    v-loading="loading"
+    :data="groupNoList"
+    border
+    @selection-change="handleSelectionChange"
+  >
+    <el-table-column
+      type="selection"
+      width="50"
+      align="center"
     />
+    <el-table-column
+      prop="roleName"
+      label="角色名称"
+      min-width="100"
+      align="center"
+    />
+    <el-table-column
+      prop="category"
+      label="角色类型"
+      align="center"
+      min-width="80"
+    >
+      <template #default="scope">
+        <dict-tag
+          :options="group_category_options"
+          :value="scope.row.category"
+        />
+      </template>
+    </el-table-column>
+  </el-table>
+  <pagination
+    v-show="total > 0"
+    v-model:page="queryParams.pageNumber"
+    v-model:limit="queryParams.pageSize"
+    :total="total"
+    :page-sizes="queryParams.pageSizeOptions"
+    @pagination="getList"
+  />
 </template>
 
 <script setup lang="ts">

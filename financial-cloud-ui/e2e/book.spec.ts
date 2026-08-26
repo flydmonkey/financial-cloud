@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {getCurrentUser, loginViaApi} from './helpers/auth'
+import {expectPagesOpen, getCurrentUser, loginViaApi, loginViaUi} from './helpers/auth'
 
 test.describe('book module', () => {
     test('book and subject APIs respond', async ({request}) => {
@@ -19,5 +19,10 @@ test.describe('book module', () => {
             const body = await res.json()
             expect(body.code).toBe(0)
         }
+    })
+
+    test('book pages open', async ({page}) => {
+        await loginViaUi(page)
+        await expectPagesOpen(page, ['/books/index'])
     })
 })

@@ -5,19 +5,27 @@
         </el-card>-->
     <el-card class="common-card">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" @submit.native.prevent>
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item :label="$t('jbx.resources.name')">
             <el-input
-                v-model="queryParams.resName"
-                clearable
-                style="width: 240px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.resName"
+              clearable
+              style="width: 240px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ $t('jbx.text.query') }}
+            <el-button @click="handleQuery">
+              {{ $t('jbx.text.query') }}
             </el-button>
-            <el-button @click="resetQuery">{{ $t('jbx.text.reset') }}</el-button>
+            <el-button @click="resetQuery">
+              {{ $t('jbx.text.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -26,201 +34,334 @@
       <el-row :gutter="20">
         <el-col :span="6">
           <el-tree
-              ref="resTreeRef"
-              node-key="key"
-              :data="dataOptions"
-              :props="defaultProps"
-              @node-click="handleNodeClick"
-              :expand-on-click-node="false"
-              highlight-current
-              v-slot="{ node, data }"
+            ref="resTreeRef"
+            v-slot="{ node, data }"
+            node-key="key"
+            :data="dataOptions"
+            :props="defaultProps"
+            :expand-on-click-node="false"
+            highlight-current
+            @node-click="handleNodeClick"
           >
             <span>
               <span v-if="node.label?.length<=20">{{ node.label }}</span>
               <span v-else>
-                 <el-tooltip class="item" effect="dark" :content="node.label" placement="right">
-                   <span>{{ node.label.slice(0, 10) + '...' }}</span>
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  :content="node.label"
+                  placement="right"
+                >
+                  <span>{{ node.label.slice(0, 10) + '...' }}</span>
                 </el-tooltip>
               </span>
             </span>
           </el-tree>
         </el-col>
         <el-col :span="18">
-          <div class="btn-form" style="margin-bottom: 10px">
+          <div
+            class="btn-form"
+            style="margin-bottom: 10px"
+          >
             <el-button
-                type="primary"
-                @click="handleAdd"
-            >{{ $t('jbx.text.add') }}
+              type="primary"
+              @click="handleAdd"
+            >
+              {{ $t('jbx.text.add') }}
             </el-button>
             <el-button
-                type="danger"
-                plain
-                :disabled="multiple"
-                @click="handleDelete"
-            >{{ $t('jbx.text.delete') }}
+              type="danger"
+              plain
+              :disabled="multiple"
+              @click="handleDelete"
+            >
+              {{ $t('jbx.text.delete') }}
             </el-button>
           </div>
 
-          <el-table v-loading="loading" :data="list" border>
-            <el-table-column :label="$t('jbx.resources.name')" align="left" prop="resName"/>
-            <el-table-column :label="$t('jbx.resources.resourceType.index')" align="center">
+          <el-table
+            v-loading="loading"
+            :data="list"
+            border
+          >
+            <el-table-column
+              :label="$t('jbx.resources.name')"
+              align="left"
+              prop="resName"
+            />
+            <el-table-column
+              :label="$t('jbx.resources.resourceType.index')"
+              align="center"
+            >
               <template #default="scope">
-                <dict-tag :options="resource_type" :value="scope.row.classify"></dict-tag>
+                <dict-tag
+                  :options="resource_type"
+                  :value="scope.row.classify"
+                />
               </template>
             </el-table-column>
-            <el-table-column :label="$t('jbx.resources.requesturl')" align="left" prop="requestUrl"/>
-            <el-table-column :label="$t('jbx.text.sortIndex')" align="center" prop="sortIndex" width="120"/>
-            <el-table-column :label="$t('jbx.users.status')" align="center" prop="status" width="120">
+            <el-table-column
+              :label="$t('jbx.resources.requesturl')"
+              align="left"
+              prop="requestUrl"
+            />
+            <el-table-column
+              :label="$t('jbx.text.sortIndex')"
+              align="center"
+              prop="sortIndex"
+              width="120"
+            />
+            <el-table-column
+              :label="$t('jbx.users.status')"
+              align="center"
+              prop="status"
+              width="120"
+            >
               <template #default="scope">
                 <span v-if="scope.row.status == 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-                <span v-if="scope.row.status == 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+                  class="success"
+                /></el-icon></span>
+                <span v-if="scope.row.status == 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('jbx.text.action')" align="center"
-                             class-name="small-padding fixed-width" width="80">
+            <el-table-column
+              :label="$t('jbx.text.action')"
+              align="center"
+              class-name="small-padding fixed-width"
+              width="80"
+            >
               <template #default="scope">
                 <el-tooltip content="编辑">
-                  <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+                  <el-button
+                    link
+                    icon="Edit"
+                    @click="handleUpdate(scope.row)"
+                  />
                 </el-tooltip>
                 <el-tooltip content="移除">
-                  <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+                  <el-button
+                    link
+                    icon="Delete"
+                    type="danger"
+                    @click="handleDelete(scope.row)"
+                  />
                 </el-tooltip>
               </template>
             </el-table-column>
           </el-table>
           <pagination
-              v-show="total > 0"
-              :total="total"
-              v-model:page="queryParams.pageNumber"
-              v-model:limit="queryParams.pageSize"
-              @pagination="getList"
+            v-show="total > 0"
+            v-model:page="queryParams.pageNumber"
+            v-model:limit="queryParams.pageSize"
+            :total="total"
+            @pagination="getList"
           />
         </el-col>
       </el-row>
     </el-card>
 
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog :title="title" v-model="open" width="900px" append-to-body destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+    <el-dialog
+      v-model="open"
+      :title="title"
+      width="900px"
+      append-to-body
+      destroy-on-close
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+      >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.resources.name')" prop="resName">
-              <el-input v-model="form.resName" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.resources.name')"
+              prop="resName"
+            >
+              <el-input
+                v-model="form.resName"
+                placeholder=""
+              />
             </el-form-item>
 
-            <el-form-item :label="$t('jbx.resources.i18n')" prop="i18n">
-              <el-input v-model="form.i18n" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.resources.i18n')"
+              prop="i18n"
+            >
+              <el-input
+                v-model="form.i18n"
+                placeholder=""
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.actionTypes')">
-              <el-select v-model="form.actionType" placeholder="" clearable style="width: 100%">
+              <el-select
+                v-model="form.actionType"
+                placeholder=""
+                clearable
+                style="width: 100%"
+              >
                 <el-option
-                    v-for="dict in action_type"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
+                  v-for="dict in action_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
                 />
               </el-select>
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.resStyle')">
-              <el-input readonly v-model="form.resStyle" placeholder=""/>
-              <icon-select v-model="form.resStyle" @selected="(name:any) => {form.resStyle = name}"></icon-select>
+              <el-input
+                v-model="form.resStyle"
+                readonly
+                placeholder=""
+              />
+              <icon-select
+                v-model="form.resStyle"
+                @selected="(name:any) => {form.resStyle = name}"
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.icon')">
-              <el-input v-model="form.icon" placeholder=""/>
+              <el-input
+                v-model="form.icon"
+                placeholder=""
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.iconSelected')">
-              <el-input v-model="form.iconSelected" placeholder=""/>
+              <el-input
+                v-model="form.iconSelected"
+                placeholder=""
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.isOpen') ">
               <el-switch
-                  v-model="form.isOpen"
-                  active-value="y"
-                  inactive-value="n"
-              ></el-switch>
+                v-model="form.isOpen"
+                active-value="y"
+                inactive-value="n"
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.isFrame')">
               <el-switch
-                  v-model="form.isFrame"
-                  active-value="y"
-                  inactive-value="n"
-              ></el-switch>
+                v-model="form.isFrame"
+                active-value="y"
+                inactive-value="n"
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.users.status')" prop="status">
+            <el-form-item
+              :label="$t('jbx.users.status')"
+              prop="status"
+            >
               <el-switch
-                  v-model="form.status"
-                  active-value="1"
-                  inactive-value="0"
-              ></el-switch>
+                v-model="form.status"
+                active-value="1"
+                inactive-value="0"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.organizations.parentName')" prop="parentId">
+            <el-form-item
+              :label="$t('jbx.organizations.parentName')"
+              prop="parentId"
+            >
               <el-tree-select
-                  v-model="form.parentId"
-                  :data="dataOptions"
-                  :props="defaultProps"
-                  check-strictly
-                  value-key="key"
+                v-model="form.parentId"
+                :data="dataOptions"
+                :props="defaultProps"
+                check-strictly
+                value-key="key"
               />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.resourceType.index')">
-              <el-select v-model="form.classify" placeholder="" clearable style="width: 100%">
+              <el-select
+                v-model="form.classify"
+                placeholder=""
+                clearable
+                style="width: 100%"
+              >
                 <el-option
-                    v-for="dict in resource_type"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
+                  v-for="dict in resource_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
                 />
               </el-select>
             </el-form-item>
-            <el-form-item :label="$t('jbx.resources.requesturl')" prop="requestUrl">
-              <el-input v-model="form.requestUrl" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.resources.requesturl')"
+              prop="requestUrl"
+            >
+              <el-input
+                v-model="form.requestUrl"
+                placeholder=""
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.params')">
-              <el-input v-model="form.params" placeholder=""/>
+              <el-input
+                v-model="form.params"
+                placeholder=""
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.requestMethod')">
-              <el-select v-model="form.requestMethod" placeholder="" clearable style="width: 100%">
+              <el-select
+                v-model="form.requestMethod"
+                placeholder=""
+                clearable
+                style="width: 100%"
+              >
                 <el-option
-                    v-for="dict in method_type"
-                    :key="dict.value"
-                    :label="dict.label"
-                    :value="dict.value"
+                  v-for="dict in method_type"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
                 />
               </el-select>
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.permission')">
-              <el-input v-model="form.permission" placeholder=""/>
+              <el-input
+                v-model="form.permission"
+                placeholder=""
+              />
             </el-form-item>
-            <el-form-item :label="$t('jbx.text.sortIndex')" prop="sortIndex">
-              <el-input v-model="form.sortIndex" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.text.sortIndex')"
+              prop="sortIndex"
+            >
+              <el-input
+                v-model="form.sortIndex"
+                placeholder=""
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.isCache')">
               <el-switch
-                  v-model="form.isCache"
-                  active-value="y"
-                  inactive-value="n"
-              ></el-switch>
+                v-model="form.isCache"
+                active-value="y"
+                inactive-value="n"
+              />
             </el-form-item>
             <el-form-item :label="$t('jbx.resources.isVisible')">
               <el-switch
-                  v-model="form.isVisible"
-                  active-value="y"
-                  inactive-value="n"
-              ></el-switch>
+                v-model="form.isVisible"
+                active-value="y"
+                inactive-value="n"
+              />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('jbx.text.submit') }}</el-button>
-          <el-button @click="cancel">{{ $t('jbx.text.close') }}</el-button>
+          <el-button
+            type="primary"
+            @click="submitForm"
+          >
+            {{ $t('jbx.text.submit') }}
+          </el-button>
+          <el-button @click="cancel">
+            {{ $t('jbx.text.close') }}
+          </el-button>
         </div>
       </template>
     </el-dialog>
-
   </div>
 </template>
 

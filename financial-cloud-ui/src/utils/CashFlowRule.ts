@@ -13,7 +13,7 @@ export function checkCashFlowSettingPermission(subject: any): {
     const {isCash} = subject;
 
     // 结果对象
-    let result = {
+    const result = {
         canSetMainTable: false,       // 是否可设置主表项目
         canSetSupplementary: false,   // 是否可设置补充资料项目
         reason: ""                    // 限制原因(如果有)

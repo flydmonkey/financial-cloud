@@ -2,19 +2,27 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true"
-                 @submit.native.prevent>
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item label="账套名称">
             <el-input
-                v-model="queryParams.name"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.name"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -22,79 +30,144 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleAdd"
-        >{{ t('org.button.add') }}
+          type="primary"
+          @click="handleAdd"
+        >
+          {{ t('org.button.add') }}
         </el-button>
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="onBatchDelete"
-        >{{ t('org.button.deleteBatch') }}
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="onBatchDelete"
+        >
+          {{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
       <el-table
-          v-loading="loading"
-          :data="setsList"
-          border
-          @selection-change="handleSelectionChange"
+        v-loading="loading"
+        :data="setsList"
+        border
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" align="center"/>
-         <el-table-column prop="id" label="编码" align="center" min-width="80"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="name" label="名称" align="left" min-width="100"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="companyName" label="单位名称" align="left" min-width="100"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="vatType" label="纳税性质" align="center" min-width="70">
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          prop="id"
+          label="编码"
+          align="center"
+          min-width="80"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="name"
+          label="名称"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="companyName"
+          label="单位名称"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="vatType"
+          label="纳税性质"
+          align="center"
+          min-width="70"
+        >
           <template #default="scope">
-            <dict-tag-number :options="books_vat_type" :value="scope.row.vatType"/>
+            <dict-tag-number
+              :options="books_vat_type"
+              :value="scope.row.vatType"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="standardsName" label="会计准则" align="left" min-width="80"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="enableDate" label="建账期间" align="center" min-width="40"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="voucherReviewed" label="凭证审核" align="center" min-width="40">
+        <el-table-column
+          prop="standardsName"
+          label="会计准则"
+          align="left"
+          min-width="80"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="enableDate"
+          label="建账期间"
+          align="center"
+          min-width="40"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="voucherReviewed"
+          label="凭证审核"
+          align="center"
+          min-width="40"
+        >
           <template #default="scope">
             <span v-if="scope.row.voucherReviewed === 0">关闭</span>
             <span v-if="scope.row.voucherReviewed === 1">开启</span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="t('org.status')" align="center" min-width="40">
+        <el-table-column
+          prop="status"
+          :label="t('org.status')"
+          align="center"
+          min-width="40"
+        >
           <template #default="scope">
-                <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+            <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
+              class="success"
+            /></el-icon></span>
+            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" align="center" width="120">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          align="center"
+          width="120"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="移除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
     </el-card>
-    <edit-form :title="title" :open="open"
-               :form-id="id"
-               :accounting_standards="standardList"
-               :vat_types="books_vat_type"
-               :books_industry="books_industry"
-               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
-
+    <edit-form
+      :title="title"
+      :open="open"
+      :form-id="id"
+      :accounting_standards="standardList"
+      :vat_types="books_vat_type"
+      :books_industry="books_industry"
+      @dialog-of-closed-methods="dialogOfClosedMethods"
+    />
   </div>
 </template>
 

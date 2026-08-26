@@ -2,61 +2,78 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="params" ref="queryForm" :inline="true" v-show="showSearch"><!-- class="search-form" -->
+        <el-form
+          v-show="showSearch"
+          ref="queryForm"
+          :model="params"
+          :inline="true"
+        >
+          <!-- class="search-form" -->
           <div>
             <el-form-item :label="$t('jbx.users.username')">
               <el-input
-                  v-model="params.username"
-                  clearable
-                  @keyup.enter.native="handleQuery"
+                v-model="params.username"
+                clearable
+                @keyup.enter.native="handleQuery"
               />
             </el-form-item>
             <el-form-item :label="$t('jbx.users.displayName')">
               <el-input
-                  v-model="params.displayName"
-                  clearable
-                  @keyup.enter.native="handleQuery"
+                v-model="params.displayName"
+                clearable
+                @keyup.enter.native="handleQuery"
               />
             </el-form-item>
             <span v-show="moreCondition">
-          <el-form-item :label="$t('jbx.users.employeeNumber')">
-           <el-input
-               v-model="params.employeeNumber"
-               clearable
-               @keyup.enter.native="handleQuery"
-           />
-          </el-form-item>
-          <el-form-item :label="$t('jbx.text.startDate')">
-            <el-date-picker v-model="params.startDatePicker" type="datetime">
-            </el-date-picker>
-          </el-form-item>
-          <el-form-item :label="$t('jbx.text.endDate')">
-            <el-date-picker v-model="params.endDatePicker" type="datetime">
-            </el-date-picker>
-          </el-form-item>
-        </span>
+              <el-form-item :label="$t('jbx.users.employeeNumber')">
+                <el-input
+                  v-model="params.employeeNumber"
+                  clearable
+                  @keyup.enter.native="handleQuery"
+                />
+              </el-form-item>
+              <el-form-item :label="$t('jbx.text.startDate')">
+                <el-date-picker
+                  v-model="params.startDatePicker"
+                  type="datetime"
+                />
+              </el-form-item>
+              <el-form-item :label="$t('jbx.text.endDate')">
+                <el-date-picker
+                  v-model="params.endDatePicker"
+                  type="datetime"
+                />
+              </el-form-item>
+            </span>
             <el-divider v-if="!moreCondition">
               <el-button
-                  type="text"
-                  icon="el-icon-arrow-down"
-                  @click="moreCondition = !moreCondition">
+                type="text"
+                icon="el-icon-arrow-down"
+                @click="moreCondition = !moreCondition"
+              >
                 {{ $t('jbx.text.expand') }}
               </el-button>
             </el-divider>
             <el-divider v-else>
               <el-button
-                  type="text"
-                  icon="el-icon-arrow-up"
-                  @click="moreCondition = !moreCondition">
+                type="text"
+                icon="el-icon-arrow-up"
+                @click="moreCondition = !moreCondition"
+              >
                 {{ $t('jbx.text.collapse') }}
               </el-button>
             </el-divider>
           </div>
           <div class="search-form-btns">
             <el-form-item>
-              <el-button type="primary" @click="handleQuery">{{ $t('jbx.text.query') }}
+              <el-button
+                type="primary"
+                @click="handleQuery"
+              >
+                {{ $t('jbx.text.query') }}
               </el-button><!-- type="primary" plain  -->
-              <el-button @click="handleReset">{{ $t('jbx.text.reset') }}
+              <el-button @click="handleReset">
+                {{ $t('jbx.text.reset') }}
               </el-button>
             </el-form-item>
           </div>
@@ -65,29 +82,75 @@
     </el-card>
 
     <el-card class="common-card">
-      <el-table ref='multipleTable'
-                v-loading="loading"
-                :data="sessions"
-                @selection-change="handleSelectionChange">
-        <el-table-column prop="id" :label="$t('jbx.posts.id')" align="center" min-width="50"/>
-        <el-table-column prop="conName" :label="$t('jbx.history.connectorConname')" align="center" min-width="120"/>
-        <el-table-column prop="conType" :label="$t('jbx.organizations.type')" align="center" min-width="120"/>
-        <el-table-column prop="sourceId" :label="$t('jbx.history.connectorSourceid')" align="center" min-width="120"/>
-        <el-table-column prop="sourceName" :label="$t('jbx.history.connectorSourcename')" align="center"
-                         min-width="120"/>
-        <el-table-column prop="sourceId" :label="$t('jbx.history.synchronizerObjectid')" align="center"
-                         min-width="120"/>
-        <el-table-column prop="objectName" :label="$t('jbx.history.synchronizerObjectname')" align="center"
-                         min-width="120"/>
-        <el-table-column prop="syncTime" :label="$t('jbx.history.connectorSynctime')" align="center" min-width="120"/>
-        <el-table-column prop="result" :label="$t('jbx.history.systemlogsMessageresult')" align="center"
-                         min-width="120"/>
+      <el-table
+        ref="multipleTable"
+        v-loading="loading"
+        :data="sessions"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          prop="id"
+          :label="$t('jbx.posts.id')"
+          align="center"
+          min-width="50"
+        />
+        <el-table-column
+          prop="conName"
+          :label="$t('jbx.history.connectorConname')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="conType"
+          :label="$t('jbx.organizations.type')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="sourceId"
+          :label="$t('jbx.history.connectorSourceid')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="sourceName"
+          :label="$t('jbx.history.connectorSourcename')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="sourceId"
+          :label="$t('jbx.history.synchronizerObjectid')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="objectName"
+          :label="$t('jbx.history.synchronizerObjectname')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="syncTime"
+          :label="$t('jbx.history.connectorSynctime')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="result"
+          :label="$t('jbx.history.systemlogsMessageresult')"
+          align="center"
+          min-width="120"
+        />
       </el-table>
-      <pagination v-if="total>0" :total="total"
-                  :page.sync="params.pageNumber"
-                  :limit.sync="params.pageSize"
-                  @pagination="getList"
-                  :page-sizes="params.pageSizeOptions"/>
+      <pagination
+        v-if="total>0"
+        v-model:page="params.pageNumber"
+        v-model:limit="params.pageSize"
+        :total="total"
+        :page-sizes="params.pageSizeOptions"
+        @pagination="getList"
+      />
     </el-card>
   </div>
 </template>
@@ -98,7 +161,7 @@ import modal from "@/plugins/modal";
 import {connectorHistory} from "@/api/audit/audit";
 
 export default {
-  name: 'sessions',
+  name: 'Sessions',
   data() {
     return {
       loading: true,

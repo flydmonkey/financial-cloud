@@ -66,7 +66,7 @@ app.component('Editor', Editor)
 app.use(router)
 app.use(store)
 app.use(plugins)
-app.component('svg-icon', SvgIcon)
+app.component('SvgIcon', SvgIcon)
 
 directive(app)
 

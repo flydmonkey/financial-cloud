@@ -82,7 +82,7 @@ export function resetForm(refName: any): any {
 
 // 添加日期范围
 export function addDateRange(params: any, dateRange: any, propName: any): any {
-    let search: any = params;
+    const search: any = params;
     search.params = typeof (search.params) === 'object' && search.params !== null && !Array.isArray(search.params) ? search.params : {};
     dateRange = Array.isArray(dateRange) ? dateRange : [];
     if (typeof (propName) === 'undefined') {
@@ -100,7 +100,7 @@ export function selectDictLabel(datas: any, value: any): any {
     if (value === undefined) {
         return "";
     }
-    var actions: any = [];
+    const actions: any = [];
     Object.keys(datas).some((key: any) => {
         if (datas[key].value == ('' + value)) {
             actions.push(datas[key].label);
@@ -121,11 +121,11 @@ export function selectDictLabels(datas: any, value: any, separator: any): any {
     if (Array.isArray(value)) {
         value = value.join(",");
     }
-    var actions: any = [];
-    var currentSeparator: any = undefined === separator ? "," : separator;
-    var temp: any = value.split(currentSeparator);
+    const actions: any = [];
+    const currentSeparator: any = undefined === separator ? "," : separator;
+    const temp: any = value.split(currentSeparator);
     Object.keys(value.split(currentSeparator)).some((val: any) => {
-        var match: any = false;
+        let match: any = false;
         Object.keys(datas).some((key: any) => {
             if (datas[key].value == ('' + temp[val])) {
                 actions.push(datas[key].label + currentSeparator);
@@ -147,31 +147,31 @@ export function selectDictLabels(datas: any, value: any, separator: any): any {
  * @param {*} children 孩子节点字段 默认 'children'
  */
 export function handleTree(data?: any, id?: any, parentId?: any, children?: any): any {
-    let config: any = {
+    const config: any = {
         id: id || 'id',
         parentId: parentId || 'parentId',
         childrenList: children || 'children'
     };
-    var childrenListMap: any = {};
-    var nodeIds: any = {};
-    var tree: any = [];
+    const childrenListMap: any = {};
+    const nodeIds: any = {};
+    const tree: any = [];
 
-    for (let d of data) {
-        let parentId: any = d[config.parentId];
+    for (const d of data) {
+        const parentId: any = d[config.parentId];
         if (childrenListMap[parentId] == null) {
             childrenListMap[parentId] = [];
         }
         nodeIds[d[config.id]] = d;
         childrenListMap[parentId].push(d);
     }
-    for (let d of data) {
-        let parentId: any = d[config.parentId];
+    for (const d of data) {
+        const parentId: any = d[config.parentId];
         if (!nodeIds[parentId]) {
             tree.push(d);
         }
     }
 
-    for (let t of tree) {
+    for (const t of tree) {
         adaptToChildrenList(t);
     }
 
@@ -180,7 +180,7 @@ export function handleTree(data?: any, id?: any, parentId?: any, children?: any)
             o[config.childrenList] = childrenListMap[o[config.id]];
         }
         if (o[config.childrenList]) {
-            for (let c of o[config.childrenList]) {
+            for (const c of o[config.childrenList]) {
                 adaptToChildrenList(c);
             }
         }
@@ -198,14 +198,14 @@ export function handleTreeToList(data?: any, children?: any): any {
     children = children || 'children'
     const list: any = [];
     data = JSON.parse(JSON.stringify(data))
-    for (let d of data) {
+    for (const d of data) {
         adaptToListChildren(d)
     }
 
     function adaptToListChildren(o: any): any {
         list.push(o);
         if (o[children]) {
-            for (let c of o[children]) {
+            for (const c of o[children]) {
                 adaptToListChildren(c);
             }
             o[children] = null
@@ -223,13 +223,13 @@ export function tansParams(params: any): any {
     let result: any = ''
     for (const propName of Object.keys(params)) {
         const value: any = params[propName];
-        var part: any = encodeURIComponent(propName) + "=";
+        const part: any = encodeURIComponent(propName) + "=";
         if (value !== null && value !== "" && typeof (value) !== "undefined") {
             if (typeof value === 'object') {
                 for (const key of Object.keys(value)) {
                     if (value[key] !== null && value[key] !== "" && typeof (value[key]) !== 'undefined') {
-                        let params: any = propName + '[' + key + ']';
-                        var subPart: any = encodeURIComponent(params) + "=";
+                        const params: any = propName + '[' + key + ']';
+                        const subPart: any = encodeURIComponent(params) + "=";
                         result += subPart + encodeURIComponent(value[key]) + "&";
                     }
                 }
@@ -247,7 +247,7 @@ export function getNormalPath(p: any): any {
     if (p.length === 0 || !p || p === 'undefined') {
         return p
     }
-    let res: any = p.replace('//', '/')
+    const res: any = p.replace('//', '/')
     if (res[res.length - 1] === '/') {
         return res.slice(0, res.length - 1)
     }
@@ -265,7 +265,7 @@ export function blobValidate(data: any): any {
  * @param currBookStore 账簿信息
  */
 export function getAccountPeriod(queryParams: any, currBookStore: any): string {
-    let date = new Date(currBookStore.termCurrent + "-01")
+    const date = new Date(currBookStore.termCurrent + "-01")
     if (queryParams.value.accountPeriod === "currentPeriod") {
         queryParams.value.reportDate = parseTime(date, "{y}-{m}")
         queryParams.value.periodType = "month"

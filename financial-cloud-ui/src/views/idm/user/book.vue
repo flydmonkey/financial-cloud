@@ -1,83 +1,146 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="55%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="55%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryForm" :inline="true" @submit.native.prevent>
+        <el-form
+          ref="queryForm"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item label="账套">
             <el-input
-                v-model="queryParams.bookName"
-                clearable
-                @keyup.enter.native="handleQuery"
+              v-model="queryParams.bookName"
+              clearable
+              @keyup.enter.native="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
       <div class="button-top">
         <el-button
-            @click="handleAdd"
-            type="primary">
+          type="primary"
+          @click="handleAdd"
+        >
           {{ $t('jbx.text.add') }}
         </el-button>
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="onBatchDelete"
-        >{{ t('org.button.deleteBatch') }}
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="onBatchDelete"
+        >
+          {{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
-      <el-table v-loading="loading" :data="groupsList" border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="50" align="center"/>
-        <el-table-column prop="bookId" label="编码" min-width="80" align="left"/>
-        <el-table-column prop="name" label="账套" min-width="100" align="left"/>
-        <el-table-column prop="standardId" label="会计准则" align="left" min-width="100" :show-overflow-tooltip="true">
+      <el-table
+        v-loading="loading"
+        :data="groupsList"
+        border
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="50"
+          align="center"
+        />
+        <el-table-column
+          prop="bookId"
+          label="编码"
+          min-width="80"
+          align="left"
+        />
+        <el-table-column
+          prop="name"
+          label="账套"
+          min-width="100"
+          align="left"
+        />
+        <el-table-column
+          prop="standardId"
+          label="会计准则"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
-            <el-select v-model="scope.row.standardId" disabled >
+            <el-select
+              v-model="scope.row.standardId"
+              disabled
+            >
               <el-option
-                  v-for="dict in standardList"
-                  :key="dict.id"
-                  :label="dict.name"
-                  :value="dict.id"
+                v-for="dict in standardList"
+                :key="dict.id"
+                :label="dict.name"
+                :value="dict.id"
               />
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" min-width="50" align="center">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          min-width="50"
+          align="center"
+        >
           <template #default="scope">
-            <el-button type="danger"  @click="onDelete(scope.row)">
-              {{$t("jbx.text.delete")}}
+            <el-button
+              type="danger"
+              @click="onDelete(scope.row)"
+            >
+              {{ $t("jbx.text.delete") }}
             </el-button>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
       <!--新增对话框-->
-      <el-dialog v-model="addPermissionFlag" width="800" :title="addPermissionTitle" align-center :close-on-click-modal="false">
+      <el-dialog
+        v-model="addPermissionFlag"
+        width="800"
+        :title="addPermissionTitle"
+        align-center
+        :close-on-click-modal="false"
+      >
         <addPermissionBook 
           ref="addPermissionBookRef" 
           :permission-open="addPermissionFlag" 
           :username="username" 
-          :userId="formId"
-          @onSubmitSuccess="addSuccess">
-        </addPermissionBook>
+          :user-id="formId"
+          @on-submit-success="addSuccess"
+        />
         <template #footer>
           <div class="dialog-footer">
-            <el-button type="primary" @click="confirmAdd">{{ t('jbx.text.confirm') }}</el-button>
-            <el-button @click="cancelAdd">{{ t('systemCancel') }}</el-button>
+            <el-button
+              type="primary"
+              @click="confirmAdd"
+            >
+              {{ t('jbx.text.confirm') }}
+            </el-button>
+            <el-button @click="cancelAdd">
+              {{ t('systemCancel') }}
+            </el-button>
           </div>
         </template>
       </el-dialog>

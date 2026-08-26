@@ -1,15 +1,25 @@
 <template>
-  <el-container :class="classObj" class="app-wrapper" :style="{'--current-color': theme}">
-    <el-header :height="variables.navBarHeight" :class="{'fixed-header':fixedHeader}">
-      <Navbar/>
+  <el-container
+    :class="classObj"
+    class="app-wrapper"
+    :style="{'--current-color': theme}"
+  >
+    <el-header
+      :height="variables.navBarHeight"
+      :class="{'fixed-header':fixedHeader}"
+    >
+      <Navbar />
     </el-header>
     <el-container class="container-main">
       <el-aside :width="appStore.sidebar.opened ? variables.sideBarWidth : '60px'">
-        <Sidebar v-if="!sidebar.hide" class="sidebar-container"/>
+        <Sidebar
+          v-if="!sidebar.hide"
+          class="sidebar-container"
+        />
       </el-aside>
       <el-main>
-        <app-main/>
-        <settings ref="settingRef"/>
+        <app-main />
+        <settings ref="settingRef" />
       </el-main>
     </el-container>
   </el-container>

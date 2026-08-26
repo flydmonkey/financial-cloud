@@ -2,51 +2,73 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="凭证字" prop="word">
+        <el-form
+          v-show="showSearch"
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          label-width="68px"
+        >
+          <el-form-item
+            label="凭证字"
+            prop="word"
+          >
             <el-input
-                v-model="queryParams.word"
-                placeholder="请输入凭证字"
-                clearable
-                @keyup.enter="handleQuery"
+              v-model="queryParams.word"
+              placeholder="请输入凭证字"
+              clearable
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="年份" prop="voucherYear">
+          <el-form-item
+            label="年份"
+            prop="voucherYear"
+          >
             <el-date-picker
-                style="width: 110px"
-                v-model="queryParams.voucherYear"
-                type="year"
-                placeholder="请选择"
-                format="YYYY年"
-                value-format="YYYY"
-                @change="handleQuery"
+              v-model="queryParams.voucherYear"
+              style="width: 110px"
+              type="year"
+              placeholder="请选择"
+              format="YYYY年"
+              value-format="YYYY"
+              @change="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="月份" prop="voucherMonth">
+          <el-form-item
+            label="月份"
+            prop="voucherMonth"
+          >
             <el-date-picker
-                style="width: 110px"
-                v-model="queryParams.voucherMonth"
-                type="month"
-                placeholder="请选择"
-                format="MM月"
-                value-format="MM"
-                @change="handleQuery"
+              v-model="queryParams.voucherMonth"
+              style="width: 110px"
+              type="month"
+              placeholder="请选择"
+              format="MM月"
+              value-format="MM"
+              @change="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="日期" prop="voucherDate">
+          <el-form-item
+            label="日期"
+            prop="voucherDate"
+          >
             <el-date-picker
-                style="width: 140px"
-                clearable
-                v-model="queryParams.voucherDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-                placeholder="请选择"
-                @change="handleQuery">
-            </el-date-picker>
+              v-model="queryParams.voucherDate"
+              style="width: 140px"
+              clearable
+              type="date"
+              value-format="YYYY-MM-DD"
+              placeholder="请选择"
+              @change="handleQuery"
+            />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">搜索</el-button>
-            <el-button @click="resetQuery">重置</el-button>
+            <el-button @click="handleQuery">
+              搜索
+            </el-button>
+            <el-button @click="resetQuery">
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -54,155 +76,307 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleAdd"
-        >{{ t('org.button.add') }}
+          type="primary"
+          @click="handleAdd"
+        >
+          {{ t('org.button.add') }}
         </el-button>
         <el-button
-            type="success"
-            :disabled="ids.length === 0"
-            @click="handleSubmit"
-        >提交
+          type="success"
+          :disabled="ids.length === 0"
+          @click="handleSubmit"
+        >
+          提交
         </el-button>
         <el-button
-            type="success"
-            :disabled="ids.length === 0"
-            @click="handleAudit"
-        >审核
+          type="success"
+          :disabled="ids.length === 0"
+          @click="handleAudit"
+        >
+          审核
         </el-button>
         <el-button
-            type="success"
-            :disabled="ids.length === 0"
-            @click="handleManager"
-        >主管复核
+          type="success"
+          :disabled="ids.length === 0"
+          @click="handleManager"
+        >
+          主管复核
         </el-button>
         <el-button
-            type="success"
-            :disabled="ids.length === 0"
-            @click="handleSender"
-        >过账
+          type="success"
+          :disabled="ids.length === 0"
+          @click="handleSender"
+        >
+          过账
         </el-button>
 
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="handleDelete"
-        >{{ t('org.button.deleteBatch') }}
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="handleDelete"
+        >
+          {{ t('org.button.deleteBatch') }}
         </el-button>
         <div class="btn-form-right">
-          <el-button @click="handleExport">导出</el-button>
-          <el-button @click="handleShowVoucherSuccessive">凭证整理</el-button>
+          <el-button @click="handleExport">
+            导出
+          </el-button>
+          <el-button @click="handleShowVoucherSuccessive">
+            凭证整理
+          </el-button>
         </div>
       </div>
 
-      <el-table max-height="540" v-loading="loading" :data="booksVoucherList"
-                border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column label="凭证字" align="left" header-align="center" prop="word" width="150" fixed="left"/>
+      <el-table
+        v-loading="loading"
+        max-height="540"
+        :data="booksVoucherList"
+        border
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          label="凭证字"
+          align="left"
+          header-align="center"
+          prop="word"
+          width="150"
+          fixed="left"
+        />
         <!--        <el-table-column label="公司名称" align="center" prop="companyName" width="150"/>-->
-        <el-table-column label="备注" align="left" header-align="center" prop="remark" width="280"
-                         :show-overflow-tooltip="true"/>
-        <el-table-column label="借方总额" align="right" header-align="center" prop="debitAmount" width="120">
+        <el-table-column
+          label="备注"
+          align="left"
+          header-align="center"
+          prop="remark"
+          width="280"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="借方总额"
+          align="right"
+          header-align="center"
+          prop="debitAmount"
+          width="120"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.debitAmount) }}
           </template>
         </el-table-column>
-        <el-table-column label="贷方总额" align="right" header-align="center" prop="creditAmount" width="120">
+        <el-table-column
+          label="贷方总额"
+          align="right"
+          header-align="center"
+          prop="creditAmount"
+          width="120"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.creditAmount) }}
           </template>
         </el-table-column>
-        <el-table-column label="日期" align="center" prop="voucherDate" width="100">
+        <el-table-column
+          label="日期"
+          align="center"
+          prop="voucherDate"
+          width="100"
+        >
           <template #default="scope">
             <span>{{ parseTime(scope.row.voucherDate, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="附单据" align="center" prop="receiptNum"/>
-        <el-table-column label="结转" align="center" prop="carryForward">
+        <el-table-column
+          label="附单据"
+          align="center"
+          prop="receiptNum"
+        />
+        <el-table-column
+          label="结转"
+          align="center"
+          prop="carryForward"
+        >
           <template #default="scope">
             <span v-if="scope.row.carryForward === 'y'">是</span>
             <span v-if="scope.row.carryForward === 'n'">否</span>
           </template>
         </el-table-column>
-        <el-table-column label="制单人" align="center" prop="createdName" :show-overflow-tooltip="true"/>
-        <el-table-column label="创建时间" align="center" prop="createdDate" width="160">
+        <el-table-column
+          label="制单人"
+          align="center"
+          prop="createdName"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="创建时间"
+          align="center"
+          prop="createdDate"
+          width="160"
+        >
           <template #default="scope">
             <span>{{ parseTime(scope.row.createdDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="审核人" align="center" prop="auditMemberName" :show-overflow-tooltip="true"/>
-        <el-table-column label="审核时间" align="center" prop="auditDate" width="160">
+        <el-table-column
+          label="审核人"
+          align="center"
+          prop="auditMemberName"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="审核时间"
+          align="center"
+          prop="auditDate"
+          width="160"
+        >
           <template #default="scope">
             <span>{{ parseTime(scope.row.auditDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="过账人" align="center" prop="senderName" :show-overflow-tooltip="true"/>
-        <el-table-column label="过账操作时间" align="center" prop="senderDate" width="160">
+        <el-table-column
+          label="过账人"
+          align="center"
+          prop="senderName"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="过账操作时间"
+          align="center"
+          prop="senderDate"
+          width="160"
+        >
           <template #default="scope">
             <span>{{ parseTime(scope.row.senderDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="主管" align="center" prop="managerName" :show-overflow-tooltip="true"/>
-        <el-table-column label="主管操作时间" align="center" prop="managerDate" width="160">
+        <el-table-column
+          label="主管"
+          align="center"
+          prop="managerName"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="主管操作时间"
+          align="center"
+          prop="managerDate"
+          width="160"
+        >
           <template #default="scope">
             <span>{{ parseTime(scope.row.managerDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" align="center" prop="status" fixed="right" width="80">
+        <el-table-column
+          label="状态"
+          align="center"
+          prop="status"
+          fixed="right"
+          width="80"
+        >
           <template #default="scope">
-            <div v-html="getVoucherStatusDesc(scope.row.status)"></div>
+            <div v-html="getVoucherStatusDesc(scope.row.status)" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="120" fixed="right">
+        <el-table-column
+          label="操作"
+          align="center"
+          width="120"
+          fixed="right"
+        >
           <template #default="scope">
             <!--      暂存才可以修改      -->
             <el-tooltip
-                v-if="'draft' === scope.row.status && isEditable(scope.row.voucherDate)"
-                content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              v-if="'draft' === scope.row.status && isEditable(scope.row.voucherDate)"
+              content="编辑"
+            >
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip
-                v-if="'draft' !== scope.row.status || !isEditable(scope.row.voucherDate)"
-                content="查看">
-              <el-button link icon="View" @click="handlePreview(scope.row)"></el-button>
+              v-if="'draft' !== scope.row.status || !isEditable(scope.row.voucherDate)"
+              content="查看"
+            >
+              <el-button
+                link
+                icon="View"
+                @click="handlePreview(scope.row)"
+              />
             </el-tooltip>
             <!--      审批中才可以取消      -->
             <el-tooltip
-                v-if="'reviewing' === scope.row.status"
-                content="取消">
-              <el-button link icon="RemoveFilled" type="danger"
-                         @click="handleCancel(scope.row)"></el-button>
+              v-if="'reviewing' === scope.row.status"
+              content="取消"
+            >
+              <el-button
+                link
+                icon="RemoveFilled"
+                type="danger"
+                @click="handleCancel(scope.row)"
+              />
             </el-tooltip>
-            <el-tooltip v-if="currBookStore.termCurrent <= scope.row.voucherDate.substring(0, 7)" content="移除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+            <el-tooltip
+              v-if="currBookStore.termCurrent <= scope.row.voucherDate.substring(0, 7)"
+              content="移除"
+            >
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
 
       <pagination
-          v-show="total>0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          @pagination="getList"
+        v-show="total>0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        @pagination="getList"
       />
     </el-card>
 
     <!-- 添加或修改凭证记录对话框 -->
-    <el-drawer :title="title" v-model="open" :close-on-click-modal="false" @close="getList" size="1200px">
+    <el-drawer
+      v-model="open"
+      :title="title"
+      :close-on-click-modal="false"
+      size="1200px"
+      @close="getList"
+    >
       <template #header>
         <h4>{{ title }}</h4>
       </template>
-      <voucher-edit v-if="open" v-model="form" :edit="!previewMode" :dialog="true" :auto="false"
-                    @submit="submitForm"></voucher-edit>
+      <voucher-edit
+        v-if="open"
+        v-model="form"
+        :edit="!previewMode"
+        :dialog="true"
+        :auto="false"
+        @submit="submitForm"
+      />
     </el-drawer>
 
     <!-- 检查结果 -->
-    <el-dialog title="检查结果" v-model="dialogVoucherSuccessive.visible" width="1200px"
-               style="margin-top: 20vh !important;">
-      <el-alert v-if="dialogVoucherSuccessive.isNumber" title="恭喜您,所有凭证已连号，无需整理" type="success"
-                :closable="false" show-icon/>
+    <el-dialog
+      v-model="dialogVoucherSuccessive.visible"
+      title="检查结果"
+      width="1200px"
+      style="margin-top: 20vh !important;"
+    >
+      <el-alert
+        v-if="dialogVoucherSuccessive.isNumber"
+        title="恭喜您,所有凭证已连号，无需整理"
+        type="success"
+        :closable="false"
+        show-icon
+      />
 
       <!--      <el-form v-model="dialogVoucherSuccessive" inline style="margin-top: 20px">-->
       <!--        <el-form-item label="凭证字">-->
@@ -231,18 +405,38 @@
       <!--        </el-form-item>-->
       <!--      </el-form>-->
 
-      <el-table v-loading="dialogVoucherSuccessive.loading" border :data="voucherSuccessiveList">
-        <el-table-column label="原始凭证号" prop="sourceWord" align="center"></el-table-column>
-        <el-table-column label="新凭证号" prop="targetWord" align="center"></el-table-column>
+      <el-table
+        v-loading="dialogVoucherSuccessive.loading"
+        border
+        :data="voucherSuccessiveList"
+      >
+        <el-table-column
+          label="原始凭证号"
+          prop="sourceWord"
+          align="center"
+        />
+        <el-table-column
+          label="新凭证号"
+          prop="targetWord"
+          align="center"
+        />
         <template #empty>
-          <div style="text-align: center">暂无记录</div>
+          <div style="text-align: center">
+            暂无记录
+          </div>
         </template>
       </el-table>
 
       <template #footer>
-        <el-button @click="dialogVoucherSuccessive.visible = false">取消</el-button>
-        <el-button v-if="voucherSuccessiveList.length > 0" v-loading="dialogVoucherSuccessive.btnLoading" type="primary"
-                   @click="handleVoucherSuccessiveUpdate">
+        <el-button @click="dialogVoucherSuccessive.visible = false">
+          取消
+        </el-button>
+        <el-button
+          v-if="voucherSuccessiveList.length > 0"
+          v-loading="dialogVoucherSuccessive.btnLoading"
+          type="primary"
+          @click="handleVoucherSuccessiveUpdate"
+        >
           确认整理
         </el-button>
       </template>

@@ -1,40 +1,51 @@
 <template>
   <div class="app-container">
     <el-row :gutter="20">
-      <el-col :span="6" :xs="24">
+      <el-col
+        :span="6"
+        :xs="24"
+      >
         <el-card class="box-card">
-          <template v-slot:header>
+          <template #header>
             <div class="clearfix">
               <span>个人信息</span>
             </div>
           </template>
           <div>
             <div class="text-center">
-              <userAvatar/>
+              <userAvatar />
             </div>
             <ul class="list-group list-group-striped">
               <li class="list-group-item">
-                <svg-icon icon-class="user"/>
+                <svg-icon icon-class="user" />
                 登录名
                 <div class="pull-right">
                   <span v-if="state.user.username && state.user.username.length <= 20">{{ state.user.username }}</span>
                   <span v-else>
-                    <el-tooltip class="item" effect="dark" :content="state.user.username" placement="top">
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      :content="state.user.username"
+                      placement="top"
+                    >
                       <span>{{ state.user.username ? state.user.username.slice(0, 20) + '...' : '' }}</span>
                     </el-tooltip>
                   </span>
                 </div>
-
               </li>
               <li class="list-group-item">
                 <span>显示名称</span>
-                <div class="pull-right">{{ state.user.displayName }}</div>
+                <div class="pull-right">
+                  {{ state.user.displayName }}
+                </div>
               </li>
               <li class="list-group-item">
                 <span>昵称</span>
-                <div class="pull-right">{{ state.user.nickName }}</div>
+                <div class="pull-right">
+                  {{ state.user.nickName }}
+                </div>
               </li>
-<!--              <li class="list-group-item">
+              <!--              <li class="list-group-item">
                 <svg-icon icon-class="color"/>
                 性别
                 <div class="pull-right">
@@ -44,33 +55,40 @@
                 </div>
               </li>-->
               <li class="list-group-item">
-                <svg-icon icon-class="phone"/>
+                <svg-icon icon-class="phone" />
                 手机
-                <div class="pull-right">{{ state.user.mobile }}</div>
+                <div class="pull-right">
+                  {{ state.user.mobile }}
+                </div>
               </li>
               <li class="list-group-item">
-                <svg-icon icon-class="email"/>
+                <svg-icon icon-class="email" />
                 邮箱
                 <div class="pull-right">
                   <span v-if="state.user.email && state.user.email.length <= 20">{{ state.user.email }}</span>
                   <span v-else>
-                   <el-tooltip class="item" effect="dark" :content="state.user.email" placement="top">
-                     <span>{{ state.user.email ? state.user.email.slice(0, 20) + '...' : '' }}</span>
-                   </el-tooltip>
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      :content="state.user.email"
+                      placement="top"
+                    >
+                      <span>{{ state.user.email ? state.user.email.slice(0, 20) + '...' : '' }}</span>
+                    </el-tooltip>
                   </span>
                 </div>
               </li>
-<!--              <li class="list-group-item">
+              <!--              <li class="list-group-item">
                 <svg-icon icon-class="tree"/>
                 {{t('user.belong')}}
                 <div class="pull-right">{{ state.user.departmentName }}</div>
               </li>-->
-<!--              <li class="list-group-item">
+              <!--              <li class="list-group-item">
                 <svg-icon icon-class="guide"/>
                 {{t('org.from')}}
                 <dict-tag class="pull-right" :options="sys_data_object_from" :value="state.user.objectFrom"/>
               </li>-->
-<!--              <li class="list-group-item">
+              <!--              <li class="list-group-item">
                 <svg-icon icon-class="date"/>
                 {{t('user.birthDate')}}
                 <div class="pull-right">{{ state.user.birthDate }}</div>
@@ -79,19 +97,35 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="18" :xs="24">
+      <el-col
+        :span="18"
+        :xs="24"
+      >
         <el-card>
-          <template v-slot:header>
+          <template #header>
             <div class="clearfix">
               <span>修改信息</span>
             </div>
           </template>
           <el-tabs v-model="activeTab">
-            <el-tab-pane label="基本信息" name="userinfo">
-              <userInfo :user="state.user" :genderOptions="sys_user_sex" @profileDisplay="profileDisplay"/>
+            <el-tab-pane
+              label="基本信息"
+              name="userinfo"
+            >
+              <userInfo
+                :user="state.user"
+                :gender-options="sys_user_sex"
+                @profile-display="profileDisplay"
+              />
             </el-tab-pane>
-            <el-tab-pane label="密码修改" name="resetPwd">
-              <resetPwd :user="state.user" :pwdPolicy="pwdPolicy"/>
+            <el-tab-pane
+              label="密码修改"
+              name="resetPwd"
+            >
+              <resetPwd
+                :user="state.user"
+                :pwd-policy="pwdPolicy"
+              />
             </el-tab-pane>
           </el-tabs>
         </el-card>

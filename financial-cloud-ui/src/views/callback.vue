@@ -1,59 +1,99 @@
 <template>
-    <div class="login" v-if="bindShow">
-      <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
-        <el-form-item prop="username">
-          <el-input
-              v-model="loginForm.username"
-              type="text"
-              size="large"
-              auto-complete="off"
-              :placeholder="t('login.username')"
-          >
-            <template #prefix><svg-icon icon-class="user" class="el-input__icon input-icon" /></template>
-          </el-input>
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input
-              v-model="loginForm.password"
-              type="password"
-              size="large"
-              auto-complete="off"
-              :placeholder="t('login.password')"
-              @keyup.enter="submitForm"
-          >
-            <template #prefix><svg-icon icon-class="password" class="el-input__icon input-icon" /></template>
-          </el-input>
-        </el-form-item>
+  <div
+    v-if="bindShow"
+    class="login"
+  >
+    <el-form
+      ref="loginRef"
+      :model="loginForm"
+      :rules="loginRules"
+      class="login-form"
+    >
+      <el-form-item prop="username">
+        <el-input
+          v-model="loginForm.username"
+          type="text"
+          size="large"
+          auto-complete="off"
+          :placeholder="t('login.username')"
+        >
+          <template #prefix>
+            <svg-icon
+              icon-class="user"
+              class="el-input__icon input-icon"
+            />
+          </template>
+        </el-input>
+      </el-form-item>
+      <el-form-item prop="password">
+        <el-input
+          v-model="loginForm.password"
+          type="password"
+          size="large"
+          auto-complete="off"
+          :placeholder="t('login.password')"
+          @keyup.enter="submitForm"
+        >
+          <template #prefix>
+            <svg-icon
+              icon-class="password"
+              class="el-input__icon input-icon"
+            />
+          </template>
+        </el-input>
+      </el-form-item>
 
-        <el-form-item prop="captcha" v-if="captchaEnabled">
-          <el-input
-              v-model="loginForm.captcha"
-              size="large"
-              auto-complete="off"
-              :placeholder="t('login.code')"
-              @keyup.enter="submitForm"
-              style="width: 63%"
+      <el-form-item
+        v-if="captchaEnabled"
+        prop="captcha"
+      >
+        <el-input
+          v-model="loginForm.captcha"
+          size="large"
+          auto-complete="off"
+          :placeholder="t('login.code')"
+          style="width: 63%"
+          @keyup.enter="submitForm"
+        >
+          <template #prefix>
+            <svg-icon
+              icon-class="validCode"
+              class="el-input__icon input-icon"
+            />
+          </template>
+        </el-input>
+        <div class="login-code">
+          <img
+            :src="codeUrl"
+            class="login-code-img"
+            @click="getCode"
           >
-            <template #prefix><svg-icon icon-class="validCode" class="el-input__icon input-icon" /></template>
-          </el-input>
-          <div class="login-code">
-            <img :src="codeUrl" @click="getCode" class="login-code-img"/>
-          </div>
-        </el-form-item>
+        </div>
+      </el-form-item>
 
-        <el-form-item style="width:100%;">
-          <el-button :loading="loading" size="medium" type="primary" style="width:100%;" @click="submitForm">提交</el-button>
-        </el-form-item>
-        <el-form-item>
-          <h3 style="width: 100%;">温馨提示</h3>
-          <ul class="topicList">
-            <li>系统已经获取第三方授权用户，请完成绑定</li>
-            <li>如已有账号，请输入对应的账号密码，验证通过后自动绑定关系</li>
-            <li>绑定成功后，第二次将直接登录系统，无需再次绑定</li>
-          </ul>
-        </el-form-item>
-      </el-form>
-    </div>
+      <el-form-item style="width:100%;">
+        <el-button
+          :loading="loading"
+          size="medium"
+          type="primary"
+          style="width:100%;"
+          @click="submitForm"
+        >
+          提交
+        </el-button>
+      </el-form-item>
+      <el-form-item>
+        <h3 style="width: 100%;">
+          温馨提示
+        </h3>
+        <ul class="topicList">
+          <li>系统已经获取第三方授权用户，请完成绑定</li>
+          <li>如已有账号，请输入对应的账号密码，验证通过后自动绑定关系</li>
+          <li>绑定成功后，第二次将直接登录系统，无需再次绑定</li>
+        </ul>
+      </el-form-item>
+    </el-form>
+  </div>
 </template>
 <script setup name="CallBack" lang="ts">
 import { useRoute, useRouter } from "vue-router";

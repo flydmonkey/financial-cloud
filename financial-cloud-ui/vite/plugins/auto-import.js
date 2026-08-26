@@ -7,6 +7,10 @@ export default function createAutoImport() {
             'vue-router',
             'pinia',
         ],
-        dts: false,
+        dts: 'src/types/auto-imports.d.ts',
+        eslintrc: {
+            enabled: true,
+            filepath: './.eslintrc-auto-import.json',
+        },
     })
 }

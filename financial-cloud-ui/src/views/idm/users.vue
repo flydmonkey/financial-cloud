@@ -2,17 +2,26 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="userParams" ref="queryForm" :inline="true" @submit.native.prevent>
+        <el-form
+          ref="queryForm"
+          :model="userParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item :label="$t('jbx.users.username')">
             <el-input
-                v-model="userParams.username"
-                clearable
-                @keyup.enter.native="handleQuery"
+              v-model="userParams.username"
+              clearable
+              @keyup.enter.native="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -21,40 +30,45 @@
       <div class="button-top">
         <div>
           <el-button
-              @click="handleAdd"
-              type="primary">
+            type="primary"
+            @click="handleAdd"
+          >
             {{ $t('jbx.text.add') }}
           </el-button>
           <el-button
-              type="danger"
-              :disabled="ids.length === 0"
-              @click="onBatchDelete"
-          >{{ t('org.button.deleteBatch') }}
+            type="danger"
+            :disabled="ids.length === 0"
+            @click="onBatchDelete"
+          >
+            {{ t('org.button.deleteBatch') }}
           </el-button>
         </div>
         <div style="display: flex">
           <el-button
-              type="success"
-              plain
-              @click="downloadTemplate('template')"
-          >{{ $t('jbx.text.template') }}
+            type="success"
+            plain
+            @click="downloadTemplate('template')"
+          >
+            {{ $t('jbx.text.template') }}
           </el-button>
           <el-button
-              @click="downloadTemplate('user')"
-          >{{ $t('jbx.text.export') }}
+            @click="downloadTemplate('user')"
+          >
+            {{ $t('jbx.text.export') }}
           </el-button>
           <el-upload
-              style="margin-left: 10px"
-              action="fake"
-              multiple
-              accept=".xls,.xlsx,csv"
-              :show-file-list="showFileList"
-              :file-list="fileList"
-              :before-upload="beforeUpload"
-              name="excelFile"
-              :http-request="importExcel"
+            style="margin-left: 10px"
+            action="fake"
+            multiple
+            accept=".xls,.xlsx,csv"
+            :show-file-list="showFileList"
+            :file-list="fileList"
+            :before-upload="beforeUpload"
+            name="excelFile"
+            :http-request="importExcel"
           >
-            <el-button>{{ $t('jbx.text.import') }}
+            <el-button>
+              {{ $t('jbx.text.import') }}
             </el-button>
           </el-upload>
         </div>
@@ -62,72 +76,135 @@
 
 
       <el-table
-          border
-          v-loading="loading"
-          :data="usersList"
-          @selection-change="handleSelectionChange"
+        v-loading="loading"
+        border
+        :data="usersList"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" align="center"/>
-        <el-table-column prop="username" :label="$t('jbx.users.username')" align="center"
-                         min-width="100" :show-overflow-tooltip="true"/>
-        <el-table-column prop="displayName" :label="$t('jbx.users.displayName')" align="center"
-                         min-width="120" :show-overflow-tooltip="true"/>
-        <el-table-column prop="gender" :label="t('jbx.users.gender')" align="center" min-width="60">
+        <el-table-column
+          type="selection"
+          width="50"
+          align="center"
+        />
+        <el-table-column
+          prop="username"
+          :label="$t('jbx.users.username')"
+          align="center"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="displayName"
+          :label="$t('jbx.users.displayName')"
+          align="center"
+          min-width="120"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="gender"
+          :label="t('jbx.users.gender')"
+          align="center"
+          min-width="60"
+        >
           <template #default="scope">
             <span v-if="scope.row.gender === 1">{{ t('jbx.users.genderFemale') }}</span>
             <span v-if="scope.row.gender === 2">{{ t('jbx.users.genderMale') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="$t('jbx.users.status')" align="center"
-                         min-width="60">
+        <el-table-column
+          prop="status"
+          :label="$t('jbx.users.status')"
+          align="center"
+          min-width="60"
+        >
           <template #default="scope">
-            <a :title="$t('jbx.users.statusActive')" v-if="scope.row.status === 1">
+            <a
+              v-if="scope.row.status === 1"
+              :title="$t('jbx.users.statusActive')"
+            >
               <el-icon color="green">
                 <SuccessFilled
-                    class="success"/>
+                  class="success"
+                />
               </el-icon>
             </a>
-            <a :title="$t('jbx.users.statusInactive')" v-if="scope.row.status === 2">
+            <a
+              v-if="scope.row.status === 2"
+              :title="$t('jbx.users.statusInactive')"
+            >
               <el-icon color="grey">
-                <WarningFilled/>
+                <WarningFilled />
               </el-icon>
             </a>
-            <a :title="$t('jbx.users.statusForbidden')" v-if="scope.row.status === 4">
+            <a
+              v-if="scope.row.status === 4"
+              :title="$t('jbx.users.statusForbidden')"
+            >
               <el-icon color="grey">
-                <RemoveFilled/>
+                <RemoveFilled />
               </el-icon>
             </a>
-            <a :title="$t('jbx.users.statusLock')" v-if="scope.row.status === 5">
+            <a
+              v-if="scope.row.status === 5"
+              :title="$t('jbx.users.statusLock')"
+            >
               <el-icon color="orange">
-                <Lock/>
+                <Lock />
               </el-icon>
             </a>
-            <a :title="$t('jbx.users.statusDelete')" v-if="scope.row.status === 9">
+            <a
+              v-if="scope.row.status === 9"
+              :title="$t('jbx.users.statusDelete')"
+            >
               <el-icon color="red">
-                <CircleCloseFilled/>
+                <CircleCloseFilled />
               </el-icon>
             </a>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" align="center" width="140">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          align="center"
+          width="140"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="账套配置">
-              <el-button link type="text" @click="bookDrawerOpen(scope.row)">
-                <svg-icon size="0.9em" icon-class="menus-zhangtaoguanli"/>
+              <el-button
+                link
+                type="text"
+                @click="bookDrawerOpen(scope.row)"
+              >
+                <svg-icon
+                  size="0.9em"
+                  icon-class="menus-zhangtaoguanli"
+                />
               </el-button>
             </el-tooltip>
-            <el-dropdown v-if="scope.row.status !== 9" style="margin-left: 8px">
-              <el-button link icon="MoreFilled"></el-button>
+            <el-dropdown
+              v-if="scope.row.status !== 9"
+              style="margin-left: 8px"
+            >
+              <el-button
+                link
+                icon="MoreFilled"
+              />
               <template #dropdown>
                 <el-dropdown-menu>
                   <!--                      <el-dropdown-item v-if="scope.row.status === 1"
                                                           @click.native="onNavToUrl(scope.row.id, scope.row.username, 'accounts')">
                                           <span>{{ $t('jbx.text.accounts') }}</span>
                                         </el-dropdown-item>-->
-                  <el-dropdown-item v-if="scope.row.status === 1" @click.native="groupDrawerOpen(scope.row)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 1"
+                    @click.native="groupDrawerOpen(scope.row)"
+                  >
                     <span>角色</span>
                   </el-dropdown-item>
 
@@ -137,25 +214,46 @@
                                         <el-dropdown-item v-if="scope.row.status === 1" @click.native="handleHats(scope.row)">
                                           <span>{{ $t('jbx.text.hats') }}</span>
                                         </el-dropdown-item>-->
-                  <el-dropdown-item v-if="scope.row.status === 1" @click.native="handlePas(scope.row)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 1"
+                    @click.native="handlePas(scope.row)"
+                  >
                     <span>{{ $t('jbx.text.changepassword') }}</span>
                   </el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.status === 1" @click.native="onUpdateStatus(scope.row.id,5)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 1"
+                    @click.native="onUpdateStatus(scope.row.id,5)"
+                  >
                     <span>{{ $t('jbx.text.lock') }}</span>
                   </el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.status === 1" @click.native="onUpdateStatus(scope.row.id,4)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 1"
+                    @click.native="onUpdateStatus(scope.row.id,4)"
+                  >
                     <span>{{ $t('jbx.text.disable') }}</span>
                   </el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.status === 2" @click.native="onUpdateStatus(scope.row.id,1)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 2"
+                    @click.native="onUpdateStatus(scope.row.id,1)"
+                  >
                     <span>{{ $t('jbx.text.enable') }}</span>
                   </el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.status === 4" @click.native="onUpdateStatus(scope.row.id,1)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 4"
+                    @click.native="onUpdateStatus(scope.row.id,1)"
+                  >
                     <span>{{ $t('jbx.text.enable') }}</span>
                   </el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.status === 5" @click.native="onUpdateStatus(scope.row.id,1)">
+                  <el-dropdown-item
+                    v-if="scope.row.status === 5"
+                    @click.native="onUpdateStatus(scope.row.id,1)"
+                  >
                     <span>{{ $t('jbx.text.unlock') }}</span>
                   </el-dropdown-item>
-                  <el-dropdown-item divided @click.native="onDelete(scope.row)">
+                  <el-dropdown-item
+                    divided
+                    @click.native="onDelete(scope.row)"
+                  >
                     <span style="color: red">{{ $t('jbx.text.delete') }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -165,42 +263,85 @@
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="userParams.pageNumber"
-          v-model:limit="userParams.pageSize"
-          :page-sizes="userParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="userParams.pageNumber"
+        v-model:limit="userParams.pageSize"
+        :total="total"
+        :page-sizes="userParams.pageSizeOptions"
+        @pagination="getList"
       />
     </el-card>
-    <user-edit :title="title" :open="open" :formId="id" @dialogOfClosedMethods="dialogOfClosedMethods"
-               :users_state="users_state"
-               :users_type="users_type" :status="status" :users_married="users_married"
-               :users_id-type="users_idType"></user-edit>
+    <user-edit
+      :title="title"
+      :open="open"
+      :form-id="id"
+      :users_state="users_state"
+      :users_type="users_type"
+      :status="status"
+      :users_married="users_married"
+      :users_id-type="users_idType"
+      @dialog-of-closed-methods="dialogOfClosedMethods"
+    />
 
     <!--修改密码对话框-->
-    <el-dialog v-model="pasFlag" width="500" :title="title" align-center>
-      <change-password ref="changePasRef" :pasFlag="pasFlag" :pasForm="pasForm"
-                       @onSubmitSuccess="dialogAndDrawClose"></change-password>
+    <el-dialog
+      v-model="pasFlag"
+      width="500"
+      :title="title"
+      align-center
+    >
+      <change-password
+        ref="changePasRef"
+        :pas-flag="pasFlag"
+        :pas-form="pasForm"
+        @on-submit-success="dialogAndDrawClose"
+      />
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitPass">{{ t('jbx.text.confirm') }}</el-button>
-          <el-button @click="dialogAndDrawClose">{{ t('systemCancel') }}</el-button>
+          <el-button
+            type="primary"
+            @click="submitPass"
+          >
+            {{ t('jbx.text.confirm') }}
+          </el-button>
+          <el-button @click="dialogAndDrawClose">
+            {{ t('systemCancel') }}
+          </el-button>
         </div>
       </template>
     </el-dialog>
     <!--用户岗位-->
-    <postDrawer :title="title" :post-open="postOpen" @postDrawerClose="dialogAndDrawClose"
-                :post_options="post_options" :form-id="id"></postDrawer>
+    <postDrawer
+      :title="title"
+      :post-open="postOpen"
+      :post_options="post_options"
+      :form-id="id"
+      @post-drawer-close="dialogAndDrawClose"
+    />
     <!--用户组-->
-    <user-group :title="title" :username="currentUsername" :form-id="id"
-                @groupDrawerClose="dialogAndDrawClose" :group-open="groupOpen"></user-group>
+    <user-group
+      :title="title"
+      :username="currentUsername"
+      :form-id="id"
+      :group-open="groupOpen"
+      @group-drawer-close="dialogAndDrawClose"
+    />
     <!--用户兼职-->
-    <user-hats :title="title" :form-id="id" :open="hatsOpen" @hatsDrawerClose="dialogAndDrawClose"></user-hats>
+    <user-hats
+      :title="title"
+      :form-id="id"
+      :open="hatsOpen"
+      @hats-drawer-close="dialogAndDrawClose"
+    />
 
     <!--账套权限-->
-    <book :title="title" :username="currentUsername" :form-id="id"
-          @bookDrawerClose="dialogAndDrawClose" :book-open="bookOpen"></book>
+    <book
+      :title="title"
+      :username="currentUsername"
+      :form-id="id"
+      :book-open="bookOpen"
+      @book-drawer-close="dialogAndDrawClose"
+    />
   </div>
 </template>
 <script setup lang="ts">

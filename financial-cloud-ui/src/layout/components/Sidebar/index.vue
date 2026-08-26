@@ -1,27 +1,36 @@
 <template>
   <div>
-    <el-scrollbar :class="sideTheme" wrap-class="scrollbar-wrapper">
+    <el-scrollbar
+      :class="sideTheme"
+      wrap-class="scrollbar-wrapper"
+    >
       <el-menu
-          class="app-el-menu"
-          :default-active="activeMenu"
-          :collapse="isCollapse"
-          :background-color="sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground"
-          :text-color="sideTheme === 'theme-dark' ? variables.menuColor : variables.menuLightColor"
-          :unique-opened="true"
-          :active-text-color="theme"
-          :collapse-transition="false"
-          mode="vertical">
+        class="app-el-menu"
+        :default-active="activeMenu"
+        :collapse="isCollapse"
+        :background-color="sideTheme === 'theme-dark' ? variables.menuBackground : variables.menuLightBackground"
+        :text-color="sideTheme === 'theme-dark' ? variables.menuColor : variables.menuLightColor"
+        :unique-opened="true"
+        :active-text-color="theme"
+        :collapse-transition="false"
+        mode="vertical"
+      >
         <sidebar-item
-            v-for="(route, index) in sidebarRouters"
-            :key="route.path + index"
-            :item="route"
-            :base-path="isParentView(route) ? '' : route.path"
+          v-for="(route, index) in sidebarRouters"
+          :key="route.path + index"
+          :item="route"
+          :base-path="isParentView(route) ? '' : route.path"
         />
 
-        <el-menu-item index="toggleSide" @click="toggleSideBar">
+        <el-menu-item
+          index="toggleSide"
+          @click="toggleSideBar"
+        >
           <el-tooltip :content="appStore.sidebar.opened ? '收缩' : '展开'">
-            <hamburger :style="{marginLeft: appStore.sidebar.opened ? '80px': '0', padding: '0'}"
-                       :is-active="appStore.sidebar.opened"/>
+            <hamburger
+              :style="{marginLeft: appStore.sidebar.opened ? '80px': '0', padding: '0'}"
+              :is-active="appStore.sidebar.opened"
+            />
           </el-tooltip>
         </el-menu-item>
       </el-menu>

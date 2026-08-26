@@ -1,56 +1,116 @@
 <template>
-  <el-drawer v-if="dialogStatus" v-model="dialogStatus" :close-on-click-modal="false" size="40%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-if="dialogStatus"
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="40%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" inline-message>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
         <el-form-item label="会计准则">
-          <el-select v-model="form.standardId" @change="changeStandard">
+          <el-select
+            v-model="form.standardId"
+            @change="changeStandard"
+          >
             <el-option
-                v-for="item in standardList"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id">
-            </el-option>
+              v-for="item in standardList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item prop="category" :label="$t('subjectCategory')" :required="true">
-          <el-select v-model="form.category" clearable>
+        <el-form-item
+          prop="category"
+          :label="$t('subjectCategory')"
+          :required="true"
+        >
+          <el-select
+            v-model="form.category"
+            clearable
+          >
             <el-option
-                v-for="dict in subjects_category"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
+              v-for="dict in subjects_category"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
             />
           </el-select>
         </el-form-item>
 
-        <el-form-item prop="code" :label="t('subjectCode')" :required="true">
-          <el-input v-model="form.code"/>
+        <el-form-item
+          prop="code"
+          :label="t('subjectCode')"
+          :required="true"
+        >
+          <el-input v-model="form.code" />
         </el-form-item>
-        <el-form-item prop="name" :label="t('subjectName')" :required="true">
-          <el-input v-model="form.name"/>
+        <el-form-item
+          prop="name"
+          :label="t('subjectName')"
+          :required="true"
+        >
+          <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item prop="displayName" :label="t('subjectDisplayName')" >
-            <el-input v-model="form.displayName"  disabled/>
-          </el-form-item>
-        <el-form-item prop="pinyinCode" :label="t('subjectPinyinCode')">
-          <el-input v-model="form.pinyinCode"/>
+        <el-form-item
+          prop="displayName"
+          :label="t('subjectDisplayName')"
+        >
+          <el-input
+            v-model="form.displayName"
+            disabled
+          />
         </el-form-item>
-        <el-form-item prop="pinyinDisplayCode" :label="t('subjectPinyinDisplayCode')">
-            <el-input v-model="form.pinyinDisplayCode" disabled/>
-          </el-form-item>
-        <el-form-item prop="direction" :label="$t('subjectBalanceDirection')">
+        <el-form-item
+          prop="pinyinCode"
+          :label="t('subjectPinyinCode')"
+        >
+          <el-input v-model="form.pinyinCode" />
+        </el-form-item>
+        <el-form-item
+          prop="pinyinDisplayCode"
+          :label="t('subjectPinyinDisplayCode')"
+        >
+          <el-input
+            v-model="form.pinyinDisplayCode"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item
+          prop="direction"
+          :label="$t('subjectBalanceDirection')"
+        >
           <el-radio-group v-model="form.direction">
-            <el-radio value="0">{{ t('subjectDirectionNone') }}</el-radio>
-            <el-radio value="1">{{ t('subjectDebit') }}</el-radio>
-            <el-radio value="2">{{ t('subjectCredit') }}</el-radio>
+            <el-radio value="0">
+              {{ t('subjectDirectionNone') }}
+            </el-radio>
+            <el-radio value="1">
+              {{ t('subjectDebit') }}
+            </el-radio>
+            <el-radio value="2">
+              {{ t('subjectCredit') }}
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item prop="auxiliary" :label="$t('subjectAuxiliary')">
-          <el-select v-model="form.auxiliary" clearable multiple>
+        <el-form-item
+          prop="auxiliary"
+          :label="$t('subjectAuxiliary')"
+        >
+          <el-select
+            v-model="form.auxiliary"
+            clearable
+            multiple
+          >
             <template #header>
               <div style="display: flex;justify-content: space-between;padding: 0 40px 0 10px">
                 <span>类型名称</span>
@@ -58,59 +118,89 @@
               </div>
             </template>
             <el-option
-                v-for="dict in subjects_category_dicts"
-                :key="dict.id"
-                :label="dict.label"
-                value-key="value"
-                :value="dict">
+              v-for="dict in subjects_category_dicts"
+              :key="dict.id"
+              :label="dict.label"
+              value-key="value"
+              :value="dict"
+            >
               <span style="float: left">{{ dict.label }}</span>
-              <el-switch @click.stop
-                         style="float: right;color: var(--el-text-color-secondary);margin-right: 10px;"
-                         v-model="dict.must" @change="handle_subjects_category_dicts(dict)"/>
+              <el-switch
+                v-model="dict.must"
+                style="float: right;color: var(--el-text-color-secondary);margin-right: 10px;"
+                @click.stop
+                @change="handle_subjects_category_dicts(dict)"
+              />
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item prop="classify" :label="t('subjectClassify')">
-          <el-input v-model="form.classify"/>
+        <el-form-item
+          prop="classify"
+          :label="t('subjectClassify')"
+        >
+          <el-input v-model="form.classify" />
         </el-form-item>
-        <el-form-item prop="scope" :label="t('subjectScope')">
-          <el-input v-model="form.scope"/>
+        <el-form-item
+          prop="scope"
+          :label="t('subjectScope')"
+        >
+          <el-input v-model="form.scope" />
         </el-form-item>
-        <el-form-item prop="parentId" :label="$t('subjectParent')">
+        <el-form-item
+          prop="parentId"
+          :label="$t('subjectParent')"
+        >
           <el-tree-select
-              ref="resTreeRef"
-              v-model="form.parentId"
-              :data="deptOptions"
-              :props="defaultProps"
-              check-strictly
-              value-key="id"
-              show-checkbox
-              clearable
-              :default-checked-keys="cheackdData"
+            ref="resTreeRef"
+            v-model="form.parentId"
+            :data="deptOptions"
+            :props="defaultProps"
+            check-strictly
+            value-key="id"
+            show-checkbox
+            clearable
+            :default-checked-keys="cheackdData"
           />
         </el-form-item>
-        <el-form-item prop="isCash" label="是否为现金科目">
+        <el-form-item
+          prop="isCash"
+          label="是否为现金科目"
+        >
           <el-radio-group v-model="form.isCash">
-            <el-radio :value="1">是</el-radio>
-            <el-radio :value="0">否</el-radio>
+            <el-radio :value="1">
+              是
+            </el-radio>
+            <el-radio :value="0">
+              否
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item prop="status" :label="$t('jbx.text.status.status')">
+        <el-form-item
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+        >
           <el-switch
-              :width="44"
-              v-model="form.status"
-              :active-value="1"
-              :inactive-value="0"
-              active-icon-class="el-icon-close"
-              inactive-icon-class="el-icon-check">
-          </el-switch>
+            v-model="form.status"
+            :width="44"
+            :active-value="1"
+            :inactive-value="0"
+            active-icon-class="el-icon-close"
+            inactive-icon-class="el-icon-check"
+          />
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

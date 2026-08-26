@@ -1,44 +1,81 @@
 <template>
-    <div class="queryForm">
-      <el-form :model="queryParams" ref="queryForm" :inline="true" @submit.native.prevent>
-        <el-form-item label="账套名称">
-          <el-input
-              v-model="queryParams.bookName"
-              clearable
-              @keyup.enter.native="handleQuery"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-          <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <el-table v-loading="loading" :data="list" border @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="50" align="center"/>
-      <el-table-column prop="id" label="编码" min-width="70" align="left"/>
-      <el-table-column prop="name" label="名称" min-width="100" align="left"/>
-      <el-table-column prop="standardId" label="会计准则" align="left" min-width="100" :show-overflow-tooltip="true">
-          <template #default="scope">
-            <el-select v-model="scope.row.standardId" disabled >
-              <el-option
-                  v-for="dict in standardList"
-                  :key="dict.id"
-                  :label="dict.name"
-                  :value="dict.id"
-              />
-            </el-select>
-          </template>
-        </el-table-column>
-    </el-table>
-    <pagination
-        v-show="total > 0"
-        :total="total"
-        v-model:page="queryParams.pageNumber"
-        v-model:limit="queryParams.pageSize"
-        :page-sizes="queryParams.pageSizeOptions"
-        @pagination="getList"
+  <div class="queryForm">
+    <el-form
+      ref="queryForm"
+      :model="queryParams"
+      :inline="true"
+      @submit.native.prevent
+    >
+      <el-form-item label="账套名称">
+        <el-input
+          v-model="queryParams.bookName"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button @click="handleQuery">
+          {{ t('org.button.query') }}
+        </el-button>
+        <el-button @click="resetQuery">
+          {{ t('org.button.reset') }}
+        </el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+  <el-table
+    v-loading="loading"
+    :data="list"
+    border
+    @selection-change="handleSelectionChange"
+  >
+    <el-table-column
+      type="selection"
+      width="50"
+      align="center"
     />
+    <el-table-column
+      prop="id"
+      label="编码"
+      min-width="70"
+      align="left"
+    />
+    <el-table-column
+      prop="name"
+      label="名称"
+      min-width="100"
+      align="left"
+    />
+    <el-table-column
+      prop="standardId"
+      label="会计准则"
+      align="left"
+      min-width="100"
+      :show-overflow-tooltip="true"
+    >
+      <template #default="scope">
+        <el-select
+          v-model="scope.row.standardId"
+          disabled
+        >
+          <el-option
+            v-for="dict in standardList"
+            :key="dict.id"
+            :label="dict.name"
+            :value="dict.id"
+          />
+        </el-select>
+      </template>
+    </el-table-column>
+  </el-table>
+  <pagination
+    v-show="total > 0"
+    v-model:page="queryParams.pageNumber"
+    v-model:limit="queryParams.pageSize"
+    :total="total"
+    :page-sizes="queryParams.pageSizeOptions"
+    @pagination="getList"
+  />
 </template>
 
 <script setup lang="ts">

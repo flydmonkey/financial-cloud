@@ -83,7 +83,7 @@ export const getRouters: any = () => {
                 mapChildren[item.parentId].push(item)
             })
             // 预处理空菜单,过滤出不需要显示在菜单中，但需要定义路由的菜单（附件的隐藏菜单）
-            for (let key in mapChildren) {
+            for (const key in mapChildren) {
                 const children: any = mapChildren[key]
                 children.filter((t: any) => t.isVisible !== 'y').forEach((t: any) => {
                     additionalMenu[t.id] = formatMenu(t)
@@ -102,7 +102,7 @@ export const getRouters: any = () => {
                 })
 
             tree = handleTree(tree || [])
-            for (let key in additionalMenu) {
+            for (const key in additionalMenu) {
                 tree.push(additionalMenu[key])
             }
             tree = tree.map((t: any) => {

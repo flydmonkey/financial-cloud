@@ -1,21 +1,50 @@
 <template>
-   <el-form ref="userRef" :model="form" :rules="rules" label-width="80px">
-     <el-form-item label="登录名" prop="username">
-       <el-input v-model="form.username" disabled/>
-     </el-form-item>
-     <el-form-item label="显示名称" prop="displayName">
-       <el-input v-model="form.displayName" maxlength="20" />
-     </el-form-item>
-      <el-form-item label="昵称" prop="nickName">
-         <el-input v-model="form.nickName" maxlength="20" />
-      </el-form-item>
-      <el-form-item label="手机号码" prop="mobile">
-         <el-input v-model="form.mobile" />
-      </el-form-item>
-      <el-form-item label="邮箱" prop="email">
-         <el-input v-model="form.email" />
-      </el-form-item>
-<!--      <el-form-item :label="t('user.gender')">
+  <el-form
+    ref="userRef"
+    :model="form"
+    :rules="rules"
+    label-width="80px"
+  >
+    <el-form-item
+      label="登录名"
+      prop="username"
+    >
+      <el-input
+        v-model="form.username"
+        disabled
+      />
+    </el-form-item>
+    <el-form-item
+      label="显示名称"
+      prop="displayName"
+    >
+      <el-input
+        v-model="form.displayName"
+        maxlength="20"
+      />
+    </el-form-item>
+    <el-form-item
+      label="昵称"
+      prop="nickName"
+    >
+      <el-input
+        v-model="form.nickName"
+        maxlength="20"
+      />
+    </el-form-item>
+    <el-form-item
+      label="手机号码"
+      prop="mobile"
+    >
+      <el-input v-model="form.mobile" />
+    </el-form-item>
+    <el-form-item
+      label="邮箱"
+      prop="email"
+    >
+      <el-input v-model="form.email" />
+    </el-form-item>
+    <!--      <el-form-item :label="t('user.gender')">
         <el-radio-group v-model="form.gender">
           <el-radio-button v-for="item in genderOptions"
                            :label="item.label"
@@ -34,11 +63,21 @@
            :placeholder="t('profile.rule.birthDate')">
        </el-date-picker>
      </el-form-item>-->
-      <el-form-item>
-      <el-button type="primary" @click="submit">保存</el-button>
-      <el-button type="danger" @click="close">关闭</el-button>
-      </el-form-item>
-   </el-form>
+    <el-form-item>
+      <el-button
+        type="primary"
+        @click="submit"
+      >
+        保存
+      </el-button>
+      <el-button
+        type="danger"
+        @click="close"
+      >
+        关闭
+      </el-button>
+    </el-form-item>
+  </el-form>
 </template>
 
 <script setup lang="ts">

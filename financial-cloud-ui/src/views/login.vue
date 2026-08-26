@@ -2,7 +2,10 @@
   <div class="login">
     <div class="top-box">
       <div class="title">
-        <img :src="staticAppInfo.logo" alt=""/>
+        <img
+          :src="staticAppInfo.logo"
+          alt=""
+        >
         {{ staticAppInfo.consoleTitle || t('appTitle') }}
       </div>
       <div class="right">
@@ -14,47 +17,69 @@
       </div>
     </div>
 
-    <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
+    <el-form
+      ref="loginRef"
+      :model="loginForm"
+      :rules="loginRules"
+      class="login-form"
+    >
       <el-form-item prop="username">
         <el-input
-            v-model="loginForm.username"
-            type="text"
-            auto-complete="off"
-            :placeholder="t('login.textUsername')"
+          v-model="loginForm.username"
+          type="text"
+          auto-complete="off"
+          :placeholder="t('login.textUsername')"
         >
           <template #prepend>
-            <svg-icon icon-class="user2" color="#000000"/>
+            <svg-icon
+              icon-class="user2"
+              color="#000000"
+            />
           </template>
         </el-input>
       </el-form-item>
       <el-form-item prop="password">
         <el-input
-            v-model="loginForm.password"
-            type="password"
-            auto-complete="off"
-            show-password
-            :placeholder="t('login.textPassword')"
-            @keyup.enter="handleLogin"
+          v-model="loginForm.password"
+          type="password"
+          auto-complete="off"
+          show-password
+          :placeholder="t('login.textPassword')"
+          @keyup.enter="handleLogin"
         >
           <template #prepend>
-            <svg-icon icon-class="password2" color="#ffd700"/>
+            <svg-icon
+              icon-class="password2"
+              color="#ffd700"
+            />
           </template>
         </el-input>
       </el-form-item>
-      <el-form-item prop="code" v-if="captchaEnabled">
+      <el-form-item
+        v-if="captchaEnabled"
+        prop="code"
+      >
         <el-input
-            v-model="loginForm.captcha"
-            auto-complete="off"
-            :placeholder="t('login.textCaptcha')"
-            style="width: 63%"
-            @keyup.enter="handleLogin"
+          v-model="loginForm.captcha"
+          auto-complete="off"
+          :placeholder="t('login.textCaptcha')"
+          style="width: 63%"
+          @keyup.enter="handleLogin"
         >
           <template #prepend>
-            <svg-icon icon-class="validCode2" color="#000000"/>
+            <svg-icon
+              icon-class="validCode2"
+              color="#000000"
+            />
           </template>
         </el-input>
         <div class="login-code">
-          <img :src="codeUrl" @click="getCode" class="login-code-img" alt=""/>
+          <img
+            :src="codeUrl"
+            class="login-code-img"
+            alt=""
+            @click="getCode"
+          >
         </div>
       </el-form-item>
       <!--      <div class="operater-wrapper">-->
@@ -67,27 +92,43 @@
       <!--      </div>-->
       <el-form-item style="width:100%;">
         <el-button
-            class="login-btn"
-            :loading="loading"
-            type="primary"
-            style="width:100%;"
-            @click.prevent="handleLogin">
+          class="login-btn"
+          :loading="loading"
+          type="primary"
+          style="width:100%;"
+          @click.prevent="handleLogin"
+        >
           <span v-if="!loading">{{ t("login.login") }}</span>
           <span v-else>{{ t("login.logging") }}</span>
         </el-button>
       </el-form-item>
-      <el-form-item style="width:100%;" v-if="others.length > 0">
-        <div class="other" style="width: 100%;display: flex;">
+      <el-form-item
+        v-if="others.length > 0"
+        style="width:100%;"
+      >
+        <div
+          class="other"
+          style="width: 100%;display: flex;"
+        >
           其他方式
-          <div class="item" v-for="other in others" @click="openOtherLogin(other.id)" :title="other.name"
-               style="cursor: pointer">
-            <img :src="privateImage(other.icon)" style="width: 28px;height: 28px" alt=""/>
+          <div
+            v-for="other in others"
+            class="item"
+            :title="other.name"
+            style="cursor: pointer"
+            @click="openOtherLogin(other.id)"
+          >
+            <img
+              :src="privateImage(other.icon)"
+              style="width: 28px;height: 28px"
+              alt=""
+            >
           </div>
         </div>
       </el-form-item>
     </el-form>
     <!--  底部  -->
-    <Footer></Footer>
+    <Footer />
   </div>
 </template>
 

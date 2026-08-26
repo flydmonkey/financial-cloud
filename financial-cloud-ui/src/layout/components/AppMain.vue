@@ -1,16 +1,23 @@
 <template>
   <section class="app-main">
     <div class="main-navbar">
-      <Breadcrumb id="breadcrumb-container" class="breadcrumb-container"/>
+      <Breadcrumb
+        id="breadcrumb-container"
+        class="breadcrumb-container"
+      />
       <!--<div class="page-title">{{ route.meta.title }}</div>-->
     </div>
 
     <router-view v-slot="{ Component, route }">
-<!--        <keep-alive :include="tagsViewStore.cachedViews">-->
-<!--        </keep-alive>-->
-      <component v-if="!route.meta.link" :is="Component" :key="route.path"/>
+      <!--        <keep-alive :include="tagsViewStore.cachedViews">-->
+      <!--        </keep-alive>-->
+      <component
+        :is="Component"
+        v-if="!route.meta.link"
+        :key="route.path"
+      />
     </router-view>
-    <iframe-toggle/>
+    <iframe-toggle />
   </section>
 </template>
 

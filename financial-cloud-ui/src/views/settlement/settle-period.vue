@@ -3,69 +3,149 @@
   <div class="app-container">
     <el-card class="common-card">
       <el-tabs
-          v-model="activeName"
-          type="card"
-          class="demo-tabs"
-          @tab-click="handleClick"
+        v-model="activeName"
+        type="card"
+        class="demo-tabs"
+        @tab-click="handleClick"
       >
-        <el-tab-pane label="期末处理" name="carry-forward"></el-tab-pane>
-        <el-tab-pane label="结账" name="settle-period">
+        <el-tab-pane
+          label="期末处理"
+          name="carry-forward"
+        />
+        <el-tab-pane
+          label="结账"
+          name="settle-period"
+        >
           <div class="queryForm">
-            <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="150px">
+            <el-form
+              ref="queryRef"
+              :model="queryParams"
+              :inline="true"
+              label-width="150px"
+            >
               <el-form-item label="当前账期：">
                 {{ currentTerm }}
               </el-form-item>
             </el-form>
           </div>
-          <el-steps :active="active" finish-status="success">
-            <el-step title="结账前自查"/>
-            <el-step title="结账检查"/>
-            <el-step title="结账"/>
+          <el-steps
+            :active="active"
+            finish-status="success"
+          >
+            <el-step title="结账前自查" />
+            <el-step title="结账检查" />
+            <el-step title="结账" />
           </el-steps>
 
-          <el-table v-if="active == 0" :data="tableCheckData" border style="width: 100%">
-            <el-table-column prop="item" label="检查项目" width="180"/>
-            <el-table-column prop="content" label="检查内容"/>
+          <el-table
+            v-if="active == 0"
+            :data="tableCheckData"
+            border
+            style="width: 100%"
+          >
+            <el-table-column
+              prop="item"
+              label="检查项目"
+              width="180"
+            />
+            <el-table-column
+              prop="content"
+              label="检查内容"
+            />
           </el-table>
-          <el-table v-loading="loadingVerify" v-if="active == 1 ||active == 2" :data="tableVerifyData" border
-                    style="width: 100%">
-            <el-table-column prop="id" label="序号"/>
-            <el-table-column prop="item" label="检查项目"/>
-            <el-table-column prop="result" label="结果">
+          <el-table
+            v-if="active == 1 ||active == 2"
+            v-loading="loadingVerify"
+            :data="tableVerifyData"
+            border
+            style="width: 100%"
+          >
+            <el-table-column
+              prop="id"
+              label="序号"
+            />
+            <el-table-column
+              prop="item"
+              label="检查项目"
+            />
+            <el-table-column
+              prop="result"
+              label="结果"
+            >
               <template #default="scope">
-                <span v-if="scope.row.result == true"><el-icon color="#67C23A"><Select/></el-icon></span>
-                <span v-if="scope.row.result == false"><el-icon color="#F56C6C"><CloseBold/></el-icon></span>
+                <span v-if="scope.row.result == true"><el-icon color="#67C23A"><Select /></el-icon></span>
+                <span v-if="scope.row.result == false"><el-icon color="#F56C6C"><CloseBold /></el-icon></span>
               </template>
             </el-table-column>
-
           </el-table>
           <el-row v-if="isCheckout">
-            <el-col v-if="checkoutResult" :sm="12" :lg="6">
+            <el-col
+              v-if="checkoutResult"
+              :sm="12"
+              :lg="6"
+            >
               <el-result
-                  icon="success"
-                  title="结账成功"
-                  sub-title="本期结账已经完成，进入下一个账期"
-              ></el-result>
+                icon="success"
+                title="结账成功"
+                sub-title="本期结账已经完成，进入下一个账期"
+              />
             </el-col>
-            <el-col v-if="!checkoutResult" :sm="12" :lg="6">
+            <el-col
+              v-if="!checkoutResult"
+              :sm="12"
+              :lg="6"
+            >
               <el-result
-                  icon="error"
-                  title="结账失败"
-                  sub-title="请检查相关要素，再重新结账"
-              >
-              </el-result>
+                icon="error"
+                title="结账失败"
+                sub-title="请检查相关要素，再重新结账"
+              />
             </el-col>
           </el-row>
 
           <div style="margin-top: 12px">
-            <el-button v-if="active == 0" @click="next">下一步</el-button>
-            <el-button v-if="active == 1" type="primary" v-loading="loadingVerify" @click="handleVerify">检查</el-button>
-            <el-button v-if="active == 1 && isVerify" @click="next">下一步</el-button>
-            <el-button v-if="active == 2" type="primary"  v-loading="checkoutButtonLoading" :disable="checkoutButtonLoading" @click="handleQuery">结账</el-button>
-            <el-button v-if="active == 3" type="primary" @click="handleConfirm">确定</el-button>
+            <el-button
+              v-if="active == 0"
+              @click="next"
+            >
+              下一步
+            </el-button>
+            <el-button
+              v-if="active == 1"
+              v-loading="loadingVerify"
+              type="primary"
+              @click="handleVerify"
+            >
+              检查
+            </el-button>
+            <el-button
+              v-if="active == 1 && isVerify"
+              @click="next"
+            >
+              下一步
+            </el-button>
+            <el-button
+              v-if="active == 2"
+              v-loading="checkoutButtonLoading"
+              type="primary"
+              :disable="checkoutButtonLoading"
+              @click="handleQuery"
+            >
+              结账
+            </el-button>
+            <el-button
+              v-if="active == 3"
+              type="primary"
+              @click="handleConfirm"
+            >
+              确定
+            </el-button>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="结账列表" name="settle-list"></el-tab-pane>
+        <el-tab-pane
+          label="结账列表"
+          name="settle-list"
+        />
       </el-tabs>
     </el-card>
   </div>
@@ -97,7 +177,7 @@ const data = reactive({
   queryParams: {
     periodType: 'year',
     date: currentTerm,
-    year: (currentTerm + "").substring(0, 4),
+    year: (currentTerm.value + "").substring(0, 4),
     pageNumber: 1,
     pageSize: 10,
     providerName: undefined

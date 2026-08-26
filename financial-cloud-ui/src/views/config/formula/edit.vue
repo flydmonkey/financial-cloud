@@ -1,51 +1,72 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="50%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="50%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px">
-        <el-form-item label="规则名称" prop="ruleName">
-          <el-input v-model="form.ruleName" placeholder="请输入规则名称"></el-input>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+      >
+        <el-form-item
+          label="规则名称"
+          prop="ruleName"
+        >
+          <el-input
+            v-model="form.ruleName"
+            placeholder="请输入规则名称"
+          />
         </el-form-item>
         <el-form-item label="规则描述">
           <el-input
-              v-model="form.ruleDescription"
-              maxlength="100"
-              type="textarea"
-              show-word-limit
-              placeholder="请输入规则描述"
-          ></el-input>
-        </el-form-item><el-form-item prop="status" :label="$t('jbx.text.status.status')">
-        <el-switch
-            :width="44"
+            v-model="form.ruleDescription"
+            maxlength="100"
+            type="textarea"
+            show-word-limit
+            placeholder="请输入规则描述"
+          />
+        </el-form-item><el-form-item
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+        >
+          <el-switch
             v-model="form.status"
+            :width="44"
             :active-value="1"
             :inactive-value="0"
             active-icon-class="el-icon-close"
-            inactive-icon-class="el-icon-check">
-        </el-switch>
-      </el-form-item>
-
+            inactive-icon-class="el-icon-check"
+          />
+        </el-form-item>
       </el-form>
 
       <!-- 公式构建区 -->
       <div class="section-margin">
-        <h4 class="section-title">构建计算公式</h4>
+        <h4 class="section-title">
+          构建计算公式
+        </h4>
 
         <!-- 可选项目 -->
         <div class="subsection-margin">
-          <h5 class="subsection-title">工资项目：</h5>
+          <h5 class="subsection-title">
+            工资项目：
+          </h5>
           <div class="flex-container">
             <el-button
-                v-for="item in salaryTypes"
-                :key="item.id"
-                @click="addItem(item)"
-                size="small"
-                :type="item.type === 'deduction' ? 'danger' : 'primary'"
-                plain
-                class="salary-type-btn"
+              v-for="item in salaryTypes"
+              :key="item.id"
+              size="small"
+              :type="item.type === 'deduction' ? 'danger' : 'primary'"
+              plain
+              class="salary-type-btn"
+              @click="addItem(item)"
             >
               {{ item.name }}
             </el-button>
@@ -54,15 +75,17 @@
 
         <!-- 运算符 -->
         <div class="subsection-margin">
-          <h4 class="subsection-title">运算符：</h4>
+          <h4 class="subsection-title">
+            运算符：
+          </h4>
           <div class="flex-container">
             <el-button
-                v-for="op in operators"
-                :key="op.symbol"
-                @click="addOperator(op)"
-                type="info"
-                plain
-                class="salary-type-btn"
+              v-for="op in operators"
+              :key="op.symbol"
+              type="info"
+              plain
+              class="salary-type-btn"
+              @click="addOperator(op)"
             >
               {{ op.name }}
             </el-button>
@@ -72,34 +95,52 @@
         <!-- 公式显示区 -->
         <div class="formula-container">
           <draggable
-              v-model="selectedItems"
-              item-key="id"
-              class="draggable-container"
-              handle=".handle"
+            v-model="selectedItems"
+            item-key="id"
+            class="draggable-container"
+            handle=".handle"
           >
             <template #item="{ element, index }">
               <div
-                  class="item-container"
+                class="item-container"
               >
-                <GripVertical class="handle drag-icon" style="color: lightgray;"/>
-                <span :class="{'deduction-text': element.type === 'deduction',
-                'other-text': element.type !== 'deduction' && element.type !== 'operator'}">{{ element.name }}</span>
-                <X class="delete-icon" @click="removeItem(index)"/>
+                <GripVertical
+                  class="handle drag-icon"
+                  style="color: lightgray;"
+                />
+                <span
+                  :class="{'deduction-text': element.type === 'deduction',
+                           'other-text': element.type !== 'deduction' && element.type !== 'operator'}"
+                >{{ element.name }}</span>
+                <X
+                  class="delete-icon"
+                  @click="removeItem(index)"
+                />
               </div>
             </template>
           </draggable>
         </div>
 
         <!-- 公式预览 -->
-        <div class="subsection-title" style="margin-top: 16px">
+        <div
+          class="subsection-title"
+          style="margin-top: 16px"
+        >
           当前公式：{{ formulaString }}
         </div>
       </div>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

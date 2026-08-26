@@ -1,130 +1,280 @@
 <template>
   <div class="app-container">
     <el-card class="common-card query-box">
-      <el-form :model="queryParams" ref="queryRef" inline v-show="showSearch">
-        <el-form-item :label="$t('jbx.journalaccout.accName')" prop="accName">
+      <el-form
+        v-show="showSearch"
+        ref="queryRef"
+        :model="queryParams"
+        inline
+      >
+        <el-form-item
+          :label="$t('jbx.journalaccout.accName')"
+          prop="accName"
+        >
           <el-input
-              v-model="queryParams.accName"
-              placeholder=""
-              clearable
-              @keyup.enter.native="handleQuery"
+            v-model="queryParams.accName"
+            placeholder=""
+            clearable
+            @keyup.enter.native="handleQuery"
           />
         </el-form-item>
         <el-form-item>
-          <el-button @click="handleQuery">{{ $t('jbx.text.query') }}</el-button>
-          <el-button @click="resetQuery">{{ $t('jbx.text.reset') }}</el-button>
+          <el-button @click="handleQuery">
+            {{ $t('jbx.text.query') }}
+          </el-button>
+          <el-button @click="resetQuery">
+            {{ $t('jbx.text.reset') }}
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleAdd"
-        >{{ $t('jbx.text.add') }}
+          type="primary"
+          @click="handleAdd"
+        >
+          {{ $t('jbx.text.add') }}
         </el-button>
         <el-button
-            type="danger"
-            :disabled="multiple"
-            @click="handleDelete"
-        >{{ $t('jbx.text.delete') }}
+          type="danger"
+          :disabled="multiple"
+          @click="handleDelete"
+        >
+          {{ $t('jbx.text.delete') }}
         </el-button>
       </div>
-      <el-table v-loading="loading" :data="list" show-summary :summary-method="getSummaries"
-                border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column :label="$t('jbx.journalaccout.accName')" align="left" prop="accName"/>
-        <el-table-column :label="$t('jbx.journalaccout.category.category')" align="center" prop="category">
+      <el-table
+        v-loading="loading"
+        :data="list"
+        show-summary
+        :summary-method="getSummaries"
+        border
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          :label="$t('jbx.journalaccout.accName')"
+          align="left"
+          prop="accName"
+        />
+        <el-table-column
+          :label="$t('jbx.journalaccout.category.category')"
+          align="center"
+          prop="category"
+        >
           <template #default="scope">
             <span v-if="scope.row.category == 'deposit'">{{ $t('jbx.journalaccout.category.deposit') }}</span>
             <span v-if="scope.row.category == 'cash'">{{ $t('jbx.journalaccout.category.cash') }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.journalaccout.accCode')" align="left" prop="accCode"/>
-        <el-table-column :label="$t('jbx.journalaccout.balance')" align="right" prop="balance">
+        <el-table-column
+          :label="$t('jbx.journalaccout.accCode')"
+          align="left"
+          prop="accCode"
+        />
+        <el-table-column
+          :label="$t('jbx.journalaccout.balance')"
+          align="right"
+          prop="balance"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.balance) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.journalaccout.currency')" align="center" prop="currency"/>
-        <el-table-column :label="$t('jbx.journalaccout.bank')" align="left" prop="bank"/>
-        <el-table-column :label="$t('jbx.journalaccout.bankNo')" width="180" align="left" prop="bankNo"/>
-        <el-table-column :label="$t('jbx.text.sortIndex')" align="center" prop="sortIndex"/>
-        <el-table-column :label="$t('jbx.text.status.status')" align="center" prop="status">
+        <el-table-column
+          :label="$t('jbx.journalaccout.currency')"
+          align="center"
+          prop="currency"
+        />
+        <el-table-column
+          :label="$t('jbx.journalaccout.bank')"
+          align="left"
+          prop="bank"
+        />
+        <el-table-column
+          :label="$t('jbx.journalaccout.bankNo')"
+          width="180"
+          align="left"
+          prop="bankNo"
+        />
+        <el-table-column
+          :label="$t('jbx.text.sortIndex')"
+          align="center"
+          prop="sortIndex"
+        />
+        <el-table-column
+          :label="$t('jbx.text.status.status')"
+          align="center"
+          prop="status"
+        >
           <template #default="scope">
-            <span v-if="scope.row.status == 1"><el-icon color="green"><SuccessFilled class="success"/></el-icon></span>
-            <span v-if="scope.row.status == 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+            <span v-if="scope.row.status == 1"><el-icon color="green"><SuccessFilled class="success" /></el-icon></span>
+            <span v-if="scope.row.status == 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" width="80" align="center"
-                         class-name="small-padding fixed-width" fixed="right" >
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          width="80"
+          align="center"
+          class-name="small-padding fixed-width"
+          fixed="right"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="删除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        @pagination="getList"
       />
     </el-card>
     <!-- 添加或修改参数配置对话框 -->
-    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item prop="category" :label="$t('jbx.journalaccout.category.category')" :required="true">
-          <el-select v-model="form.category" clearable>
+    <el-dialog
+      v-model="open"
+      :title="title"
+      width="600px"
+      append-to-body
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="80px"
+      >
+        <el-form-item
+          prop="category"
+          :label="$t('jbx.journalaccout.category.category')"
+          :required="true"
+        >
+          <el-select
+            v-model="form.category"
+            clearable
+          >
             <el-option
-                v-for="dict in journalAccout_category_types"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
+              v-for="dict in journalAccout_category_types"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('jbx.journalaccout.accCode')" prop="accCode">
-          <el-input v-model="form.accCode" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.journalaccout.accCode')"
+          prop="accCode"
+        >
+          <el-input
+            v-model="form.accCode"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.journalaccout.accName')" prop="accName">
-          <el-input v-model="form.accName" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.journalaccout.accName')"
+          prop="accName"
+        >
+          <el-input
+            v-model="form.accName"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.journalaccout.subjectId')" prop="subjectId">
-          <el-input v-model="form.subjectId" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.journalaccout.subjectId')"
+          prop="subjectId"
+        >
+          <el-input
+            v-model="form.subjectId"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.journalaccout.currency')" prop="currency">
-          <el-input v-model="form.currency" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.journalaccout.currency')"
+          prop="currency"
+        >
+          <el-input
+            v-model="form.currency"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.journalaccout.bankNo')" prop="bankNo">
-          <el-input v-model="form.bankNo" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.journalaccout.bankNo')"
+          prop="bankNo"
+        >
+          <el-input
+            v-model="form.bankNo"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.journalaccout.bank')" prop="bank">
-          <el-input v-model="form.bank" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.journalaccout.bank')"
+          prop="bank"
+        >
+          <el-input
+            v-model="form.bank"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.text.sortIndex')" prop="sortIndex">
-          <el-input-number v-model="form.sortIndex" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.text.sortIndex')"
+          prop="sortIndex"
+        >
+          <el-input-number
+            v-model="form.sortIndex"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item :label="$t('jbx.text.description')" prop="description">
-          <el-input v-model="form.description" placeholder=""/>
+        <el-form-item
+          :label="$t('jbx.text.description')"
+          prop="description"
+        >
+          <el-input
+            v-model="form.description"
+            placeholder=""
+          />
         </el-form-item>
-        <el-form-item prop="status" :label="$t('jbx.users.status')">
+        <el-form-item
+          prop="status"
+          :label="$t('jbx.users.status')"
+        >
           <el-switch
-              v-model="form.status"
-              :active-value="1"
-              :inactive-value="0"
-          ></el-switch>
+            v-model="form.status"
+            :active-value="1"
+            :inactive-value="0"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('jbx.text.submit') }}</el-button>
-          <el-button @click="cancel">{{ $t('jbx.text.close') }}</el-button>
+          <el-button
+            type="primary"
+            @click="submitForm"
+          >
+            {{ $t('jbx.text.submit') }}
+          </el-button>
+          <el-button @click="cancel">
+            {{ $t('jbx.text.close') }}
+          </el-button>
         </div>
       </template>
     </el-dialog>

@@ -17,7 +17,7 @@ import {getLang} from "@/languages";
 
 let downloadLoadingInstance: any;
 // 是否显示重新登录
-export let isRelogin: any = {show: false};
+export const isRelogin: any = {show: false};
 let isRefreshing: any = false; // 标志是否正在刷新token
 let requests: any = []; // 存储待处理请求
 

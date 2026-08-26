@@ -33,7 +33,7 @@ const useDictStore: any = defineStore(
             },
             // 删除字典
             removeDict(_key: any) {
-                var bln: any = false;
+                let bln: any = false;
                 try {
                     for (let i: any = 0; i < this.dict.length; i++) {
                         if (this.dict[i].key == _key) {
@@ -48,7 +48,7 @@ const useDictStore: any = defineStore(
             },
             // 清空字典
             cleanDict() {
-                this.dict = new Array();
+                this.dict = [];
             },
             // 初始字典
             initDict() {

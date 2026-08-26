@@ -2,18 +2,29 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true">
-          <el-form-item :label="t('accountingStandardName') + '：'" prop="name">
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+        >
+          <el-form-item
+            :label="t('accountingStandardName') + '：'"
+            prop="name"
+          >
             <el-input
-                v-model="queryParams.name"
-                placeholder=""
-                clearable
-                @keyup.enter.native="handleQuery"
+              v-model="queryParams.name"
+              placeholder=""
+              clearable
+              @keyup.enter.native="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ $t('jbx.text.query') }}</el-button>
-            <el-button @click="resetQuery">{{ $t('jbx.text.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ $t('jbx.text.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ $t('jbx.text.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -21,54 +32,90 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleAdd"
-        >{{ t('org.button.add') }}
+          type="primary"
+          @click="handleAdd"
+        >
+          {{ t('org.button.add') }}
         </el-button>
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="onBatchDelete"
-        >{{ t('org.button.deleteBatch') }}
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="onBatchDelete"
+        >
+          {{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
-      <el-table v-loading="loading" :data="standardList"
-                border
-                @selection-change="handleSelectionChange"
-                highlight-current-row>
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column :label="t('accountingStandardName')" prop="name" align="center" min-width="100"
-                         :show-overflow-tooltip="true"/>
-        <el-table-column prop="status" :label="t('org.status')" align="center" min-width="40">
+      <el-table
+        v-loading="loading"
+        :data="standardList"
+        border
+        highlight-current-row
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          :label="t('accountingStandardName')"
+          prop="name"
+          align="center"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="status"
+          :label="t('org.status')"
+          align="center"
+          min-width="40"
+        >
           <template #default="scope">
-                <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+            <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
+              class="success"
+            /></el-icon></span>
+            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('jbx.text.action')" align="center" width="80">
+        <el-table-column
+          :label="t('jbx.text.action')"
+          align="center"
+          width="80"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="移除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
     </el-card>
-    <edit-form :title="title" :open="open"
-               :form-id="id"
-               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
+    <edit-form
+      :title="title"
+      :open="open"
+      :form-id="id"
+      @dialog-of-closed-methods="dialogOfClosedMethods"
+    />
   </div>
 </template>
 

@@ -1,24 +1,37 @@
 <template>
-  <el-card shadow="hover" header-class="el-card-header">
+  <el-card
+    shadow="hover"
+    header-class="el-card-header"
+  >
     <template #header>
       <div class="card-title">
         <span>其它科目指标</span>
-        <el-cascader style="width: 200px;margin-left: 50px" filterable clearable
-                     v-model="subjectCode"
-                     :options="subjectList"
-                     :props="cascaderSubjectPropsOwn"
-                     @change="handleSubjectChange"
-                     :filter-method="cascaderSubjectPropsOwn.filterMethod"/>
+        <el-cascader
+          v-model="subjectCode"
+          style="width: 200px;margin-left: 50px"
+          filterable
+          clearable
+          :options="subjectList"
+          :props="cascaderSubjectPropsOwn"
+          :filter-method="cascaderSubjectPropsOwn.filterMethod"
+          @change="handleSubjectChange"
+        />
       </div>
     </template>
 
     <div class="card-content">
       <el-row>
         <el-col :span="16">
-          <div ref="chartRef" style="width: 100%; height: 400px"></div>
+          <div
+            ref="chartRef"
+            style="width: 100%; height: 400px"
+          />
         </el-col>
         <el-col :span="8">
-          <div ref="chartRef2" style="width: 100%; height: 400px"></div>
+          <div
+            ref="chartRef2"
+            style="width: 100%; height: 400px"
+          />
         </el-col>
       </el-row>
     </div>

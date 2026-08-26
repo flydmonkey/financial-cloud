@@ -1,37 +1,68 @@
 <template>
   <div class="queryForm">
-    <el-form :model="queryParams" ref="queryForm" :inline="true" @submit.native.prevent>
+    <el-form
+      ref="queryForm"
+      :model="queryParams"
+      :inline="true"
+      @submit.native.prevent
+    >
       <el-form-item :label="$t('jbx.posts.postName')">
         <el-input
-            v-model="queryParams.memberName"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.memberName"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-        <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+        <el-button @click="handleQuery">
+          {{ t('org.button.query') }}
+        </el-button>
+        <el-button @click="resetQuery">
+          {{ t('org.button.reset') }}
+        </el-button>
       </el-form-item>
     </el-form>
   </div>
-  <el-table ref='multipleTable'
-            border
-            v-loading="loading"
-            :data="dataList"
-            @selection-change="handleSelectionChange">
-    <el-table-column type="selection" width="50" align="center"></el-table-column>
-    <el-table-column :label="$t('jbx.posts.postCode')" align="center" prop="postCode"/>
-    <el-table-column :label="$t('jbx.posts.postName')" align="center" prop="postName"/>
-    <el-table-column :label="$t('jbx.users.departmentId')" align="center" prop="departmentId"/>
-    <el-table-column :label="$t('jbx.users.department')" align="center" prop="department"/>
+  <el-table
+    ref="multipleTable"
+    v-loading="loading"
+    border
+    :data="dataList"
+    @selection-change="handleSelectionChange"
+  >
+    <el-table-column
+      type="selection"
+      width="50"
+      align="center"
+    />
+    <el-table-column
+      :label="$t('jbx.posts.postCode')"
+      align="center"
+      prop="postCode"
+    />
+    <el-table-column
+      :label="$t('jbx.posts.postName')"
+      align="center"
+      prop="postName"
+    />
+    <el-table-column
+      :label="$t('jbx.users.departmentId')"
+      align="center"
+      prop="departmentId"
+    />
+    <el-table-column
+      :label="$t('jbx.users.department')"
+      align="center"
+      prop="department"
+    />
   </el-table>
   <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNumber"
-      v-model:limit="queryParams.pageSize"
-      :page-sizes="queryParams.pageSizeOptions"
-      @pagination="getList"
+    v-show="total > 0"
+    v-model:page="queryParams.pageNumber"
+    v-model:limit="queryParams.pageSize"
+    :total="total"
+    :page-sizes="queryParams.pageSizeOptions"
+    @pagination="getList"
   />
 </template>
 

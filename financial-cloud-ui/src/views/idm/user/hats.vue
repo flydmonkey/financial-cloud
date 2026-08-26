@@ -1,189 +1,255 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="55%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="55%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
       <div class="button-top">
         <el-button
-            @click="handleAdd"
-            type="primary">
+          type="primary"
+          @click="handleAdd"
+        >
           {{ $t('jbx.text.add') }}
         </el-button>
       </div>
-      <el-table v-loading="loading" :data="hatsList" border>
-        <el-table-column prop="jobTitle" :label="$t('jbx.users.jobTitle')" min-width="90" align="center"/>
-        <el-table-column prop="departmentId" :label="$t('jbx.users.departmentId')" min-width="90" align="center"/>
-        <el-table-column prop="department" :label="$t('jbx.users.department')" min-width="90" align="center"/>
-        <el-table-column prop="status" :label="$t('jbx.text.status.status')" min-width="50" align="center">
+      <el-table
+        v-loading="loading"
+        :data="hatsList"
+        border
+      >
+        <el-table-column
+          prop="jobTitle"
+          :label="$t('jbx.users.jobTitle')"
+          min-width="90"
+          align="center"
+        />
+        <el-table-column
+          prop="departmentId"
+          :label="$t('jbx.users.departmentId')"
+          min-width="90"
+          align="center"
+        />
+        <el-table-column
+          prop="department"
+          :label="$t('jbx.users.department')"
+          min-width="90"
+          align="center"
+        />
+        <el-table-column
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+          min-width="50"
+          align="center"
+        >
           <template #default="scope">
-            <a :title="$t('jbx.users.statusActive')" v-if="scope.row.status === 1">
+            <a
+              v-if="scope.row.status === 1"
+              :title="$t('jbx.users.statusActive')"
+            >
               <el-icon color="green">
                 <SuccessFilled
-                    class="success"/>
+                  class="success"
+                />
               </el-icon>
             </a>
-            <a :title="$t('jbx.users.statusInactive')" v-if="scope.row.status === 2">
+            <a
+              v-if="scope.row.status === 2"
+              :title="$t('jbx.users.statusInactive')"
+            >
               <el-icon color="grey">
-                <WarningFilled/>
+                <WarningFilled />
               </el-icon>
             </a>
-            <a :title="$t('jbx.users.statusDelete')" v-if="scope.row.status === 9">
+            <a
+              v-if="scope.row.status === 9"
+              :title="$t('jbx.users.statusDelete')"
+            >
               <el-icon color="red">
-                <CircleCloseFilled/>
+                <CircleCloseFilled />
               </el-icon>
             </a>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" min-width="90" align="center">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          min-width="90"
+          align="center"
+        >
           <template #default="scope">
-            <el-button @click.stop="handleUpdate(scope.row)"
-            >{{ $t('jbx.text.edit') }}
+            <el-button @click.stop="handleUpdate(scope.row)">
+              {{ $t('jbx.text.edit') }}
             </el-button>
-            <el-button type="danger" @click="onDelete(scope.row)">
-              {{$t("jbx.text.delete")}}
+            <el-button
+              type="danger"
+              @click="onDelete(scope.row)"
+            >
+              {{ $t("jbx.text.delete") }}
             </el-button>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
 
-      <el-dialog v-model="editFlag" width="800px" append-to-body :title="editTitle">
-        <el-form :model="form" ref="hatRef" :rules="rules" label-width="120px"
-                 inline-message v-loading="formLoading">
+      <el-dialog
+        v-model="editFlag"
+        width="800px"
+        append-to-body
+        :title="editTitle"
+      >
+        <el-form
+          ref="hatRef"
+          v-loading="formLoading"
+          :model="form"
+          :rules="rules"
+          label-width="120px"
+          inline-message
+        >
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.departmentId')">
-                <el-input v-model="form.departmentId"></el-input>
+                <el-input v-model="form.departmentId" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.department')">
-                <el-input v-model="form.department"></el-input>
+                <el-input v-model="form.department" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.jobTitle')">
-                <el-input v-model="form.jobTitle"></el-input>
+                <el-input v-model="form.jobTitle" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.jobLevel')">
-                <el-input v-model="form.jobLevel"></el-input>
+                <el-input v-model="form.jobLevel" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.organization')">
-                <el-input v-model="form.organization"></el-input>
+                <el-input v-model="form.organization" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.division')">
-                <el-input v-model="form.division"></el-input>
+                <el-input v-model="form.division" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.manager')">
-                <el-input v-model="form.manager"></el-input>
+                <el-input v-model="form.manager" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.assistant')">
-                <el-input v-model="form.assistant"></el-input>
+                <el-input v-model="form.assistant" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.costCenter')">
-                <el-input v-model="form.costCenter"></el-input>
+                <el-input v-model="form.costCenter" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workOfficeName')">
-                <el-input v-model="form.workOfficeName"></el-input>
+                <el-input v-model="form.workOfficeName" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.entryDate')">
-                <el-input v-model="form.entryDate"></el-input>
+                <el-input v-model="form.entryDate" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.quitDate')">
-                <el-input v-model="form.quitDate"></el-input>
+                <el-input v-model="form.quitDate" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workPhoneNumber')">
-                <el-input v-model="form.workPhoneNumber"></el-input>
+                <el-input v-model="form.workPhoneNumber" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workEmail')">
-                <el-input v-model="form.workEmail"></el-input>
+                <el-input v-model="form.workEmail" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workCountry')">
-                <el-input v-model="form.workCountry"></el-input>
+                <el-input v-model="form.workCountry" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workRegion')">
-                <el-input v-model="form.workRegion"></el-input>
+                <el-input v-model="form.workRegion" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workLocality')">
-                <el-input v-model="form.workLocalityworkLocality"></el-input>
+                <el-input v-model="form.workLocalityworkLocality" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="t('jbx.users.workStreetAddress')">
-                <el-input v-model="form.workStreetAddress"></el-input>
+                <el-input v-model="form.workStreetAddress" />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="gutter">
             <el-col :span="12">
               <el-form-item :label="$t('jbx.users.workPostalCode')">
-                <el-input v-model="form.workPostalCode"></el-input>
+                <el-input v-model="form.workPostalCode" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item :label="$t('jbx.users.workFax')">
-                <el-input v-model="form.workFax"></el-input>
+                <el-input v-model="form.workFax" />
               </el-form-item>
             </el-col>
           </el-row>
         </el-form>
-        <div slot="footer" class="dialog-footer">
-          <el-button @click="updateHats" type="primary">{{ $t('jbx.text.confirm') }}</el-button>
-          <el-button @click="cancel">{{ $t('systemCancel') }}</el-button>
-        </div>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button
+              type="primary"
+              @click="updateHats"
+            >
+              {{ $t('jbx.text.confirm') }}
+            </el-button>
+            <el-button @click="cancel">
+              {{ $t('systemCancel') }}
+            </el-button>
+          </div>
+        </template>
       </el-dialog>
     </template>
   </el-drawer>

@@ -1,6 +1,6 @@
 <template>
   <div @click="click">
-    <svg-icon icon-class="tool"/>
+    <svg-icon icon-class="tool" />
     <span style="margin-left: 5px">清理本地缓存</span>
   </div>
 </template>

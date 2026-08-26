@@ -1,6 +1,9 @@
 <template>
-  <el-config-provider :locale="locale" :size="elementPlusSize">
-    <RouterView/>
+  <el-config-provider
+    :locale="locale"
+    :size="elementPlusSize"
+  >
+    <RouterView />
   </el-config-provider>
 </template>
 

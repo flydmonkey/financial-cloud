@@ -1,32 +1,74 @@
 <template>
   <div class="app-container">
     <el-row :gutter="10">
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-        <fund-balance style="height: 350px"></fund-balance>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
+        <fund-balance style="height: 350px" />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="16" :lg="12" :xl="12">
-        <receivable style="height: 350px"></receivable>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="16"
+        :lg="12"
+        :xl="12"
+      >
+        <receivable style="height: 350px" />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-        <expected-available-funds style="height: 350px"></expected-available-funds>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
+        <expected-available-funds style="height: 350px" />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-        <net-profit style="height: 450px"></net-profit>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
+        <net-profit style="height: 450px" />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-        <revenue-cost style="height: 450px"></revenue-cost>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
+        <revenue-cost style="height: 450px" />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-        <cost style="height: 450px"></cost>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
+        <cost style="height: 450px" />
       </el-col>
-      <el-col :xs="24" :sm="24" :md="8" :lg="6" :xl="6">
-        <added-tax style="height: 450px"></added-tax>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
+        <added-tax style="height: 450px" />
       </el-col>
       <el-col :span="24">
-        <other-subjects style="height: 450px"></other-subjects>
+        <other-subjects style="height: 450px" />
       </el-col>
     </el-row>
-    <Footer position="relative"></Footer>
+    <Footer position="relative" />
   </div>
 </template>
 

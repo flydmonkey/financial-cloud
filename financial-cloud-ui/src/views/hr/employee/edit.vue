@@ -1,200 +1,431 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="40%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="40%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" inline-message>
-        <el-tabs v-model="activeName" class="demo-tabs">
-          <el-tab-pane label="基本信息" name="first">
-            <el-form-item label="工号" prop="employeeNumber">
-              <el-input v-model="form.employeeNumber" placeholder="请输入工号"/>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+        inline-message
+      >
+        <el-tabs
+          v-model="activeName"
+          class="demo-tabs"
+        >
+          <el-tab-pane
+            label="基本信息"
+            name="first"
+          >
+            <el-form-item
+              label="工号"
+              prop="employeeNumber"
+            >
+              <el-input
+                v-model="form.employeeNumber"
+                placeholder="请输入工号"
+              />
             </el-form-item>
-            <el-form-item label="姓名" prop="displayName">
-              <el-input v-model="form.displayName" placeholder="请输入姓名"/>
+            <el-form-item
+              label="姓名"
+              prop="displayName"
+            >
+              <el-input
+                v-model="form.displayName"
+                placeholder="请输入姓名"
+              />
             </el-form-item>
-            <el-form-item label="性别" prop="gender">
-              <el-select v-model="form.gender" style="width: 100%">
+            <el-form-item
+              label="性别"
+              prop="gender"
+            >
+              <el-select
+                v-model="form.gender"
+                style="width: 100%"
+              >
                 <el-option
-                    v-for="dict in GendersEnum.getAllGenders()"
-                    :key="dict.value"
-                    :label="dict.name"
-                    :value="dict.value"
+                  v-for="dict in GendersEnum.getAllGenders()"
+                  :key="dict.value"
+                  :label="dict.name"
+                  :value="dict.value"
                 />
               </el-select>
             </el-form-item>
-            <el-form-item label="出生日期" prop="birthDate">
-              <el-date-picker clearable style="width: 100%"
-                              v-model="form.birthDate"
-                              type="date"
-                              value-format="YYYY-MM-DD"
-                              placeholder="请选择出生日期">
-              </el-date-picker>
+            <el-form-item
+              label="出生日期"
+              prop="birthDate"
+            >
+              <el-date-picker
+                v-model="form.birthDate"
+                clearable
+                style="width: 100%"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="请选择出生日期"
+              />
             </el-form-item>
            
             <el-form-item label="证件类型">
-              <el-select v-model="form.idType" style="width: 100%" :required="true">
-                <el-option v-for="item in usersIdType" :label="item.label" :value="item.value"/>
-              </el-select>
-            </el-form-item>
-            <el-form-item label="证件编码" prop="idCardNo" :required="true">
-              <el-input v-model="form.idCardNo" placeholder="请输入证件编码"/>
-            </el-form-item>
-            <el-form-item label="员工类型" :required="true" prop="employeeType">
-              <el-select v-model="form.employeeType" style="width: 100%">
-                <el-option v-for="item in employee_types" :label="item.label" :value="item.value"/>
-              </el-select>
-            </el-form-item>
-              <el-form-item label="员工状态" :required="true" prop="employeeStatus">
-                <el-select v-model="form.employeeStatus" style="width: 100%">
-                  <el-option v-for="item in employee_statuses" :label="item.label" :value="item.value"/>
-                </el-select>
-              </el-form-item>
-            <el-form-item prop="departmentId" label="所属部门">
-              <el-tree-select
-                  ref="resTreeRef"
-                  v-model="form.departmentId"
-                  :data="orgOptions"
-                  :props="defaultProps"
-                  check-strictly
-                  value-key="id"
-                  show-checkbox
-                  clearable
-                  :default-checked-keys="cheackdData"
-              />
-            </el-form-item>
-            <el-form-item label="经理编号" prop="managerId">
-              <el-input v-model="form.managerId" placeholder="请输入经理编号"/>
-            </el-form-item>
-            <el-form-item label="职务" prop="jobTitle">
-              <el-input v-model="form.jobTitle" placeholder="请输入职务"/>
-            </el-form-item>
-            <el-form-item label="电话号码" prop="mobile">
-              <el-input v-model="form.mobile" placeholder="请输入电话号码"/>
-            </el-form-item>
-            <el-form-item label="邮箱地址" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱地址"/>
-            </el-form-item>
-          
-            <el-form-item label="学历" prop="education">
-              <el-select v-model="form.education" style="width: 100%">
+              <el-select
+                v-model="form.idType"
+                style="width: 100%"
+                :required="true"
+              >
                 <el-option
-                    v-for="dict in EducationsEnum.getAllEducations()"
-                    :key="dict.value"
-                    :label="dict.name"
-                    :value="dict.value"
+                  v-for="item in usersIdType"
+                  :label="item.label"
+                  :value="item.value"
                 />
               </el-select>
             </el-form-item>
-            <el-form-item label="毕业院校" prop="graduateFrom">
-              <el-input v-model="form.graduateFrom" placeholder="请输入毕业院校"/>
+            <el-form-item
+              label="证件编码"
+              prop="idCardNo"
+              :required="true"
+            >
+              <el-input
+                v-model="form.idCardNo"
+                placeholder="请输入证件编码"
+              />
             </el-form-item>
-            <el-form-item label="毕业时间" prop="graduateDate">
-              <el-date-picker clearable style="width: 100%"
-                              v-model="form.graduateDate"
-                              type="date"
-                              value-format="YYYY-MM-DD"
-                              placeholder="请选择毕业时间">
-              </el-date-picker>
+            <el-form-item
+              label="员工类型"
+              :required="true"
+              prop="employeeType"
+            >
+              <el-select
+                v-model="form.employeeType"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in employee_types"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
             </el-form-item>
-            <el-form-item label="住址" prop="homeAddress">
-              <el-input v-model="form.homeAddress" placeholder="请输入住址"/>
+            <el-form-item
+              label="员工状态"
+              :required="true"
+              prop="employeeStatus"
+            >
+              <el-select
+                v-model="form.employeeStatus"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in employee_statuses"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              prop="departmentId"
+              label="所属部门"
+            >
+              <el-tree-select
+                ref="resTreeRef"
+                v-model="form.departmentId"
+                :data="orgOptions"
+                :props="defaultProps"
+                check-strictly
+                value-key="id"
+                show-checkbox
+                clearable
+                :default-checked-keys="cheackdData"
+              />
+            </el-form-item>
+            <el-form-item
+              label="经理编号"
+              prop="managerId"
+            >
+              <el-input
+                v-model="form.managerId"
+                placeholder="请输入经理编号"
+              />
+            </el-form-item>
+            <el-form-item
+              label="职务"
+              prop="jobTitle"
+            >
+              <el-input
+                v-model="form.jobTitle"
+                placeholder="请输入职务"
+              />
+            </el-form-item>
+            <el-form-item
+              label="电话号码"
+              prop="mobile"
+            >
+              <el-input
+                v-model="form.mobile"
+                placeholder="请输入电话号码"
+              />
+            </el-form-item>
+            <el-form-item
+              label="邮箱地址"
+              prop="email"
+            >
+              <el-input
+                v-model="form.email"
+                placeholder="请输入邮箱地址"
+              />
+            </el-form-item>
+          
+            <el-form-item
+              label="学历"
+              prop="education"
+            >
+              <el-select
+                v-model="form.education"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="dict in EducationsEnum.getAllEducations()"
+                  :key="dict.value"
+                  :label="dict.name"
+                  :value="dict.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              label="毕业院校"
+              prop="graduateFrom"
+            >
+              <el-input
+                v-model="form.graduateFrom"
+                placeholder="请输入毕业院校"
+              />
+            </el-form-item>
+            <el-form-item
+              label="毕业时间"
+              prop="graduateDate"
+            >
+              <el-date-picker
+                v-model="form.graduateDate"
+                clearable
+                style="width: 100%"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="请选择毕业时间"
+              />
+            </el-form-item>
+            <el-form-item
+              label="住址"
+              prop="homeAddress"
+            >
+              <el-input
+                v-model="form.homeAddress"
+                placeholder="请输入住址"
+              />
             </el-form-item>
             
-            <el-form-item label="入职日期" prop="entryDate">
-              <el-date-picker clearable style="width: 100%"
-                              v-model="form.entryDate"
-                              type="date"
-                              value-format="YYYY-MM-DD"
-                              placeholder="请选择入职日期">
-              </el-date-picker>
+            <el-form-item
+              label="入职日期"
+              prop="entryDate"
+            >
+              <el-date-picker
+                v-model="form.entryDate"
+                clearable
+                style="width: 100%"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="请选择入职日期"
+              />
             </el-form-item>
-            <el-form-item label="离职日期" prop="quitDate">
-              <el-date-picker clearable style="width: 100%"
-                              v-model="form.quitDate"
-                              type="date"
-                              value-format="YYYY-MM-DD"
-                              placeholder="请选择离职日期">
-              </el-date-picker>
+            <el-form-item
+              label="离职日期"
+              prop="quitDate"
+            >
+              <el-date-picker
+                v-model="form.quitDate"
+                clearable
+                style="width: 100%"
+                type="date"
+                value-format="YYYY-MM-DD"
+                placeholder="请选择离职日期"
+              />
             </el-form-item>
             
-              <el-form-item prop="status" :label="$t('jbx.text.status.status')">
+            <el-form-item
+              prop="status"
+              :label="$t('jbx.text.status.status')"
+            >
               <el-switch
-                  :width="44"
-                  v-model="form.status"
-                  :active-value="1"
-                  :inactive-value="0"
-                  active-icon-class="el-icon-close"
-                  inactive-icon-class="el-icon-check">
-              </el-switch>
+                v-model="form.status"
+                :width="44"
+                :active-value="1"
+                :inactive-value="0"
+                active-icon-class="el-icon-close"
+                inactive-icon-class="el-icon-check"
+              />
             </el-form-item>
           </el-tab-pane>
-          <el-tab-pane label="工资信息" name="second">
-            <el-form-item label="基本工资" prop="payBasic" v-if="form.employeeType === 'NORMAL'|| form.employeeType === 'INTERN' || form.employeeType === 'RETIREMENT'">
-              <el-input-number :min="0" :precision="2" v-model="form.payBasic" style="width: 200px">
+          <el-tab-pane
+            label="工资信息"
+            name="second"
+          >
+            <el-form-item
+              v-if="form.employeeType === 'NORMAL'|| form.employeeType === 'INTERN' || form.employeeType === 'RETIREMENT'"
+              label="基本工资"
+              prop="payBasic"
+            >
+              <el-input-number
+                v-model="form.payBasic"
+                :min="0"
+                :precision="2"
+                style="width: 200px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
               </el-input-number>
             </el-form-item>
 
-            <el-form-item label="绩效奖金" prop="payMerit" v-if="form.employeeType === 'NORMAL'|| form.employeeType === 'INTERN' || form.employeeType === 'RETIREMENT'">
-              <el-input-number :min="0" :precision="2" v-model="form.payMerit" style="width: 200px">
+            <el-form-item
+              v-if="form.employeeType === 'NORMAL'|| form.employeeType === 'INTERN' || form.employeeType === 'RETIREMENT'"
+              label="绩效奖金"
+              prop="payMerit"
+            >
+              <el-input-number
+                v-model="form.payMerit"
+                :min="0"
+                :precision="2"
+                style="width: 200px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
               </el-input-number>
             </el-form-item>
 
-            <el-form-item label="岗位工资" prop="payPost" v-if="form.employeeType === 'NORMAL'|| form.employeeType === 'INTERN' || form.employeeType === 'RETIREMENT'">
-              <el-input-number :min="0" :precision="2" v-model="form.payPost" style="width: 200px">
+            <el-form-item
+              v-if="form.employeeType === 'NORMAL'|| form.employeeType === 'INTERN' || form.employeeType === 'RETIREMENT'"
+              label="岗位工资"
+              prop="payPost"
+            >
+              <el-input-number
+                v-model="form.payPost"
+                :min="0"
+                :precision="2"
+                style="width: 200px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
               </el-input-number>
             </el-form-item>
 
-            <el-form-item label="劳务费" prop="laborFee" v-if="form.employeeType === 'PARTTIME'">
-            <el-input-number :min="0" :precision="2" v-model="form.laborFee" style="width: 200px">
-              <template #suffix>
-                <span>元</span>
-              </template>
-            </el-input-number>
-          </el-form-item>
-          <el-form-item label="社保缴费基数"  v-if="form.employeeType === 'NORMAL'">
-            <el-radio-group v-model="form.payBaseRule" >
-              <el-radio :value="0" size="large">统一配置标准基数</el-radio>
-              <el-radio :value="1" size="large">自定义缴纳基数</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="缴费基数" prop="payBaseNumber" v-if="form.payBaseRule === 1 &&form.employeeType === 'NORMAL'" >
-              <el-input-number :min="0" :precision="2" v-model="form.payBaseNumber" style="width: 200px">
+            <el-form-item
+              v-if="form.employeeType === 'PARTTIME'"
+              label="劳务费"
+              prop="laborFee"
+            >
+              <el-input-number
+                v-model="form.laborFee"
+                :min="0"
+                :precision="2"
+                style="width: 200px"
+              >
                 <template #suffix>
                   <span>元</span>
                 </template>
               </el-input-number>
-          </el-form-item>
-          <el-form-item label="银行名称" prop="bankName">
-              <el-input v-model="form.bankName" placeholder="请输入银行名称"/>
-          </el-form-item>
-          <el-form-item label="银行卡号" prop="bankCardNo">
-              <el-input v-model="form.bankCardNo" placeholder="请输入银行卡"/>
-          </el-form-item>
-          <el-form-item label="社保卡号" prop="insuranceFundCard">
-              <el-input v-model="form.insuranceFundCard" placeholder="请输入社保卡号"/>
-          </el-form-item>
-          <el-form-item label="医保卡号" prop="medicalCard">
-              <el-input v-model="form.medicalCard" placeholder="请输入医保卡号"/>
-          </el-form-item>
+            </el-form-item>
+            <el-form-item
+              v-if="form.employeeType === 'NORMAL'"
+              label="社保缴费基数"
+            >
+              <el-radio-group v-model="form.payBaseRule">
+                <el-radio
+                  :value="0"
+                  size="large"
+                >
+                  统一配置标准基数
+                </el-radio>
+                <el-radio
+                  :value="1"
+                  size="large"
+                >
+                  自定义缴纳基数
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item
+              v-if="form.payBaseRule === 1 &&form.employeeType === 'NORMAL'"
+              label="缴费基数"
+              prop="payBaseNumber"
+            >
+              <el-input-number
+                v-model="form.payBaseNumber"
+                :min="0"
+                :precision="2"
+                style="width: 200px"
+              >
+                <template #suffix>
+                  <span>元</span>
+                </template>
+              </el-input-number>
+            </el-form-item>
+            <el-form-item
+              label="银行名称"
+              prop="bankName"
+            >
+              <el-input
+                v-model="form.bankName"
+                placeholder="请输入银行名称"
+              />
+            </el-form-item>
+            <el-form-item
+              label="银行卡号"
+              prop="bankCardNo"
+            >
+              <el-input
+                v-model="form.bankCardNo"
+                placeholder="请输入银行卡"
+              />
+            </el-form-item>
+            <el-form-item
+              label="社保卡号"
+              prop="insuranceFundCard"
+            >
+              <el-input
+                v-model="form.insuranceFundCard"
+                placeholder="请输入社保卡号"
+              />
+            </el-form-item>
+            <el-form-item
+              label="医保卡号"
+              prop="medicalCard"
+            >
+              <el-input
+                v-model="form.medicalCard"
+                placeholder="请输入医保卡号"
+              />
+            </el-form-item>
           </el-tab-pane>
         </el-tabs>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

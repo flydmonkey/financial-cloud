@@ -1,36 +1,77 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="40%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="40%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" inline-message>
-        <el-form-item prop="roleCode" :label="t('jbx.text.id')" :required="true">
-          <el-input v-model="form.roleCode" :disabled="isEdit"/>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
+        <el-form-item
+          prop="roleCode"
+          :label="t('jbx.text.id')"
+          :required="true"
+        >
+          <el-input
+            v-model="form.roleCode"
+            :disabled="isEdit"
+          />
         </el-form-item>
-        <el-form-item prop="roleName" :label="t('jbx.roles.name')" :required="true">
-          <el-input v-model="form.roleName"/>
+        <el-form-item
+          prop="roleName"
+          :label="t('jbx.roles.name')"
+          :required="true"
+        >
+          <el-input v-model="form.roleName" />
         </el-form-item>
-        <el-form-item prop="category" :label="t('jbx.roles.category.category')">
-          <el-select v-model="form.category" style="width: 100%">
+        <el-form-item
+          prop="category"
+          :label="t('jbx.roles.category.category')"
+        >
+          <el-select
+            v-model="form.category"
+            style="width: 100%"
+          >
             <el-option
-                v-for="item in group_category_options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-            </el-option>
+              v-for="item in group_category_options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item prop="description" :label="$t('jbx.text.description')">
-          <el-input v-model="form.description" type="textarea" :rows="4"/>
+        <el-form-item
+          prop="description"
+          :label="$t('jbx.text.description')"
+        >
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="4"
+          />
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

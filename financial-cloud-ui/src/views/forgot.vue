@@ -1,61 +1,114 @@
 <template>
   <div class="forgot">
     <div class="forget-content">
-      <el-form ref="forgotForm" :model="form" :rules="forgotRules" class="forgot-form">
-        <div v-if="active === 1" style="width: 410px">
+      <el-form
+        ref="forgotForm"
+        :model="form"
+        :rules="forgotRules"
+        class="forgot-form"
+      >
+        <div
+          v-if="active === 1"
+          style="width: 410px"
+        >
           <el-form-item prop="mobile">
-            <el-input :prefix-icon="Cellphone" :placeholder="t('user.placeholder.mobile')"
-                      size="large"
-                      v-model="form.mobile"></el-input>
+            <el-input
+              v-model="form.mobile"
+              :prefix-icon="Cellphone"
+              :placeholder="t('user.placeholder.mobile')"
+              size="large"
+            />
           </el-form-item>
           <el-form-item prop="mobileOtp">
-            <el-input v-model="form.mobileOtp" size="large" :placeholder="t('forgot.placeholder.mobileOtp')"
-                      @keyup.enter.native="onNextReset">
+            <el-input
+              v-model="form.mobileOtp"
+              size="large"
+              :placeholder="t('forgot.placeholder.mobileOtp')"
+              @keyup.enter.native="onNextReset"
+            >
               <template #append>
-                <el-button slot="append" @click="sendCode" :disabled="!canClick" class="send-btn">
+                <el-button
+                  slot="append"
+                  :disabled="!canClick"
+                  class="send-btn"
+                  @click="sendCode"
+                >
                   {{ content }}
                 </el-button>
               </template>
             </el-input>
           </el-form-item>
         </div>
-        <div v-if="active === 3" style="width: 410px">
-          <el-form :rules="passwordRules" :model="newPwdForm" ref="passwordForm" label-width="100px">
-            <div style="text-align: center;margin-bottom: 30px">{{ t('forgot.setNew') }}</div>
-            <el-form-item :label="t('forgot.new')" prop="password" style="margin-bottom: 30px">
-              <el-input v-model="newPwdForm.password" show-password>
-              </el-input>
+        <div
+          v-if="active === 3"
+          style="width: 410px"
+        >
+          <el-form
+            ref="passwordForm"
+            :rules="passwordRules"
+            :model="newPwdForm"
+            label-width="100px"
+          >
+            <div style="text-align: center;margin-bottom: 30px">
+              {{ t('forgot.setNew') }}
+            </div>
+            <el-form-item
+              :label="t('forgot.new')"
+              prop="password"
+              style="margin-bottom: 30px"
+            >
+              <el-input
+                v-model="newPwdForm.password"
+                show-password
+              />
             </el-form-item>
-            <el-form-item :label="t('forgot.confirmNew')" prop="confirmPassword" style="margin-bottom: 25px">
-              <el-input v-model="newPwdForm.confirmPassword" show-password>
-              </el-input>
+            <el-form-item
+              :label="t('forgot.confirmNew')"
+              prop="confirmPassword"
+              style="margin-bottom: 25px"
+            >
+              <el-input
+                v-model="newPwdForm.confirmPassword"
+                show-password
+              />
             </el-form-item>
           </el-form>
         </div>
         <div class="forgot-footer">
           <div>
-            <el-button type="primary"
-                       v-if="active === 1"
-                       @click="onNextReset"
-                       style="width: 100px"
-                       class="button-account">{{ t('forgot.next') }}
+            <el-button
+              v-if="active === 1"
+              type="primary"
+              style="width: 100px"
+              class="button-account"
+              @click="onNextReset"
+            >
+              {{ t('forgot.next') }}
             </el-button>
-            <el-button type="primary" v-if="active === 3"
-                       @click="confirm"
-                       class="button-account"
-                       style="width:100px">
+            <el-button
+              v-if="active === 3"
+              type="primary"
+              class="button-account"
+              style="width:100px"
+              @click="confirm"
+            >
               {{ t('text.submit') }}
             </el-button>
           </div>
-          <el-button class="button-account"
-                     @click="backToLogin"
-                     style="width: 100px">
+          <el-button
+            class="button-account"
+            style="width: 100px"
+            @click="backToLogin"
+          >
             {{ t('forgot.back') }}
           </el-button>
         </div>
 
         <el-form-item>
-          <div style="width: 410px;margin-top: 20px;line-height: 26px" v-show="active === 1">
+          <div
+            v-show="active === 1"
+            style="width: 410px;margin-top: 20px;line-height: 26px"
+          >
             <el-row>
               {{ t('forgot.mobileTi1') }}
             </el-row>

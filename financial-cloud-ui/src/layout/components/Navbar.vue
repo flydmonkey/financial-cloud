@@ -1,25 +1,29 @@
 <template>
   <div class="navbar">
     <div class="left-main">
-      <Logo class="logo" :collapse="false"/>
-<!--      <hamburger id="hamburger-container" :is-active="appStore.sidebar.opened" class="hamburger-container"-->
-<!--                 @toggleClick="toggleSideBar"/>-->
+      <Logo
+        class="logo"
+        :collapse="false"
+      />
+      <!--      <hamburger id="hamburger-container" :is-active="appStore.sidebar.opened" class="hamburger-container"-->
+      <!--                 @toggleClick="toggleSideBar"/>-->
     </div>
 
     <div class="right-menu">
       <div class="right-menu-item">
         <span>当前账期：{{ termCurrent }}</span>
-        <el-divider direction="vertical"></el-divider>
+        <el-divider direction="vertical" />
         <span>账套：</span>
         <el-select
-            @change="handleSwitchBook"
-            v-model="currentSet"
-            style="width: 250px;">
+          v-model="currentSet"
+          style="width: 250px;"
+          @change="handleSwitchBook"
+        >
           <el-option
-              v-for="dict in currBookStore.setList"
-              :key="dict.id"
-              :label="dict.name"
-              :value="dict.id"
+            v-for="dict in currBookStore.setList"
+            :key="dict.id"
+            :label="dict.name"
+            :value="dict.id"
           />
         </el-select>
       </div>
@@ -28,9 +32,12 @@
         <Language class="right-menu-item hover-effect"></Language>
       </el-tooltip>
       -->
-      <el-divider direction="vertical"></el-divider>
+      <el-divider direction="vertical" />
       <div class="right-menu-item">
-        <ScreenFull id="screenfull" class="right-menu-item hover-effect"></ScreenFull>
+        <ScreenFull
+          id="screenfull"
+          class="right-menu-item hover-effect"
+        />
         <!--
         <el-dropdown placement="bottom" trigger="click">
           <svg-icon icon-class="setting"></svg-icon>
@@ -53,11 +60,15 @@
         </el-dropdown>
          -->
       </div>
-      <el-divider direction="vertical"></el-divider>
+      <el-divider direction="vertical" />
       <div class="right-menu-item avatar-box">
         <el-dropdown placement="bottom">
           <div class="avatar-wrapper">
-            <img :src="userStore.avatar" class="user-avatar" alt=""/>
+            <img
+              :src="userStore.avatar"
+              class="user-avatar"
+              alt=""
+            >
             <span style="margin-left: 5px">{{ userStore.name }}</span>
             <span>({{ userStore.username }})</span>
           </div>
@@ -65,27 +76,27 @@
             <el-dropdown-menu>
               <el-dropdown-item>
                 <router-link to="/user/profile">
-                  <svg-icon icon-class="user"></svg-icon>
+                  <svg-icon icon-class="user" />
                   <span style="margin-left: 5px">个人中心</span>
                 </router-link>
               </el-dropdown-item>
-<!--              <el-dropdown-item>-->
-<!--                <svg-icon icon-class="setting"></svg-icon>-->
-<!--                <span style="margin-left: 5px">个人设置</span>-->
-<!--              </el-dropdown-item>-->
+              <!--              <el-dropdown-item>-->
+              <!--                <svg-icon icon-class="setting"></svg-icon>-->
+              <!--                <span style="margin-left: 5px">个人设置</span>-->
+              <!--              </el-dropdown-item>-->
 
-<!--              <el-dropdown-item>-->
-<!--                <router-link to="/exception/trigger">-->
-<!--                  <svg-icon icon-class="close-circle"></svg-icon>-->
-<!--                  <span style="margin-left: 5px">触发错误</span>-->
-<!--                </router-link>-->
-<!--              </el-dropdown-item>-->
+              <!--              <el-dropdown-item>-->
+              <!--                <router-link to="/exception/trigger">-->
+              <!--                  <svg-icon icon-class="close-circle"></svg-icon>-->
+              <!--                  <span style="margin-left: 5px">触发错误</span>-->
+              <!--                </router-link>-->
+              <!--              </el-dropdown-item>-->
               <el-dropdown-item>
-                <CleanSession class="right-menu-item hover-effect"/>
+                <CleanSession class="right-menu-item hover-effect" />
               </el-dropdown-item>
               <el-dropdown-item style="border-top: 1px solid #888888;">
                 <div @click="logout">
-                  <svg-icon icon-class="logout"></svg-icon>
+                  <svg-icon icon-class="logout" />
                   <span style="margin-left: 5px">退出登录</span>
                 </div>
               </el-dropdown-item>

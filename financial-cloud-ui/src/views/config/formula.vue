@@ -2,19 +2,27 @@
   <div class="app-container">
     <el-card class="common-card">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true"
-                 @submit.native.prevent>
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item label="规则名称">
             <el-input
-                v-model="queryParams.ruleName"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.ruleName"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -22,60 +30,99 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleAdd"
-        >{{ t('org.button.add') }}
+          type="primary"
+          @click="handleAdd"
+        >
+          {{ t('org.button.add') }}
         </el-button>
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="onBatchDelete"
-        >{{ t('org.button.deleteBatch') }}
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="onBatchDelete"
+        >
+          {{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
       <el-table
-          v-loading="loading"
-          :data="dataList"
-          @selection-change="handleSelectionChange"
+        v-loading="loading"
+        :data="dataList"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column prop="ruleName" label="规则名称" align="center" min-width="100"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="ruleDescription" label="规则描述" align="center" min-width="150"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="formulaText" label="计算公式" align="center" min-width="200"
-                         :show-overflow-tooltip="true"></el-table-column>
-        <el-table-column prop="status" :label="t('org.status')" align="center" min-width="35">
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          prop="ruleName"
+          label="规则名称"
+          align="center"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="ruleDescription"
+          label="规则描述"
+          align="center"
+          min-width="150"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="formulaText"
+          label="计算公式"
+          align="center"
+          min-width="200"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="status"
+          :label="t('org.status')"
+          align="center"
+          min-width="35"
+        >
           <template #default="scope">
-                <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+            <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
+              class="success"
+            /></el-icon></span>
+            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" fixed="right" width="180">
+        <el-table-column
+          label="操作"
+          align="center"
+          fixed="right"
+          width="180"
+        >
           <template #default="scope">
             <el-button @click="handleUpdate(scope.row)">
               {{ t('org.edit') }}
             </el-button>
-            <el-button type="danger" @click="handleDelete(scope.row)">{{ t('org.button.delete') }}
+            <el-button
+              type="danger"
+              @click="handleDelete(scope.row)"
+            >
+              {{ t('org.button.delete') }}
             </el-button>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
     </el-card>
-    <edit-form :title="title" :open="open"
-               :form-id="id"
-               :salary-types="salaryTypes"
-               :operators="operators"
-               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
+    <edit-form
+      :title="title"
+      :open="open"
+      :form-id="id"
+      :salary-types="salaryTypes"
+      :operators="operators"
+      @dialog-of-closed-methods="dialogOfClosedMethods"
+    />
   </div>
 </template>
 

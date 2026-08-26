@@ -1,67 +1,150 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="65%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="65%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
       <div class="queryForm">
-        <el-form :model="form" ref="formRef" :inline="true" label-width="68px">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :inline="true"
+          label-width="68px"
+        >
           <el-form-item label="凭证类型">
-            <el-select v-model="form.voucherType" style="width: 200px" @change="handleChangeType">
-              <el-option v-for="item in voucherTypes" :label="item.label" :value="item.value"/>
+            <el-select
+              v-model="form.voucherType"
+              style="width: 200px"
+              @change="handleChangeType"
+            >
+              <el-option
+                v-for="item in voucherTypes"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="凭证字">
-            <el-select v-model="form.wordHead" style="width: 200px" disabled>
-              <el-option v-for="item in voucherTypes" :label="item.label" :value="item.value"/>
+            <el-select
+              v-model="form.wordHead"
+              style="width: 200px"
+              disabled
+            >
+              <el-option
+                v-for="item in voucherTypes"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
         </el-form>
-        <el-table v-loading="loading" :data="dataList" border>
-          <el-table-column prop="summary" label="摘要" align="left" min-width="90"
-                           :show-overflow-tooltip="true">
+        <el-table
+          v-loading="loading"
+          :data="dataList"
+          border
+        >
+          <el-table-column
+            prop="summary"
+            label="摘要"
+            align="left"
+            min-width="90"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
-              <el-input v-model="scope.row.summary" style="width: 100%"></el-input>
-            </template>
-          </el-table-column>
-          <el-table-column prop="direction" label="借/贷" align="center" min-width="40">
-            <template #default="scope">
-              <el-select v-model="scope.row.direction" style="width: 100%">
-                <el-option v-for="item in salary_directions" :label="item.label" :value="item.value"/>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column prop="subjectName" label="科目" align="left" min-width="110" :show-overflow-tooltip="true">
-            <template #default="scope">
-              <el-cascader
-                  style="width: 100%"
-                  filterable
-                  v-model="scope.row.subjectCode"
-                  :options="deptOptions"
-                  :props="defaultProps"
+              <el-input
+                v-model="scope.row.summary"
+                style="width: 100%"
               />
             </template>
           </el-table-column>
-          <el-table-column prop="selectedValue" label="取值" align="center" min-width="60"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="direction"
+            label="借/贷"
+            align="center"
+            min-width="40"
+          >
             <template #default="scope">
-              <el-select v-model="scope.row.selectedValue" style="width: 100%">
-                <el-option v-for="item in salaryValuesList" :label="item.label" :value="item.value"/>
+              <el-select
+                v-model="scope.row.direction"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in salary_directions"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" header-align="center" width="120">
+          <el-table-column
+            prop="subjectName"
+            label="科目"
+            align="left"
+            min-width="110"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
-              <div >
+              <el-cascader
+                v-model="scope.row.subjectCode"
+                style="width: 100%"
+                filterable
+                :options="deptOptions"
+                :props="defaultProps"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="selectedValue"
+            label="取值"
+            align="center"
+            min-width="60"
+            :show-overflow-tooltip="true"
+          >
+            <template #default="scope">
+              <el-select
+                v-model="scope.row.selectedValue"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in salaryValuesList"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="操作"
+            align="center"
+            header-align="center"
+            width="120"
+          >
+            <template #default="scope">
+              <div>
                 <div>
                   <el-tooltip content="新增">
-                    <el-button type="primary"
-                               link @click="handleAdd()" icon="Plus"></el-button>
+                    <el-button
+                      type="primary"
+                      link
+                      icon="Plus"
+                      @click="handleAdd()"
+                    />
                   </el-tooltip>
-                  <el-tooltip content="移除" v-if="dataList.length > 1">
-                    <el-button type="primary"
-                               link  @click="handleDel(scope.$index)" icon="Delete"></el-button>
+                  <el-tooltip
+                    v-if="dataList.length > 1"
+                    content="移除"
+                  >
+                    <el-button
+                      type="primary"
+                      link
+                      icon="Delete"
+                      @click="handleDel(scope.$index)"
+                    />
                   </el-tooltip>
                 </div>
               </div>
@@ -72,8 +155,15 @@
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

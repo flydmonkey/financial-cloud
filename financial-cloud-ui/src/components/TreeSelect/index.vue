@@ -1,16 +1,19 @@
 <template>
   <div class="el-tree-select">
     <el-select
-      style="width: 100%"
-      v-model="valueId"
       ref="treeSelect"
+      v-model="valueId"
+      style="width: 100%"
       :filterable="true"
       :clearable="true"
-      @clear="clearHandle"
       :filter-method="selectFilterData"
       :placeholder="placeholder"
+      @clear="clearHandle"
     >
-      <el-option :value="valueId" :label="valueTitle">
+      <el-option
+        :value="valueId"
+        :label="valueTitle"
+      >
         <el-tree
           id="tree-option"
           ref="selectTree"
@@ -22,7 +25,7 @@
           :default-expanded-keys="defaultExpandedKey"
           :filter-node-method="filterNode"
           @node-click="handleNodeClick"
-        ></el-tree>
+        />
       </el-option>
     </el-select>
   </div>

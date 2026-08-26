@@ -1,35 +1,70 @@
 <template>
   <div class="queryForm">
-    <el-form :model="queryParams" ref="queryForm" :inline="true" @submit.native.prevent>
+    <el-form
+      ref="queryForm"
+      :model="queryParams"
+      :inline="true"
+      @submit.native.prevent
+    >
       <el-form-item :label="$t('jbx.users.username')">
         <el-input
-            v-model="queryParams.username"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.username"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-        <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+        <el-button @click="handleQuery">
+          {{ t('org.button.query') }}
+        </el-button>
+        <el-button @click="resetQuery">
+          {{ t('org.button.reset') }}
+        </el-button>
       </el-form-item>
     </el-form>
   </div>
-  <el-table ref='multipleTable'
-            border
-            v-loading="loading"
-            :data="dataList"
-            @selection-change="handleSelectionChange">
-    <el-table-column type="selection" width="50" align="center"></el-table-column>
-    <el-table-column prop="username" :label="t('jbx.users.username')" align="center"
-                     min-width="100"/>
-    <el-table-column prop="displayName" :label="t('jbx.users.displayName')" align="center"
-                     min-width="120"/>
-    <el-table-column prop="department" :label="t('jbx.users.department')" align="center"
-                     min-width="100"/>
-    <el-table-column prop="jobTitle" :label="t('jbx.users.jobTitle')" align="center"
-                     min-width="100"/>
-    <el-table-column prop="gender" :label="t('jbx.users.gender')" align="center"
-                     min-width="60">
+  <el-table
+    ref="multipleTable"
+    v-loading="loading"
+    border
+    :data="dataList"
+    @selection-change="handleSelectionChange"
+  >
+    <el-table-column
+      type="selection"
+      width="50"
+      align="center"
+    />
+    <el-table-column
+      prop="username"
+      :label="t('jbx.users.username')"
+      align="center"
+      min-width="100"
+    />
+    <el-table-column
+      prop="displayName"
+      :label="t('jbx.users.displayName')"
+      align="center"
+      min-width="120"
+    />
+    <el-table-column
+      prop="department"
+      :label="t('jbx.users.department')"
+      align="center"
+      min-width="100"
+    />
+    <el-table-column
+      prop="jobTitle"
+      :label="t('jbx.users.jobTitle')"
+      align="center"
+      min-width="100"
+    />
+    <el-table-column
+      prop="gender"
+      :label="t('jbx.users.gender')"
+      align="center"
+      min-width="60"
+    >
       <template #default="scope">
         <span v-if="scope.row.gender === 1">{{ t('jbx.users.genderFemale') }}</span>
         <span v-else-if="scope.row.gender === 2">{{ t('jbx.users.genderMale') }}</span>
@@ -38,12 +73,12 @@
     </el-table-column>
   </el-table>
   <pagination
-      v-show="total > 0"
-      :total="total"
-      v-model:page="queryParams.pageNumber"
-      v-model:limit="queryParams.pageSize"
-      :page-sizes="queryParams.pageSizeOptions"
-      @pagination="getList"
+    v-show="total > 0"
+    v-model:page="queryParams.pageNumber"
+    v-model:limit="queryParams.pageSize"
+    :total="total"
+    :page-sizes="queryParams.pageSizeOptions"
+    @pagination="getList"
   />
 </template>
 

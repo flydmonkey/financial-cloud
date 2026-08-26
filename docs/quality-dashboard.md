@@ -8,7 +8,9 @@
 | 维度 | 结果 |
 |------|------|
 | API 冒烟（34 探针） | 34/34 通过 |
-| Playwright E2E | 15/15 通过（含资产负债表平衡） |
+| Playwright E2E | 18/18 通过（含页面探针） |
+| TypeScript | 261 error（原 728，-64%） |
+| ESLint | 114 error / 698 warning（原 398 / 11378） |
 | 后端单测 | 凭证 + 结账 + 报表 seed |
 | Controller | ~57 个，多数无单测 |
 
@@ -21,7 +23,7 @@
 | statement | 5/5 | 4 条 | 报表平衡已修 |
 | settlement | 2/2 | 3 条 | 结账年份默认已修 |
 | dashboard | 5/5 | 部分 | bookId 顺序已修 |
-| book / journal / hr | 全过 | 3 条 API 探针 | 中 |
+| book / journal / hr | 全过 | API + 页面探针 | 中 |
 | 其余 | 全过 | — | 低 |
 
 ## 复跑
@@ -39,5 +41,5 @@ cd financial-cloud-ui && npm run test:e2e
 ## 已知后续
 
 - 账套 4103/4104 权益数据建议人工核对
-- TypeScript ~728 error、ESLint ~398 error（历史债）
+- TypeScript ~261 error、ESLint ~114 error（已做首轮基础设施清理，剩余多为组件级问题）
 - 资产负债表总计调平会在服务端日志记录差额

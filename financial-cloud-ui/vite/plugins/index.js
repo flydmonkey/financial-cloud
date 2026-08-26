@@ -10,6 +10,8 @@ export default function createVitePlugins(viteEnv, isBuild = false) {
     vitePlugins.push(createAutoImport())
 	vitePlugins.push(createSetupExtend())
     vitePlugins.push(createSvgIcon(isBuild))
-	isBuild && vitePlugins.push(...createCompression(viteEnv))
+    if (isBuild) {
+        vitePlugins.push(...createCompression(viteEnv))
+    }
     return vitePlugins
 }

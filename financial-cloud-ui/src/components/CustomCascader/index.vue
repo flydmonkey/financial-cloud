@@ -1,17 +1,17 @@
 <template>
   <div>
     <el-cascader
-        ref="cascaderRef"
-        v-model="innerValue"
-        :options="props.options"
-        :props="props.props"
-        :filter-method="props.filterMethod"
-        :show-all-levels="props.props.showAllLevels"
-        :clearable="props.props.clearable"
-        filterable
-        style="width: 100%"
-        @change="(val) => emit('change', val)"
-        @keydown="handleKeydown"
+      ref="cascaderRef"
+      v-model="innerValue"
+      :options="props.options"
+      :props="props.props"
+      :filter-method="props.filterMethod"
+      :show-all-levels="props.props.showAllLevels"
+      :clearable="props.props.clearable"
+      filterable
+      style="width: 100%"
+      @change="(val) => emit('change', val)"
+      @keydown="handleKeydown"
     />
   </div>
 </template>

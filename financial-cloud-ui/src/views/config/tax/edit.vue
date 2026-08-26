@@ -1,22 +1,42 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="45%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="45%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="150px">
-        <el-form-item label="层级：" prop="level" :required="true">
-          <el-input-number :min="0" v-model="form.level" :disabled="true" controls-position="right">
-          </el-input-number>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="150px"
+      >
+        <el-form-item
+          label="层级："
+          prop="level"
+          :required="true"
+        >
+          <el-input-number
+            v-model="form.level"
+            :min="0"
+            :disabled="true"
+            controls-position="right"
+          />
         </el-form-item>
-        <el-form-item label="应纳税所得额级距：" prop="taxRange">
+        <el-form-item
+          label="应纳税所得额级距："
+          prop="taxRange"
+        >
           <el-col :span="11">
             <el-input-number
-                v-model="form.minNum"
-                :min="0"
-                controls-position="right"
-                style="width: 100%"
+              v-model="form.minNum"
+              :min="0"
+              controls-position="right"
+              style="width: 100%"
             >
               <template #prefix>
                 <span>￥</span>
@@ -33,16 +53,19 @@
               </template>
             </el-input-number>
           </el-col>
-          <el-col class="text-center" :span="2">
+          <el-col
+            class="text-center"
+            :span="2"
+          >
             <span class="text-gray-500">至</span>
           </el-col>
           <el-col :span="11">
             <el-input-number
-                v-model="form.maxNum"
-                :min="0"
-                controls-position="right"
-                style="width: 100%"
-                placeholder="无上限金额的时候无需填写"
+              v-model="form.maxNum"
+              :min="0"
+              controls-position="right"
+              style="width: 100%"
+              placeholder="无上限金额的时候无需填写"
             >
               <template #prefix>
                 <span>￥</span>
@@ -60,30 +83,51 @@
             </el-input-number>
           </el-col>
         </el-form-item>
-        <el-form-item label="税率：" prop="taxRate" :required="true">
+        <el-form-item
+          label="税率："
+          prop="taxRate"
+          :required="true"
+        >
           <el-input-number
-              v-model="form.taxRate"
-              :min="0"
-              :max="100"
-              controls-position="right"
+            v-model="form.taxRate"
+            :min="0"
+            :max="100"
+            controls-position="right"
           >
             <template #suffix>
               <span>%</span>
             </template>
           </el-input-number>
         </el-form-item>
-        <el-form-item prop="type" label="类型：">
-          <el-radio-group v-model="form.type" disabled>
-            <el-radio :value="0">工资薪金</el-radio>
-            <el-radio :value="1">劳务报酬</el-radio>
+        <el-form-item
+          prop="type"
+          label="类型："
+        >
+          <el-radio-group
+            v-model="form.type"
+            disabled
+          >
+            <el-radio :value="0">
+              工资薪金
+            </el-radio>
+            <el-radio :value="1">
+              劳务报酬
+            </el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

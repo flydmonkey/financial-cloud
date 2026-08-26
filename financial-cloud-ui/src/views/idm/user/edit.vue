@@ -1,44 +1,86 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="45%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="45%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="userRef" label-width="100px" inline-message>
-        <el-tabs v-model="activeName" :stretch="true">
-          <el-tab-pane :label="$t('jbx.organizations.tabBasic')" name="first">
+      <el-form
+        ref="userRef"
+        :model="form"
+        :rules="rules"
+        label-width="100px"
+        inline-message
+      >
+        <el-tabs
+          v-model="activeName"
+          :stretch="true"
+        >
+          <el-tab-pane
+            :label="$t('jbx.organizations.tabBasic')"
+            name="first"
+          >
             <el-row :gutter="gutter">
               <el-col :span="12">
-                <el-form-item :label="$t('jbx.users.displayName')" :required="true" prop="displayName">
-                  <el-input v-model="form.displayName"></el-input>
+                <el-form-item
+                  :label="$t('jbx.users.displayName')"
+                  :required="true"
+                  prop="displayName"
+                >
+                  <el-input v-model="form.displayName" />
                 </el-form-item>
-                <el-form-item :label="$t('jbx.users.username')" :required="true" prop="username">
-                  <el-input v-model="form.username"></el-input>
+                <el-form-item
+                  :label="$t('jbx.users.username')"
+                  :required="true"
+                  prop="username"
+                >
+                  <el-input v-model="form.username" />
                 </el-form-item>
-                <el-form-item :label="$t('jbx.users.password')" v-if="isPass" :required="true" prop="password">
-                  <el-input v-model="form.password"></el-input>
+                <el-form-item
+                  v-if="isPass"
+                  :label="$t('jbx.users.password')"
+                  :required="true"
+                  prop="password"
+                >
+                  <el-input v-model="form.password" />
                 </el-form-item>
                 <el-form-item :label="$t('jbx.users.gender')">
                   <el-radio-group v-model="form.gender">
-                    <el-radio-button value="2">{{ $t('jbx.users.genderMale') }}</el-radio-button>
-                    <el-radio-button value="1">{{ $t('jbx.users.genderFemale') }}</el-radio-button>
+                    <el-radio-button value="2">
+                      {{ $t('jbx.users.genderMale') }}
+                    </el-radio-button>
+                    <el-radio-button value="1">
+                      {{ $t('jbx.users.genderFemale') }}
+                    </el-radio-button>
                   </el-radio-group>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
                 <el-form-item :label="$t('jbx.users.picture')">
                   <el-upload
-                      action="fakeAction"
-                      accept="image/jpg,image/jpeg"
-                      class="avatar-uploader"
-                      name="uploadFile"
-                      :http-request="doUploadAvatar"
-                      :before-upload="beforeAvatarUpload"
-                      :show-file-list="false">
-                    <img v-if="previewImage" :src="previewImage" class="avatar" alt="">
-                    <el-icon v-else class="avatar-uploader-icon">
-                      <Plus/>
+                    action="fakeAction"
+                    accept="image/jpg,image/jpeg"
+                    class="avatar-uploader"
+                    name="uploadFile"
+                    :http-request="doUploadAvatar"
+                    :before-upload="beforeAvatarUpload"
+                    :show-file-list="false"
+                  >
+                    <img
+                      v-if="previewImage"
+                      :src="previewImage"
+                      class="avatar"
+                      alt=""
+                    >
+                    <el-icon
+                      v-else
+                      class="avatar-uploader-icon"
+                    >
+                      <Plus />
                     </el-icon>
                   </el-upload>
                 </el-form-item>
@@ -47,42 +89,83 @@
             <el-row :gutter="gutter">
               <el-col :span="12">
                 <el-form-item :label="$t('jbx.users.mobile')">
-                  <el-input v-model="form.mobile"/>
+                  <el-input v-model="form.mobile" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
                 <el-form-item :label="$t('jbx.users.email')">
-                  <el-input v-model="form.email"/>
+                  <el-input v-model="form.email" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="gutter">
               <el-col :span="12">
-                <el-form-item :label="$t('jbx.users.userType')" :required="true" prop="userType">
-                  <el-select v-model="form.userType" style="width: 100%">
-                    <el-option v-for="item in users_type" :label="item.label" :value="item.value"/>
+                <el-form-item
+                  :label="$t('jbx.users.userType')"
+                  :required="true"
+                  prop="userType"
+                >
+                  <el-select
+                    v-model="form.userType"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="item in users_type"
+                      :label="item.label"
+                      :value="item.value"
+                    />
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item :label="$t('jbx.users.userstate')" :required="true" prop="userState">
-                  <el-select v-model="form.userState" style="width: 100%">
-                    <el-option v-for="item in users_state" :label="item.label" :value="item.value"/>
+                <el-form-item
+                  :label="$t('jbx.users.userstate')"
+                  :required="true"
+                  prop="userState"
+                >
+                  <el-select
+                    v-model="form.userState"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="item in users_state"
+                      :label="item.label"
+                      :value="item.value"
+                    />
                   </el-select>
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="gutter">
               <el-col :span="12">
-                <el-form-item :label="$t('jbx.text.sortIndex')" :required="true" prop="sortIndex">
-                  <el-input-number v-model="form.sortIndex" style="width: 100%" :min="0"
-                                   :max="100000"></el-input-number>
+                <el-form-item
+                  :label="$t('jbx.text.sortIndex')"
+                  :required="true"
+                  prop="sortIndex"
+                >
+                  <el-input-number
+                    v-model="form.sortIndex"
+                    style="width: 100%"
+                    :min="0"
+                    :max="100000"
+                  />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item :label="$t('jbx.users.status')" :required="true" prop="status">
-                  <el-select v-model="form.status" style="width: 100%">
-                    <el-option v-for="item in status" :label="item.label" :value="item.value"/>
+                <el-form-item
+                  :label="$t('jbx.users.status')"
+                  :required="true"
+                  prop="status"
+                >
+                  <el-select
+                    v-model="form.status"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="item in status"
+                      :label="item.label"
+                      :value="item.value"
+                    />
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -90,19 +173,19 @@
             <el-row :gutter="gutter">
               <el-col :span="span">
                 <el-form-item :label="$t('jbx.users.timeZone')">
-                  <el-input v-model="form.timeZone"/>
+                  <el-input v-model="form.timeZone" />
                 </el-form-item>
               </el-col>
               <el-col :span="span">
                 <el-form-item :label="$t('jbx.users.preferredLanguage')">
-                  <el-input v-model="form.preferredLanguage"/>
+                  <el-input v-model="form.preferredLanguage" />
                 </el-form-item>
               </el-col>
             </el-row>
             <el-row :gutter="gutter">
               <el-col :span="span">
                 <el-form-item :label="$t('jbx.users.website')">
-                  <el-input v-model="form.webSite"/>
+                  <el-input v-model="form.webSite" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -112,8 +195,15 @@
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

@@ -2,19 +2,28 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch"
-                 @submit.native.prevent>
+        <el-form
+          v-show="showSearch"
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item :label="t('org.name')">
             <el-input
-                v-model="queryParams.orgName"
-                :placeholder="t('org.placeholder.name')"
-                clearable
-                @keyup.enter="handleQuery"
+              v-model="queryParams.orgName"
+              :placeholder="t('org.placeholder.name')"
+              clearable
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -23,134 +32,211 @@
       <div class="button-top">
         <div>
           <el-button
-              type="primary"
-              @click="handleAdd"
-          >{{ t('org.button.add') }}
+            type="primary"
+            @click="handleAdd"
+          >
+            {{ t('org.button.add') }}
           </el-button>
           <el-button
-              type="danger"
-              @click="onBatchDelete"
-              :disabled="ids.length === 0"
-          >{{ t('org.button.deleteBatch') }}
+            type="danger"
+            :disabled="ids.length === 0"
+            @click="onBatchDelete"
+          >
+            {{ t('org.button.deleteBatch') }}
           </el-button>
         </div>
         <div style="display: flex">
           <el-button
-              type="success"
-              plain
-              @click="downloadTemplate('template')"
-          >{{ $t('jbx.text.template') }}
+            type="success"
+            plain
+            @click="downloadTemplate('template')"
+          >
+            {{ $t('jbx.text.template') }}
           </el-button>
           <el-button
-              @click="downloadTemplate('org')"
-          >{{ $t('jbx.text.export') }}
+            @click="downloadTemplate('org')"
+          >
+            {{ $t('jbx.text.export') }}
           </el-button>
           <el-upload
-              style="margin-left: 10px"
-              action="fake"
-              multiple
-              accept=".xls,.xlsx,csv"
-              :show-file-list="showFileList"
-              :file-list="fileList"
-              :before-upload="beforeUpload"
-              name="excelFile"
-              :http-request="importExcel"
+            style="margin-left: 10px"
+            action="fake"
+            multiple
+            accept=".xls,.xlsx,csv"
+            :show-file-list="showFileList"
+            :file-list="fileList"
+            :before-upload="beforeUpload"
+            name="excelFile"
+            :http-request="importExcel"
           >
-            <el-button>{{ $t('jbx.text.import') }}
+            <el-button>
+              {{ $t('jbx.text.import') }}
             </el-button>
           </el-upload>
         </div>
       </div>
 
       <el-row :gutter="20">
-        <el-col :xs="8" :sm="6" :md="6" :lg="4" :xl="4">
+        <el-col
+          :xs="8"
+          :sm="6"
+          :md="6"
+          :lg="4"
+          :xl="4"
+        >
           <!--          <el-row style="display: flex;justify-content: center">
                       <span style="line-height: 30px;" @click="handleClick" class="clickable">{{ t('org.organization') }}</span>
                     </el-row>-->
           <el-tree
-              style="width: 100%;margin-top: 10px"
-              node-key="id"
-              :data="deptOptions"
-              :props="defaultProps"
-              :expand-on-click-node="false"
-              :filter-node-method="filterNode"
-              ref="tree"
-              :default-expanded-keys="treeData"
-              @node-click="handleNodeClick"
-              highlight-current
-              v-slot="{ node, data }"
+            ref="tree"
+            style="width: 100%;margin-top: 10px"
+            v-slot="{ node, data }"
+            node-key="id"
+            :data="deptOptions"
+            :props="defaultProps"
+            :expand-on-click-node="false"
+            :filter-node-method="filterNode"
+            :default-expanded-keys="treeData"
+            highlight-current
+            @node-click="handleNodeClick"
           >
             <span>
               <span v-if="node.label.length<=10">{{ node.label }}</span>
               <span v-else>
-                 <el-tooltip class="item" effect="dark" :content="node.label" placement="right">
-                   <span>{{ node.label.slice(0, 10) + '...' }}</span>
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  :content="node.label"
+                  placement="right"
+                >
+                  <span>{{ node.label.slice(0, 10) + '...' }}</span>
                 </el-tooltip>
               </span>
             </span>
           </el-tree>
         </el-col>
-        <el-col :xs="16" :sm="18" :md="18" :lg="20" :xl="20">
+        <el-col
+          :xs="16"
+          :sm="18"
+          :md="18"
+          :lg="20"
+          :xl="20"
+        >
           <!--          <div v-if="currentDepartmentName"
                          style="height: 10px;font-size: 18px;">
                       {{ `【${currentDepartmentName}】` }}
                     </div>-->
           <el-table
-              v-loading="loading"
-              :data="deptList"
-              border
-              @selection-change="handleSelectionChange"
+            v-loading="loading"
+            :data="deptList"
+            border
+            @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column prop="orgCode" :label="t('jbx.organizations.code')" align="left" min-width="100"
-                             :show-overflow-tooltip="true"></el-table-column>
-            <el-table-column prop="orgName" :label="t('org.name')" align="left" min-width="100"
-                             :show-overflow-tooltip="true"></el-table-column>
-            <el-table-column prop="type" :label="t('jbx.organizations.type')" align="center" min-width="60">
+            <el-table-column
+              type="selection"
+              width="55"
+              align="center"
+            />
+            <el-table-column
+              prop="orgCode"
+              :label="t('jbx.organizations.code')"
+              align="left"
+              min-width="100"
+              :show-overflow-tooltip="true"
+            />
+            <el-table-column
+              prop="orgName"
+              :label="t('org.name')"
+              align="left"
+              min-width="100"
+              :show-overflow-tooltip="true"
+            />
+            <el-table-column
+              prop="type"
+              :label="t('jbx.organizations.type')"
+              align="center"
+              min-width="60"
+            >
               <template #default="scope">
-                <dict-tag :options="org_type" :value="scope.row.type"/>
+                <dict-tag
+                  :options="org_type"
+                  :value="scope.row.type"
+                />
               </template>
             </el-table-column>
-            <el-table-column prop="sortIndex" :label="t('org.sort')" align="center"
-                             min-width="40">
-            </el-table-column>
-            <el-table-column prop="status" :label="t('org.status')" align="center" min-width="40">
+            <el-table-column
+              prop="sortIndex"
+              :label="t('org.sort')"
+              align="center"
+              min-width="40"
+            />
+            <el-table-column
+              prop="status"
+              :label="t('org.status')"
+              align="center"
+              min-width="40"
+            >
               <template #default="scope">
                 <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-                <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+                  class="success"
+                /></el-icon></span>
+                <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
               </template>
             </el-table-column>
-            <el-table-column prop="actions" :label="t('org.operate')" align="center" width="80">
+            <el-table-column
+              prop="actions"
+              :label="t('org.operate')"
+              align="center"
+              width="80"
+            >
               <template #default="scope">
                 <el-tooltip content="编辑">
-                  <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+                  <el-button
+                    link
+                    icon="Edit"
+                    @click="handleUpdate(scope.row)"
+                  />
                 </el-tooltip>
-                <el-tooltip v-if="scope.row.parentId != null
-              && scope.row.parentId != '-1'
-              && scope.row.parentId != '0'
-              && scope.row.id != scope.row.instId" content="移除">
-                  <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+                <el-tooltip
+                  v-if="scope.row.parentId != null
+                    && scope.row.parentId != '-1'
+                    && scope.row.parentId != '0'
+                    && scope.row.id != scope.row.instId"
+                  content="移除"
+                >
+                  <el-button
+                    link
+                    icon="Delete"
+                    type="danger"
+                    @click="handleDelete(scope.row)"
+                  />
                 </el-tooltip>
-
               </template>
             </el-table-column>
           </el-table>
           <pagination
-              v-show="total > 0"
-              :total="total"
-              v-model:page="queryParams.pageNumber"
-              v-model:limit="queryParams.pageSize"
-              :page-sizes="queryParams.pageSizeOptions"
-              @pagination="getList"
+            v-show="total > 0"
+            v-model:page="queryParams.pageNumber"
+            v-model:limit="queryParams.pageSize"
+            :total="total"
+            :page-sizes="queryParams.pageSizeOptions"
+            @pagination="getList"
           />
         </el-col>
       </el-row>
     </el-card>
     <!--新增或修改对话框-->
-    <OrgEdit :title="title" :open="open" :formId="id" @dialogOfClosedMethods="dialogOfClosedMethods"
-             :org-type="org_type" :deptOptions="deptOptions" :currentTreeId="currentDepartmentId"
-             :currentTreeParentId="idParent" :current-tree-inst-id="idInst"></OrgEdit>
+    <OrgEdit
+      :title="title"
+      :open="open"
+      :form-id="id"
+      :org-type="org_type"
+      :dept-options="deptOptions"
+      :current-tree-id="currentDepartmentId"
+      :current-tree-parent-id="idParent"
+      :current-tree-inst-id="idInst"
+      @dialog-of-closed-methods="dialogOfClosedMethods"
+    />
   </div>
 </template>
 

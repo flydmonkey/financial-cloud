@@ -1,7 +1,11 @@
 <template>
-  <div class="el-login-footer" :style="{'position': props.position}">
-    <div> 财务云<br/>
-      Version {{ version }}<br/>
+  <div
+    class="el-login-footer"
+    :style="{'position': props.position}"
+  >
+    <div>
+      财务云<br>
+      Version {{ version }}<br>
     </div>
   </div>
 </template>

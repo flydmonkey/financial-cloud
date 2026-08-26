@@ -3,112 +3,215 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleSave"
-            :loading="saveLoading"
-        >保存
+          type="primary"
+          :loading="saveLoading"
+          @click="handleSave"
+        >
+          保存
         </el-button>
         <el-button
-            @click="trialBalance(false)"
-        >试算平衡
+          @click="trialBalance(false)"
+        >
+          试算平衡
         </el-button>
       </div>
 
       <el-table
-          v-loading="loading"
-          :data="dataList"
-          border
-          :row-class-name="tableRowClassName"
-          height="700"
+        v-loading="loading"
+        :data="dataList"
+        border
+        :row-class-name="tableRowClassName"
+        height="700"
       >
-        <el-table-column prop="itemName" label="项目" align="left" min-width="160"
-                         :show-overflow-tooltip="true">
+        <el-table-column
+          prop="itemName"
+          label="项目"
+          align="left"
+          min-width="160"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
             <span :class="{ 'indented-item': scope.row.isTitle !== 1 }">{{ scope.row.itemName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="sortIndex" label="行次" align="center" min-width="20">
-        </el-table-column>
-        <el-table-column prop="balance" label="本年累计" align="right" min-width="100"
-                         :show-overflow-tooltip="true">
+        <el-table-column
+          prop="sortIndex"
+          label="行次"
+          align="center"
+          min-width="20"
+        />
+        <el-table-column
+          prop="balance"
+          label="本年累计"
+          align="right"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
             <!-- 特定行号不显示任何内容 -->
-            <template v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
-            '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk'].includes(scope.row.itemCode)">
-              <span></span>
+            <template
+              v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
+                     '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk'].includes(scope.row.itemCode)"
+            >
+              <span />
             </template>
             <!-- 其他行正常显示可编辑内容或只读内容 -->
             <template v-else>
               <div v-if="scope.row.isEdit === 1">
                 <el-input
-                    v-if="scope.row.editing"
-                    v-model="scope.row.inputBalance"
-                    type="text"
-                    @input="validateNumber(scope.row)"
-                    @blur="handleBlur(scope.row)"
-                    @focus="handleFocus(scope.row)"
-                    style="text-align: right"
-                    ref="inputRef"
+                  v-if="scope.row.editing"
+                  ref="inputRef"
+                  v-model="scope.row.inputBalance"
+                  type="text"
+                  style="text-align: right"
+                  @input="validateNumber(scope.row)"
+                  @blur="handleBlur(scope.row)"
+                  @focus="handleFocus(scope.row)"
                 />
-                <span v-else @click="handleClick(scope.row)" class="editable-cell">
-                {{ formatBalance(scope.row.balance) }}
+                <span
+                  v-else
+                  class="editable-cell"
+                  @click="handleClick(scope.row)"
+                >
+                  {{ formatBalance(scope.row.balance) }}
                 </span>
               </div>
               <span v-else>{{ formatBalance(scope.row.balance) }}</span>
             </template>
           </template>
         </el-table-column>
-        <el-table-column align="right" min-width="150">
-        </el-table-column>
+        <el-table-column
+          align="right"
+          min-width="150"
+        />
       </el-table>
 
-      <el-dialog v-model="dialogOpen" width="800px" append-to-body :title="dialogTitle" :close-on-click-modal="false"
-                 @close="cancel">
-        <el-alert v-if="isBalance" type="success" show-icon :closable="false"
-                  center
-                  title="报表数据平衡！">
-        </el-alert>
-        <el-alert v-if="!isBalance" type="warning" show-icon :closable="false"
-                  :title="balanceTitle">
-        </el-alert>
-        <div class="balance-check-content" v-if="!isBalance">
+      <el-dialog
+        v-model="dialogOpen"
+        width="800px"
+        append-to-body
+        :title="dialogTitle"
+        :close-on-click-modal="false"
+        @close="cancel"
+      >
+        <el-alert
+          v-if="isBalance"
+          type="success"
+          show-icon
+          :closable="false"
+          center
+          title="报表数据平衡！"
+        />
+        <el-alert
+          v-if="!isBalance"
+          type="warning"
+          show-icon
+          :closable="false"
+          :title="balanceTitle"
+        />
+        <div
+          v-if="!isBalance"
+          class="balance-check-content"
+        >
           <div class="balance-calculation">
             <div class="balance-item">
-              <p class="balance-amount" v-if="endingBalance !== 0.00">{{ formatBalance(endingBalance) }}</p>
-              <p class="balance-amount" v-else>0.00</p>
-              <p class="balance-label">期末现金及现金等价物余额(38行)</p>
+              <p
+                v-if="endingBalance !== 0.00"
+                class="balance-amount"
+              >
+                {{ formatBalance(endingBalance) }}
+              </p>
+              <p
+                v-else
+                class="balance-amount"
+              >
+                0.00
+              </p>
+              <p class="balance-label">
+                期末现金及现金等价物余额(38行)
+              </p>
             </div>
-            <div class="operator">−</div>
-            <div class="balance-item" style="width: 40%">
-              <p class="balance-amount" v-if="startingBalance !== 0.00">{{ formatBalance(startingBalance) }}</p>
-              <p class="balance-amount" v-else>0.00</p>
-              <p class="balance-label">科目初始余额</p>
+            <div class="operator">
+              −
+            </div>
+            <div
+              class="balance-item"
+              style="width: 40%"
+            >
+              <p
+                v-if="startingBalance !== 0.00"
+                class="balance-amount"
+              >
+                {{ formatBalance(startingBalance) }}
+              </p>
+              <p
+                v-else
+                class="balance-amount"
+              >
+                0.00
+              </p>
+              <p class="balance-label">
+                科目初始余额
+              </p>
               <!-- 分割线 -->
-              <hr class="balance-divider"/>
+              <hr class="balance-divider">
               <!-- 明细列表 -->
               <div
-                  class="balance-detail"
-                  v-for="(item, index) in bookInitBalances"
-                  :key="index"
+                v-for="(item, index) in bookInitBalances"
+                :key="index"
+                class="balance-detail"
               >
                 <span class="balance-detail-left">·{{ item.code }}{{ item.name }}</span>
-                <span class="balance-detail-right">{{ formatBalance(item.balance)}}</span>
+                <span class="balance-detail-right">{{ formatBalance(item.balance) }}</span>
               </div>
             </div>
-            <div class="operator">=</div>
+            <div class="operator">
+              =
+            </div>
 
             <div class="balance-item">
-              <p class="balance-amount" v-if="difference !== 0.00">{{ formatBalance(difference) }}</p>
-              <p class="balance-amount" v-else>0.00</p>
-              <p class="balance-label">差额</p>
+              <p
+                v-if="difference !== 0.00"
+                class="balance-amount"
+              >
+                {{ formatBalance(difference) }}
+              </p>
+              <p
+                v-else
+                class="balance-amount"
+              >
+                0.00
+              </p>
+              <p class="balance-label">
+                差额
+              </p>
             </div>
           </div>
         </div>
-        <div slot="footer" class="dialog-footer" v-if="!isBalance">
-          <el-button type="primary" @click="autosave" :loading="saveLoading">自动调平并保存</el-button>
-          <el-button @click="forceSave" v-if="ifSaveType" :loading="saveLoading">直接保存</el-button>
-          <el-button @click="cancel">{{ $t('systemCancel') }}</el-button>
-        </div>
+        <template #footer>
+          <div
+            v-if="!isBalance"
+            class="dialog-footer"
+          >
+            <el-button
+              type="primary"
+              :loading="saveLoading"
+              @click="autosave"
+            >
+              自动调平并保存
+            </el-button>
+            <el-button
+              v-if="ifSaveType"
+              :loading="saveLoading"
+              @click="forceSave"
+            >
+              直接保存
+            </el-button>
+            <el-button @click="cancel">
+              {{ $t('systemCancel') }}
+            </el-button>
+          </div>
+        </template>
       </el-dialog>
     </el-card>
   </div>

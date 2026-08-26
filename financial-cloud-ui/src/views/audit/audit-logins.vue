@@ -2,40 +2,54 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="params" ref="queryForm" :inline="true"><!-- class="search-form" -->
+        <el-form
+          ref="queryForm"
+          :model="params"
+          :inline="true"
+        >
+          <!-- class="search-form" -->
           <el-form-item :label="$t('jbx.users.username')">
             <el-input
-                v-model="params.username"
-                clearable
-                @keyup.enter.native="handleQuery"
+              v-model="params.username"
+              clearable
+              @keyup.enter.native="handleQuery"
             />
           </el-form-item>
           <el-form-item :label="$t('jbx.users.displayName')">
             <el-input
-                v-model="params.displayName"
-                clearable
-                @keyup.enter.native="handleQuery"
+              v-model="params.displayName"
+              clearable
+              @keyup.enter.native="handleQuery"
             />
           </el-form-item>
           <el-form-item :label="$t('jbx.users.employeeNumber')">
             <el-input
-                v-model="params.employeeNumber"
-                clearable
-                @keyup.enter.native="handleQuery"
+              v-model="params.employeeNumber"
+              clearable
+              @keyup.enter.native="handleQuery"
             />
           </el-form-item>
           <el-form-item :label="$t('jbx.text.startDate')">
-            <el-date-picker v-model="params.startDatePicker" type="datetime">
-            </el-date-picker>
+            <el-date-picker
+              v-model="params.startDatePicker"
+              type="datetime"
+            />
           </el-form-item>
           <el-form-item :label="$t('jbx.text.endDate')">
-            <el-date-picker v-model="params.endDatePicker" type="datetime">
-            </el-date-picker>
+            <el-date-picker
+              v-model="params.endDatePicker"
+              type="datetime"
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleQuery">{{ $t('jbx.text.query') }}
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
+              {{ $t('jbx.text.query') }}
             </el-button>
-            <el-button @click="handleReset">{{ $t('jbx.text.reset') }}
+            <el-button @click="handleReset">
+              {{ $t('jbx.text.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -43,45 +57,85 @@
     </el-card>
 
     <el-card class="common-card">
-      <el-table ref='multipleTable'
-                v-loading="loading"
-                border
-                :data="sessions"
-                @selection-change="handleSelectionChange">
-        <el-table-column prop="sessionId" :label="$t('jbx.history.loginSessionid')" align="center"
-                         min-width="120"/>
-        <el-table-column prop="username" :label="$t('jbx.history.loginUsername')" align="center"
-                         min-width="90"/>
-        <el-table-column prop="message" :label="$t('jbx.users.status')" align="center"
-                         min-width="50"/>
-        <el-table-column prop="sourceIp" :label="$t('jbx.history.loginSourceip')" align="center"
-                         min-width="90"/>
-        <el-table-column prop="location" :label="$t('jbx.history.loginLocation')" align="center"
-                         min-width="90"/>
-        <el-table-column prop="browser" :label="$t('jbx.history.loginBrowser')" align="center"
-                         min-width="90"/>
-        <el-table-column prop="platform" :label="$t('jbx.history.loginPlatform')" align="center"
-                         min-width="120"/>
-        <el-table-column prop="loginTime" :label="$t('jbx.history.loginLogintime')" align="center"
-                         min-width="120"/>
-        <el-table-column prop="logoutTime" :label="$t('jbx.history.loginLogouttime')" align="center"
-                         min-width="120"/>
+      <el-table
+        ref="multipleTable"
+        v-loading="loading"
+        border
+        :data="sessions"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          prop="sessionId"
+          :label="$t('jbx.history.loginSessionid')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="username"
+          :label="$t('jbx.history.loginUsername')"
+          align="center"
+          min-width="90"
+        />
+        <el-table-column
+          prop="message"
+          :label="$t('jbx.users.status')"
+          align="center"
+          min-width="50"
+        />
+        <el-table-column
+          prop="sourceIp"
+          :label="$t('jbx.history.loginSourceip')"
+          align="center"
+          min-width="90"
+        />
+        <el-table-column
+          prop="location"
+          :label="$t('jbx.history.loginLocation')"
+          align="center"
+          min-width="90"
+        />
+        <el-table-column
+          prop="browser"
+          :label="$t('jbx.history.loginBrowser')"
+          align="center"
+          min-width="90"
+        />
+        <el-table-column
+          prop="platform"
+          :label="$t('jbx.history.loginPlatform')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="loginTime"
+          :label="$t('jbx.history.loginLogintime')"
+          align="center"
+          min-width="120"
+        />
+        <el-table-column
+          prop="logoutTime"
+          :label="$t('jbx.history.loginLogouttime')"
+          align="center"
+          min-width="120"
+        />
       </el-table>
-      <pagination v-if="total>0" :total="total"
-                  :page.sync="params.pageNumber"
-                  :limit.sync="params.pageSize"
-                  @pagination="getList"
-                  :page-sizes="params.pageSizeOptions"/>
+      <pagination
+        v-if="total>0"
+        v-model:page="params.pageNumber"
+        v-model:limit="params.pageSize"
+        :total="total"
+        :page-sizes="params.pageSizeOptions"
+        @pagination="getList"
+      />
     </el-card>
   </div>
-
 </template>
 
 <script lang="ts">
 import {loginHistory} from "@/api/audit/audit";
 
 export default {
-  name: 'sessions',
+  name: 'Sessions',
   data() {
     return {
       loading: true,

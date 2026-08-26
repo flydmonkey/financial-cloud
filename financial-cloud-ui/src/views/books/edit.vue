@@ -1,94 +1,161 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="40%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="40%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" inline-message>
-        <el-form-item prop="name" label="账套名称" :required="true">
-          <el-input v-model="form.name"/>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
+        <el-form-item
+          prop="name"
+          label="账套名称"
+          :required="true"
+        >
+          <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item prop="standardId" label="会计准则" :required="true">
-          <el-select v-model="form.standardId" clearable :disabled="props.formId">
+        <el-form-item
+          prop="standardId"
+          label="会计准则"
+          :required="true"
+        >
+          <el-select
+            v-model="form.standardId"
+            clearable
+            :disabled="props.formId"
+          >
             <el-option
-                v-for="dict in accounting_standards"
-                :key="dict.id"
-                :label="dict.name"
-                :value="dict.id"
+              v-for="dict in accounting_standards"
+              :key="dict.id"
+              :label="dict.name"
+              :value="dict.id"
             />
           </el-select>
-<!--          <el-alert v-if="isEdit" type="info" show-icon :closable="false"
+          <!--          <el-alert v-if="isEdit" type="info" show-icon :closable="false"
                     title="会计准则一旦发生更改，将影响当前账套下关联的所有会计科目。">
           </el-alert>-->
         </el-form-item>
-        <el-form-item prop="enableDate" label="建账期间" :required="true">
+        <el-form-item
+          prop="enableDate"
+          label="建账期间"
+          :required="true"
+        >
           <el-date-picker
-              style="width: 100%"
-              v-model="form.enableDate"
-              type="month"
-              placeholder="选择账套启用年月"
-              format="YYYY-MM"
-              value-format="YYYY-MM"
+            v-model="form.enableDate"
+            style="width: 100%"
+            type="month"
+            placeholder="选择账套启用年月"
+            format="YYYY-MM"
+            value-format="YYYY-MM"
           />
         </el-form-item>
-        <el-form-item prop="vatType" label="纳税性质" :required="true">
-          <el-select v-model="form.vatType" clearable>
+        <el-form-item
+          prop="vatType"
+          label="纳税性质"
+          :required="true"
+        >
+          <el-select
+            v-model="form.vatType"
+            clearable
+          >
             <el-option
-                v-for="dict in vat_types"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
+              v-for="dict in vat_types"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
             />
           </el-select>
         </el-form-item>
-        <el-form-item prop="companyName" label="单位名称" :required="true">
-          <el-input v-model="form.companyName"/>
+        <el-form-item
+          prop="companyName"
+          label="单位名称"
+          :required="true"
+        >
+          <el-input v-model="form.companyName" />
         </el-form-item>
-        <el-form-item prop="creditCode" label="纳税人识别号">
-          <el-input v-model="form.creditCode"/>
+        <el-form-item
+          prop="creditCode"
+          label="纳税人识别号"
+        >
+          <el-input v-model="form.creditCode" />
         </el-form-item>
-        <el-form-item prop="industry" label="所属行业">
-          <el-select v-model="form.industry" clearable>
+        <el-form-item
+          prop="industry"
+          label="所属行业"
+        >
+          <el-select
+            v-model="form.industry"
+            clearable
+          >
             <el-option-group
-                v-for="group in books_industry"
-                :key="group.label"
-                :label="group.label"
+              v-for="group in books_industry"
+              :key="group.label"
+              :label="group.label"
             >
               <el-option
-                  v-for="item in group.options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
+                v-for="item in group.options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
               />
             </el-option-group>
           </el-select>
         </el-form-item>
-        <el-form-item prop="address" label="单位地址">
-          <el-input v-model="form.address"/>
+        <el-form-item
+          prop="address"
+          label="单位地址"
+        >
+          <el-input v-model="form.address" />
         </el-form-item>
-        <el-form-item prop="voucherReviewed" label="凭证审核">
+        <el-form-item
+          prop="voucherReviewed"
+          label="凭证审核"
+        >
           <el-radio-group v-model="form.voucherReviewed">
-            <el-radio :value="0">关闭</el-radio>
-            <el-radio :value="1">开启</el-radio>
+            <el-radio :value="0">
+              关闭
+            </el-radio>
+            <el-radio :value="1">
+              开启
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item prop="status" :label="$t('jbx.text.status.status')">
+        <el-form-item
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+        >
           <el-switch
-              :width="44"
-              v-model="form.status"
-              :active-value="1"
-              :inactive-value="0"
-              active-icon-class="el-icon-close"
-              inactive-icon-class="el-icon-check">
-          </el-switch>
+            v-model="form.status"
+            :width="44"
+            :active-value="1"
+            :inactive-value="0"
+            active-icon-class="el-icon-close"
+            inactive-icon-class="el-icon-check"
+          />
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" :loading="loading" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="loading"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

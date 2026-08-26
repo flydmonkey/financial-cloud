@@ -1,13 +1,22 @@
 <template>
-	<div class="popup-result">
-		<p class="title">最近5次运行时间</p>
-		<ul class="popup-result-scroll">
-			<template v-if='isShow'>
-				<li v-for='item in resultList' :key="item">{{item}}</li>
-			</template>
-			<li v-else>计算结果中...</li>
-		</ul>
-	</div>
+  <div class="popup-result">
+    <p class="title">
+      最近5次运行时间
+    </p>
+    <ul class="popup-result-scroll">
+      <template v-if="isShow">
+        <li
+          v-for="item in resultList"
+          :key="item"
+        >
+          {{ item }}
+        </li>
+      </template>
+      <li v-else>
+        计算结果中...
+      </li>
+    </ul>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -282,7 +291,7 @@ function expressionChange(): any {
                             continue;
                         }
                         // 循环"秒"数组
-                        goSecond: for (let si: any = sIdx; si <= sDate.length - 1; si++) {
+                        for (let si: any = sIdx; si <= sDate.length - 1; si++) {
                             let ss: any = sDate[si] < 10 ? '0' + sDate[si] : sDate[si];
                             // 添加当前时间（时间合法性在日期循环时已经判断）
                             if (MM !== '00' && DD !== '00') {

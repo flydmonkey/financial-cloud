@@ -1,5 +1,9 @@
 <template>
-  <div class="chinaMap" ref="chartRef" style="width: 100%;height: 500px;"></div>
+  <div
+    ref="chartRef"
+    class="chinaMap"
+    style="width: 100%;height: 500px;"
+  />
 </template>
 
 <script lang="ts" setup>

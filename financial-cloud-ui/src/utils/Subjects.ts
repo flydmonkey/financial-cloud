@@ -131,7 +131,7 @@ export function getSubjectIndent(subjectCode: string) {
  * @param data
  */
 export function getSubjectAllNodeIds(data: any) {
-    let ids: any = [];
+    const ids: any = [];
 
     function recurse(nodes: any) {
         nodes.forEach((node: any) => {

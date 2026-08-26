@@ -1,6 +1,7 @@
 <template>
   <div class="component-upload-image">
     <el-upload
+      ref="imageUpload"
       multiple
       :action="uploadImgUrl"
       list-type="picture-card"
@@ -9,7 +10,6 @@
       :limit="limit"
       :on-error="handleUploadError"
       :on-exceed="handleExceed"
-      ref="imageUpload"
       :before-remove="handleDelete"
       :show-file-list="true"
       :headers="headers"
@@ -17,10 +17,15 @@
       :on-preview="handlePictureCardPreview"
       :class="{ hide: fileList.length >= limit }"
     >
-      <el-icon class="avatar-uploader-icon"><plus /></el-icon>
+      <el-icon class="avatar-uploader-icon">
+        <plus />
+      </el-icon>
     </el-upload>
     <!-- 上传提示 -->
-    <div class="el-upload__tip" v-if="showTip">
+    <div
+      v-if="showTip"
+      class="el-upload__tip"
+    >
       请上传
       <template v-if="fileSize">
         大小不超过 <b style="color: #f56c6c">{{ fileSize }}MB</b>
@@ -40,7 +45,7 @@
       <img
         :src="dialogImageUrl"
         style="display: block; max-width: 100%; margin: 0 auto"
-      />
+      >
     </el-dialog>
   </div>
 </template>

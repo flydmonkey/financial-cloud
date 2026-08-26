@@ -1,22 +1,37 @@
 <template>
   <div v-if="props.auxiliary && props.auxiliary.length > 0">
-    <el-form :model="form" :rules="rules" ref="auxiliaryFormRef" label-width="68px">
+    <el-form
+      ref="auxiliaryFormRef"
+      :model="form"
+      :rules="rules"
+      label-width="68px"
+    >
       <!-- 是否禁用 -->
-      <el-form-item v-for="(item, index) in auxiliary" :key="item.id"
-                    :label="item.label" :prop="item.value">
+      <el-form-item
+        v-for="(item, index) in auxiliary"
+        :key="item.id"
+        :label="item.label"
+        :prop="item.value"
+      >
         <el-select
-            style="width: 300px"
-            :ref="index === 0 ? setFirstSelectRef : undefined"
-            :model-value="itemValue(item).value.map((t: any) => t.value)"
-            multiple :multiple-limit="1" clearable placeholder="请选择"
-            @remove-tag="handleRemoveTag(item, $event)"
-            @clear="handleClear(item)"
-            @change="val => handleChange(item, val)">
-          <el-option v-for="itemOp in listData[item.value]"
-                     :key="itemOp.value"
-                     :label="itemOp.label"
-                     :value="itemOp.value"
-                     :disabled="itemOp.status === 'y'"/>
+          :ref="index === 0 ? setFirstSelectRef : undefined"
+          style="width: 300px"
+          :model-value="itemValue(item).value.map((t: any) => t.value)"
+          multiple
+          :multiple-limit="1"
+          clearable
+          placeholder="请选择"
+          @remove-tag="handleRemoveTag(item, $event)"
+          @clear="handleClear(item)"
+          @change="val => handleChange(item, val)"
+        >
+          <el-option
+            v-for="itemOp in listData[item.value]"
+            :key="itemOp.value"
+            :label="itemOp.label"
+            :value="itemOp.value"
+            :disabled="itemOp.status === 'y'"
+          />
         </el-select>
       </el-form-item>
     </el-form>
@@ -152,7 +167,7 @@ watch(
 
 watch(
     () => props.show,
-    (newVal: Boolean) => {
+    (newVal: boolean) => {
       // 首次挂载后也可以聚焦
       nextTick(() => {
         firstSelectRef.value?.focus()

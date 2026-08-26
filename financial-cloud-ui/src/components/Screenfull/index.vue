@@ -1,6 +1,6 @@
 <template>
   <div @click="toggle">
-    <svg-icon :icon-class="isFullscreen ? 'exit-fullscreen' : 'fullscreen'"/>
+    <svg-icon :icon-class="isFullscreen ? 'exit-fullscreen' : 'fullscreen'" />
     <span style="margin-left: 5px">{{ isFullscreen ? "退出全屏" : '全屏' }}</span>
   </div>
 </template>

@@ -1,85 +1,175 @@
 <template>
   <div class="app-container">
     <el-card class="common-card">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="120px"
+      >
         <el-row :gutter="30">
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.apps.adapterName') + '：'" prop="instName">
-              <el-input v-model="form.instName" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.apps.adapterName') + '：'"
+              prop="instName"
+            >
+              <el-input
+                v-model="form.instName"
+                placeholder=""
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.fullName') + '：'" prop="fullName">
-              <el-input v-model="form.fullName" placeholder=""/>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="LOGO：" prop="logo">
-              <el-input v-model="form.logo" placeholder=""/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.backgroundImage') + '：'" prop="backgroundImage">
-              <el-input v-model="form.backgroundImage" placeholder=""/>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.domain') + '：'" prop="domain">
-              <el-input v-model="form.domain" placeholder=""/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.frontTitle') + '：'" prop="frontTitle">
-              <el-input v-model="form.frontTitle" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.institutions.fullName') + '：'"
+              prop="fullName"
+            >
+              <el-input
+                v-model="form.fullName"
+                placeholder=""
+              />
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.consoleDomain') + '：'" prop="consoleDomain">
-              <el-input v-model="form.consoleDomain" placeholder=""/>
+            <el-form-item
+              label="LOGO："
+              prop="logo"
+            >
+              <el-input
+                v-model="form.logo"
+                placeholder=""
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.consoleTitle') + '：'" prop="consoleTitle">
-              <el-input v-model="form.consoleTitle" placeholder=""/>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.defaultUri') + '：'" prop="defaultUri">
-              <el-input v-model="form.defaultUri" placeholder=""/>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item :label="$t('jbx.organizations.contact') + '：'" prop="configName">
-              <el-input v-model="form.contact" placeholder=""/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.phone') + '：'" prop="phone">
-              <el-input v-model="form.phone" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.institutions.backgroundImage') + '：'"
+              prop="backgroundImage"
+            >
+              <el-input
+                v-model="form.backgroundImage"
+                placeholder=""
+              />
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.institutions.email') + '：'" prop="email">
-              <el-input v-model="form.email" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.institutions.domain') + '：'"
+              prop="domain"
+            >
+              <el-input
+                v-model="form.domain"
+                placeholder=""
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('jbx.users.workStreetAddress') + '：'" prop="address">
-              <el-input v-model="form.address" placeholder=""/>
+            <el-form-item
+              :label="$t('jbx.institutions.frontTitle') + '：'"
+              prop="frontTitle"
+            >
+              <el-input
+                v-model="form.frontTitle"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.institutions.consoleDomain') + '：'"
+              prop="consoleDomain"
+            >
+              <el-input
+                v-model="form.consoleDomain"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.institutions.consoleTitle') + '：'"
+              prop="consoleTitle"
+            >
+              <el-input
+                v-model="form.consoleTitle"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.institutions.defaultUri') + '：'"
+              prop="defaultUri"
+            >
+              <el-input
+                v-model="form.defaultUri"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.organizations.contact') + '：'"
+              prop="configName"
+            >
+              <el-input
+                v-model="form.contact"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.institutions.phone') + '：'"
+              prop="phone"
+            >
+              <el-input
+                v-model="form.phone"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.institutions.email') + '：'"
+              prop="email"
+            >
+              <el-input
+                v-model="form.email"
+                placeholder=""
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item
+              :label="$t('jbx.users.workStreetAddress') + '：'"
+              prop="address"
+            >
+              <el-input
+                v-model="form.address"
+                placeholder=""
+              />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
 
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">{{$t('jbx.text.submit')}}</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button
+            type="primary"
+            @click="submitForm"
+          >
+            {{ $t('jbx.text.submit') }}
+          </el-button>
+        </div>
+      </template>
     </el-card>
   </div>
 </template>

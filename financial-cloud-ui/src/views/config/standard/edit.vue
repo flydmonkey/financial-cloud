@@ -1,30 +1,54 @@
 <template>
-  <el-drawer v-model="dialogStatus" :close-on-click-modal="false" size="40%"
-             @close="dialogOfClosedMethods(false)">
+  <el-drawer
+    v-model="dialogStatus"
+    :close-on-click-modal="false"
+    size="40%"
+    @close="dialogOfClosedMethods(false)"
+  >
     <template #header>
       <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" inline-message>
-        <el-form-item prop="name" :label="t('accountingStandardName')" :required="true">
-          <el-input v-model="form.name"/>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
+        <el-form-item
+          prop="name"
+          :label="t('accountingStandardName')"
+          :required="true"
+        >
+          <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item prop="status" :label="$t('jbx.text.status.status')">
+        <el-form-item
+          prop="status"
+          :label="$t('jbx.text.status.status')"
+        >
           <el-switch
-              :width="44"
-              v-model="form.status"
-              :active-value="1"
-              :inactive-value="0"
-              active-icon-class="el-icon-close"
-              inactive-icon-class="el-icon-check">
-          </el-switch>
+            v-model="form.status"
+            :width="44"
+            :active-value="1"
+            :inactive-value="0"
+            active-icon-class="el-icon-close"
+            inactive-icon-class="el-icon-check"
+          />
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="dialogOfClosedMethods(false)">{{ t('org.cancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+        <el-button @click="dialogOfClosedMethods(false)">
+          {{ t('org.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          @click="submitForm"
+        >
+          {{ t('org.confirm') }}
+        </el-button>
       </div>
     </template>
   </el-drawer>

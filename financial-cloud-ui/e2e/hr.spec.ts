@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {loginViaApi} from './helpers/auth'
+import {expectPagesOpen, loginViaApi, loginViaUi} from './helpers/auth'
 
 test.describe('hr module', () => {
     test('employee and salary APIs respond', async ({request}) => {
@@ -16,5 +16,14 @@ test.describe('hr module', () => {
             const body = await res.json()
             expect(body.code).toBe(0)
         }
+    })
+
+    test('hr pages open', async ({page}) => {
+        await loginViaUi(page)
+        await expectPagesOpen(page, [
+            '/hr/employee',
+            '/hr/salary-summary',
+            '/hr/salary-detail',
+        ])
     })
 })

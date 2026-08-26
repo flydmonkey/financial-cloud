@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {loginViaApi} from './helpers/auth'
+import {expectPagesOpen, loginViaApi, loginViaUi} from './helpers/auth'
 
 test.describe('journal module', () => {
     test('journal APIs respond', async ({request}) => {
@@ -17,5 +17,14 @@ test.describe('journal module', () => {
             const body = await res.json()
             expect(body.code).toBe(0)
         }
+    })
+
+    test('journal pages open', async ({page}) => {
+        await loginViaUi(page)
+        await expectPagesOpen(page, [
+            '/journal/journalaccout',
+            '/journal/journalentry',
+            '/journal/journalsummary',
+        ])
     })
 })

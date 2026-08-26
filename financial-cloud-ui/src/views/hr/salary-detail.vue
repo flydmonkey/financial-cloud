@@ -2,45 +2,67 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="68px">
-          <el-form-item label="姓名" prop="displayName">
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          label-width="68px"
+        >
+          <el-form-item
+            label="姓名"
+            prop="displayName"
+          >
             <el-input
-                v-model="queryParams.employeeName"
-                placeholder="请输入员工姓名"
-                clearable
-                @keyup.enter="handleQuery"
+              v-model="queryParams.employeeName"
+              placeholder="请输入员工姓名"
+              clearable
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="工号" prop="employeeNumber">
+          <el-form-item
+            label="工号"
+            prop="employeeNumber"
+          >
             <el-input
-                v-model="queryParams.employeeNumber"
-                placeholder="请输入工号"
-                clearable
-                @keyup.enter="handleQuery"
+              v-model="queryParams.employeeNumber"
+              placeholder="请输入工号"
+              clearable
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item label="所属月份" prop="belongDate">
+          <el-form-item
+            label="所属月份"
+            prop="belongDate"
+          >
             <el-date-picker
-                v-model="queryParams.belongDateRange"
-                type="monthrange"
-                unlink-panels
-                range-separator="至"
-                start-placeholder="起始月份"
-                end-placeholder="结束月份"
-                value-format="YYYY-MM"
-                :shortcuts="shortcuts"
+              v-model="queryParams.belongDateRange"
+              type="monthrange"
+              unlink-panels
+              range-separator="至"
+              start-placeholder="起始月份"
+              end-placeholder="结束月份"
+              value-format="YYYY-MM"
+              :shortcuts="shortcuts"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
     </el-card>
     <el-card class="common-card">
       <div class="btn-form">
-        <el-button type="success" plain @click="exportTaxItems">
+        <el-button
+          type="success"
+          plain
+          @click="exportTaxItems"
+        >
           {{ $t('jbx.text.export') }}
         </el-button>
         <!--        <el-button type="primary"
@@ -59,197 +81,363 @@
                 >{{ t('org.button.deleteBatch') }}
                 </el-button>-->
       </div>
-      <el-table v-loading="loading" :data="dataList" show-summary :summary-method="getSummaries"
-                border
-                @selection-change="handleSelectionChange">
+      <el-table
+        v-loading="loading"
+        :data="dataList"
+        show-summary
+        :summary-method="getSummaries"
+        border
+        @selection-change="handleSelectionChange"
+      >
         <!--        <el-table-column type="selection" width="55" align="center"/>-->
-        <el-table-column fixed prop="belongDate" label="月份" align="center" width="80"
-                         :show-overflow-tooltip="true">
-        </el-table-column>
-        <el-table-column fixed prop="employeeNumber" label="工号" align="center" width="150"
-                         :show-overflow-tooltip="true">
-        </el-table-column>
-        <el-table-column fixed prop="employeeName" label="姓名" align="center" width="120"
-                         :show-overflow-tooltip="true">
-        </el-table-column>
-        <el-table-column label="员工类型" align="center" prop="employeeType" min-width="80">
+        <el-table-column
+          fixed
+          prop="belongDate"
+          label="月份"
+          align="center"
+          width="80"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          fixed
+          prop="employeeNumber"
+          label="工号"
+          align="center"
+          width="150"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          fixed
+          prop="employeeName"
+          label="姓名"
+          align="center"
+          width="120"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          label="员工类型"
+          align="center"
+          prop="employeeType"
+          min-width="80"
+        >
           <template #default="scope">
-            <dict-tag-number :options="employee_types" :value="scope.row.employeeType"/>
+            <dict-tag-number
+              :options="employee_types"
+              :value="scope.row.employeeType"
+            />
           </template>
         </el-table-column>
-        <el-table-column label="应发金额" align="center">
-          <el-table-column prop="payPost" label="工资" align="right" width="100"
-                           :show-overflow-tooltip="true">
+        <el-table-column
+          label="应发金额"
+          align="center"
+        >
+          <el-table-column
+            prop="payPost"
+            label="工资"
+            align="right"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               <b v-if="scope.row.employeeType === 'NORMAL'||scope.row.employeeType === 'INTERN'||scope.row.employeeType === 'RETIREMENT'">
                 {{ formatAmount(scope.row.payBasic + scope.row.payPost + scope.row.payMerit) }}</b>
               <b v-if="scope.row.employeeType === 'PARTTIME'">{{ formatAmount(scope.row.laborFee) }}</b>
             </template>
           </el-table-column>
-          <el-table-column prop="payBasic" label="基本工资" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="payBasic"
+            label="基本工资"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.payBasic) }}
             </template>
           </el-table-column>
-          <el-table-column prop="payPost" label="岗位工资" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="payPost"
+            label="岗位工资"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.payPost) }}
             </template>
           </el-table-column>
-          <el-table-column prop="payMerit" label="绩效" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="payMerit"
+            label="绩效"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.payMerit) }}
             </template>
           </el-table-column>
-          <el-table-column prop="laborFee" label="劳务费" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="laborFee"
+            label="劳务费"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.laborFee) }}
             </template>
           </el-table-column>
-          <el-table-column prop="bonus" label="奖金" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="bonus"
+            label="奖金"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.bonus) }}
             </template>
           </el-table-column>
-          <el-table-column prop="overtime" label="加班补贴" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="overtime"
+            label="加班补贴"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.overtime) }}
             </template>
           </el-table-column>
-          <el-table-column prop="allowance" label="津贴" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="allowance"
+            label="津贴"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.allowance) }}
             </template>
           </el-table-column>
-          <el-table-column prop="backPay" label="补发工资" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="backPay"
+            label="补发工资"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.backPay) }}
             </template>
           </el-table-column>
         </el-table-column>
-        <el-table-column label="应扣金额" align="center">
-          <el-table-column prop="totalSocialInsurance" label="代扣社保合计" align="center" width="110"
-                           :show-overflow-tooltip="true">
+        <el-table-column
+          label="应扣金额"
+          align="center"
+        >
+          <el-table-column
+            prop="totalSocialInsurance"
+            label="代扣社保合计"
+            align="center"
+            width="110"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
-            <span :class="{ 'red-font': scope.row.totalSocialInsurance > 0 }">{{ formatAmount(scope.row.totalSocialInsurance) }}</span>
+              <span :class="{ 'red-font': scope.row.totalSocialInsurance > 0 }">{{ formatAmount(scope.row.totalSocialInsurance) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="providentFund" label="代扣公积金" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="providentFund"
+            label="代扣公积金"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               <span :class="{ 'red-font': scope.row.providentFund > 0 }">{{ formatAmount(scope.row.providentFund) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="attendance" label="请假考勤" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="attendance"
+            label="请假考勤"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               <span :class="{ 'red-font': scope.row.attendance > 0 }">{{ formatAmount(scope.row.attendance) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="otherDeductions" label="其他扣额" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="otherDeductions"
+            label="其他扣额"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               <span :class="{ 'red-font': scope.row.otherDeductions > 0 }">{{ formatAmount(scope.row.otherDeductions) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="personalTax" label="个税" align="center" width="100"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="personalTax"
+            label="个税"
+            align="center"
+            width="100"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               <span :class="{ 'red-font': scope.row.personalTax > 0 }">{{ formatAmount(scope.row.personalTax) }}</span>
             </template>
           </el-table-column>
         </el-table-column>
-        <el-table-column label="企业缴纳" align="center">
-          <el-table-column prop="businessSocialInsurance" label="社保（公司）" align="center" width="110"
-                           :show-overflow-tooltip="true">
+        <el-table-column
+          label="企业缴纳"
+          align="center"
+        >
+          <el-table-column
+            prop="businessSocialInsurance"
+            label="社保（公司）"
+            align="center"
+            width="110"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.businessSocialInsurance) }}
             </template>
           </el-table-column>
-          <el-table-column prop="businessProvidentFund" label="公积金（公司）" align="center" width="120"
-                           :show-overflow-tooltip="true">
+          <el-table-column
+            prop="businessProvidentFund"
+            label="公积金（公司）"
+            align="center"
+            width="120"
+            :show-overflow-tooltip="true"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.businessProvidentFund) }}
             </template>
           </el-table-column>
         </el-table-column>
-        <el-table-column prop="taxDeduction" label="税务抵扣" align="center" width="110"
-                         :show-overflow-tooltip="true">
+        <el-table-column
+          prop="taxDeduction"
+          label="税务抵扣"
+          align="center"
+          width="110"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.taxDeduction) }}
           </template>
         </el-table-column>
-        <el-table-column prop="payAmount" label="应发工资" align="center" width="110"
-                         :show-overflow-tooltip="true">
+        <el-table-column
+          prop="payAmount"
+          label="应发工资"
+          align="center"
+          width="110"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.payAmount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="taxableWages" label="应税工资" align="center" width="110"
-                         :show-overflow-tooltip="true">
+        <el-table-column
+          prop="taxableWages"
+          label="应税工资"
+          align="center"
+          width="110"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.taxableWages) }}
           </template>
         </el-table-column>
-        <el-table-column prop="totalAmount" label="实发合计" align="center" width="110"
-                         :show-overflow-tooltip="true" fixed="right">
+        <el-table-column
+          prop="totalAmount"
+          label="实发合计"
+          align="center"
+          width="110"
+          :show-overflow-tooltip="true"
+          fixed="right"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.totalAmount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="businessExpenditureCosts" label="公司成本" align="center" width="110"
-                         :show-overflow-tooltip="true" fixed="right">
+        <el-table-column
+          prop="businessExpenditureCosts"
+          label="公司成本"
+          align="center"
+          width="110"
+          :show-overflow-tooltip="true"
+          fixed="right"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.businessExpenditureCosts) }}
           </template>
         </el-table-column>
-        <el-table-column label="收票凭证" align="center" width="100"
-                         :show-overflow-tooltip="true" fixed="right">
+        <el-table-column
+          label="收票凭证"
+          align="center"
+          width="100"
+          :show-overflow-tooltip="true"
+          fixed="right"
+        >
           <template #default="scope">
-            <el-button v-if="scope.row.employeeType === 'PARTTIME' && (scope.row.accrualVoucherId === null ||scope.row.accrualVoucherId ==='')"
-                       type="text"
-                       @click="generateVoucher(scope.row,2)">
+            <el-button
+              v-if="scope.row.employeeType === 'PARTTIME' && (scope.row.accrualVoucherId === null ||scope.row.accrualVoucherId ==='')"
+              type="text"
+              @click="generateVoucher(scope.row,2)"
+            >
               生成
             </el-button>
-            <el-button v-if="scope.row.employeeType === 'PARTTIME' && scope.row.accrualVoucherId !== null &&scope.row.accrualVoucherId !==''"
-                       type="text"
-                       @click="viewVoucher(scope.row.accrualVoucherId)">
+            <el-button
+              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.accrualVoucherId !== null &&scope.row.accrualVoucherId !==''"
+              type="text"
+              @click="viewVoucher(scope.row.accrualVoucherId)"
+            >
               查看
             </el-button>
-             <el-button v-if="scope.row.employeeType === 'PARTTIME' && scope.row.accrualVoucherId !== null &&scope.row.accrualVoucherId !==''"
-                       type="text"
-                       @click="deleteVoucher(scope.row,2)">
+            <el-button
+              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.accrualVoucherId !== null &&scope.row.accrualVoucherId !==''"
+              type="text"
+              @click="deleteVoucher(scope.row,2)"
+            >
               删除
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column label="发放凭证" align="center" width="100"
-                         :show-overflow-tooltip="true" fixed="right">
-            <template #default="scope">
-              <el-button v-if="scope.row.employeeType === 'PARTTIME' && (scope.row.salaryVoucherId === null ||scope.row.salaryVoucherId ==='')"
-                         type="text"
-                         @click="generateVoucher(scope.row,3)">
-                生成
-              </el-button>
-              <el-button v-if="scope.row.employeeType === 'PARTTIME' && scope.row.salaryVoucherId !== null &&scope.row.salaryVoucherId !==''"
-                         type="text"
-                         @click="viewVoucher(scope.row.salaryVoucherId)">
-                查看
-              </el-button>
-              <el-button v-if="scope.row.employeeType === 'PARTTIME' && scope.row.salaryVoucherId !== null &&scope.row.salaryVoucherId !==''"
-                         type="text"
-                         @click="deleteVoucher(scope.row,3)">
-                删除
-              </el-button>
-            </template>
+        <el-table-column
+          label="发放凭证"
+          align="center"
+          width="100"
+          :show-overflow-tooltip="true"
+          fixed="right"
+        >
+          <template #default="scope">
+            <el-button
+              v-if="scope.row.employeeType === 'PARTTIME' && (scope.row.salaryVoucherId === null ||scope.row.salaryVoucherId ==='')"
+              type="text"
+              @click="generateVoucher(scope.row,3)"
+            >
+              生成
+            </el-button>
+            <el-button
+              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.salaryVoucherId !== null &&scope.row.salaryVoucherId !==''"
+              type="text"
+              @click="viewVoucher(scope.row.salaryVoucherId)"
+            >
+              查看
+            </el-button>
+            <el-button
+              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.salaryVoucherId !== null &&scope.row.salaryVoucherId !==''"
+              type="text"
+              @click="deleteVoucher(scope.row,3)"
+            >
+              删除
+            </el-button>
+          </template>
         </el-table-column>
         <!--        <el-table-column label="操作" align="center" fixed="right" width="180">
                   <template #default="scope">
@@ -262,31 +450,56 @@
                 </el-table-column>-->
       </el-table>
       <pagination
-          v-show="total > 0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          :page-sizes="queryParams.pageSizeOptions"
-          @pagination="getList"
+        v-show="total > 0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        :page-sizes="queryParams.pageSizeOptions"
+        @pagination="getList"
       />
     </el-card>
-    <el-dialog v-model="editFlag" width="500px" append-to-body :title="editTitle" :close-on-click-modal="false"
-               @close="cancel">
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="110px" inline-message>
-        <el-form-item prop="belongDate" label="所属月份" :required="true">
+    <el-dialog
+      v-model="editFlag"
+      width="500px"
+      append-to-body
+      :title="editTitle"
+      :close-on-click-modal="false"
+      @close="cancel"
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        inline-message
+      >
+        <el-form-item
+          prop="belongDate"
+          label="所属月份"
+          :required="true"
+        >
           <el-date-picker
-              style="width: 100%"
-              v-model="form.belongDate"
-              type="month"
-              format="YYYY-MM"
-              value-format="YYYY-MM"
+            v-model="form.belongDate"
+            style="width: 100%"
+            type="month"
+            format="YYYY-MM"
+            value-format="YYYY-MM"
           />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="cancel">{{ $t('systemCancel') }}</el-button>
-        <el-button type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancel">
+            {{ $t('systemCancel') }}
+          </el-button>
+          <el-button
+            type="primary"
+            @click="submitForm"
+          >
+            {{ t('org.confirm') }}
+          </el-button>
+        </div>
+      </template>
     </el-dialog>
     <!--    <drawerTable :title="title" :open="open"
                    @dialogOfClosedMethods="dialogOfClosedMethods"></drawerTable>
@@ -294,12 +507,24 @@
                    :form-id="id"
                    @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>-->
     <!-- 添加或修改凭证记录对话框 -->
-    <el-drawer :title="voucherTitle" v-model="voucherOpen" :close-on-click-modal="false" @close="getList" size="1200px">
+    <el-drawer
+      v-model="voucherOpen"
+      :title="voucherTitle"
+      :close-on-click-modal="false"
+      size="1200px"
+      @close="getList"
+    >
       <template #header>
         <h4>{{ voucherTitle }}</h4>
       </template>
-      <voucher-edit v-if="voucherOpen" v-model="voucherForm" :edit="!voucherPreviewMode" :dialog="true" :auto="false"
-                    @submit="submitForm"></voucher-edit>
+      <voucher-edit
+        v-if="voucherOpen"
+        v-model="voucherForm"
+        :edit="!voucherPreviewMode"
+        :dialog="true"
+        :auto="false"
+        @submit="submitForm"
+      />
     </el-drawer>
   </div>
 </template>
@@ -407,64 +632,64 @@ function getList() {
   });
 
   salarySummary(queryParams.value).then((res: any) => {
-    tableSummary = res.data;
+    tableSummary.value = res.data;
   });
 }
 
 const getSummaries = () => {
   const sums: (string | VNode)[] = []
 
-  if (tableSummary != null) {
+  if (tableSummary.value != null) {
     sums[0] = h('div', {style: {textDecoration: 'underline'}}, ['合计',])
-    sums[1] = '人数：' + tableSummary.peopleNumber;
+    sums[1] = '人数：' + tableSummary.value.peopleNumber;
     sums[2] = ''
     sums[3] = ''
-    sums[4] = tableSummary.payBasic + tableSummary.payPost + tableSummary.payMerit + tableSummary.laborFee;
-    sums[5] = tableSummary.payBasic;
-    sums[6] = tableSummary.payPost;
-    sums[7] = tableSummary.payMerit;
-    sums[8] = tableSummary.laborFee;
-    sums[9] = tableSummary.bonus;
-    sums[10] = tableSummary.overtime;
-    sums[11] = tableSummary.allowance;
-    sums[12] = tableSummary.backPay;
+    sums[4] = tableSummary.value.payBasic + tableSummary.value.payPost + tableSummary.value.payMerit + tableSummary.value.laborFee;
+    sums[5] = tableSummary.value.payBasic;
+    sums[6] = tableSummary.value.payPost;
+    sums[7] = tableSummary.value.payMerit;
+    sums[8] = tableSummary.value.laborFee;
+    sums[9] = tableSummary.value.bonus;
+    sums[10] = tableSummary.value.overtime;
+    sums[11] = tableSummary.value.allowance;
+    sums[12] = tableSummary.value.backPay;
     sums[13] = h('div', {
       style: {
-        color: tableSummary.totalSocialInsurance > 0 ? 'red' : '',
+        color: tableSummary.value.totalSocialInsurance > 0 ? 'red' : '',
       }
-    }, [formatAmount(tableSummary.totalSocialInsurance),]);
+    }, [formatAmount(tableSummary.value.totalSocialInsurance),]);
     sums[14] = h('div', {
       style: {
-        color: tableSummary.providentFund > 0 ? 'red' : '',
+        color: tableSummary.value.providentFund > 0 ? 'red' : '',
       }
-    }, [formatAmount(tableSummary.providentFund),]);
+    }, [formatAmount(tableSummary.value.providentFund),]);
     sums[15] = h('div', {
       style: {
-        color: tableSummary.attendance > 0 ? 'red' : '',
+        color: tableSummary.value.attendance > 0 ? 'red' : '',
       }
-    }, [formatAmount(tableSummary.attendance),]);
+    }, [formatAmount(tableSummary.value.attendance),]);
     sums[16] = h('div', {
       style: {
-        color: tableSummary.otherDeductions > 0 ? 'red' : '',
+        color: tableSummary.value.otherDeductions > 0 ? 'red' : '',
       }
-    }, [formatAmount(tableSummary.otherDeductions),]);
+    }, [formatAmount(tableSummary.value.otherDeductions),]);
     sums[17] = h('div', {
       style: {
-        color: tableSummary.personalTax > 0 ? 'red' : '',
+        color: tableSummary.value.personalTax > 0 ? 'red' : '',
       }
-    }, [formatAmount(tableSummary.personalTax),]);
-    sums[18] = tableSummary.businessSocialInsurance;
-    sums[19] = tableSummary.businessProvidentFund;
-    sums[20] = tableSummary.taxDeduction;
-    sums[21] = tableSummary.payAmount;
-    sums[22] = tableSummary.taxableWages;
-    sums[23] = formatAmount(tableSummary.totalAmount);
+    }, [formatAmount(tableSummary.value.personalTax),]);
+    sums[18] = tableSummary.value.businessSocialInsurance;
+    sums[19] = tableSummary.value.businessProvidentFund;
+    sums[20] = tableSummary.value.taxDeduction;
+    sums[21] = tableSummary.value.payAmount;
+    sums[22] = tableSummary.value.taxableWages;
+    sums[23] = formatAmount(tableSummary.value.totalAmount);
     sums[24] = h('div', {
       style: {
         textDecoration: 'underline',
         fontWeight: "bold"
       }
-    }, [formatAmount(tableSummary.businessExpenditureCosts),]);
+    }, [formatAmount(tableSummary.value.businessExpenditureCosts),]);
   }
 
   return sums

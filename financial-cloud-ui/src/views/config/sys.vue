@@ -1,43 +1,74 @@
 <template>
   <div class="app-container">
     <el-card class="common-card">
-      <el-form style="margin: 20px 0 " label-position="right" label-width="200">
+      <el-form
+        style="margin: 20px 0 "
+        label-position="right"
+        label-width="200"
+      >
         <template v-for="(item, index) in sysCfgList">
-          <el-form-item :key="index" :label="item.configName" required
-                        v-if="item.configKey !== 'sys.subject.codes.length'">
-            <el-date-picker v-if="['sys.payment.term.current', 'sys.payment.term.start'].indexOf(item.configKey) > -1"
-                            v-model="item.configValue"
-                            value-format="YYYY-MM" format="YYYY-MM"
-                            readonly></el-date-picker>
-            <el-switch v-else-if="item.configKey === 'sys.initialize.task'"
-                       active-value="true"
-                       inactive-value="false"
-                       disabled
-                       v-model="item.configValue"></el-switch>
-            <el-switch v-else-if="item.configKey === 'sys.assist.acc.enabled'"
-                       active-value="true"
-                       inactive-value="false"
-                       :loading="buttonLoading"
-                       v-model="item.configValue"
-                       @change="handleAssistAccChange(item)"></el-switch>
+          <el-form-item
+            v-if="item.configKey !== 'sys.subject.codes.length'"
+            :key="index"
+            :label="item.configName"
+            required
+          >
+            <el-date-picker
+              v-if="['sys.payment.term.current', 'sys.payment.term.start'].indexOf(item.configKey) > -1"
+              v-model="item.configValue"
+              value-format="YYYY-MM"
+              format="YYYY-MM"
+              readonly
+            />
+            <el-switch
+              v-else-if="item.configKey === 'sys.initialize.task'"
+              v-model="item.configValue"
+              active-value="true"
+              inactive-value="false"
+              disabled
+            />
+            <el-switch
+              v-else-if="item.configKey === 'sys.assist.acc.enabled'"
+              v-model="item.configValue"
+              active-value="true"
+              inactive-value="false"
+              :loading="buttonLoading"
+              @change="handleAssistAccChange(item)"
+            />
             <template v-else-if="item.configKey === 'sys.subject.level'">
-              <el-input-number readonly :min="sysCfgMap['sys.subject.level'].level" :max="9"
-                               v-model="item.configValue" @change="handleLevel(item, $event)"></el-input-number>
-              <div style="width: 100%;margin: 10px 0">编辑各级科目编码长度：</div>
-              <template v-for="idx in item.configValue" :key="'len'+ idx">
-                <el-input-number readonly style="margin-right: 30px"
-                                 :min="sysCfgMap['sys.subject.codes.length'].oldLens[idx-1]"
-                                 :max="6"
-                                 @change="handleLevel(item, item.configValue)"
-                                 v-model="sysCfgMap['sys.subject.codes.length'].lens[idx-1]"></el-input-number>
+              <el-input-number
+                v-model="item.configValue"
+                readonly
+                :min="sysCfgMap['sys.subject.level'].level"
+                :max="9"
+                @change="handleLevel(item, $event)"
+              />
+              <div style="width: 100%;margin: 10px 0">
+                编辑各级科目编码长度：
+              </div>
+              <template
+                v-for="idx in item.configValue"
+                :key="'len'+ idx"
+              >
+                <el-input-number
+                  v-model="sysCfgMap['sys.subject.codes.length'].lens[idx-1]"
+                  readonly
+                  style="margin-right: 30px"
+                  :min="sysCfgMap['sys.subject.codes.length'].oldLens[idx-1]"
+                  :max="6"
+                  @change="handleLevel(item, item.configValue)"
+                />
               </template>
             </template>
-            <el-input v-else v-model="item.configValue"></el-input>
+            <el-input
+              v-else
+              v-model="item.configValue"
+            />
           </el-form-item>
         </template>
-<!--        <el-form-item>-->
-<!--          <el-button :loading="buttonLoading" type="primary" @click="submitSaveForm">{{ t('org.confirm') }}</el-button>-->
-<!--        </el-form-item>-->
+        <!--        <el-form-item>-->
+        <!--          <el-button :loading="buttonLoading" type="primary" @click="submitSaveForm">{{ t('org.confirm') }}</el-button>-->
+        <!--        </el-form-item>-->
       </el-form>
     </el-card>
   </div>

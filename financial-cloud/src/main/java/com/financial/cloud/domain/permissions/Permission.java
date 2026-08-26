@@ -13,9 +13,6 @@ import com.financial.cloud.constants.common.ConstsStatus;
 import com.financial.cloud.common.BaseEntity;
 import com.financial.cloud.context.WebContext;
 
-/**
- * @author 24096
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

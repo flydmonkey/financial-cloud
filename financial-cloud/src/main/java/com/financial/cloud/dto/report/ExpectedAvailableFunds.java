@@ -7,14 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/**
- * 简介说明: 预计可用资金仪表盘视图类
- *
- * @author wuyan
- * {@code @date} 2025/05/06 09:46:26
- * {@code @version} 1.0
- */
-
 @Builder
 @Data
 @NoArgsConstructor

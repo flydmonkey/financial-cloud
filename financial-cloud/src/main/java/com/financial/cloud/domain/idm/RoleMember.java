@@ -10,9 +10,6 @@ import java.io.Serializable;
 import java.util.Date;
 
 
-/**
- * @author 24096
- */
 @Data
 @NoArgsConstructor
 @TableName("role_member")
@@ -70,16 +67,10 @@ public class RoleMember implements Serializable {
 	@TableField(exist = false)
 	String gradingUserId;
 
-	/**
-	 * åå»ºè?
-	 */
 	@TableField(fill = FieldFill.INSERT)
 	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	protected String createdBy;
 
-	/**
-	 * åå»ºæ¶é´
-	 */
 	@TableField(fill = FieldFill.INSERT)
 	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
 	protected Date createdDate;

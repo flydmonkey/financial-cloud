@@ -15,10 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * 初始余额管理接口
- */
-
 @RestController
 @RequestMapping("/api/base/init-balance")
 @Slf4j

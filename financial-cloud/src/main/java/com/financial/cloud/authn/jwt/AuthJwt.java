@@ -15,13 +15,6 @@ import com.financial.cloud.constants.auth.ConstsJwt;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 前端认证JWT
- * 
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 public class AuthJwt implements Serializable {

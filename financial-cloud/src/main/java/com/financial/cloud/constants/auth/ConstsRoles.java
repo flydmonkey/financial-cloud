@@ -6,9 +6,6 @@ import java.util.List;
 import com.financial.cloud.authn.core.Authority;
 import com.financial.cloud.authn.core.SimpleAuthority;
 
-/**
- * ROLES.
- */
 public final class ConstsRoles {
 
     public static final SimpleAuthority ROLE_SUPERVISOR = new SimpleAuthority("ROLE_SUPERVISOR");
@@ -28,9 +25,6 @@ public final class ConstsRoles {
 
     public static final List<Authority> grantedAdminAuthoritys = new ArrayList<>();
 
-    /**
-     * 模型
-     */
     public class Pattern {
         /**
          * 动态模型
@@ -43,9 +37,6 @@ public final class ConstsRoles {
 
     }
 
-    /**
-     * 类型
-     */
     public class Category {
         /**
          * 超级管理员

@@ -18,11 +18,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * .
- *
- * @author Crystal.Sea
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

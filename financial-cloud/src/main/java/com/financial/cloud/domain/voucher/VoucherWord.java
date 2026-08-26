@@ -9,13 +9,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.financial.cloud.common.BaseEntity;
 import lombok.*;
 
-/**
- * 凭证字对象 voucher_word
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("voucher_word")

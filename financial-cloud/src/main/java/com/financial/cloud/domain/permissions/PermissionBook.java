@@ -14,9 +14,6 @@ import lombok.NoArgsConstructor;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.financial.cloud.common.BaseEntity;
 
-/**
- * @author 24096
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

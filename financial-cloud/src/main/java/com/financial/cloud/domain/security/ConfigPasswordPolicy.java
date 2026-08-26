@@ -18,11 +18,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 @TableName("config_password_policy")

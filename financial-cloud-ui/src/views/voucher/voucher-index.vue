@@ -409,11 +409,45 @@ function handlePreview(row) {
 
 /** 修改按钮操作 */
 function handleCancel(row) {
-  const _id = [row.id] || ids.value.join(",");
-  voucherApis.cancelVoucherByIds(_id).then(res => {
+  if (!row?.id) {
+    return
+  }
+  proxy.$modal.confirm('确认取消该凭证的审核申请？').then(() => {
+    return voucherApis.cancelVoucherByIds(row.id);
+  }).then(() => {
     proxy.$modal.msgSuccess("已取消");
     getList()
+  }).catch(() => {
   });
+}
+
+function getSelectedVouchers(row) {
+  if (row?.id) {
+    return booksVoucherList.value.filter(item => item.id === row.id)
+  }
+  const selected = new Set(ids.value)
+  return booksVoucherList.value.filter(item => selected.has(item.id))
+}
+
+function filterVoucherIdsByStatus(status, row) {
+  return getSelectedVouchers(row)
+      .filter(item => item.status === status)
+      .map(item => item.id)
+}
+
+function isDeletable(voucher) {
+  if (!voucher?.voucherDate) {
+    return false
+  }
+  return currBookStore.termCurrent <= voucher.voucherDate.substring(0, 7)
+}
+
+function showActionResult(res, fallback = "操作成功") {
+  proxy.$modal.msgSuccess(res?.message || fallback)
+}
+
+function showActionError(err, fallback = "操作失败") {
+  proxy.$modal.msgError(err?.message || fallback)
 }
 
 /** 提交按钮 */
@@ -425,61 +459,87 @@ function submitForm(res) {
 }
 
 function handleSubmit(row) {
-  const _ids = row.id || ids.value.join(",");
-  const idList = _ids.split(",")
-  const submitIds = booksVoucherList.value.filter(item => {
-    return idList.indexOf(item.id) > -1 && 'draft' === item.status
-  }).map(item => item.id)
+  const submitIds = filterVoucherIdsByStatus('draft', row)
   if (!submitIds.length) {
     proxy.$modal.msgError("没有可以提交的凭证项。");
     return
   }
-  voucherApis.submitBatch(submitIds).then(res => {
+  voucherApis.submitBatch(submitIds.join(",")).then(res => {
     getList();
-    proxy.$modal.msgSuccess("操作成功")
+    showActionResult(res)
+  }).catch((err) => {
+    showActionError(err)
   })
 }
 
 function handleAudit(row) {
-  const _ids = row.id || ids.value.join(",");
-  proxy.$modal.confirm('确认审核"' + _ids + '"等凭证？').then(function () {
-    return voucherApis.auditBatch(_ids);
+  const auditIds = filterVoucherIdsByStatus('reviewing', row)
+  if (!auditIds.length) {
+    proxy.$modal.msgError("没有可以审核的凭证项。");
+    return
+  }
+  proxy.$modal.confirm(`确认审核 ${auditIds.length} 条凭证？`).then(function () {
+    return voucherApis.auditBatch(auditIds.join(","));
   }).then((res) => {
     getList();
-    proxy.$modal.msgSuccess(res.msg);
-  }).catch(() => {
+    showActionResult(res)
+  }).catch((err) => {
+    if (err?.message) {
+      showActionError(err)
+    }
   });
 }
 
 function handleSender(row) {
-  const _ids = row.id || ids.value.join(",");
-  voucherApis.senderBatch(_ids).then(res => {
+  const senderIds = filterVoucherIdsByStatus('completed', row)
+  if (!senderIds.length) {
+    proxy.$modal.msgError("没有可以过账的凭证项（需为已完成状态）。");
+    return
+  }
+  proxy.$modal.confirm(`确认过账 ${senderIds.length} 条凭证？`).then(function () {
+    return voucherApis.senderBatch(senderIds.join(","));
+  }).then((res) => {
     getList();
-    proxy.$modal.msgSuccess("操作成功")
+    showActionResult(res)
   }).catch((err) => {
-    proxy.$modal.msgError(err.msg || "操作失败");
+    showActionError(err)
   });
 }
 
 function handleManager(row) {
-  const _ids = row.id || ids.value.join(",");
-  voucherApis.manageBatch(_ids).then(res => {
-    proxy.$modal.msgSuccess("操作成功")
+  const managerIds = filterVoucherIdsByStatus('completed', row)
+  if (!managerIds.length) {
+    proxy.$modal.msgError("没有可以主管复核的凭证项（需为已完成状态）。");
+    return
+  }
+  proxy.$modal.confirm(`确认主管复核 ${managerIds.length} 条凭证？`).then(function () {
+    return voucherApis.manageBatch(managerIds.join(","));
+  }).then((res) => {
     getList();
+    showActionResult(res)
   }).catch((err) => {
-    proxy.$modal.msgError(err.msg || "操作失败");
+    showActionError(err)
   });
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const _ids = row.id || ids.value.join(",");
-  proxy.$modal.confirm('删除凭证可能为导致不连号，确认删除凭证记录编号为"' + _ids + '"的数据项？').then(function () {
-    return voucherApis.deleteBatch(_ids);
+  const deleteIds = row?.id
+      ? (isDeletable(row) ? [row.id] : [])
+      : getSelectedVouchers().filter(isDeletable).map(item => item.id)
+  if (!deleteIds.length) {
+    proxy.$modal.msgError("没有可以删除的凭证项（仅当期及以后凭证可删）。");
+    return
+  }
+  proxy.$modal.confirm(`删除凭证可能导致不连号，确认删除 ${deleteIds.length} 条凭证？`).then(function () {
+    return voucherApis.deleteBatch(deleteIds.join(","));
   }).then(() => {
     getList();
     proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {
+  }).catch((err) => {
+    if (err?.message) {
+      showActionError(err)
+    }
   });
 }
 

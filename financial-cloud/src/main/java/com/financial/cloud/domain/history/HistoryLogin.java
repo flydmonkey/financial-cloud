@@ -15,11 +15,6 @@ import com.financial.cloud.common.client.ClientResolve;
 import com.financial.cloud.common.client.ClientUserAgent;
 
 
-/**
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 @TableName("history_login")

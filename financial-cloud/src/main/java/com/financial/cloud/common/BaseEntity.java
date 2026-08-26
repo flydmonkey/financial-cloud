@@ -21,31 +21,19 @@ public class BaseEntity implements Serializable {
     public BaseEntity(){
 
     }
-    /**
-     * åå»ºè?
-     */
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     protected String createdBy;
 
-    /**
-     * åå»ºæ¶é´
-     */
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @ExcelExportCfg(dateFormat = DateUtils.FORMAT_DATE_YYYY_MM_DD_HH_MM_SS)
     protected Date createdDate;
 
-    /**
-     * æ´æ°è?
-     */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     protected String modifiedBy;
 
-    /**
-     * æ´æ°æ¶é´
-     */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     @ExcelExportCfg(dateFormat = DateUtils.FORMAT_DATE_YYYY_MM_DD_HH_MM_SS)

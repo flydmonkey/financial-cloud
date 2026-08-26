@@ -10,12 +10,6 @@ import com.financial.cloud.service.config.ConfigInsuranceFundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/12 15:11
- */
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/config/insurance_fund")

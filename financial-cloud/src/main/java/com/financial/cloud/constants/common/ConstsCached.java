@@ -1,8 +1,5 @@
 package com.financial.cloud.constants.common;
 
-/**
- * Cache key constants.
- */
 public final class ConstsCached {
 
 	/**

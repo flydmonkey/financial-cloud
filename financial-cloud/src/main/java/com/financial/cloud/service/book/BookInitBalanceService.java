@@ -34,12 +34,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 初始余额配置Service业务层处理
- *
- * @author wuyan
- * {@code @date} 2025-02-18
- */
 @RequiredArgsConstructor
 @Service
 public class BookInitBalanceService extends ServiceImpl<BookInitBalanceMapper, BookInitBalance>{

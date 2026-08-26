@@ -19,9 +19,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-/**
- * æ¥è®°è´?
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("journal_entry")
@@ -36,9 +33,6 @@ public class JournalEntry  extends BaseEntity implements Serializable {
     String id;
 	
 	String bookId;
-	/**
-	 * è´¦æ·ç±»åï¼ç°écash  é¶è¡deposit
-	 */
 	String category;
 	
 	String remark;
@@ -52,9 +46,6 @@ public class JournalEntry  extends BaseEntity implements Serializable {
 	String subjectId;
 	
 	String voucherId;
-	/**
-	 * æ¹åæ¶å¥ãæ¯åºåæåï¼? Iï¼EæOï¼Income and Expenditureï¼oï¼opening
-	 */
 	String direction;
 	
 	BigDecimal income;
@@ -69,9 +60,6 @@ public class JournalEntry  extends BaseEntity implements Serializable {
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     Date tradeDate;
 	
-	/**
-     * å é¤æ è®°
-     */
     @TableField(fill = FieldFill.INSERT)
     @TableLogic(value = "n", delval = "y")
     private String deleted;

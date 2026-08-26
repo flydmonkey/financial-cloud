@@ -7,11 +7,6 @@ import lombok.Getter;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/4/15 11:25
- */
 @Getter
 public enum CashFlowItemEnum {
     // 一、经营活动产生的现金流量（流入）

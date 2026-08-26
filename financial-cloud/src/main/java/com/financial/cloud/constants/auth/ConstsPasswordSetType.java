@@ -1,10 +1,5 @@
 package com.financial.cloud.constants.auth;
 
-/**
- * PASSWORDSETTYPE.
- * @author Crystal.Sea
- *
- */
 public final class ConstsPasswordSetType {
 
     public static final int PASSWORD_NORMAL 			= 0;

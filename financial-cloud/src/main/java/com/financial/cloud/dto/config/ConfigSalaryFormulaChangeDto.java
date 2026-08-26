@@ -4,22 +4,17 @@ import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.util.List;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/10 10:09
- */
 
 @Data
 public class ConfigSalaryFormulaChangeDto {
 
-    @NotNull(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     private String id;
 
-    @NotNull(message = "规则名称不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_RULE_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String ruleName;
 
     String ruleDescription;

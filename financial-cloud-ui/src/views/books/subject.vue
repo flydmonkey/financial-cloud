@@ -99,7 +99,7 @@
             <span v-else>{{ t('textOther') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="auxiliary" :label="t('subjectAuxiliary')" align="center" min-width="70">
+        <el-table-column v-if="currBookStore.assistAccEnabled" prop="auxiliary" :label="t('subjectAuxiliary')" align="center" min-width="70">
           <template #default="scope">
             <dict-tag :options="subjects_auxiliary"
                       :value="scope.row.auxiliary && scope.row.auxiliary.startsWith('[') ? JSON.parse(scope.row.auxiliary).map((t:any) => {return t.value}): ''"/>
@@ -175,7 +175,7 @@
               <el-radio value="2">{{ t('subjectCredit') }}</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item prop="auxiliary" :label="$t('subjectAuxiliary')">
+          <el-form-item v-if="currBookStore.assistAccEnabled" prop="auxiliary" :label="$t('subjectAuxiliary')">
             <el-select :disabled="form.hasVoucher" v-model="form.auxiliary" clearable multiple>
               <template #header>
                 <div style="display: flex;justify-content: space-between;padding: 0 40px 0 10px">

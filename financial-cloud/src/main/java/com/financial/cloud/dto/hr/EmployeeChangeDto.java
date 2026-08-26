@@ -6,72 +6,66 @@ import com.financial.cloud.validation.EditGroup;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.math.BigDecimal;
 import java.util.Date;
-
-/**
- * 员工信息编辑对象
- *
- * @author wuyan
- * {@code @date} 2025-01-22
- */
 
 @Data
 public class EmployeeChangeDto {
     /**
      * 主键
      */
-    @NotNull(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     private String id;
 
     /**
      * 姓名
      */
-    @NotEmpty(message = "姓名不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.HR_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String displayName;
 
     /**
      * 电话号码
      */
-//    @NotEmpty(message = "电话号码不能为空", groups = {AddGroup.class, EditGroup.class})
+//    @NotEmpty(message = MessageKeys.Validation.USER_PHONE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String mobile;
 
     /**
      * 邮箱地址
      */
-//    @NotEmpty(message = "邮箱不能为空", groups = {AddGroup.class, EditGroup.class})
+//    @NotEmpty(message = MessageKeys.Validation.USER_EMAIL_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String email;
 
     /**
      * 性别:0-其他；1-男；2-女
      */
-    @NotNull(message = "性别不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.HR_GENDER_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private Integer gender;
 
     /**
      * 出生日期
      */
-//    @NotNull(message = "出生日期不能为空", groups = {AddGroup.class, EditGroup.class})
+//    @NotNull(message = MessageKeys.Validation.HR_BIRTH_DATE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date birthDate;
 
     /**
      * 证件类型
      */
-    @NotNull(message = "证件类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.HR_ID_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private Integer idType;
 
     /**
      * 证件编码
      */
-    @NotEmpty(message = "证件编码不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.HR_ID_NUMBER_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String idCardNo;
 
     /**
      * 学历
      */
-//    @NotEmpty(message = "学历不能为空", groups = {AddGroup.class, EditGroup.class})
+//    @NotEmpty(message = MessageKeys.Validation.HR_EDUCATION_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String education;
 
     /**
@@ -173,7 +167,7 @@ public class EmployeeChangeDto {
     /**
      * 部门ID
      */
-    @NotEmpty(message = "所属部门不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.HR_DEPARTMENT_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String departmentId;
 
     /**
@@ -201,7 +195,7 @@ public class EmployeeChangeDto {
     /**
      * 状态:1-启用;0-禁用
      */
-    @NotNull(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_STATUS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private Integer status;
 
     /**
@@ -227,13 +221,13 @@ public class EmployeeChangeDto {
     /**
      * 员工类型
      */
-    @NotEmpty(message = "员工类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.HR_EMPLOYEE_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String employeeType;
 
     /**
      * 员工状态
      */
-    @NotEmpty(message = "员工状态不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.HR_EMPLOYEE_STATUS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String employeeStatus;
 
     private String bookId;

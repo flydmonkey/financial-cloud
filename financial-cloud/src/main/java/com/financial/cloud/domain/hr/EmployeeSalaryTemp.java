@@ -10,12 +10,6 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/5 16:09
- */
-
 @EqualsAndHashCode(callSuper = true)
 @TableName("employee_salary_temp")
 @Data

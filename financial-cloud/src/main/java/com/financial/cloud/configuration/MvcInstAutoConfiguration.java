@@ -12,9 +12,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.financial.cloud.service.config.InstitutionsService;
 
-/**
- * 多租户机构读取的自动装配
- */
 @Slf4j
 @Configuration
 public class MvcInstAutoConfiguration implements WebMvcConfigurer {

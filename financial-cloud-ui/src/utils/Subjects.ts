@@ -9,6 +9,33 @@ export interface SummaryMethodProps<T = any> {
     data: T[]
 }
 
+export function hasBookAuxiliary(subjectMap: Record<string, any>) {
+    return Object.values(subjectMap).some((item: any) => {
+        const auxiliary = item?.auxiliary
+        return Array.isArray(auxiliary) && auxiliary.length > 0
+    })
+}
+
+export function subjectMatchesKeyword(data: any, keyword: string): boolean {
+    if (!keyword) {
+        return true
+    }
+    const kw = keyword.toLowerCase().trim()
+    if (!kw) {
+        return true
+    }
+    const fields = [
+        data?.name,
+        data?.code,
+        data?.displayName,
+        data?.pinyinCode,
+        data?.pinyinDisplayCode,
+        data?.pinyinFull,
+        data?.pinyinDisplayFull,
+    ]
+    return fields.some((field) => field != null && String(field).toLowerCase().includes(kw))
+}
+
 export const cascaderSubjectProps = {
     expandTrigger: 'hover',
     label: 'name',
@@ -22,10 +49,13 @@ export const cascaderSubjectProps = {
     filterable: true,
     filterMethod: (item: any, keyword: any) => {
         if (!keyword) return true
-        return item.data.name.toLowerCase().includes(keyword.toLowerCase())
-            || item.data.code.toLowerCase().includes(keyword.toLowerCase())
-            || (item.data.pinyinCode)?.toLowerCase().includes(keyword.toLowerCase())
-            || (item.data.pinyinDisplayCode)?.toLowerCase().includes(keyword.toLowerCase())
+        const kw = String(keyword).toLowerCase()
+        const data = item?.data ?? item
+        if (subjectMatchesKeyword(data, kw)) {
+            return true
+        }
+        return String(item?.text ?? '').toLowerCase().includes(kw)
+            || String(item?.value ?? '').toLowerCase().includes(kw)
     }
 }
 

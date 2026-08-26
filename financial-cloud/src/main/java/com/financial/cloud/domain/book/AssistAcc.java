@@ -7,12 +7,6 @@ import lombok.*;
 import java.io.Serial;
 import java.io.Serializable;
 
-/**
- * 辅助核算对象 assist_acc
- *
- * @author Wuyan
- * {@code @date} 2025-03-10
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder

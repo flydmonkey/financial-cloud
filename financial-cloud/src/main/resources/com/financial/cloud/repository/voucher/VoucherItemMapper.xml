@@ -83,7 +83,7 @@
         i.id as voucherItemId,
         v.voucher_date as voucherDate,
         i.summary as summary,
-        jbs.display_name as subjectName,
+        COALESCE(NULLIF(jbs.display_name, ''), jbs.name) as subjectName,
         i.debit_amount as debitAmount,
         i.credit_amount as creditAmount,
         v.id as voucherId

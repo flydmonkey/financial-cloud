@@ -12,9 +12,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * 跨域请求、支持请求方法自动装配
- */
 @Slf4j
 @Configuration
 public class MvcCorsAutoConfiguration implements WebMvcConfigurer {

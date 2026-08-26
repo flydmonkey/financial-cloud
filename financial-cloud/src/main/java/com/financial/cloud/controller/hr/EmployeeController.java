@@ -16,10 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 员工信息管理接口
- */
-
 @RestController
 @RequestMapping("/api/salary/employee")
 @Slf4j

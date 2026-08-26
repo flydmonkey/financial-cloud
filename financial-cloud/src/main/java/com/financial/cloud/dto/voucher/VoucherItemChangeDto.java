@@ -9,19 +9,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-
-/**
- * 凭证明细对象 voucher_item
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
 
 @Builder
 @NoArgsConstructor
@@ -34,13 +28,13 @@ public class VoucherItemChangeDto implements Serializable {
     /**
      * 主键
      */
-    @NotNull(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     private String id;
 
     /**
      * 凭证ID
      */
-    @NotNull(message = "凭证对象不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_TARGET_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String voucherId;
 
     /**
@@ -51,25 +45,24 @@ public class VoucherItemChangeDto implements Serializable {
     /**
      * 摘要
      */
-    @NotEmpty(message = "摘要不能为空", groups = {AddGroup.class, EditGroup.class})
     private String summary;
 
     /**
      * 会计科目ID
      */
-    @NotEmpty(message = "会计科目不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_ACCOUNT_SUBJECT_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String subjectId;
 
     /**
      * 科目名称
      */
-    @NotEmpty(message = "会计科目不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_ACCOUNT_SUBJECT_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String subjectName;
 
     /**
      * 科目编号
      */
-    @NotEmpty(message = "科目编号不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_SUBJECT_NUMBER_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String subjectCode;
 
     /**

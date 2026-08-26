@@ -8,14 +8,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * 简介说明: 净利润视图类
- *
- * @author wuyan
- * {@code @date} 2025/05/05 14:03:57
- * {@code @version} 1.0
- */
-
 @Builder
 @Data
 @AllArgsConstructor

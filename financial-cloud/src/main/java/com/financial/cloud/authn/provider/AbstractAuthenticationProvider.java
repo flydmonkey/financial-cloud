@@ -28,21 +28,11 @@ import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.service.auth.LoginService;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
-/**
- * login Authentication abstract class.登录认证提供者抽象类
- *
- * @author Crystal.Sea
- *
- */
 @Slf4j
 public abstract class AbstractAuthenticationProvider {
 
     public static final String PROVIDER_SUFFIX = "AuthenticationProvider";
 
-    /**
-     * 认证类型
-     *
-     */
     public class AuthType{
     	//用户名和密码登录
     	public static final  String NORMAL 		= "normal";

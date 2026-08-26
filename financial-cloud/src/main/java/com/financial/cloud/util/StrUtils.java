@@ -41,6 +41,21 @@ public final class StrUtils {
 		}
 	}
 
+	public static String getPinYinFull(String name) {
+		if (name == null || name.isBlank()) {
+			return "";
+		}
+		try {
+			HanyuPinyinOutputFormat pinyinFormat = new HanyuPinyinOutputFormat();
+			pinyinFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
+			pinyinFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+			pinyinFormat.setVCharType(HanyuPinyinVCharType.WITH_V);
+			return PinyinHelper.toHanYuPinyinString(name, pinyinFormat, "", false);
+		} catch (Exception e) {
+			return "";
+		}
+	}
+
 	private static String getPinYinName(String name) {
 		try {
 			HanyuPinyinOutputFormat pinyinFormat = new HanyuPinyinOutputFormat();

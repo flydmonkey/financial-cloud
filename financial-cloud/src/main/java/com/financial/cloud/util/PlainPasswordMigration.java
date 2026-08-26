@@ -2,9 +2,6 @@ package com.financial.cloud.util;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
- * Converts legacy {@code {plain}...} password rows to bcrypt.
- */
 public final class PlainPasswordMigration {
 
 	private static final String PLAIN_PREFIX = "{plain}";

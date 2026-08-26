@@ -15,9 +15,6 @@ import com.financial.cloud.captcha.HutoolCaptchaService;
 import com.financial.cloud.captcha.ImageCaptcha;
 import com.financial.cloud.common.Message;
 
-/**
- * 图片验证码，使用 Hutool 生成。
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController

@@ -6,12 +6,6 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/12 10:53
- */
-
 @TableName("config_insurance_fund")
 @Data
 public class ConfigInsuranceFund {

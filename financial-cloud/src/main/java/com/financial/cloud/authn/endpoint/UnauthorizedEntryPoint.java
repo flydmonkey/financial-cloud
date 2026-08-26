@@ -15,12 +15,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import com.financial.cloud.common.Message;
 
-/**
- * 未认证接口 /auth/entrypoint，以 Message 信封返回 401、提示信息和时间戳。
- * 
- * @author Crystal.Sea
- *
- */
 @Slf4j
 @Controller
 @RequestMapping(value = "/api/auth")

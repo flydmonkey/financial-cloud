@@ -5,13 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 凭证号非连续性查询参数
- *
- * @author wuyan
- * {@code @date} 2025-04-20
- */
-
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

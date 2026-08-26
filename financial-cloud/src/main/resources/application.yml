@@ -36,6 +36,8 @@ spring:
     encoding: UTF-8
 
 financial-cloud:
+  auth:
+    captcha-enabled: false
   security:
     legacy-secret-suffix: l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6
   session:

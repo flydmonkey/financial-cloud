@@ -31,6 +31,7 @@ import com.financial.cloud.repository.standard.StandardSubjectMapper;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.util.StrUtils;
+import com.financial.cloud.util.SubjectDisplayNameUtils;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -45,12 +46,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/1/16 16:13
- */
 
 @RequiredArgsConstructor
 @Slf4j
@@ -109,7 +104,7 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         if (Objects.nonNull(parentId)) {
             BookSubject subjectParent = super.getById(parentId);
             subject.setLevel(subjectParent.getLevel() + 1);
-            subject.setDisplayName(subjectParent.getDisplayName() + "_" + subject.getName());
+            subject.setDisplayName(SubjectDisplayNameUtils.resolve(subjectParent) + "_" + subject.getName());
             subject.setPinyinDisplayCode(subjectParent.getPinyinDisplayCode() + "_" + subject.getPinyinCode());
             //判断是否符合辅助核算层级
             ifParentExistAuxiliary(parentId);
@@ -119,6 +114,8 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
             }
         } else {
             subject.setLevel(1);
+            subject.setDisplayName(subject.getName());
+            subject.setPinyinDisplayCode(subject.getPinyinCode());
         }
 
         boolean save = super.save(subject);
@@ -197,10 +194,12 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         if (Objects.isNull(parentId) || StringUtils.isEmpty(parentId)) {
             //设置等级
             subject.setLevel(1);
+            subject.setDisplayName(subject.getName());
+            subject.setPinyinDisplayCode(subject.getPinyinCode());
         } else {
             BookSubject subjectParent = super.getById(parentId);
             subject.setLevel(subjectParent.getLevel() + 1);
-            subject.setDisplayName(subjectParent.getDisplayName() + "_" + subject.getName());
+            subject.setDisplayName(SubjectDisplayNameUtils.resolve(subjectParent) + "_" + subject.getName());
             subject.setPinyinDisplayCode(subjectParent.getPinyinDisplayCode() + "_" + subject.getPinyinCode());
         }
 
@@ -481,9 +480,14 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
             StatementSubjectBalance sb = subjectBalanceMap.get(temp.getCode());
             extraMap.put("balance", (sb != null ) ? sb.getBalance():BigDecimal.ZERO);
             //extraMap.put("balance", temp.getBalance());
-            extraMap.put("pinyinCode", temp.getPinyinCode());
-            extraMap.put("pinyinDisplayCode", temp.getPinyinDisplayCode());
-            extraMap.put("displayName", temp.getDisplayName());
+            extraMap.put("pinyinCode", StringUtils.isNotBlank(temp.getPinyinCode())
+                    ? temp.getPinyinCode() : StrUtils.getPinYinShort(temp.getName()));
+            String displayName = SubjectDisplayNameUtils.resolve(temp);
+            extraMap.put("pinyinDisplayCode", StringUtils.isNotBlank(temp.getPinyinDisplayCode())
+                    ? temp.getPinyinDisplayCode() : StrUtils.getPinYinShort(displayName.replace("_", "")));
+            extraMap.put("pinyinFull", StrUtils.getPinYinFull(temp.getName()));
+            extraMap.put("pinyinDisplayFull", StrUtils.getPinYinFull(displayName.replace("_", "")));
+            extraMap.put("displayName", displayName);
             extraMap.put("isCash", temp.getIsCash());
             stringTreeNode.setExtra(extraMap);
 
@@ -688,6 +692,8 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
             newSubjects.forEach(subject -> subject.setIdPath(generateIdPath(subject.getParentId(), subject.getId())));
 
             bookSubjectMapper.updateById(newSubjects);
+
+            reorgDisplayName(dto.getId());
         }
 		return true;
 	}

@@ -12,10 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
-/**
- * 报表资产负债表配置接口
- */
-
 @RestController
 @RequestMapping("/api/statement/config/balance-sheet")
 @Slf4j

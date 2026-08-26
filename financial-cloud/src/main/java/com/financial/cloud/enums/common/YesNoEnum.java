@@ -5,11 +5,6 @@ import lombok.Getter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Yes、No枚举类
- *
- * @author wuyan
- */
 @Getter
 public enum YesNoEnum implements BaseEnum {
     /**

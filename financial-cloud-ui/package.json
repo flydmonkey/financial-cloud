@@ -10,7 +10,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -35,11 +38,12 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "@playwright/test": "^1.62.1",
     "@types/file-saver": "^2.0.7",
     "@types/js-cookie": "^3.0.6",
     "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^5.2.4",
-    "@eslint/js": "^9.19.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.19.0",
     "eslint-plugin-vue": "^9.32.0",
@@ -55,6 +59,7 @@
     "vite": "^6.0.11",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-svg-icons": "^2.0.1",
+    "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^2.2.0"
   },
   "optionalDependencies": {

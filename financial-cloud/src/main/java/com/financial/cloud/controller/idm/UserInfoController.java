@@ -59,10 +59,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * @author Crystal.Sea
- *
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController
@@ -102,11 +98,6 @@ public class UserInfoController {
 		}
 	}
 
-	/**
-	 * è·åç»å½ç¨æ·ä¿¡æ¯
-	 * éè¦tokenå¤´ï¼è·åå½åtokenå¯¹åºçç¨æ·å¯¹è±?
-	 * @return
-	 */
 	@GetMapping(value = { "/currentUser" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> currentUser(@CurrentUser UserInfo currentUser) {
 		if (Objects.isNull(currentUser)) {
@@ -116,11 +107,6 @@ public class UserInfoController {
 		userInfo.clearSensitive();
 		return new Message<>(userInfo);
 	}
-	/**
-	 * è·åç»å½ç¨æ·ä¿¡æ¯
-	 * éè¦tokenå¤´ï¼è·åå½åtokenå¯¹åºçç¨æ·å¯¹è±?
-	 * @return
-	 */
 	@GetMapping(value = { "/switchBook/{bookId}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> switchBook(@PathVariable("bookId") String bookId,
 			@CurrentUser UserInfo currentUser,
@@ -336,7 +322,6 @@ public class UserInfoController {
 	@GetMapping(value={"/passwordpolicy"})
 	public Message<ConfigPasswordPolicy> passwordpolicy(@CurrentUser UserInfo currentUser){
 		ConfigPasswordPolicy passwordPolicy = configPasswordPolicyService.getPasswordPolicy();
-		//æå»ºå¯ç å¼ºåº¦è¯´æ
 		configPasswordPolicyService.buildTipMessage(passwordPolicy);
 		return new Message<>(passwordPolicy);
 	}

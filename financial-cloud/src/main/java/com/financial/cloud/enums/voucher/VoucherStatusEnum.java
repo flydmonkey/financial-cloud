@@ -6,9 +6,6 @@ import lombok.Getter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * 记账凭证状态
- */
 @Getter
 public enum VoucherStatusEnum implements BaseEnum {
     DRAFT("draft", "暂存"),

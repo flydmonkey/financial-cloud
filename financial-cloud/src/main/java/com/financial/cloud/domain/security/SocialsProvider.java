@@ -8,11 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-/**
- * @author Crystal.Sea
- *
- */
-
 @Data
 @EqualsAndHashCode(callSuper=false)
 @NoArgsConstructor

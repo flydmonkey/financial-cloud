@@ -44,10 +44,6 @@ public class JournalAccountController {
         return journalAccountService.findAll(AuthorizationUtils.getUserInfo().getBookId());
     }
     
-    /**
-     * ææè´¦æ·ä½é¢æ±æ?
-     * @return
-     */
     @GetMapping(value = {"/allBalance"})
     public Message<BigDecimal> allBalance() {
     	Message<List<JournalAccount>> accountListMsg = journalAccountService.findAll(AuthorizationUtils.getUserInfo().getBookId());

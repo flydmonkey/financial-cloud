@@ -44,7 +44,7 @@
         <el-button
             type="danger"
             :disabled="ids.length === 0"
-            @click="handleDelete"
+            @click="() => handleDelete()"
         >{{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
@@ -296,10 +296,17 @@ const submitForm = () => {
 };
 
 /** 删除按钮操作 */
-function handleDelete(row: any) {
-  const _ids = row.id || ids.value;
-  modal.confirm('是否确认删除辅助核算编号为"' + _ids + '"的数据项？').then(function () {
-    return delAssistAcc({listIds: [_ids]});
+function handleDelete(row?: any) {
+  const selectedIds = row?.id ? [row.id] : [...ids.value]
+  if (!selectedIds.length) {
+    proxy?.$modal.msgWarning('请选择要删除的数据')
+    return
+  }
+  const confirmText = selectedIds.length === 1
+      ? `是否确认删除辅助核算编号为"${selectedIds[0]}"的数据项？`
+      : `是否确认删除选中的 ${selectedIds.length} 条辅助核算数据？`
+  modal.confirm(confirmText).then(function () {
+    return delAssistAcc({listIds: selectedIds});
   }).then((res: any) => {
     if (res.code === 0) {
       getList();

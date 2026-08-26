@@ -14,6 +14,12 @@
                        inactive-value="false"
                        disabled
                        v-model="item.configValue"></el-switch>
+            <el-switch v-else-if="item.configKey === 'sys.assist.acc.enabled'"
+                       active-value="true"
+                       inactive-value="false"
+                       :loading="buttonLoading"
+                       v-model="item.configValue"
+                       @change="handleAssistAccChange(item)"></el-switch>
             <template v-else-if="item.configKey === 'sys.subject.level'">
               <el-input-number readonly :min="sysCfgMap['sys.subject.level'].level" :max="9"
                                v-model="item.configValue" @change="handleLevel(item, $event)"></el-input-number>
@@ -120,6 +126,16 @@ function handleLevel(item: any, value: any) {
   }
   sysCfgMap.value['sys.subject.codes.length'].configValue =
       sysCfgMap.value['sys.subject.codes.length'].lens.slice(0, value).join(",")
+}
+
+function handleAssistAccChange(item: any) {
+  buttonLoading.value = true
+  updateConfig(item).then(() => {
+    currBookStore.setAssistAccEnabled(item.configValue === 'true')
+    proxy?.$modal.msgSuccess('操作成功')
+  }).finally(() => {
+    buttonLoading.value = false
+  })
 }
 
 /** 表单重置 */

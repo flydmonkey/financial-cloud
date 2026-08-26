@@ -9,10 +9,6 @@ import org.springframework.stereotype.Component;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 全局应用程序配置，包含数据源、字符集、可访问地址等运行时参数。
- */
-
 @Data
 @NoArgsConstructor
 @Component

@@ -14,12 +14,6 @@ import com.financial.cloud.authn.support.AuthorizationUtils;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.domain.idm.UserInfo;
 
-/**
- * CurrentUser注解的注入实现
- * 
- * @author Crystal.Sea
- *
- */
 public class CurrentUserMethodArgumentResolver implements HandlerMethodArgumentResolver {
 	
     @Override

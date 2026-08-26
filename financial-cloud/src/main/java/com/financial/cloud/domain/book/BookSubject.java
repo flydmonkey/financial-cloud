@@ -10,11 +10,6 @@ import lombok.EqualsAndHashCode;
 import java.io.Serial;
 
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/1/15 18:05
- */
 @EqualsAndHashCode(callSuper = true)
 @TableName("book_subject")
 @Data

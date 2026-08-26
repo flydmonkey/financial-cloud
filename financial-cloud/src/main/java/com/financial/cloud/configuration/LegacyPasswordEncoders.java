@@ -15,9 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import cn.hutool.crypto.SmUtil;
 
-/**
- * Password encoders backed by Hutool (SM3) and JDK (legacy salted MD5).
- */
 public final class LegacyPasswordEncoders {
 
 	private LegacyPasswordEncoders() {

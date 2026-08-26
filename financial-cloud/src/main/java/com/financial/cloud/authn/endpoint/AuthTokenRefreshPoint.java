@@ -21,9 +21,6 @@ import com.financial.cloud.authn.session.Session;
 import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.common.Message;
 
-/**
- * 前端认证令牌刷新：延长内存会话有效期。
- */
 @RequiredArgsConstructor
 @Slf4j
 @Controller

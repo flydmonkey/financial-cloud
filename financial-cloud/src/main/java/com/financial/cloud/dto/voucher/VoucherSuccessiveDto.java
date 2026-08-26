@@ -6,16 +6,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.io.Serializable;
 import java.util.Date;
-
-/**
- * 凭证字号连续性视图对象
- *
- * @author wuyan
- * {@code @date} 2025-04-20
- */
 
 @Builder
 @NoArgsConstructor
@@ -32,7 +26,7 @@ public class VoucherSuccessiveDto implements Serializable {
      * 凭证ID
      */
     @TableId(type = IdType.ASSIGN_ID)
-    @NotBlank(message = "编辑对象不能为空")
+    @NotBlank(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED)
     private String id;
 
     private String bookId;
@@ -40,37 +34,37 @@ public class VoucherSuccessiveDto implements Serializable {
     /**
      * 原始凭证字
      */
-    @NotBlank(message = "原始凭证字不能为空")
+    @NotBlank(message = MessageKeys.Validation.VOUCHER_ORIGINAL_VOUCHER_WORD_REQUIRED)
     private String sourceWord;
 
     /**
      * 新凭证字
      */
-    @NotBlank(message = "新凭证字不能为空")
+    @NotBlank(message = MessageKeys.Validation.VOUCHER_NEW_VOUCHER_WORD_REQUIRED)
     private String targetWord;
 
     /**
      * 字头：“收”、“付”、“转”等
      */
-    @NotBlank(message = "字头不能为空")
+    @NotBlank(message = MessageKeys.Validation.VOUCHER_PREFIX_REQUIRED)
     private String wordHead;
 
     /**
      * 号码
      */
-    @NotNull(message = "号码不能为空")
+    @NotNull(message = MessageKeys.Validation.COMMON_NUMBER_REQUIRED)
     private Integer wordNum;
 
     /**
      * 年份
      */
-    @NotNull(message = "年份不能为空")
+    @NotNull(message = MessageKeys.Validation.COMMON_YEAR_REQUIRED)
     private Integer voucherYear;
 
     /**
      * 月份
      */
-    @NotNull(message = "月份不能为空")
+    @NotNull(message = MessageKeys.Validation.COMMON_MONTH_REQUIRED)
     private Integer voucherMonth;
 
     /**

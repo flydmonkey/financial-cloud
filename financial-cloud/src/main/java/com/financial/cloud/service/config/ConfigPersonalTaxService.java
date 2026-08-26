@@ -21,12 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/6 17:48
- */
-
 @Service
 public class ConfigPersonalTaxService extends ServiceImpl<ConfigPersonalTaxMapper, ConfigPersonalTax>{
     public Message<Page<ConfigPersonalTax>> pageList(ConfigPersonalTaxPageDto dto) {

@@ -8,12 +8,6 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/19 15:45
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName(value = "standard_subject", autoResultMap = true)

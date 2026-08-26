@@ -15,12 +15,6 @@ import com.financial.cloud.authn.realm.AbstractAuthenticationRealm;
 import com.financial.cloud.captcha.HutoolCaptchaService;
 import com.financial.cloud.service.auth.LoginService;
 
-/**
- * 认证提供者自动配置，可根据需要增加新的提供者
- *
- * @author Crystal.Sea
- *
- */
 @Slf4j
 @Configuration
 public class AuthnProviderAutoConfiguration {

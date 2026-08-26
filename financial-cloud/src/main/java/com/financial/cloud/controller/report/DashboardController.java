@@ -15,11 +15,6 @@ import com.financial.cloud.dto.report.DashBoardReqDto;
 import com.financial.cloud.dto.report.DashBoardVo;
 import com.financial.cloud.service.report.ReportService;
 
-/**
- * Index
- * @author Crystal.Sea
- *
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController

@@ -20,9 +20,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
-/**
- * 请求域名限定Filter
- */
 @Slf4j
 public class WebHttpRestrictHostRequestFilter  extends GenericFilterBean {
 

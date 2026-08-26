@@ -10,12 +10,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/3/18 17:39
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("config_cash_flow_balance")

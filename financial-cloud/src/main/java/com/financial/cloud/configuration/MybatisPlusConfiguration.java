@@ -24,9 +24,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 
-/**
- * mybatis-plus配置类
- */
 @Configuration
 @EnableTransactionManagement(proxyTargetClass = true)
 @MapperScan(basePackages = "com.financial.cloud.repository")

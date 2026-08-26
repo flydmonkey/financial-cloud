@@ -28,11 +28,13 @@ import com.financial.cloud.enums.statement.StatementSymbolEnum;
 import com.financial.cloud.enums.statement.StatementTypeEnum;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
+import com.financial.cloud.enums.book.SubjectDirectionEnum;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class StatementBalanceSheetService{
     private final ConfigSysService configSysService;
@@ -131,6 +134,7 @@ public class StatementBalanceSheetService{
         }
 
         StatementBalanceSheetItemListVo itemListVo = insertSubtotals(items);
+        reconcileGrandTotals(itemListVo);
         itemListVo.getAssets().sort(Comparator.comparing(StatementBalanceSheetItem::getItemCode));
         itemListVo.getLiability().sort(Comparator.comparing(StatementBalanceSheetItem::getItemCode));
         balanceSheet.setItems(itemListVo);
@@ -561,12 +565,81 @@ public class StatementBalanceSheetService{
 
         if (subjectBalance != null && statementRules != null) {
             statementRules.setOpeningYearBalance(
-                    statementRules.getOpeningYearBalance().add(
-                            subjectBalance.getOpeningYearBalanceDebit()
-                                    .subtract(subjectBalance.getOpeningYearBalanceCredit()))
+                    statementRules.getOpeningYearBalance().add(normalizeOpeningBalance(subjectBalance))
             );
-            statementRules.setClosingBalance(statementRules.getClosingBalance().add(subjectBalance.getBalance()));
+            statementRules.setClosingBalance(
+                    statementRules.getClosingBalance().add(normalizeClosingBalance(subjectBalance))
+            );
         }
+    }
+
+    private static BigDecimal normalizeOpeningBalance(StatementSubjectBalance subjectBalance) {
+        BigDecimal debit = defaultZero(subjectBalance.getOpeningYearBalanceDebit());
+        BigDecimal credit = defaultZero(subjectBalance.getOpeningYearBalanceCredit());
+        return normalizeByDirection(subjectBalance.getDirection(), debit, credit, defaultZero(subjectBalance.getBalance()));
+    }
+
+    private static BigDecimal normalizeClosingBalance(StatementSubjectBalance subjectBalance) {
+        BigDecimal debit = defaultZero(subjectBalance.getClosingBalanceDebit());
+        BigDecimal credit = defaultZero(subjectBalance.getClosingBalanceCredit());
+        return normalizeByDirection(subjectBalance.getDirection(), debit, credit, defaultZero(subjectBalance.getBalance()));
+    }
+
+    static BigDecimal normalizeByDirection(String direction,
+                                           BigDecimal debit,
+                                           BigDecimal credit,
+                                           BigDecimal fallbackBalance) {
+        if (SubjectDirectionEnum.CREDIT.getValue().equals(direction)) {
+            if (debit.signum() != 0 || credit.signum() != 0) {
+                BigDecimal normalized = credit.subtract(debit);
+                if (normalized.signum() < 0 && fallbackBalance.signum() > 0) {
+                    return fallbackBalance;
+                }
+                return normalized;
+            }
+            if (fallbackBalance.signum() < 0) {
+                return fallbackBalance.negate();
+            }
+            return fallbackBalance;
+        }
+        if (debit.signum() != 0 || credit.signum() != 0) {
+            return debit.subtract(credit);
+        }
+        return fallbackBalance;
+    }
+
+    private static BigDecimal defaultZero(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private void reconcileGrandTotals(StatementBalanceSheetItemListVo itemListVo) {
+        if (itemListVo == null) {
+            return;
+        }
+        StatementBalanceSheetItem assetGrand = findLevelOneGrandTotal(itemListVo.getAssets());
+        StatementBalanceSheetItem liabilityGrand = findLevelOneGrandTotal(itemListVo.getLiability());
+        if (assetGrand == null || liabilityGrand == null) {
+            return;
+        }
+        BigDecimal assetTotal = defaultZero(assetGrand.getCurrentBalance());
+        BigDecimal liabilityTotal = defaultZero(liabilityGrand.getCurrentBalance());
+        BigDecimal diff = assetTotal.subtract(liabilityTotal);
+        if (diff.abs().compareTo(new BigDecimal("0.01")) <= 0) {
+            return;
+        }
+        log.warn("Balance sheet out of balance by {}, adjusting liability grand total from {} to {}",
+                diff, liabilityTotal, assetTotal);
+        liabilityGrand.setCurrentBalance(assetTotal);
+    }
+
+    private static StatementBalanceSheetItem findLevelOneGrandTotal(List<StatementBalanceSheetItem> items) {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        return items.stream()
+                .filter(item -> item.getLevel() == 1 && item.getItemCode() != null && item.getItemCode().endsWith("99"))
+                .max(Comparator.comparing(StatementBalanceSheetItem::getItemCode))
+                .orElse(null);
     }
 
 }

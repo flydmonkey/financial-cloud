@@ -24,10 +24,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.List;
 import java.util.Objects;
 
-/**
- * 全局异常处理器
- *
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {

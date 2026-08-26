@@ -2,6 +2,7 @@ package com.financial.cloud.domain.idm;
 
 import java.io.Serial;
 import java.io.Serializable;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.financial.cloud.constants.auth.ConstsRoles;
@@ -14,9 +15,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-/**
- * @author 24096
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
@@ -29,10 +27,10 @@ public class Roles extends BaseEntity implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     String id;
 
-    @NotEmpty(message = "用户组编码不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_GROUP_CODE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String roleCode;
 
-    @NotEmpty(message = "用户组名称不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_GROUP_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String roleName;
 
     String pattern;

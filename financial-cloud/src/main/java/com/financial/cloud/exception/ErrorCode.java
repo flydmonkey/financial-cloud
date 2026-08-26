@@ -1,8 +1,5 @@
 package com.financial.cloud.exception;
 
-/**
- * Business error code with a unique numeric code and i18n message key.
- */
 public interface ErrorCode {
 
     int getCode();

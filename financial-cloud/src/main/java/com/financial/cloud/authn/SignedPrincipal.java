@@ -11,9 +11,6 @@ import com.financial.cloud.domain.idm.UserInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 登录后颁发签名的当事人，包含用户信息，当前会话，用户角色，用户应用权限等
- */
 @Data
 @NoArgsConstructor
 public class SignedPrincipal {

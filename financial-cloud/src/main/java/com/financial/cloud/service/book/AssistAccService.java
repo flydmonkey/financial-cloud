@@ -24,12 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * 辅助核算项目Service业务层处理
- *
- * @author wuyan
- * {@code @date} 2025-02-18
- */
 @RequiredArgsConstructor
 @Service
 public class AssistAccService extends ServiceImpl<AssistAccMapper, AssistAcc>{

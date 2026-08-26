@@ -3,13 +3,6 @@ package com.financial.cloud.common;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 数控件的节点 使用HashMap<String,Object> attr存储节点数据.
- * 
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 public class TreeNode {

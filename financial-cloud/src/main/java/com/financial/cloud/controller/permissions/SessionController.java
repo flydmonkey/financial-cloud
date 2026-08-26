@@ -22,13 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 登录会话管理.
- *
- * @author Crystal.sea
- *
- */
-
 @RequiredArgsConstructor
 @Slf4j
 @RestController

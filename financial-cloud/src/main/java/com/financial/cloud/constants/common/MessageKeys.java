@@ -1,8 +1,5 @@
 package com.financial.cloud.constants.common;
 
-/**
- * i18n message keys. Format: {@code domain.module.detail_snake_case}.
- */
 public final class MessageKeys {
 
     private MessageKeys() {
@@ -193,6 +190,127 @@ public final class MessageKeys {
         public static final String FIELD_NOT_FOUND = "excel.error.field_not_found";
 
         private Excel() {
+        }
+    }
+
+    public static final class Validation {
+        public static final String ASSIST_CODE_REQUIRED = "{validation.assist.code.required}";
+        public static final String ASSIST_NAME_REQUIRED = "{validation.assist.name.required}";
+        public static final String ASSIST_TARGET_REQUIRED = "{validation.assist.target.required}";
+        public static final String ASSIST_TYPE_REQUIRED = "{validation.assist.type.required}";
+        public static final String BOOK_ACCOUNT_SUBJECT_REQUIRED = "{validation.book.account_subject.required}";
+        public static final String BOOK_BALANCE_DIRECTION_REQUIRED = "{validation.book.balance_direction.required}";
+        public static final String BOOK_BOOK_ID_REQUIRED = "{validation.book.book_id.required}";
+        public static final String BOOK_CASH_SUBJECT_FLAG_REQUIRED = "{validation.book.cash_subject_flag.required}";
+        public static final String BOOK_INIT_PERIOD_REQUIRED = "{validation.book.init_period.required}";
+        public static final String BOOK_NAME_MAX_LENGTH = "{validation.book.name.max_length}";
+        public static final String BOOK_NAME_REQUIRED = "{validation.book.name.required}";
+        public static final String BOOK_OWNER_BOOK_ID_REQUIRED = "{validation.book.owner_book_id.required}";
+        public static final String BOOK_SUBJECT_CODE_PATTERN = "{validation.book.subject_code.pattern}";
+        public static final String BOOK_SUBJECT_CODE_REQUIRED = "{validation.book.subject_code.required}";
+        public static final String BOOK_SUBJECT_ENCODING_REQUIRED = "{validation.book.subject_encoding.required}";
+        public static final String BOOK_SUBJECT_NAME_MAX_LENGTH = "{validation.book.subject_name.max_length}";
+        public static final String BOOK_SUBJECT_NAME_REQUIRED = "{validation.book.subject_name.required}";
+        public static final String BOOK_SUBJECT_NUMBER_REQUIRED = "{validation.book.subject_number.required}";
+        public static final String BOOK_SUBJECT_TYPE_REQUIRED = "{validation.book.subject_type.required}";
+        public static final String BOOK_TAX_NATURE_REQUIRED = "{validation.book.tax_nature.required}";
+        public static final String COMMON_DATE_REQUIRED = "{validation.common.date.required}";
+        public static final String COMMON_EDIT_TARGET_REQUIRED = "{validation.common.edit_target.required}";
+        public static final String COMMON_ID_REQUIRED = "{validation.common.id.required}";
+        public static final String COMMON_ID_LOWERCASE_REQUIRED = "{validation.common.id_lowercase.required}";
+        public static final String COMMON_INPUT_PARAM_REQUIRED = "{validation.common.input_param.required}";
+        public static final String COMMON_INPUT_PARAM_LIST_REQUIRED = "{validation.common.input_param_list.required}";
+        public static final String COMMON_LEVEL_REQUIRED = "{validation.common.level.required}";
+        public static final String COMMON_MONTH_REQUIRED = "{validation.common.month.required}";
+        public static final String COMMON_NAME_REQUIRED = "{validation.common.name.required}";
+        public static final String COMMON_NUMBER_REQUIRED = "{validation.common.number.required}";
+        public static final String COMMON_OWNER_MONTH_REQUIRED = "{validation.common.owner_month.required}";
+        public static final String COMMON_RELATED_OBJECT_CODE_REQUIRED = "{validation.common.related_object_code.required}";
+        public static final String COMMON_RULE_NAME_REQUIRED = "{validation.common.rule_name.required}";
+        public static final String COMMON_SELECTED_ID_REQUIRED = "{validation.common.selected_id.required}";
+        public static final String COMMON_SORT_ORDER_REQUIRED = "{validation.common.sort_order.required}";
+        public static final String COMMON_STATUS_NOT_NULL = "{validation.common.status.not_null}";
+        public static final String COMMON_STATUS_REQUIRED = "{validation.common.status.required}";
+        public static final String COMMON_TEMPLATE_NAME_REQUIRED = "{validation.common.template_name.required}";
+        public static final String COMMON_TYPE_REQUIRED = "{validation.common.type.required}";
+        public static final String COMMON_YEAR_REQUIRED = "{validation.common.year.required}";
+        public static final String CONFIG_PARAM_KEY_MAX_LENGTH = "{validation.config.param_key.max_length}";
+        public static final String CONFIG_PARAM_KEY_REQUIRED = "{validation.config.param_key.required}";
+        public static final String CONFIG_PARAM_NAME_MAX_LENGTH = "{validation.config.param_name.max_length}";
+        public static final String CONFIG_PARAM_NAME_REQUIRED = "{validation.config.param_name.required}";
+        public static final String CONFIG_PARAM_VALUE_MAX_LENGTH = "{validation.config.param_value.max_length}";
+        public static final String CONFIG_PARAM_VALUE_REQUIRED = "{validation.config.param_value.required}";
+        public static final String CONFIG_TAX_RATE_REQUIRED = "{validation.config.tax_rate.required}";
+        public static final String HR_BIRTH_DATE_REQUIRED = "{validation.hr.birth_date.required}";
+        public static final String HR_DEPARTMENT_REQUIRED = "{validation.hr.department.required}";
+        public static final String HR_EDUCATION_REQUIRED = "{validation.hr.education.required}";
+        public static final String HR_EMPLOYEE_STATUS_REQUIRED = "{validation.hr.employee_status.required}";
+        public static final String HR_EMPLOYEE_TYPE_REQUIRED = "{validation.hr.employee_type.required}";
+        public static final String HR_GENDER_REQUIRED = "{validation.hr.gender.required}";
+        public static final String HR_ID_NUMBER_REQUIRED = "{validation.hr.id_number.required}";
+        public static final String HR_ID_TYPE_REQUIRED = "{validation.hr.id_type.required}";
+        public static final String HR_NAME_MAX_LENGTH = "{validation.hr.name.max_length}";
+        public static final String HR_NAME_REQUIRED = "{validation.hr.name.required}";
+        public static final String HR_SELECTED_SALARY_FORMULA_REQUIRED = "{validation.hr.selected_salary_formula.required}";
+        public static final String ORG_CODE_LENGTH_RANGE = "{validation.org.code.length_range}";
+        public static final String ORG_CODE_MAX_LENGTH = "{validation.org.code.max_length}";
+        public static final String ORG_CODE_REQUIRED = "{validation.org.code.required}";
+        public static final String ORG_COMPANY_NAME_REQUIRED = "{validation.org.company_name.required}";
+        public static final String ORG_FULL_NAME_MAX_LENGTH = "{validation.org.full_name.max_length}";
+        public static final String ORG_FULL_NAME_REQUIRED = "{validation.org.full_name.required}";
+        public static final String ORG_GROUP_CODE_REQUIRED = "{validation.org.group_code.required}";
+        public static final String ORG_GROUP_NAME_REQUIRED = "{validation.org.group_name.required}";
+        public static final String ORG_NAME_MAX_LENGTH = "{validation.org.name.max_length}";
+        public static final String ORG_NAME_REQUIRED = "{validation.org.name.required}";
+        public static final String ORG_SELECTED_MEMBER_REQUIRED = "{validation.org.selected_member.required}";
+        public static final String ORG_UNIT_NAME_MAX_LENGTH = "{validation.org.unit_name.max_length}";
+        public static final String ORG_UNIT_NAME_REQUIRED = "{validation.org.unit_name.required}";
+        public static final String STANDARD_ACCOUNTING_STANDARD_MAX_LENGTH = "{validation.standard.accounting_standard.max_length}";
+        public static final String STANDARD_ACCOUNTING_STANDARD_REQUIRED = "{validation.standard.accounting_standard.required}";
+        public static final String STANDARD_ACCOUNTING_SYSTEM_REQUIRED = "{validation.standard.accounting_system.required}";
+        public static final String STANDARD_STANDARD_REQUIRED = "{validation.standard.standard.required}";
+        public static final String STANDARD_STANDARD_CODE_REQUIRED = "{validation.standard.standard_code.required}";
+        public static final String STATEMENT_CALCULATION_METHOD_REQUIRED = "{validation.statement.calculation_method.required}";
+        public static final String STATEMENT_CALCULATION_METHOD_SIMPLE_REQUIRED = "{validation.statement.calculation_method_simple.required}";
+        public static final String STATEMENT_DATA_RULE_REQUIRED = "{validation.statement.data_rule.required}";
+        public static final String STATEMENT_FINANCIAL_ITEM_REQUIRED = "{validation.statement.financial_item.required}";
+        public static final String STATEMENT_FINANCIAL_ITEM_CODE_REQUIRED = "{validation.statement.financial_item_code.required}";
+        public static final String STATEMENT_ITEM_TYPE_REQUIRED = "{validation.statement.item_type.required}";
+        public static final String STATEMENT_MAIN_REPORT_ID_REQUIRED = "{validation.statement.main_report_id.required}";
+        public static final String STATEMENT_PERIOD_REQUIRED = "{validation.statement.period.required}";
+        public static final String STATEMENT_REPORT_CATEGORY_REQUIRED = "{validation.statement.report_category.required}";
+        public static final String STATEMENT_REPORT_PERIOD_TYPE_REQUIRED = "{validation.statement.report_period_type.required}";
+        public static final String STATEMENT_REPORT_TYPE_REQUIRED = "{validation.statement.report_type.required}";
+        public static final String USER_CONFIRM_PASSWORD_REQUIRED = "{validation.user.confirm_password.required}";
+        public static final String USER_DISPLAY_NAME_REQUIRED = "{validation.user.display_name.required}";
+        public static final String USER_EMAIL_REQUIRED = "{validation.user.email.required}";
+        public static final String USER_NEW_PASSWORD_REQUIRED = "{validation.user.new_password.required}";
+        public static final String USER_NICKNAME_MAX_LENGTH = "{validation.user.nickname.max_length}";
+        public static final String USER_PASSWORD_REQUIRED = "{validation.user.password.required}";
+        public static final String USER_PHONE_REQUIRED = "{validation.user.phone.required}";
+        public static final String USER_ROLE_REQUIRED = "{validation.user.role.required}";
+        public static final String USER_SELECTED_ROLES_REQUIRED = "{validation.user.selected_roles.required}";
+        public static final String USER_STATUS_REQUIRED = "{validation.user.status.required}";
+        public static final String USER_TYPE_REQUIRED = "{validation.user.type.required}";
+        public static final String USER_USERNAME_MAX_LENGTH = "{validation.user.username.max_length}";
+        public static final String USER_USERNAME_REQUIRED = "{validation.user.username.required}";
+        public static final String VOUCHER_ATTACHMENT_COUNT_REQUIRED = "{validation.voucher.attachment_count.required}";
+        public static final String VOUCHER_AUDIT_REQUIRED_REQUIRED = "{validation.voucher.audit_required.required}";
+        public static final String VOUCHER_EDIT_DEBIT_CREDIT_REQUIRED = "{validation.voucher.edit_debit_credit.required}";
+        public static final String VOUCHER_EDIT_SUBJECT_REQUIRED = "{validation.voucher.edit_subject.required}";
+        public static final String VOUCHER_EDIT_SUMMARY_REQUIRED = "{validation.voucher.edit_summary.required}";
+        public static final String VOUCHER_NEW_VOUCHER_WORD_REQUIRED = "{validation.voucher.new_voucher_word.required}";
+        public static final String VOUCHER_ORIGINAL_VOUCHER_WORD_REQUIRED = "{validation.voucher.original_voucher_word.required}";
+        public static final String VOUCHER_PREFIX_REQUIRED = "{validation.voucher.prefix.required}";
+        public static final String VOUCHER_SUMMARY_REQUIRED = "{validation.voucher.summary.required}";
+        public static final String VOUCHER_VOUCHER_ITEMS_REQUIRED = "{validation.voucher.voucher_items.required}";
+        public static final String VOUCHER_VOUCHER_PREFIX_REQUIRED = "{validation.voucher.voucher_prefix.required}";
+        public static final String VOUCHER_VOUCHER_RULE_REQUIRED = "{validation.voucher.voucher_rule.required}";
+        public static final String VOUCHER_VOUCHER_TARGET_REQUIRED = "{validation.voucher.voucher_target.required}";
+        public static final String VOUCHER_VOUCHER_WORD_REQUIRED = "{validation.voucher.voucher_word.required}";
+        public static final String VOUCHER_VOUCHER_WORD_NUMBER_REQUIRED = "{validation.voucher.voucher_word_number.required}";
+
+        private Validation() {
         }
     }
 }

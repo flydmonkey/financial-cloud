@@ -32,12 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/31 11:15
- */
-
 @RequiredArgsConstructor
 @Service
 public class BookService extends ServiceImpl<BookMapper, Book>{

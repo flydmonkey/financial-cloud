@@ -6,25 +6,19 @@ import com.financial.cloud.validation.EditGroup;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.util.List;
-
-/**
- * 凭证模板编辑对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
 
 @Data
 public class VoucherTemplateChangeDto {
     /**
      * 主键
      */
-    @NotNull(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     String id;
     
-    @NotEmpty(message = "模板名称不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_TEMPLATE_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String name;
     
     String code;
@@ -33,7 +27,7 @@ public class VoucherTemplateChangeDto {
     /**
      * 字头：“收”、“付”、“转”等
      */
-    @NotNull(message = "凭证字头不能为空", groups = {AddGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_PREFIX_REQUIRED, groups = {AddGroup.class})
     String wordHead;
 
     /**
@@ -46,7 +40,7 @@ public class VoucherTemplateChangeDto {
     /**
      * 所属账套
      */
-    @NotEmpty(message = "关联对象编码不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_RELATED_OBJECT_CODE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String relatedId;
 
     /**
@@ -66,6 +60,6 @@ public class VoucherTemplateChangeDto {
     /**
      * 凭证明细记录
      */
-    @NotNull(message = "凭证明细不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_ITEMS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private List<VoucherTemplateItem> items;
 }

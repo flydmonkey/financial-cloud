@@ -8,12 +8,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-/**
- * 初期余额表 book_init_balance
- *
- * @author Wuyan
- * {@code @date} 2025-03-11
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder

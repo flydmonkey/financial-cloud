@@ -3,13 +3,6 @@ package com.financial.cloud.captcha;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 图片验证码信息
- *
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 public class ImageCaptcha {

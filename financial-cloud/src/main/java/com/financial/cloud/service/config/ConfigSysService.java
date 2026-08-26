@@ -28,11 +28,6 @@ import java.util.*;
 
 import static com.financial.cloud.constants.common.ConstsCached.CONFIG_SYS;
 
-/**
- * 参数配置 服务层实现
- *
- * @author Lion Li
- */
 @RequiredArgsConstructor
 @Service
 public class ConfigSysService{
@@ -42,6 +37,7 @@ public class ConfigSysService{
             ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT,
             ConstsSysConfig.SYS_PAYMENT_TERM_START,
             ConstsSysConfig.SYS_INITIALIZE_TASK,
+            ConstsSysConfig.SYS_ASSIST_ACC_ENABLED,
             ConstsSysConfig.SYS_SUBJECT_LAVAL,
             ConstsSysConfig.SYS_SUBJECT_CODES_LENGTH,
             ConstsSysConfig.SYS_DEFAULT_ACCOUNTS_PAYABLE,
@@ -68,6 +64,7 @@ public class ConfigSysService{
             ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT,
             ConstsSysConfig.SYS_PAYMENT_TERM_START,
             ConstsSysConfig.SYS_INITIALIZE_TASK,
+            ConstsSysConfig.SYS_ASSIST_ACC_ENABLED,
             ConstsSysConfig.SYS_SUBJECT_LAVAL,
             ConstsSysConfig.SYS_SUBJECT_CODES_LENGTH
     );
@@ -304,6 +301,21 @@ public class ConfigSysService{
         }
         return Message.ok(data);
     }
+
+    /**
+     * 读取账套参数（缺失项不抛错，供统计/仪表盘等只读场景使用）
+     */
+    public Map<String, String> getBookConfigMap(String bookId) {
+        List<ConfigSys> data = baseMapper.selectList(new LambdaQueryWrapper<ConfigSys>()
+                .in(ConfigSys::getConfigKey, BOOKS_KEYS)
+                .eq(ConfigSys::getBookId, bookId)
+                .select(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+        Map<String, String> maps = new HashMap<>();
+        data.forEach(t -> maps.put(t.getConfigKey(), t.getConfigValue()));
+        maps.put("bookId", bookId);
+        return maps;
+    }
+
     public Message<List<ConfigSys>> getBookShowList(String bookId) {
         List<ConfigSys> data = baseMapper.selectList(new LambdaQueryWrapper<ConfigSys>()
                 .in(ConfigSys::getConfigKey, BOOKS_SHOW_KEYS)
@@ -325,6 +337,13 @@ public class ConfigSysService{
      */
     public String getConfigValue(String bookId, String configKey) {
         return SpringUtils.getAopProxy(this).selectConfigByKey(bookId, configKey);
+    }
+
+    /**
+     * 账套是否启用辅助核算
+     */
+    public boolean isAssistAccEnabled(String bookId) {
+        return "true".equalsIgnoreCase(getConfigValue(bookId, ConstsSysConfig.SYS_ASSIST_ACC_ENABLED));
     }
 
 

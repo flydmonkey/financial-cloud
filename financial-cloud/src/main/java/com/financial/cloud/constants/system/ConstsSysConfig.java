@@ -1,13 +1,5 @@
 package com.financial.cloud.constants.system;
 
-/**
- * 简介说明: 系统参数定义
- *
- * @author wuyan
- * {@code @date} 2025/03/18 10:02:48
- * {@code @version} 1.0
- */
-
 public class ConstsSysConfig {
 
     //*************************************基本信息**************************************//
@@ -26,6 +18,11 @@ public class ConstsSysConfig {
      * 是否完成初始化任务
      */
     public static final String SYS_INITIALIZE_TASK = "sys.initialize.task";
+
+    /**
+     * 是否启用辅助核算
+     */
+    public static final String SYS_ASSIST_ACC_ENABLED = "sys.assist.acc.enabled";
 
     //*************************************科目参数**************************************//
 

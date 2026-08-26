@@ -35,10 +35,6 @@ import com.financial.cloud.util.IdGenerator;
  * @author Crystal.Sea
  * @since 1.5
  */
-/**
- * @author shimi
- *
- */
 @Slf4j
 public final class WebContext {
     

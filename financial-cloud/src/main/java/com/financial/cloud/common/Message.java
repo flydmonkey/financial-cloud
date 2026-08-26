@@ -6,14 +6,6 @@ import org.springframework.http.ResponseEntity;
 
 import lombok.Data;
 
-/**
- * 返回信息内容<br>
- * code 返回码 <br>
- * message 消息提示 <br>
- * data 返回数据内容 <br>
- *
- * @param <T>
- */
 @Data
 public class Message<T> {
 

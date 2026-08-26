@@ -16,6 +16,7 @@ import com.financial.cloud.service.statement.StatementBalanceSheetService;
 import com.financial.cloud.service.statement.StatementIncomeService;
 import com.financial.cloud.util.DateUtils;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -27,14 +28,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.financial.cloud.constants.system.ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT;
-
-/**
- * 简介说明: 资金仪表盘
- *
- * @author wuyan
- * {@code @date} 2025/05/06 10:38:12
- * {@code @version} 1.0
- */
 
 @RequiredArgsConstructor
 @Service
@@ -52,9 +45,14 @@ public class FundDashboardService{
      */
     public FundBalanceVo statisticsFundBalance(StatementParamsDto params) {
         String cashCodes = configSysService.selectConfigByKey(params.getBookId(), ConstsSysConfig.SYS_DEFAULT_CASH_SUBJECT_CODES);
+        List<String> cashCodeList = splitSubjectCodes(cashCodes);
         LambdaQueryWrapper<StatementSubjectBalance> lqw = buildQueryWrapper(params);
         lqw.isNull(StatementSubjectBalance::getParentId);
-        lqw.in(StatementSubjectBalance::getSubjectCode, Arrays.asList(cashCodes.split(",")));
+        if (!cashCodeList.isEmpty()) {
+            lqw.in(StatementSubjectBalance::getSubjectCode, cashCodeList);
+        } else {
+            lqw.eq(StatementSubjectBalance::getSubjectCode, "__none__");
+        }
         List<BaseValue<BigDecimal>> listData = new ArrayList<>();
         FundBalanceVo data = FundBalanceVo.builder()
                 .balance(BigDecimal.ZERO)
@@ -72,7 +70,7 @@ public class FundDashboardService{
             listData.add(value);
             data.setBalance(data.getBalance().add(subjectBalance.getBalance()));
             data.setIncomeFunds(data.getIncomeFunds().add(subjectBalance.getCurrentPeriodDebit()));
-            data.setPayoutFunds(data.getIncomeFunds().add(subjectBalance.getCurrentPeriodCredit()));
+            data.setPayoutFunds(data.getPayoutFunds().add(subjectBalance.getCurrentPeriodCredit()));
         }
         data.setNetIncomeFunds(data.getIncomeFunds().subtract(data.getPayoutFunds()));
         return data;
@@ -115,29 +113,34 @@ public class FundDashboardService{
         FundBalanceVo fundBalanceVo = statisticsFundBalance(params);
         data.setCashBalance(fundBalanceVo.getBalance());
 
-        Map<String, String> configMap = configSysService.getBookConfigList(params.getBookId()).getData().stream()
-                .collect(Collectors.toMap(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+        Map<String, String> configMap = configSysService.getBookConfigMap(params.getBookId());
 
         // 短期应收账款
         String receivableCodes = configMap.get(ConstsSysConfig.SYS_DEFAULT_SHORT_TERM_ACCOUNTS_RECEIVABLE);
         LambdaQueryWrapper<StatementSubjectBalance> lqw = buildQueryWrapper(params);
         lqw.isNull(StatementSubjectBalance::getParentId);
-        List<String> codes = Arrays.stream(receivableCodes.split(",")).toList();
-        lqw.in(StatementSubjectBalance::getSubjectCode, codes);
-        BigDecimal accountsReceivable = subjectBalanceMapper.selectList(lqw).stream()
-                .map(item -> item.getCurrentPeriodDebit().subtract(item.getCurrentPeriodCredit()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<String> codes = splitSubjectCodes(receivableCodes);
+        BigDecimal accountsReceivable = BigDecimal.ZERO;
+        if (!codes.isEmpty()) {
+            lqw.in(StatementSubjectBalance::getSubjectCode, codes);
+            accountsReceivable = subjectBalanceMapper.selectList(lqw).stream()
+                    .map(item -> item.getCurrentPeriodDebit().subtract(item.getCurrentPeriodCredit()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
         data.setAccountsReceivable(accountsReceivable);
 
         // 短期应付账款
         String payableCodes = configMap.get(ConstsSysConfig.SYS_DEFAULT_SHORT_TERM_ACCOUNTS_PAYABLE);
         lqw = buildQueryWrapper(params);
         lqw.isNull(StatementSubjectBalance::getParentId);
-        codes = Arrays.stream(payableCodes.split(",")).toList();
-        lqw.in(StatementSubjectBalance::getSubjectCode, codes);
-        BigDecimal accountsPayable = subjectBalanceMapper.selectList(lqw).stream()
-                .map(item -> item.getCurrentPeriodCredit().subtract(item.getCurrentPeriodDebit()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        codes = splitSubjectCodes(payableCodes);
+        BigDecimal accountsPayable = BigDecimal.ZERO;
+        if (!codes.isEmpty()) {
+            lqw.in(StatementSubjectBalance::getSubjectCode, codes);
+            accountsPayable = subjectBalanceMapper.selectList(lqw).stream()
+                    .map(item -> item.getCurrentPeriodCredit().subtract(item.getCurrentPeriodDebit()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
         data.setAccountsPayable(accountsPayable);
         data.setBalance(data.getCashBalance().add(data.getAccountsReceivable()).subtract(data.getAccountsPayable()));
 
@@ -146,18 +149,20 @@ public class FundDashboardService{
         BeanUtils.copyProperties(params, ratioParams);
         ratioParams.setPeriodType(StatementPeriodTypeEnum.BETWEEN_MONTH.getValue());
         String termCurrent = configMap.get(SYS_PAYMENT_TERM_CURRENT);
-        String[] yearMonth = termCurrent.split("-");
-        String startTime = yearMonth[0] + "-01";
-        String endTime = yearMonth[0] + "-" + String.format("%02d", Integer.parseInt(yearMonth[1]));
-        ratioParams.setDateRange(new String[]{startTime, endTime});
-        calcCashRatio(false, ratioParams, data, configMap);
+        if (StringUtils.isNotBlank(termCurrent) && termCurrent.contains("-")) {
+            String[] yearMonth = termCurrent.split("-");
+            String startTime = yearMonth[0] + "-01";
+            String endTime = yearMonth[0] + "-" + String.format("%02d", Integer.parseInt(yearMonth[1]));
+            ratioParams.setDateRange(new String[]{startTime, endTime});
+            calcCashRatio(false, ratioParams, data, configMap);
 
-        // 同期统计
-        startTime = String.format("%04d", Integer.parseInt(yearMonth[0]) - 1) + "-01";
-        endTime = String.format("%04d", Integer.parseInt(yearMonth[0]) - 1)
-                + "-" + String.format("%02d", Integer.parseInt(yearMonth[1]));
-        ratioParams.setDateRange(new String[]{startTime, endTime});
-        calcCashRatio(true, ratioParams, data, configMap);
+            // 同期统计
+            startTime = String.format("%04d", Integer.parseInt(yearMonth[0]) - 1) + "-01";
+            endTime = String.format("%04d", Integer.parseInt(yearMonth[0]) - 1)
+                    + "-" + String.format("%02d", Integer.parseInt(yearMonth[1]));
+            ratioParams.setDateRange(new String[]{startTime, endTime});
+            calcCashRatio(true, ratioParams, data, configMap);
+        }
 
         return data;
     }
@@ -210,18 +215,15 @@ public class FundDashboardService{
         NetProfitVo data = NetProfitVo.builder().build();
 
         StatementIncome statementIncome = statementIncomeService.generateIncomeStatement(params, false).getData();
-        Map<String, String> configMap = configSysService.getBookConfigList(params.getBookId()).getData().stream()
-                .collect(Collectors.toMap(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+        Map<String, String> configMap = configSysService.getBookConfigMap(params.getBookId());
 
         // 净利润
         List<StatementIncomeItem> items = statementIncome.getItems();
         String incomeNetProfitCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_NET_PROFIT);
-        StatementIncomeItem incomeItem = items.stream().filter(item -> item.getItemCode().equals(incomeNetProfitCode)).toList().get(0);
-        data.setBalance(incomeItem.getCurrentBalance());
+        data.setBalance(incomeItemBalance(items, incomeNetProfitCode));
         // 营业收入
         String incomeOperatingCostsCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_OPERATING_REVENUE);
-        BigDecimal incomeOperatingCostsItemBanlance = items.stream()
-                .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+        BigDecimal incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
         // 净利润率
         BigDecimal percentage = BigDecimal.ZERO;
         if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
@@ -249,8 +251,7 @@ public class FundDashboardService{
         BigDecimal balanceLastYear;
         if (statementIncome != null) {
             items = statementIncome.getItems();
-            incomeItem = items.stream().filter(item -> item.getItemCode().equals(incomeNetProfitCode)).toList().get(0);
-            balanceLastYear = incomeItem.getCurrentBalance();
+            balanceLastYear = incomeItemBalance(items, incomeNetProfitCode);
             if (balanceLastYear.compareTo(BigDecimal.ZERO) != 0) {
                 percentage = data.getBalance().subtract(balanceLastYear)
                         .divide(balanceLastYear, 4, RoundingMode.HALF_UP)  // 保留4位中间值
@@ -260,8 +261,7 @@ public class FundDashboardService{
             data.setBalanceLastYear(percentage.floatValue());
 
             // 较同期净利润率
-            incomeOperatingCostsItemBanlance = items.stream()
-                    .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+            incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
             percentage = BigDecimal.ZERO;
             if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
                 percentage = balanceLastYear.divide(incomeOperatingCostsItemBanlance, 4, RoundingMode.HALF_UP)  // 保留4位中间值
@@ -289,8 +289,7 @@ public class FundDashboardService{
             BigDecimal balanceLast;
             if (statementIncome != null) {
                 items = statementIncome.getItems();
-                incomeItem = items.stream().filter(item -> item.getItemCode().equals(incomeNetProfitCode)).toList().get(0);
-                balanceLast = incomeItem.getCurrentBalance();
+                balanceLast = incomeItemBalance(items, incomeNetProfitCode);
                 if (balanceLast.compareTo(BigDecimal.ZERO) != 0) {
                     percentage = data.getBalance().subtract(balanceLast)
                             .divide(balanceLast, 4, RoundingMode.HALF_UP)  // 保留4位中间值
@@ -300,8 +299,7 @@ public class FundDashboardService{
                 data.setBalanceLast(percentage.floatValue());
 
                 // 较同期净利润率
-                incomeOperatingCostsItemBanlance = items.stream()
-                        .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+                incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
                 percentage = BigDecimal.ZERO;
                 if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
                     percentage = balanceLast.divide(incomeOperatingCostsItemBanlance, 4, RoundingMode.HALF_UP)  // 保留4位中间值
@@ -325,18 +323,17 @@ public class FundDashboardService{
             recentParams.parse();
             statementIncome = statementIncomeService.getIncomeStatement(recentParams, false).getData();
             items = statementIncome.getItems();
-            incomeItem = items.stream().filter(item -> item.getItemCode().equals(incomeNetProfitCode)).toList().get(0);
+            BigDecimal netProfitBalance = incomeItemBalance(items, incomeNetProfitCode);
             // 营业收入
-            incomeOperatingCostsItemBanlance = items.stream()
-                    .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+            incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
             // 净利润率
             percentage = BigDecimal.ZERO;
             if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
-                percentage = data.getBalance().divide(incomeOperatingCostsItemBanlance, 4, RoundingMode.HALF_UP)  // 保留4位中间值
+                percentage = netProfitBalance.divide(incomeOperatingCostsItemBanlance, 4, RoundingMode.HALF_UP)  // 保留4位中间值
                         .multiply(BigDecimal.valueOf(100))
                         .setScale(2, RoundingMode.HALF_UP); // 最终保留2位百分比
             }
-            balanceList.add(new BaseValue<>(recentMonth, incomeItem.getCurrentBalance()));
+            balanceList.add(new BaseValue<>(recentMonth, netProfitBalance));
             balanceRatioList.add(new BaseValue<>(recentMonth, percentage.floatValue()));
         }
         data.setBalanceList(balanceList);
@@ -355,19 +352,16 @@ public class FundDashboardService{
         RevenueCostVo data = RevenueCostVo.builder().build();
 
         StatementIncome statementIncome = statementIncomeService.generateIncomeStatement(params, false).getData();
-        Map<String, String> configMap = configSysService.getBookConfigList(params.getBookId()).getData().stream()
-                .collect(Collectors.toMap(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+        Map<String, String> configMap = configSysService.getBookConfigMap(params.getBookId());
 
         // 营业收入
         List<StatementIncomeItem> items = statementIncome.getItems();
         String incomeOperatingRevenueCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_OPERATING_REVENUE);
-        BigDecimal incomeOperatingRevenueItemBanlance = items.stream()
-                .filter(item -> item.getItemCode().equals(incomeOperatingRevenueCode)).toList().get(0).getCurrentBalance();
+        BigDecimal incomeOperatingRevenueItemBanlance = incomeItemBalance(items, incomeOperatingRevenueCode);
         data.setBalance(incomeOperatingRevenueItemBanlance);
         // 营业成本
         String incomeOperatingCostsCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_OPERATING_COSTS);
-        BigDecimal incomeOperatingCostsItemBanlance = items.stream()
-                .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+        BigDecimal incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
         data.setBalanceOperatingCosts(incomeOperatingCostsItemBanlance);
 
         // 毛利率：（毛利润 ÷ 营业收入）× 100%
@@ -400,7 +394,7 @@ public class FundDashboardService{
         if (statementIncome != null) {
             items = statementIncome.getItems();
             // 收入
-            balanceLastYear = items.stream().filter(item -> item.getItemCode().equals(incomeOperatingRevenueCode)).toList().get(0).getCurrentBalance();
+            balanceLastYear = incomeItemBalance(items, incomeOperatingRevenueCode);
             if (balanceLastYear.compareTo(BigDecimal.ZERO) != 0) {
                 percentage = data.getBalance().subtract(balanceLastYear)
                         .divide(balanceLastYear, 4, RoundingMode.HALF_UP)  // 保留4位中间值
@@ -409,8 +403,7 @@ public class FundDashboardService{
             }
             data.setBalanceLastYear(percentage.floatValue());
             // 成本
-            incomeOperatingCostsItemBanlance = items.stream()
-                    .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+            incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
             percentage = BigDecimal.ZERO;
             if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
                 percentage = data.getBalanceOperatingCosts().subtract(incomeOperatingCostsItemBanlance)
@@ -440,8 +433,7 @@ public class FundDashboardService{
             if (statementIncome != null) {
                 items = statementIncome.getItems();
                 // 收入
-                balanceLast = items.stream().filter(item -> item.getItemCode().equals(incomeOperatingRevenueCode))
-                        .toList().get(0).getCurrentBalance();
+                balanceLast = incomeItemBalance(items, incomeOperatingRevenueCode);
                 if (balanceLast.compareTo(BigDecimal.ZERO) != 0) {
                     percentage = data.getBalance().subtract(balanceLast)
                             .divide(balanceLast, 4, RoundingMode.HALF_UP)  // 保留4位中间值
@@ -451,9 +443,7 @@ public class FundDashboardService{
                 data.setBalanceLast(percentage.floatValue());
 
                 // 成本
-                incomeOperatingCostsItemBanlance = items.stream()
-                        .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode))
-                        .toList().get(0).getCurrentBalance();
+                incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
                 percentage = BigDecimal.ZERO;
                 if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
                     percentage = data.getBalanceOperatingCosts().subtract(incomeOperatingCostsItemBanlance)
@@ -479,12 +469,9 @@ public class FundDashboardService{
             statementIncome = statementIncomeService.getIncomeStatement(recentParams, false).getData();
             items = statementIncome.getItems();
             // 收入
-            incomeOperatingRevenueItemBanlance = items.stream()
-                    .filter(item -> item.getItemCode().equals(incomeOperatingRevenueCode))
-                    .toList().get(0).getCurrentBalance();
+            incomeOperatingRevenueItemBanlance = incomeItemBalance(items, incomeOperatingRevenueCode);
             // 成本
-            incomeOperatingCostsItemBanlance = items.stream()
-                    .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+            incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
             balanceList.add(new BaseValue<>(recentMonth, incomeOperatingRevenueItemBanlance));
             balanceRatioList.add(new BaseValue<>(recentMonth, incomeOperatingCostsItemBanlance));
         }
@@ -505,16 +492,14 @@ public class FundDashboardService{
                 .balance(BigDecimal.ZERO)
                 .build();
         params.parse();
-        Map<String, String> configMap = configSysService.getBookConfigList(params.getBookId()).getData().stream()
-                .collect(Collectors.toMap(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+        Map<String, String> configMap = configSysService.getBookConfigMap(params.getBookId());
         StatementIncome statementIncome = statementIncomeService.generateIncomeStatement(params, false).getData();
         List<StatementIncomeItem> items = statementIncome.getItems();
         sumExpense(configMap, items, data);
 
         // 收入比
         String incomeOperatingRevenueCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_OPERATING_REVENUE);
-        BigDecimal incomeOperatingRevenueItemBanlance = items.stream()
-                .filter(item -> item.getItemCode().equals(incomeOperatingRevenueCode)).toList().get(0).getCurrentBalance();
+        BigDecimal incomeOperatingRevenueItemBanlance = incomeItemBalance(items, incomeOperatingRevenueCode);
         BigDecimal percentage = BigDecimal.ZERO;
         if (incomeOperatingRevenueItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
             percentage = data.getBalance()
@@ -526,8 +511,7 @@ public class FundDashboardService{
 
         // 成本比
         String incomeOperatingCostsCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_OPERATING_COSTS);
-        BigDecimal incomeOperatingCostsItemBanlance = items.stream()
-                .filter(item -> item.getItemCode().equals(incomeOperatingCostsCode)).toList().get(0).getCurrentBalance();
+        BigDecimal incomeOperatingCostsItemBanlance = incomeItemBalance(items, incomeOperatingCostsCode);
         percentage = BigDecimal.ZERO;
         if (incomeOperatingCostsItemBanlance.compareTo(BigDecimal.ZERO) != 0) {
             percentage = data.getBalance()
@@ -603,8 +587,7 @@ public class FundDashboardService{
      * @return 结果
      */
     public AddTaxVo statisticsAddedTax(StatementParamsDto params) {
-        Map<String, String> configMap = configSysService.getBookConfigList(params.getBookId()).getData().stream()
-                .collect(Collectors.toMap(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+        Map<String, String> configMap = configSysService.getBookConfigMap(params.getBookId());
         AddTaxVo data = AddTaxVo.builder()
                 .taxRatio(new ArrayList<>())
                 .tax(new ArrayList<>())
@@ -618,8 +601,7 @@ public class FundDashboardService{
         String addedTaxCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_ADDED_TAX);
         String incomeTaxCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_INCOME_TAX_EXPENSES);
         BigDecimal balance = items.stream()
-                .filter(item -> item.getItemCode().equals(addedTaxCode)
-                        || item.getItemCode().equals(incomeTaxCode))
+                .filter(item -> matchesTaxItem(item, addedTaxCode, incomeTaxCode))
                 .map(StatementIncomeItem::getCurrentBalance).reduce(BigDecimal.ZERO, BigDecimal::add);
         data.setBalance(balance);
 
@@ -636,8 +618,7 @@ public class FundDashboardService{
             statementIncome = statementIncomeService.getIncomeStatement(recentParams, false).getData();
             items = statementIncome.getItems();
             balance = items.stream()
-                    .filter(item -> item.getItemCode().equals(addedTaxCode)
-                            || item.getItemCode().equals(incomeTaxCode))
+                    .filter(item -> matchesTaxItem(item, addedTaxCode, incomeTaxCode))
                     .map(StatementIncomeItem::getCurrentBalance).reduce(BigDecimal.ZERO, BigDecimal::add);
             addedTaxList.add(BaseValue.<BigDecimal>builder()
                     .name(recentMonth)
@@ -667,8 +648,7 @@ public class FundDashboardService{
         );
         for (String listKey : listKeys.keySet()) {
             String code = configMap.get(listKey);
-            BigDecimal cost = items.stream()
-                    .filter(item -> item.getItemCode().equals(code)).toList().get(0).getCurrentBalance();
+            BigDecimal cost = incomeItemBalance(items, code);
             balanceList.add(new BaseValue<>(listKeys.get(listKey), cost));
             balance = balance.add(cost);
         }
@@ -681,6 +661,32 @@ public class FundDashboardService{
         return balance;
     }
 
+    private static List<String> splitSubjectCodes(String codes) {
+        if (StringUtils.isBlank(codes)) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(codes.split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .toList();
+    }
+
+    private static BigDecimal incomeItemBalance(List<StatementIncomeItem> items, String code) {
+        if (StringUtils.isBlank(code) || items == null) {
+            return BigDecimal.ZERO;
+        }
+        return items.stream()
+                .filter(item -> code.equals(item.getItemCode()))
+                .findFirst()
+                .map(StatementIncomeItem::getCurrentBalance)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private static boolean matchesTaxItem(StatementIncomeItem item, String addedTaxCode, String incomeTaxCode) {
+        return (StringUtils.isNotBlank(addedTaxCode) && addedTaxCode.equals(item.getItemCode()))
+                || (StringUtils.isNotBlank(incomeTaxCode) && incomeTaxCode.equals(item.getItemCode()));
+    }
+
     /**
      * 获取最近几个月，加上inputDateStr
      *
@@ -689,6 +695,9 @@ public class FundDashboardService{
      * @return 结果：monthsCount + 1
      */
     public static List<String> getRecentMonths(String inputDateStr, int monthsCount) {
+        if (StringUtils.isBlank(inputDateStr)) {
+            return Collections.emptyList();
+        }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateUtils.FORMAT_DATE_YYYY_MM);
         YearMonth start = YearMonth.parse(inputDateStr, formatter);
         List<String> result = new ArrayList<>();

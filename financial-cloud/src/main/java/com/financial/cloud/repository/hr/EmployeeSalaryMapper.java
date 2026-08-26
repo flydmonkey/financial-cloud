@@ -13,12 +13,6 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/20 11:56
- */
-
 @Mapper
 public interface EmployeeSalaryMapper extends BaseMapper<EmployeeSalary> {
     Page<EmployeeSalary> pageList(Page page, @Param("Dto") SalaryDetailPageDto dto);

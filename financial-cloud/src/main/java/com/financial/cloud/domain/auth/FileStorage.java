@@ -37,16 +37,10 @@ public class FileStorage {
     @TableField(exist = false)
     String imageBase64;
 
-    /**
-     * åå»ºè?
-     */
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     protected String createdBy;
 
-    /**
-     * åå»ºæ¶é´
-     */
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     protected Date createdDate;

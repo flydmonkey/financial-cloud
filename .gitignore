@@ -50,5 +50,23 @@ release_frontend.bat
 
 financial-cloud-ui/package-lock.json
 financial-cloud-ui/yarn.lock
+financial-cloud-ui/.playwright-browsers/
+financial-cloud-ui/test-results/
 package-lock.json
 
+**/dist/**
+
+# Windows local scripts (not for repo)
+scripts/
+*.ps1
+!financial-cloud/mvnw.ps1
+*.bat
+
+# Agent session artifacts
+.superpowers/
+
+# Local helper scripts
+sql/*.py
+
+# Playwright E2E local output (keep config/specs tracked)
+financial-cloud-ui/playwright-report/

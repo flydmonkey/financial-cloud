@@ -3,14 +3,9 @@ package com.financial.cloud.dto.common;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.util.List;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/23 11:04
- */
 
 @Data
 public class ListIdsDto {
@@ -18,6 +13,6 @@ public class ListIdsDto {
     private String bookId;
 
     @Valid
-    @NotEmpty(message = "所选ID不能为空")
+    @NotEmpty(message = MessageKeys.Validation.COMMON_SELECTED_ID_REQUIRED)
     List<String> listIds;
 }

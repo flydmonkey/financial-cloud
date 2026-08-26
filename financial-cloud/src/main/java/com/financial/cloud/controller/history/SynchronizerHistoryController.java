@@ -17,12 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * åæ­¥å¨æ¥å¿æ¥è¯?
- *
- * @author Crystal.sea
- *
- */
 
 @RequiredArgsConstructor
 @Slf4j

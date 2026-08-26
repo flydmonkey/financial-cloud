@@ -1,8 +1,5 @@
 package com.financial.cloud.context;
 
-/**
- * Web Application Constants define.
- */
 public final class WebConstants {
 
     private WebConstants() {

@@ -18,9 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * åç±»æ¥è¡¨æ¥å£
- */
 
 @RestController
 @RequestMapping("/api/statement")
@@ -29,12 +26,6 @@ import java.util.List;
 public class StatementReportController {
     private final StatementReportService statementReportService;
 
-    /**
-     * æ¥è¡¨-ç°éæµéè¡?
-     *
-     * @param dto æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/cash-flow"})
     public Message<List<StatementCashFlow>> cashFlow(StatementParamsDto dto,
                                                                    @CurrentUser UserInfo userInfo) {
@@ -43,9 +34,6 @@ public class StatementReportController {
         return statementReportService.cashFlowStatement(dto);
     }
 
-    /**
-     * ç°éæµéè¡¨å¯¼åºåè?
-     */
     @GetMapping("/cash-flow/export")
     public void cashFlowExport(HttpServletResponse response,
                        StatementParamsDto dto,
@@ -55,12 +43,6 @@ public class StatementReportController {
         statementReportService.cashFlowExport(dto, response);
     }
 
-    /**
-     * æ¥è¡¨-ç§ç®ä½é¢è¡?
-     *
-     * @param dto æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/subject-balance"})
     public Message<List<StatementSubjectBalance>> subjectBalance(StatementParamsDto dto,
                                                                @CurrentUser UserInfo userInfo) {
@@ -69,9 +51,6 @@ public class StatementReportController {
         return statementReportService.subjectBalance(dto);
     }
 
-    /**
-     * ç§ç®ä½é¢è¡¨å¯¼åºåè?
-     */
     @GetMapping("/subject-balance/export")
     public void subjectBalanceExport(HttpServletResponse response,
                        StatementParamsDto dto,
@@ -81,12 +60,6 @@ public class StatementReportController {
         statementReportService.subjectBalanceExport(dto, response);
     }
 
-    /**
-     * æ¥è¡¨-å­è¯æ±æ»è¡¨
-     *
-     * @param dto æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/voucher-summary"})
     public Message<List<StatementSubjectBalance>> voucherSummary(StatementParamsDto dto,
                                                             @CurrentUser UserInfo userInfo) {
@@ -95,9 +68,6 @@ public class StatementReportController {
         return statementReportService.voucherSummary(dto);
     }
 
-    /**
-     * å­è¯æ±æ»è¡¨å¯¼åºåè½
-     */
     @GetMapping("/voucher-summary/export")
     public void voucherSummaryExport(HttpServletResponse response,
                                      StatementParamsDto dto,

@@ -9,9 +9,6 @@ import com.financial.cloud.common.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 税务个人附加扣除
- */
 @EqualsAndHashCode(callSuper = true)
 @TableName("employee_tax_deduction")
 @Data

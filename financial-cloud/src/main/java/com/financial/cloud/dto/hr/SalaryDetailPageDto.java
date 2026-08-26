@@ -6,12 +6,6 @@ import lombok.EqualsAndHashCode;
 
 import java.time.YearMonth;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/13 17:18
- */
-
 @Data
 @EqualsAndHashCode(callSuper=false)
 public class SalaryDetailPageDto extends PageQuery {

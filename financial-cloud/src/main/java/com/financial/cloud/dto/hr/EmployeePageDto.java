@@ -4,13 +4,6 @@ import com.financial.cloud.common.PageQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 员工信息分页查询对象
- *
- * @author wuyan
- * {@code @date} 2025-01-22
- */
-
 @Data
 @EqualsAndHashCode(callSuper=false)
 public class EmployeePageDto extends PageQuery {

@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.financial.cloud.repository.permissions;
 
 import com.financial.cloud.repository.permissions.ResourcesMapper;
@@ -11,11 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.domain.permissions.Resources;
 import com.financial.cloud.dto.permissions.ResourcesPageDto;
 import org.apache.ibatis.annotations.Param;
-
-/**
- * @author Crystal.sea
- *
- */
 
 public  interface ResourcesMapper extends BaseMapper<Resources> {
 

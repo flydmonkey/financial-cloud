@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
+import vueParser from 'vue-eslint-parser'
 
 export default tseslint.config(
     {ignores: ['dist/**', 'node_modules/**', 'src/assets/iconfont/**']},
@@ -9,7 +10,23 @@ export default tseslint.config(
     ...pluginVue.configs['flat/recommended'],
     ...tseslint.configs.recommended,
     {
-        files: ['**/*.{js,mjs,cjs,ts,vue}'],
+        files: ['**/*.vue'],
+        languageOptions: {
+            parser: vueParser,
+            parserOptions: {
+                parser: tseslint.parser,
+                ecmaVersion: 'latest',
+                sourceType: 'module',
+                extraFileExtensions: ['.vue'],
+            },
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+            },
+        },
+    },
+    {
+        files: ['**/*.{js,mjs,cjs,ts}'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',
@@ -18,6 +35,8 @@ export default tseslint.config(
                 ...globals.node,
             },
         },
+    },
+    {
         rules: {
             'no-console': ['warn', {allow: ['warn', 'error']}],
             '@typescript-eslint/no-explicit-any': 'off',

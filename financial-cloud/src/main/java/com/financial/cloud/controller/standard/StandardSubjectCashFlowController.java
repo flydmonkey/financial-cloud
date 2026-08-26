@@ -11,12 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/4/21 10:43
- */
-
 @RestController
 @RequestMapping("/api/config/subject-cash-flow")
 @Slf4j

@@ -6,12 +6,6 @@ import com.financial.cloud.authn.core.AuthAuthentication;
 
 import com.financial.cloud.authn.LoginCredential;
 
-/**
- * 认证提供者工厂
- * 
- * @author Crystal.Sea
- *
- */
 public class AuthenticationProviderFactory extends AbstractAuthenticationProvider {
 
     static ConcurrentHashMap<String,AbstractAuthenticationProvider> providers = new ConcurrentHashMap<>();

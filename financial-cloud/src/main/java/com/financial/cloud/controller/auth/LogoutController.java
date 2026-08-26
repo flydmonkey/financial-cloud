@@ -19,9 +19,6 @@ import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.service.permissions.SessionListService;
 import com.financial.cloud.util.AuthorizationHeaderUtils;
 
-/**
- * 前端注销
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController

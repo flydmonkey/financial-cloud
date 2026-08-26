@@ -15,12 +15,6 @@ import com.financial.cloud.service.book.SettlementCarryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/31 11:18
- */
-
 @RequiredArgsConstructor
 @Slf4j
 @RestController

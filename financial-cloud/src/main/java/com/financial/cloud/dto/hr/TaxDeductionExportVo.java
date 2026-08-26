@@ -6,12 +6,6 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.Date;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/3/7 9:52
- */
-
 @Data
 public class TaxDeductionExportVo {
 

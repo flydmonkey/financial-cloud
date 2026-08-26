@@ -697,27 +697,48 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     @Transactional
     public Message<Void> sender(List<String> ids, UserInfo userInfo) {
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
-        for (Voucher voucher : vouchers) {
+        List<Voucher> senderVouchers = vouchers.stream()
+                .filter(item -> VoucherStatusEnum.COMPLETED.getValue().equals(item.getStatus()))
+                .toList();
+        for (Voucher voucher : senderVouchers) {
             voucher.setSenderId(userInfo.getId());
             voucher.setSenderDate(new Date());
             voucher.setSenderName(userInfo.getDisplayName());
         }
-        boolean b = Db.updateBatchById(vouchers);
-        return b ? Message.ok(null) : Message.failed("操作失败");
+        if (senderVouchers.isEmpty()) {
+            return Message.failed("没有可以过账的凭证（需为已完成状态）");
+        }
+        boolean b = Db.updateBatchById(senderVouchers);
+        return b ? new Message<>(Message.SUCCESS,
+                "操作总数：" + ids.size()
+                        + "; 成功：" + senderVouchers.size()
+                        + "; 失败：" + (vouchers.size() - senderVouchers.size())
+        ) : Message.failed("操作失败");
     }
 
     /**
      * 主管复审
      */
+    @Transactional
     public Message<Void> manageAudit(List<String> ids, UserInfo userInfo) {
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
-        for (Voucher voucher : vouchers) {
+        List<Voucher> manageVouchers = vouchers.stream()
+                .filter(item -> VoucherStatusEnum.COMPLETED.getValue().equals(item.getStatus()))
+                .toList();
+        for (Voucher voucher : manageVouchers) {
             voucher.setManagerId(userInfo.getId());
             voucher.setManagerDate(new Date());
             voucher.setManagerName(userInfo.getDisplayName());
         }
-        boolean b = Db.updateBatchById(vouchers);
-        return b ? Message.ok(null) : Message.failed("操作失败");
+        if (manageVouchers.isEmpty()) {
+            return Message.failed("没有可以主管复核的凭证（需为已完成状态）");
+        }
+        boolean b = Db.updateBatchById(manageVouchers);
+        return b ? new Message<>(Message.SUCCESS,
+                "操作总数：" + ids.size()
+                        + "; 成功：" + manageVouchers.size()
+                        + "; 失败：" + (vouchers.size() - manageVouchers.size())
+        ) : Message.failed("操作失败");
     }
     public void export(VoucherPageDto dto, HttpServletResponse response) throws IOException {
         List<VoucherVo> data = pageList(dto).getData().getRecords();
@@ -836,7 +857,6 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             booksVouchers.forEach(t -> t.setStatus(VoucherStatusEnum.CANCELLED.getValue()));
             Db.updateBatchById(booksVouchers);
         }
-        voucherItemMapper.delete(new LambdaUpdateWrapper<VoucherItem>().in(VoucherItem::getVoucherId, ids));
 
         // 更新审批记录状态...
         return new Message<>(Message.SUCCESS, booksVouchers.size());
@@ -898,18 +918,20 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
             // 创建辅助核算数据
             List<VoucherItemAuxiliaryDto> auxiliary = t.getAuxiliary();
-            auxiliary.stream().filter(auxiliaryDto -> !auxiliaryDto.getValue().isEmpty())
-                    .forEach(auxiliaryDto -> auxiliaryDto.getValue()
-                            .forEach(auxiliaryValue -> insertAuxiliary.add(VoucherAuxiliary.builder()
-                                    .id(identifierGenerator.nextId(booksVoucher).toString())
-                                    .bookId(booksVoucher.getBookId())
-                                    .voucherId(currentId)
-                                    .voucherItemId(t.getId())
-                                    .auxiliary(auxiliaryDto.getId())
-                                    .auxiliaryName(auxiliaryDto.getLabel())
-                                    .itemId(auxiliaryValue.getValue())
-                                    .itemName(auxiliaryValue.getLabel())
-                                    .build())));
+            if (auxiliary != null) {
+                auxiliary.stream().filter(auxiliaryDto -> !auxiliaryDto.getValue().isEmpty())
+                        .forEach(auxiliaryDto -> auxiliaryDto.getValue()
+                                .forEach(auxiliaryValue -> insertAuxiliary.add(VoucherAuxiliary.builder()
+                                        .id(identifierGenerator.nextId(booksVoucher).toString())
+                                        .bookId(booksVoucher.getBookId())
+                                        .voucherId(currentId)
+                                        .voucherItemId(t.getId())
+                                        .auxiliary(auxiliaryDto.getId())
+                                        .auxiliaryName(auxiliaryDto.getLabel())
+                                        .itemId(auxiliaryValue.getValue())
+                                        .itemName(auxiliaryValue.getLabel())
+                                        .build())));
+            }
 
             return item;
         }).toList();

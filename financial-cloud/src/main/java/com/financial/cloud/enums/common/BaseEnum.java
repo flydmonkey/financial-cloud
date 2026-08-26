@@ -3,10 +3,6 @@ package com.financial.cloud.enums.common;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * 通用性接口
- */
-
 public interface BaseEnum {
     Map<Object, Object> getMap();
 

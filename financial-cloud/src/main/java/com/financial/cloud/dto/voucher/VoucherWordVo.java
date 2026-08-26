@@ -7,13 +7,6 @@ import java.io.Serial;
 
 import com.financial.cloud.domain.voucher.VoucherWord;
 
-/**
- * 凭证字视图对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class VoucherWordVo extends VoucherWord {

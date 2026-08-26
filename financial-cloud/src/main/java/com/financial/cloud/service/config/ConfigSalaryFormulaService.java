@@ -27,12 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/8 17:55
- */
-
 @Service
 public class ConfigSalaryFormulaService extends ServiceImpl<ConfigSalaryFormulaMapper, ConfigSalaryFormula>{
     public Message<ConfigSalaryFormulaVo> getById(String id) {

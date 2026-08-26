@@ -220,7 +220,7 @@ function getState(): any {
 
       appStore().setAppInfo(staticAppInfo.value)
       state.value = res.data.state
-      captchaEnabled.value = res.data.captcha
+      captchaEnabled.value = res.data.captcha && res.data.captcha !== 'NONE'
       if (captchaEnabled.value) {
         getCode();
       }

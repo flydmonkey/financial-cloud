@@ -14,12 +14,6 @@ import org.springframework.web.servlet.ModelAndView;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * Exception.
- * 
- * @author Crystal.Sea
- *
- */
 @Slf4j
 @RestController
 public class ExceptionController extends  AbstractErrorController    {

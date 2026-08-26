@@ -20,12 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/26 17:32
- */
-
 @RequiredArgsConstructor
 @Slf4j
 @RestController

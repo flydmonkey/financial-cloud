@@ -2,17 +2,12 @@ package com.financial.cloud.dto.standard;
 
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/4/21 10:48
- */
+import com.financial.cloud.constants.common.MessageKeys;
 
 @Data
 public class StandardSubjectCashFlowDto {
 
-    @NotEmpty(message = "科目代码不能为空")
+    @NotEmpty(message = MessageKeys.Validation.BOOK_SUBJECT_CODE_REQUIRED)
     String subjectCode;
 
     String itemCodeMain;

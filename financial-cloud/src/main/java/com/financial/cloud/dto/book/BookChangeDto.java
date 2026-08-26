@@ -6,35 +6,30 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.time.YearMonth;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/1/2 9:42
- */
-
 @Data
 public class BookChangeDto {
-    @NotEmpty(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     String id;
 
-    @NotEmpty(message = "账套名称不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 21, message = "账套名称的长度不能超过21位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 21, message = MessageKeys.Validation.BOOK_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     String name;
 
-    @NotEmpty(message = "单位名称不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 85, message = "单位名称的长度不能超过85位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_UNIT_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 85, message = MessageKeys.Validation.ORG_UNIT_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     String companyName;
 
-    @NotNull(message = "建账期间不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_INIT_PERIOD_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     YearMonth enableDate;
 
-    @NotEmpty(message = "会计制度不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.STANDARD_ACCOUNTING_SYSTEM_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String standardId;
 
-    @NotNull(message = "纳税性质不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_TAX_NATURE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer vatType;
 
     String address;
@@ -43,9 +38,9 @@ public class BookChangeDto {
 
     String creditCode;
 
-    @NotNull(message = "凭证是否需要审核不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_AUDIT_REQUIRED_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer voucherReviewed;
 
-    @NotNull(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_STATUS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer status;
 }

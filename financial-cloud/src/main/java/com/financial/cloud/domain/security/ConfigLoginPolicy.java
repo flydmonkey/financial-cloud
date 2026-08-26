@@ -12,10 +12,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.io.Serial;
 import java.io.Serializable;
 
-/**
- * @author Crystal.Sea
- *
- */
 @NoArgsConstructor
 @TableName(value = "config_login_policy")
 @Data

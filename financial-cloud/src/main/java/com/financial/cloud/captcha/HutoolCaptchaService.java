@@ -17,9 +17,6 @@ import cn.hutool.captcha.generator.RandomGenerator;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-/**
- * Hutool 图形验证码：生成 + Caffeine 内存校验。
- */
 @Slf4j
 @Service
 public class HutoolCaptchaService {

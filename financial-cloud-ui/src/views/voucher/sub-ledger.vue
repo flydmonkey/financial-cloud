@@ -143,7 +143,7 @@ import {useRouter, useRoute} from "vue-router";
 import booksSetStore from "@/store/modules/bookStore";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
 import {TableColumnCtx, TreeInstance} from "element-plus";
-import {handleSummaryMethod, SummaryMethodProps} from "@/utils/Subjects";
+import {handleSummaryMethod, subjectMatchesKeyword, SummaryMethodProps} from "@/utils/Subjects";
 
 const router = useRouter();
 const route = useRoute();
@@ -239,11 +239,7 @@ function handleSummaryMethod2(param: SummaryMethodProps) {
 }
 
 const filterNodeMethod = (value: string, data: Tree) => {
-  if (!value) return true
-  value = value + ""
-  return data.name.includes(value)
-      || data.code.includes(value)
-      || (data.pinyinCode && data.pinyinCode.toLowerCase().includes(value))
+  return subjectMatchesKeyword(data, value)
 }
 
 const handleTreeNodeClick = (data: Tree) => {

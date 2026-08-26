@@ -10,13 +10,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-/**
- * 凭证明细对象 voucher_item
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

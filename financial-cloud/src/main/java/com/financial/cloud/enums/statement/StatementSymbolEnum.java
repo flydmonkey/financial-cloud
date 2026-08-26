@@ -2,10 +2,6 @@ package com.financial.cloud.enums.statement;
 
 import lombok.Getter;
 
-/**
- * 报表操作数枚举
- */
-
 @Getter
 public enum StatementSymbolEnum {
     PLUS("+"),           // 加

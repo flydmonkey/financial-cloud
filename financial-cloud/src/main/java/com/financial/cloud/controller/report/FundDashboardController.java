@@ -14,9 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * èµéä»ªè¡¨ç?
- */
 
 @RequiredArgsConstructor
 @RestController
@@ -25,146 +22,79 @@ import java.util.List;
 public class FundDashboardController {
     private final FundDashboardService fundDashboardService;
 
-    /**
-     * èµéä½é¢
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
+    private static void bindBookContext(StatementParamsDto params, UserInfo currentUser) {
+        params.setBookId(currentUser.getBookId());
+        params.parse();
+    }
+
     @GetMapping(value = {"/fund-balance"})
     public Message<FundBalanceVo> statisticsFundBalance(@CurrentUser UserInfo currentUser,
                                                         StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         FundBalanceVo data = fundDashboardService.statisticsFundBalance(params);
         return Message.ok(data);
     }
 
-    /**
-     * åºæ¶è´¦æ¬¾
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/accounts-receivable"})
     public Message<AccountsReceivePaymentVo> statisticsAccountsReceivable(@CurrentUser UserInfo currentUser,
                                                                           StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         AccountsReceivePaymentVo data = fundDashboardService.statisticsAccountsReceivable(params);
         return Message.ok(data);
     }
 
-    /**
-     * åºä»è´¦æ¬¾
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/accounts-payable"})
     public Message<AccountsReceivePaymentVo> statisticsAccountsPayable(@CurrentUser UserInfo currentUser,
                                                                        StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         AccountsReceivePaymentVo data = fundDashboardService.statisticsAccountsPayable(params);
         return Message.ok(data);
     }
 
-    /**
-     * é¢è®¡å¯ç¨ç°é
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/able-cash"})
     public Message<ExpectedAvailableFunds> statisticsAbleCash(@CurrentUser UserInfo currentUser,
                                                               StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         ExpectedAvailableFunds data = fundDashboardService.statisticsAbleCash(params);
         return Message.ok(data);
     }
 
-    /**
-     * å¶ä»ç§ç®ææ 
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/other-subjects"})
     public Message<List<OtherSubjectsVo>> statisticsOtherSubjects(@CurrentUser UserInfo currentUser,
                                                               StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         List<OtherSubjectsVo> data = fundDashboardService.statisticsOtherSubjects(params);
         return Message.ok(data);
     }
 
-    /**
-     * åå©æ¶¦
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/net-profit"})
     public Message<NetProfitVo> statisticsNetProfit(@CurrentUser UserInfo currentUser,
                                                               StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         NetProfitVo data = fundDashboardService.statisticsNetProfit(params);
         return Message.ok(data);
     }
 
-    /**
-     * æ¶å¥ææ¬
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/revenue-cost"})
     public Message<RevenueCostVo> statisticsRevenueCost(@CurrentUser UserInfo currentUser,
                                                         StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         RevenueCostVo data = fundDashboardService.statisticsRevenueCost(params);
         return Message.ok(data);
     }
 
-    /**
-     * è´¹ç¨
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/expense"})
     public Message<ExpenseVo> statisticsExpense(@CurrentUser UserInfo currentUser,
                                                         StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         ExpenseVo data = fundDashboardService.statisticsExpense(params);
         return Message.ok(data);
     }
 
-    /**
-     * è´¹ç¨
-     *
-     * @param currentUser å½åè´¦æ·
-     * @param params      æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/added-tax"})
     public Message<AddTaxVo> statisticsAddedTax(@CurrentUser UserInfo currentUser,
                                                         StatementParamsDto params) {
-        params.parse();
-        params.setBookId(currentUser.getBookId());
+        bindBookContext(params, currentUser);
         AddTaxVo data = fundDashboardService.statisticsAddedTax(params);
         return Message.ok(data);
     }

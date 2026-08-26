@@ -10,13 +10,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * 利润表导出模板数据
- *
- * @author wuyan
- * {@code @date} 2025-02-03
- */
-
 @Data
 @Builder
 @NoArgsConstructor

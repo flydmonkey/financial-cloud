@@ -85,7 +85,7 @@ function initFuse(list: any): any {
 }
 // Filter out the routes that can be displayed in the sidebar
 // And generate the internationalized title
-function generateRoutes(routes: any, basePath = '': any, prefixTitle = []: any): any {
+function generateRoutes(routes: any, basePath = '', prefixTitle: any[] = []): any {
   let res: any = []
 
   for (const r of routes) {

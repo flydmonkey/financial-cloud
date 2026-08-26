@@ -3,10 +3,6 @@ package com.financial.cloud.dto.book;
 import com.financial.cloud.common.PageQuery;
 import lombok.*;
 
-/**
- * 辅助核算项目查询对象
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder

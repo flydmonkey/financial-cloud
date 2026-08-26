@@ -11,10 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 报表资产负债表配置接口
- */
-
 @RestController
 @RequestMapping("/api/standard/balance-sheet")
 @Slf4j

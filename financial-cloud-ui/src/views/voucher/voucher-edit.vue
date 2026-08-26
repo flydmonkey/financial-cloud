@@ -413,7 +413,7 @@ import {parseTime} from "@/utils/Jinbooks";
 import * as subjectApi from "@/api/standard/standard-subject"
 import {draftVoucher, getOneVoucher, getVoucherAbleWordNum, submitVoucher} from "@/api/voucher/voucher";
 import {validateForm} from "@/utils"
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import bookStore from "@/store/modules/bookStore";
 import Decimal from 'decimal.js'
 import {getSubjectDisplayName, cascaderSubjectProps as baseCascaderSubjectProps} from "@/utils/Subjects";
@@ -481,6 +481,7 @@ const props: any = defineProps({
 
 const auxiliaryVisible = ref<Array<boolean>>([])
 const route: any = useRoute()
+const router: any = useRouter()
 // 定义回调接口，提交按钮触发
 const emit: any = defineEmits(['submit', "update:modelValue"])
 const visibleContextmenu = ref(false)
@@ -1566,11 +1567,14 @@ const onSubmit = () => {
       ...formData.value,
       items: preparedItems,
     }).then((res: any) => {
-      ElMessage.info(res.message || `提交成功`)
-      resetList()
-      emit("submit", res)
+      ElMessage.success(res.message || `提交成功`)
+      if (props.dialog) {
+        emit("submit", res)
+      } else {
+        router.push({path: "/voucher/voucher-index"})
+      }
     }).catch((err: any) => {
-      ElMessage.error(err.message)
+      ElMessage.error(err?.message || '提交失败')
       emit("submit", err)
     }).finally(() => {
       submitButtonLoading.value = false

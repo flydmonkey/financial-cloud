@@ -13,12 +13,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * .
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 @TableName("history_system_logs")

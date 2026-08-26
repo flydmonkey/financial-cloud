@@ -5,12 +5,6 @@ import com.financial.cloud.common.PageQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/11/14 16:13
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class RoleMemberPageDto extends PageQuery {

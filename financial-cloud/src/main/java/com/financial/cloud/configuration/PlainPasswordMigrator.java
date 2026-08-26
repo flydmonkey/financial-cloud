@@ -15,9 +15,6 @@ import com.financial.cloud.util.PlainPasswordMigration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * One-time-at-startup migration for legacy {@code {plain}} password rows.
- */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
 @RequiredArgsConstructor

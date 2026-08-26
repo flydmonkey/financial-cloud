@@ -9,13 +9,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.io.Serial;
 import java.util.Date;
 
-/**
- * 凭证记录分页查询对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class VoucherPageDto extends PageQuery {

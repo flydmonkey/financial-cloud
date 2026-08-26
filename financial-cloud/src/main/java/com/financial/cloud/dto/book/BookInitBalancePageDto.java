@@ -4,10 +4,6 @@ import com.financial.cloud.common.PageQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 初始余额查询对象
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class BookInitBalancePageDto extends PageQuery {

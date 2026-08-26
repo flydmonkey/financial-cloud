@@ -9,17 +9,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-
-/**
- * 凭证记录编辑对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
 
 @Builder
 @NoArgsConstructor
@@ -29,31 +23,31 @@ public class VoucherChangeDto {
     /**
      * 主键
      */
-    @NotNull(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     private String id;
 
     /**
      * 凭证字
      */
-    @NotNull(message = "凭证字不能为空", groups = {EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_WORD_REQUIRED, groups = {EditGroup.class})
     private String word;
 
     /**
      * 字头：“收”、“付”、“转”等
      */
-    @NotNull(message = "凭证字头不能为空", groups = {AddGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_PREFIX_REQUIRED, groups = {AddGroup.class})
     private String wordHead;
 
     /**
      * 号码
      */
-    @NotNull(message = "凭证字号码不能为空", groups = {AddGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_WORD_NUMBER_REQUIRED, groups = {AddGroup.class})
     private Integer wordNum;
 
     /**
      * 所属账套
      */
-    @NotEmpty(message = "所属账套不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_OWNER_BOOK_ID_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String bookId;
 
     /**
@@ -64,13 +58,13 @@ public class VoucherChangeDto {
     /**
      * 公司名称
      */
-    @NotEmpty(message = "公司名称不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_COMPANY_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String companyName;
 
     /**
      * 附单据数量
      */
-    @NotNull(message = "附单据数量不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_ATTACHMENT_COUNT_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private Integer receiptNum;
 
     /**
@@ -96,7 +90,7 @@ public class VoucherChangeDto {
     /**
      * 日期
      */
-    @NotNull(message = "日期不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_DATE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date voucherDate;
 
@@ -166,6 +160,6 @@ public class VoucherChangeDto {
     /**
      * 凭证明细记录
      */
-    @NotNull(message = "凭证明细不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_ITEMS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private List<VoucherItemChangeDto> items;
 }

@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.financial.cloud.repository.permissions;
 
 import com.financial.cloud.repository.permissions.PermissionBookMapper;
@@ -11,11 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.permissions.PermissionBook;
 import com.financial.cloud.dto.permissions.PermissionBookPageDto;
-
-/**
- * @author Crystal.sea
- *
- */
 
 public  interface PermissionBookMapper extends BaseMapper<PermissionBook> {
 

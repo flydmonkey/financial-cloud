@@ -12,10 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import cn.hutool.core.util.HexUtil;
 
-/**
- * Legacy reversible secret codec for stored credentials (email/SMS/social client secrets).
- * Keeps backward compatibility with existing DESede-encrypted values in the database.
- */
 public final class LegacySecretCodec implements PasswordEncoder {
 
 	private static final int PREFIX_LENGTH = 7;

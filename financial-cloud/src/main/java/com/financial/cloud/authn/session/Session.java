@@ -8,9 +8,6 @@ import com.financial.cloud.context.WebContext;
 
 import lombok.Data;
 
-/**
- * 会话属性
- */
 @Data
 public class Session implements Serializable {
     private static final long serialVersionUID = 1568480892398646468L;

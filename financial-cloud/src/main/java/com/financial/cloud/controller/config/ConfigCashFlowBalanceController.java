@@ -21,12 +21,6 @@ import com.financial.cloud.service.config.ConfigCashFlowBalanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/3/19 10:41
- */
-
 @RestController
 @RequestMapping("/api/config/cash-flow-balance")
 @Slf4j

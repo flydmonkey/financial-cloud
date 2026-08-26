@@ -7,12 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-/**
- * 参数配置表 config
- *
- * @author Wuyan
- */
+import com.financial.cloud.constants.common.MessageKeys;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -38,22 +33,22 @@ public class ConfigSys extends BaseEntity {
     /**
      * 参数名称
      */
-    @NotBlank(message = "参数名称不能为空")
-    @Size(min = 0, max = 100, message = "参数名称不能超过{max}个字符")
+    @NotBlank(message = MessageKeys.Validation.CONFIG_PARAM_NAME_REQUIRED)
+    @Size(min = 0, max = 100, message = MessageKeys.Validation.CONFIG_PARAM_NAME_MAX_LENGTH)
     private String configName;
 
     /**
      * 参数键名
      */
-    @NotBlank(message = "参数键名长度不能为空")
-    @Size(max = 100, message = "参数键名长度不能超过{max}个字符")
+    @NotBlank(message = MessageKeys.Validation.CONFIG_PARAM_KEY_REQUIRED)
+    @Size(max = 100, message = MessageKeys.Validation.CONFIG_PARAM_KEY_MAX_LENGTH)
     private String configKey;
 
     /**
      * 参数键值
      */
-    @NotBlank(message = "参数键值不能为空")
-    @Size(max = 500, message = "参数键值长度不能超过{max}个字符")
+    @NotBlank(message = MessageKeys.Validation.CONFIG_PARAM_VALUE_REQUIRED)
+    @Size(max = 500, message = MessageKeys.Validation.CONFIG_PARAM_VALUE_MAX_LENGTH)
     private String configValue;
 
     /**

@@ -4,16 +4,10 @@ import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.io.Serial;
 import java.io.Serializable;
-
-/**
- * 辅助核算项目对象 voucher_item
- *
- * @author wuyan
- * {@code @date} 2025-02-18
- */
 
 @Data
 public class AssistAccChangeDto implements Serializable {
@@ -28,25 +22,25 @@ public class AssistAccChangeDto implements Serializable {
     /**
      * 所属账套
      */
-    @NotBlank(message = "所属账套不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = MessageKeys.Validation.BOOK_OWNER_BOOK_ID_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String bookId;
 
     /**
      * 辅助核算类型
      */
-    @NotBlank(message = "辅助核算类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = MessageKeys.Validation.ASSIST_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String assistType;
 
     /**
      * 辅助核算编码
      */
-    @NotBlank(message = "辅助核算编码不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = MessageKeys.Validation.ASSIST_CODE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String assistCode;
 
     /**
      * 辅助核算名称
      */
-    @NotBlank(message = "辅助核算名称不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = MessageKeys.Validation.ASSIST_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String assistName;
 
     /**

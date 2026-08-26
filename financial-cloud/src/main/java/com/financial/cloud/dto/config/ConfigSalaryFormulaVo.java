@@ -8,12 +8,6 @@ import lombok.EqualsAndHashCode;
 import java.io.Serial;
 import java.util.List;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/11 9:39
- */
-
 @Data
 @EqualsAndHashCode(callSuper=false)
 public class ConfigSalaryFormulaVo extends ConfigSalaryFormula {

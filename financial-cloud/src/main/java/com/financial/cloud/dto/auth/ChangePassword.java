@@ -1,6 +1,7 @@
 package com.financial.cloud.dto.auth;
 
 import java.io.Serializable;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.validation.EditGroup;
@@ -27,10 +28,10 @@ public class ChangePassword implements Serializable {
 	String displayName;
 	String oldPassword;
 
-	@NotEmpty(message = "新密码不能为空", groups = {EditGroup.class})
+	@NotEmpty(message = MessageKeys.Validation.USER_NEW_PASSWORD_REQUIRED, groups = {EditGroup.class})
 	String password;
 
-	@NotEmpty(message = "确认密码不能为空", groups = {EditGroup.class})
+	@NotEmpty(message = MessageKeys.Validation.USER_CONFIRM_PASSWORD_REQUIRED, groups = {EditGroup.class})
 	String confirmPassword;
 
 	String decipherable;

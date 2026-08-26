@@ -8,13 +8,6 @@ import java.util.List;
 
 import com.financial.cloud.domain.voucher.Voucher;
 
-/**
- * 凭证记录视图对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class VoucherVo extends Voucher {

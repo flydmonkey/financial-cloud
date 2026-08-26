@@ -123,7 +123,7 @@ function load(): any {
     if (resState.success) {
 
       state.value = resState.data.state;
-      captchaEnabled.value = resState.data.captcha;
+      captchaEnabled.value = resState.data.captcha && resState.data.captcha !== 'NONE';
 
       if (captchaEnabled.value) {
         getCode();

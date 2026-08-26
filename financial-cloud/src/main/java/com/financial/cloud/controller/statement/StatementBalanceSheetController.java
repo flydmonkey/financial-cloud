@@ -16,10 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-/**
- * 资产负债表接口
- */
-
 @RestController
 @RequestMapping("/api/statement")
 @Slf4j

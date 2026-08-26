@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.financial.cloud.repository.report;
 
 import com.financial.cloud.repository.report.ReportMapper;
@@ -9,10 +6,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.financial.cloud.dto.report.DashBoardReqDto;
 import com.financial.cloud.dto.report.DashBoardRepVo;
 
-/**
- * @author Crystal.sea
- *
- */
 public  interface ReportMapper extends BaseMapper<DashBoardReqDto> {
 	
 	public Integer analysisDay(DashBoardReqDto dbReqDto);

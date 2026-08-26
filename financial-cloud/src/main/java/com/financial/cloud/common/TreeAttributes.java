@@ -6,13 +6,6 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 数控件节点列表 列表的元素为TreeNode
- * 
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 public class TreeAttributes {

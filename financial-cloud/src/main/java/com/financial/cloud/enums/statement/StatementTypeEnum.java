@@ -1,9 +1,5 @@
 package com.financial.cloud.enums.statement;
 
-/**
- * 报表类型枚举
- */
-
 public enum StatementTypeEnum {
     balance_sheet,          // 资产负债表
     income,                 // 利润表

@@ -4,13 +4,6 @@ import com.financial.cloud.dto.statement.StatementParamsDto;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 凭证明细分页查询对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class VoucherItemPageDto extends StatementParamsDto {

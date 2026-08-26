@@ -68,6 +68,11 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	@Lazy
 	private final StatementReportService statementReportService;
 	public Message<Page<Settlement>> pageList(SettlementPageDto dto) {
+		String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
+		String termStart = configSysService.getTermStart(dto.getBookId());
+		if (dto.getYear() <= 0) {
+			dto.setYear(Integer.parseInt(currentTerm.split("-")[0]));
+		}
 		LambdaQueryWrapper<Settlement> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(Settlement::getBookId, dto.getBookId());
 		wrapper.eq(Settlement::getYear, dto.getYear());
@@ -75,8 +80,6 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
         log.debug("Settlement {}",listSettlement);
         Page<Settlement> pageResult = new Page<>();
         pageResult.setRecords(new ArrayList<>());
-        String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
-        String termStart = configSysService.getTermStart(dto.getBookId());
         YearMonth currentTermYearMonth = YearMonth.parse(currentTerm);
         YearMonth termStartYearMonth = YearMonth.parse(termStart);
         Integer termStartYear = Integer.valueOf(termStart.split("-")[0]);
@@ -111,6 +114,7 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	        		}
 	        	}
 	        }
+	        pageResult.setTotal(pageResult.getRecords().size());
 	        return new Message<>(Message.SUCCESS, pageResult);
         }
         return Message.failed("账期年份必须大于等于初始化账期");

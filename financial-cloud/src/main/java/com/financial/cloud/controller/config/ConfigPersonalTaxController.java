@@ -17,12 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/6 17:18
- */
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/config/tax")

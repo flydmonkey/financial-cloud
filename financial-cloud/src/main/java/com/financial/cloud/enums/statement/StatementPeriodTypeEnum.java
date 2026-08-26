@@ -2,10 +2,6 @@ package com.financial.cloud.enums.statement;
 
 import lombok.Getter;
 
-/**
- * 报表查询类型枚举类
- */
-
 @Getter
 public enum StatementPeriodTypeEnum {
     YEAR("year"),                       // 年度

@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.financial.cloud.repository.auth;
 
 import com.financial.cloud.repository.auth.LoginMapper;
@@ -10,11 +7,6 @@ import org.apache.ibatis.annotations.Update;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.financial.cloud.domain.idm.UserInfo;
-
-/**
- * @author Crystal.sea
- *
- */
 
 public  interface LoginMapper extends BaseMapper<UserInfo> {
 

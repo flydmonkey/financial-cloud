@@ -17,9 +17,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-/**
- * 日记账-账户
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("journal_account")

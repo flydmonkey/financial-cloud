@@ -10,9 +10,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * XSS请求
- */
 @Slf4j
 @Configuration
 public class MvcXssAutoConfiguration implements WebMvcConfigurer {

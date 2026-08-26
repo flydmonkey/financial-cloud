@@ -5,11 +5,6 @@ import lombok.Getter;
 
 import java.util.Map;
 
-/**
- * 凭证审核开关状态
- * 0-关闭;1-开启
- */
-
 @Getter
 public enum OnOffEnum implements BaseEnum {
     ON(1, "开启"),

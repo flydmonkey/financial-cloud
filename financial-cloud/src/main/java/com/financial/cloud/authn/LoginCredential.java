@@ -10,9 +10,6 @@ import com.financial.cloud.context.WebConstants;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 登录提交的信息属性
- */
 @Data
 @NoArgsConstructor
 public class LoginCredential {

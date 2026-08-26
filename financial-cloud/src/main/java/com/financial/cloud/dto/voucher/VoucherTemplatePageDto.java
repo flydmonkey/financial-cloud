@@ -4,13 +4,6 @@ import com.financial.cloud.common.PageQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 凭证记录分页查询对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class VoucherTemplatePageDto extends PageQuery {

@@ -19,7 +19,6 @@ import com.financial.cloud.authn.provider.AbstractAuthenticationProvider;
 import com.financial.cloud.configuration.LoginConfig;
 import com.financial.cloud.domain.config.Institutions;
 import com.financial.cloud.common.Message;
-import com.financial.cloud.domain.security.ConfigLoginPolicy;
 import com.financial.cloud.service.auth.LoginService;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
@@ -27,19 +26,6 @@ import com.financial.cloud.context.WebContext;
 import org.springframework.http.MediaType;
 
 
-/**
- * 登录
- * <p>
- * 登录界面初始化/login/get
- * </p>
- *
- * <p>
- * 登录入口/login/signin
- * </p>
- *
- * @author Crystal.Sea
- *
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController
@@ -62,10 +48,9 @@ public class LoginController {
 	public Message<LoginConfigDto> get() {
 		log.debug("/login.");
 		LoginConfigDto conf = new LoginConfigDto();
-		ConfigLoginPolicy loginPolicy = loginService.getConfigLoginPolicy();
 		Institutions inst = (Institutions)WebContext.getAttribute(WebConstants.CURRENT_INST);
 		conf.setInst(inst);
-		conf.setCaptcha(loginPolicy.getCaptchaMgt().toUpperCase());
+		conf.setCaptcha(loginService.getEffectiveCaptchaType());
 		conf.setState(authTokenService.genState());
 		return new Message<>(conf);
 	}

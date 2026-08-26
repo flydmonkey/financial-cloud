@@ -7,12 +7,6 @@ import lombok.*;
 import java.io.Serial;
 import java.math.BigDecimal;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/3/26 17:48
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

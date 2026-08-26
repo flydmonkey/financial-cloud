@@ -1,6 +1,3 @@
-/**
- *
- */
 package com.financial.cloud.repository.idm;
 
 import com.financial.cloud.repository.idm.RoleMemberMapper;
@@ -16,11 +13,6 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
-/**
- * @author Crystal.sea
- *
- */
 
 @Mapper
 public  interface RoleMemberMapper extends BaseMapper<RoleMember> {

@@ -9,12 +9,6 @@ import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.service.auth.LoginService;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
 
-/**
- * JdbcAuthenticationRealm.数据认证域
- *
- * @author Crystal.Sea
- *
- */
 @Slf4j
 public class JdbcAuthenticationRealm extends AbstractAuthenticationRealm {
 

@@ -12,10 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * 报表规则配置接口
- */
-
 @RestController
 @RequestMapping("/api/statement/config/rules")
 @Slf4j

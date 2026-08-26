@@ -9,12 +9,6 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/4/18 10:05
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName(value = "standard_subject_cash_flow")

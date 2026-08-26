@@ -11,12 +11,6 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/31 11:12
- */
-
 @Mapper
 public interface BookMapper extends BaseMapper<Book> {
     Page<Book> pageList(Page page, @Param("Dto") BookPageDto dto);

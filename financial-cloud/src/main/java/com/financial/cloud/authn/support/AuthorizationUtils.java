@@ -16,9 +16,6 @@ import com.financial.cloud.util.AuthorizationHeaderUtils;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
 
-/**
- * 认证信息工具类
- */
 @Slf4j
 public class AuthorizationUtils {
 

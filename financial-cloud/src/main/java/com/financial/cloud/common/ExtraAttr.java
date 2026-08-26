@@ -1,14 +1,7 @@
-/**
- *
- */
 package com.financial.cloud.common;
 
 import lombok.Data;
 
-/**
- * @author Administrator
- *
- */
 @Data
 public class ExtraAttr {
 

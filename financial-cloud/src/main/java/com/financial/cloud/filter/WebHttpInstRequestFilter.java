@@ -19,9 +19,6 @@ import com.financial.cloud.context.WebContext;
 import com.financial.cloud.domain.config.Institutions;
 import com.financial.cloud.service.config.InstitutionsService;
 
-/**
- * 多租户机构读取Filter
- */
 @Slf4j
 public class WebHttpInstRequestFilter  extends GenericFilterBean {
 

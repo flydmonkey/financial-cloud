@@ -13,9 +13,6 @@ import com.financial.cloud.common.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @author 24096
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor

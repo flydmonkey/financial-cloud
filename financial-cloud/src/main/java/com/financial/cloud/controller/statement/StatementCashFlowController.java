@@ -19,13 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/3/25 15:00
- */
-
-
 @RestController
 @RequestMapping("/api/statement/cash-flow")
 @Slf4j

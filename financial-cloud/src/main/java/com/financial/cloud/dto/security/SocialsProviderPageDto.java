@@ -7,12 +7,6 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 
-/**
- * {@code @description:}
- * {@code @author:} orangeBabu
- * {@code @time:} 2024/11/27 17:37
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SocialsProviderPageDto extends PageQuery {

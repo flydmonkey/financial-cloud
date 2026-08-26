@@ -18,13 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 系统操作日志查询
- *
- * @author Crystal.sea
- *
- */
-
 @RequiredArgsConstructor
 @Slf4j
 @RestController

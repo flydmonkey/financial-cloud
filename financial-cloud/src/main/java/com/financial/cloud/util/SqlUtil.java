@@ -6,11 +6,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/11/14 15:14
- */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SqlUtil {
     /**

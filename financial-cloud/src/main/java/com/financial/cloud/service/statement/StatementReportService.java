@@ -600,9 +600,6 @@ public class StatementReportService{
         return results;
     }
 
-    /**
-     * 现金流量处理器类，用于处理现金流量计算
-     */
     private static class CashFlowProcessor {
         private final Map<String, StatementCashFlow> flowMap;
         private final boolean isMonthly;

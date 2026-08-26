@@ -3,16 +3,6 @@ package com.financial.cloud.util.excel;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.*;
 
-/**
- * 简介说明: 渲染参数
- * <p>用于封装导出过程中的各种配置和输入数据，
- * 通过该类可灵活指定导出模板、输出目标、工作表名称等。</p>
- *
- * @author wuyan
- * {@code @date} 2025/04/23 17:46:45
- * {@code @version} 1.0
- */
-
 @Setter
 @Getter
 @Builder

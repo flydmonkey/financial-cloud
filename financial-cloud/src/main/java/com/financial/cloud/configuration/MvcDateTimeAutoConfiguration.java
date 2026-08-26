@@ -14,9 +14,6 @@ import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.format.support.FormattingConversionService;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
-/**
- * MVC 请求数据日期格式转换
- */
 @Slf4j
 @Configuration
 public class MvcDateTimeAutoConfiguration extends WebMvcConfigurationSupport {

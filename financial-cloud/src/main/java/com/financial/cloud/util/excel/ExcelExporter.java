@@ -20,19 +20,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * 简介说明: excel 导出工具包
- * 支持读取 .xlsx 模板；
- * 支持 ${属性} 占位符替换；
- * 支持嵌套属性如 ${item.name}；
- * 支持列表（数组）渲染为多行；
- * 输出到 HttpServletResponse。
- *
- * @author wuyan
- * {@code @date} 2025/04/23 14:48:29
- * {@code @version} 1.0
- */
-
 @Slf4j
 public class ExcelExporter {
     /**

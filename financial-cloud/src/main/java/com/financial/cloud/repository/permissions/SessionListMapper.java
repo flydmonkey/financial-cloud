@@ -13,11 +13,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.financial.cloud.domain.permissions.SessionList;
 import com.financial.cloud.domain.idm.UserInfo;
 
-/**
- * @author Crystal.sea
- *
- */
-
 @Mapper
 public interface SessionListMapper extends BaseMapper<SessionList> {
 

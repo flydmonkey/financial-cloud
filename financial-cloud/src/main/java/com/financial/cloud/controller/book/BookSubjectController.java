@@ -23,12 +23,6 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/1/17 14:40
- */
-
 @RequiredArgsConstructor
 @Slf4j
 @RestController

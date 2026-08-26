@@ -7,12 +7,6 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/31 9:54
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("settlement_carryforward")

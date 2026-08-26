@@ -11,12 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/12 15:16
- */
-
 @Service
 public class ConfigInsuranceFundService extends ServiceImpl<ConfigInsuranceFundMapper, ConfigInsuranceFund>{
     public Message<ConfigInsuranceFund> getCurrent(String bookId) {

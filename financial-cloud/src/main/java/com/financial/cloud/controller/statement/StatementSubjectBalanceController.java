@@ -10,10 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 科目余额表接口
- */
-
 @RestController
 @RequestMapping("/api/statement/subject-balance")
 @Slf4j

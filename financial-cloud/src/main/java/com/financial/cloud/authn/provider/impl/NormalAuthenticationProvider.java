@@ -13,7 +13,6 @@ import com.financial.cloud.authn.realm.AbstractAuthenticationRealm;
 import com.financial.cloud.authn.session.Session;
 import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.captcha.HutoolCaptchaService;
-import com.financial.cloud.constants.auth.ConstsCaptchaType;
 import com.financial.cloud.constants.auth.ConstsLoginType;
 import com.financial.cloud.constants.common.MessageKeys;
 import com.financial.cloud.common.client.ClientResolve;
@@ -23,12 +22,6 @@ import com.financial.cloud.service.auth.LoginService;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
 
-/**
- * Normal Authentication provider.正常用户名密码认证提供者
- *
- * @author Crystal.Sea
- *
- */
 @Slf4j
 public class NormalAuthenticationProvider extends AbstractAuthenticationProvider {
 
@@ -63,7 +56,7 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
 		log.debug("Trying to authenticate user {} via {}", loginCredential.getPrincipal(), getProviderName());
         try {
 	        //判断图片验证码并验证
-	        if(!this.loginService.getConfigLoginPolicy().getCaptchaMgt().equalsIgnoreCase(ConstsCaptchaType.NONE)) {
+	        if (this.loginService.isCaptchaRequired()) {
 	        	captchaValid(loginCredential.getState(),loginCredential.getCaptcha());
 	        }
 

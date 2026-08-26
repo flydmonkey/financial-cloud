@@ -2,9 +2,6 @@ package com.financial.cloud.constants.common;
 
 import java.util.regex.Pattern;
 
-/**
- *  Regex for email , mobile and etc.
- */
 public class ConstsRegex {
 	
 	 public static final Pattern 	EMAIL_PATTERN 		= Pattern.compile("^\\s*\\w+(?:\\.{0,1}[\\w-]+)*@[a-zA-Z0-9]+(?:[-.][a-zA-Z0-9]+)*\\.[a-zA-Z]+\\s*$");

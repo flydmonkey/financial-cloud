@@ -3,19 +3,14 @@ package com.financial.cloud.dto.hr;
 import com.financial.cloud.validation.EditGroup;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.math.BigDecimal;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/20 10:35
- */
 
 @Data
 public class SalaryDetailChangeDto {
 
-    @NotEmpty(message = "ID不能为空", groups = {EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_ID_REQUIRED, groups = {EditGroup.class})
     private String id;
 
     private BigDecimal payBasic;

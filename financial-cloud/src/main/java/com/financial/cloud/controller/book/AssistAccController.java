@@ -17,10 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 辅助核算项目管理接口
- */
-
 @RestController
 @RequestMapping("/api/base/assist-acc")
 @Slf4j

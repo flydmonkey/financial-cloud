@@ -25,9 +25,6 @@ import com.financial.cloud.service.auth.LoginService;
 
 import tools.jackson.databind.json.JsonMapper;
 
-/**
- * 登录认证判断
- */
 @RequiredArgsConstructor
 @Slf4j
 @Component

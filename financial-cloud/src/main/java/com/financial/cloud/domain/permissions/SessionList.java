@@ -13,11 +13,6 @@ import lombok.NoArgsConstructor;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 
-/**
- * @author Crystal.Sea
- *
- */
-
 @Data
 @NoArgsConstructor
 @TableName("session_list")

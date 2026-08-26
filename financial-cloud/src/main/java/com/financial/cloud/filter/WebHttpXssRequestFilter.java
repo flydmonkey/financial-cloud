@@ -18,9 +18,6 @@ import org.springframework.web.filter.GenericFilterBean;
 
 import com.financial.cloud.context.WebContext;
 
-/**
- * XSS请求Filter，包括忽略地址、忽略请求参数、风险字符等
- */
 @Slf4j
 public class WebHttpXssRequestFilter  extends GenericFilterBean {
 

@@ -6,40 +6,34 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
-
-/**
- * 初始余额编辑对象
- *
- * @author wuyan
- * {@code @date} 2025-03-11
- */
 
 @Data
 public class BookInitBalanceChangeDto implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @NotEmpty(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     String id;
     String originId;
 
     String bookId;
 
-    @NotNull(message = "科目类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_SUBJECT_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer category;
 
-    @NotEmpty(message = "科目编码不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_SUBJECT_ENCODING_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String code;
 
-    @NotEmpty(message = "科目名称不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 21, message = "科目名称的长度不能超过21位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_SUBJECT_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 21, message = MessageKeys.Validation.BOOK_SUBJECT_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     String name;
 
-    @NotNull(message = "余额方向不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_BALANCE_DIRECTION_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String direction;
 
     /**

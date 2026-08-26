@@ -4,11 +4,6 @@ import com.financial.cloud.common.PageQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * 税务个人附加扣除分页查询对象
- *
- */
-
 @Data
 @EqualsAndHashCode(callSuper=false)
 public class EmployeeTaxDeductionPageDto extends PageQuery {

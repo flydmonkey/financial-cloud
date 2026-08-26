@@ -8,9 +8,6 @@ import com.financial.cloud.authn.core.AuthAuthentication;
 import com.financial.cloud.authn.jwt.AuthJwt;
 import com.financial.cloud.context.WebContext;
 
-/**
- * 认证令牌服务：内存会话 ID 作为 token，不再签发 JWT。
- */
 @Slf4j
 public class AuthTokenService {
 

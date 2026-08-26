@@ -9,13 +9,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * 资产负债表-列表数据
- *
- * @author wuyan
- * {@code @date} 2025-05-22
- */
-
 @Data
 @Builder
 @NoArgsConstructor

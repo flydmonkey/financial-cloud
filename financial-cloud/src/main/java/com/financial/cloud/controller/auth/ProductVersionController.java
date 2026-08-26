@@ -13,12 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.financial.cloud.context.WebContext;
 
-/**
- * ProductVersion
- * @author Crystal.Sea
- *
- */
-
 @Slf4j
 @Controller
 public class ProductVersionController {

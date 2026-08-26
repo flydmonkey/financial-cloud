@@ -2,6 +2,7 @@ package com.financial.cloud.domain.idm;
 
 import java.io.Serial;
 import java.io.Serializable;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.financial.cloud.common.BaseEntity;
@@ -13,12 +14,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-/**
- * root organization node,<br> id = instId or id = parentId or parentId = -1 or parentId = 0
- * @author crystal.sea
- *
- */
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -35,16 +30,16 @@ public class Organizations extends BaseEntity implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
-    @NotEmpty(message = "组织编码不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 50, message = "组织编码的长度不能超过50位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_CODE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 50, message = MessageKeys.Validation.ORG_CODE_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     private String orgCode;
 
-    @NotEmpty(message = "组织名称不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 16, message = "组织名称的长度不能超过16位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 16, message = MessageKeys.Validation.ORG_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     private String orgName;
 
-    @NotEmpty(message = "组织全称不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 32, message = "组织全称的长度不能超过32位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.ORG_FULL_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 32, message = MessageKeys.Validation.ORG_FULL_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     private String fullName;
 
     private String parentId;
@@ -57,7 +52,7 @@ public class Organizations extends BaseEntity implements Serializable {
      * 1. entity
      * 2. virtual
      */
-    @NotEmpty(message = "类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String type;
 
     private String codePath;

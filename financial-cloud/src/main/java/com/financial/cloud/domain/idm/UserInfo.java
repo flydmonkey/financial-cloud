@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.financial.cloud.common.BaseEntity;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -15,12 +16,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-/**
- * .
- * @author Crystal.Sea
- *
- */
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -41,11 +36,11 @@ public class UserInfo extends BaseEntity  implements Serializable {
     String id;
 
 
-    @NotEmpty(message = "用户名不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 32, message = "用户名长度不能超过32位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.USER_USERNAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 32, message = MessageKeys.Validation.USER_USERNAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     protected String username;
 
-    @NotEmpty(message = "密码不能为空", groups = {AddGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.USER_PASSWORD_REQUIRED, groups = {AddGroup.class})
     protected String password;
 
     protected String decipherable;
@@ -58,22 +53,22 @@ public class UserInfo extends BaseEntity  implements Serializable {
      * "Employee", "Supplier","Dealer","Contractor",Partner,Customer "Intern",
      * "Temp", "External", and "Unknown" .
      */
-    @NotEmpty(message = "用户类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.USER_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     protected String userType;
 
-    @NotEmpty(message = "用户状态不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.USER_STATUS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     protected String userState;
 
 
     // for user name
-    @NotEmpty(message = "姓名不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 32, message = "姓名的长度不能超过32位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.HR_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 32, message = MessageKeys.Validation.HR_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     protected String displayName;
 
-    @Size(max = 32, message = "昵称的长度不能超过32位", groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 32, message = MessageKeys.Validation.USER_NICKNAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     protected String nickName;
 
-    @NotNull(message = "排序序号不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_SORT_ORDER_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     protected Integer sortIndex;
     protected String nameZhSpell;
     protected String nameZhShortSpell;
@@ -132,7 +127,7 @@ public class UserInfo extends BaseEntity  implements Serializable {
 
     protected String ldapDn;
 
-    @NotNull(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_STATUS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer status;
 
     @TableField(fill = FieldFill.INSERT)

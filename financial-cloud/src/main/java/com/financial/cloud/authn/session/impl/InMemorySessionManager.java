@@ -20,9 +20,6 @@ import com.financial.cloud.domain.permissions.SessionList;
 
 import com.financial.cloud.authn.core.AuthAuthentication;
 
-/**
- * Single-node in-memory session store backed by Caffeine.
- */
 @Slf4j
 public class InMemorySessionManager implements SessionManager {
 

@@ -4,16 +4,17 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 
 @Data
 public class GenerateVoucherDto {
 
     @Valid
-    @NotNull(message = "凭证规则不能为空")
+    @NotNull(message = MessageKeys.Validation.VOUCHER_VOUCHER_RULE_REQUIRED)
     Integer voucherType;
 
-    @NotEmpty(message = "id不能为空")
+    @NotEmpty(message = MessageKeys.Validation.COMMON_ID_LOWERCASE_REQUIRED)
     String id;
 
     String bookId;

@@ -8,10 +8,6 @@ import java.nio.charset.StandardCharsets;
 
 import cn.hutool.core.codec.Base64;
 
-/**
- * @author Crystal.Sea
- *
- */
 public class AuthorizationHeaderUtils {
 
 	/**

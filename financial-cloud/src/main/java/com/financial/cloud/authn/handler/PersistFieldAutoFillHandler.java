@@ -9,9 +9,6 @@ import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.financial.cloud.authn.SignedPrincipal;
 import com.financial.cloud.authn.support.AuthorizationUtils;
 
-/**
- * @author 24096
- */
 @Component
 public class PersistFieldAutoFillHandler implements MetaObjectHandler {
 

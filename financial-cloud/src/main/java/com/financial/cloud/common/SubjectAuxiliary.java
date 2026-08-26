@@ -2,14 +2,6 @@ package com.financial.cloud.common;
 
 import lombok.*;
 
-/**
- * 简介说明: 科目辅助项目对象
- *
- * @author wuyan
- * {@code @date} 2025/03/21 15:20:26
- * {@code @version} 1.0
- */
-
 @Getter
 @Setter
 @AllArgsConstructor

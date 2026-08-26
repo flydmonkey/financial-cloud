@@ -5,12 +5,6 @@ import java.util.List;
 
 import com.financial.cloud.domain.permissions.SessionList;
 
-/**
- * 会话管理接口
- * 
- * @author Crystal.Sea
- *
- */
 public interface SessionManager {
 
 	public  void create(String sessionId, Session session);

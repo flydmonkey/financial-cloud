@@ -9,37 +9,32 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/23 10:53
- */
+import com.financial.cloud.constants.common.MessageKeys;
 
 @Data
 public class SubjectChangeDto {
 
-    @NotEmpty(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     String id;
 
-    @NotNull(message = "科目类型不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_SUBJECT_TYPE_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer category;
 
-    @NotEmpty(message = "科目编码不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(min = 2, max = 25, message = "组织编码的长度为2~25位", groups = {AddGroup.class, EditGroup.class})
-    @Pattern(regexp = "[\\d\\-.]+", message = "科目编码只能包含数字和符号（如 - 和 .）", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_SUBJECT_ENCODING_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(min = 2, max = 25, message = MessageKeys.Validation.ORG_CODE_LENGTH_RANGE, groups = {AddGroup.class, EditGroup.class})
+    @Pattern(regexp = "[\\d\\-.]+", message = MessageKeys.Validation.BOOK_SUBJECT_CODE_PATTERN, groups = {AddGroup.class, EditGroup.class})
     String code;
 
-    @NotEmpty(message = "科目名称不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 21, message = "科目名称的长度不能超过21位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.BOOK_SUBJECT_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 21, message = MessageKeys.Validation.BOOK_SUBJECT_NAME_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     String name;
 
     String pinyinCode;
 
-    @NotNull(message = "余额方向不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_BALANCE_DIRECTION_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String direction;
 
-    @NotNull(message = "是否为现金类科目不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.BOOK_CASH_SUBJECT_FLAG_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer isCash;
 
     /**
@@ -51,7 +46,7 @@ public class SubjectChangeDto {
      */
     String classify;
 
-    @NotNull(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_STATUS_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     Integer status;
 
     String parentId;

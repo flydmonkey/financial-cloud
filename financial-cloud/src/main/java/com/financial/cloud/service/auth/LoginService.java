@@ -11,7 +11,9 @@ import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import com.financial.cloud.authn.core.BadCredentialsException;
+import com.financial.cloud.constants.auth.ConstsCaptchaType;
 import com.financial.cloud.authn.core.Authority;
 import org.springframework.stereotype.Repository;
 
@@ -61,6 +63,9 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
     private final AuthzResourceService authzResourceService;
     
     private final BookService bookService;
+
+    @Value("${financial-cloud.auth.captcha-enabled:true}")
+    private boolean captchaEnabled;
 
 	public LoginMapper getMapper() {
 		return loginMapper;
@@ -243,6 +248,23 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
 
     public ConfigLoginPolicy getConfigLoginPolicy() {
     	return configLoginPolicyService.getConfigLoginPolicy();
+    }
+
+    public boolean isCaptchaRequired() {
+        if (!captchaEnabled) {
+            return false;
+        }
+        ConfigLoginPolicy policy = getConfigLoginPolicy();
+        return policy != null
+                && policy.getCaptchaMgt() != null
+                && !policy.getCaptchaMgt().equalsIgnoreCase(ConstsCaptchaType.NONE);
+    }
+
+    public String getEffectiveCaptchaType() {
+        if (!isCaptchaRequired()) {
+            return ConstsCaptchaType.NONE;
+        }
+        return getConfigLoginPolicy().getCaptchaMgt().toUpperCase();
     }
 
     public void insertHistory(HistoryLogin historyLogin) {

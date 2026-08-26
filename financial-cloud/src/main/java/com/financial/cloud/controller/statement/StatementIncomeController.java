@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-/**
- * å©æ¶¦è¡¨æ¥å?
- */
 
 @RestController
 @RequestMapping("/api/statement")
@@ -26,15 +23,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class StatementIncomeController {
 
-    //å©æ¶¦è¡?
     private final StatementIncomeService statementIncomeService;
 
-    /**
-     * æ¥è¡¨-æ¥è¯¢å©æ¶¦è¡?
-     *
-     * @param dto æ¥è¯¢åæ°
-     * @return ç»æ
-     */
     @GetMapping(value = {"/income"})
     public Message<StatementIncome> income(StatementParamsDto dto,
                                            @CurrentUser UserInfo userInfo) {
@@ -44,9 +34,6 @@ public class StatementIncomeController {
         return statementIncomeService.getIncomeStatement(dto, false);
     }
 
-    /**
-     * å¯¼åºåè½
-     */
     @GetMapping("/income/export")
     public void export(HttpServletResponse response,
                        StatementParamsDto dto,

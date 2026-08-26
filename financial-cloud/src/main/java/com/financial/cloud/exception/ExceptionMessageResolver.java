@@ -17,9 +17,6 @@ import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.enums.error.UsersBusinessCode;
 import com.financial.cloud.enums.error.VoucherErrorCode;
 
-/**
- * Resolves business error codes to localized messages.
- */
 public final class ExceptionMessageResolver {
 
     private static final Map<Integer, String> CODE_TO_MESSAGE_KEY = new HashMap<>();

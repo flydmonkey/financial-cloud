@@ -4,20 +4,15 @@ import com.financial.cloud.domain.voucher.VoucherItemCashFlow;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import com.financial.cloud.constants.common.MessageKeys;
 
 import java.util.List;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/3/26 18:24
- */
 
 @Data
 public class VoucherItemCashFlowDto {
 
     @Valid
-    @NotEmpty(message = "入参不能为空")
+    @NotEmpty(message = MessageKeys.Validation.COMMON_INPUT_PARAM_REQUIRED)
     private List<VoucherItemCashFlow> voucherItemCashFlowDtos;
 
     private String bookId;

@@ -12,10 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * 报表利润表配置接口
- */
-
 @RestController
 @RequestMapping("/api/statement/config/income")
 @Slf4j

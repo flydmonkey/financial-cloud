@@ -17,12 +17,6 @@ import java.time.YearMonth;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/27 17:46
- */
-
 @RestController
 @RequestMapping("/api/employee/salary-summary")
 @Slf4j

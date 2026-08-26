@@ -9,13 +9,6 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * 凭证明细视图对象
- *
- * @author wuyan
- * {@code @date} 2025-01-14
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class VoucherItemVo extends VoucherItem {

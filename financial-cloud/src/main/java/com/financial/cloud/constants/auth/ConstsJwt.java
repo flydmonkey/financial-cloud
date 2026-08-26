@@ -1,8 +1,5 @@
 package com.financial.cloud.constants.auth;
 
-/**
- * Auth token JSON field names returned to the frontend.
- */
 public final class ConstsJwt {
 
     private ConstsJwt() {

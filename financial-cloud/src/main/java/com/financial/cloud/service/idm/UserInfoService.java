@@ -32,9 +32,6 @@ import com.financial.cloud.util.DateUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 
-/**
- * @author Crystal.Sea
- */
 @RequiredArgsConstructor
 @Slf4j
 @Repository

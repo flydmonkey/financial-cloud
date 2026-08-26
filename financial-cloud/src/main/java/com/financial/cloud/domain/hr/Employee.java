@@ -10,13 +10,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.financial.cloud.common.BaseEntity;
 import lombok.*;
 
-/**
- * 员工对象 employee
- *
- * @author wuyan
- * {@code @date} 2025-01-22
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("employee")

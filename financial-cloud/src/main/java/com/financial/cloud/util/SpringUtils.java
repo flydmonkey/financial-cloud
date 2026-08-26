@@ -6,11 +6,6 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-/**
- * spring工具类
- *
- * @author Lion Li
- */
 @Component
 public final class SpringUtils extends SpringUtil {
 

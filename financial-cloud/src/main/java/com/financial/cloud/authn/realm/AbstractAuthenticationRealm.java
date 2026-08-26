@@ -17,12 +17,6 @@ import com.financial.cloud.service.security.PasswordPolicyValidatorService;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
 
-/**
- * AbstractAuthenticationRealm.认证域抽象类
- *
- * @author Crystal.Sea
- *
- */
 @Slf4j
 public abstract class AbstractAuthenticationRealm {
 

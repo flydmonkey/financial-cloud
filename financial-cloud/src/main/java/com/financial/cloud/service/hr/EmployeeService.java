@@ -19,13 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 
-/**
- * 员工信息Service业务层处理
- *
- * @author wuyan
- * {@code @date} 2025-01-22
- */
-
 @RequiredArgsConstructor
 @Service
 public class EmployeeService extends ServiceImpl<EmployeeMapper, Employee>{

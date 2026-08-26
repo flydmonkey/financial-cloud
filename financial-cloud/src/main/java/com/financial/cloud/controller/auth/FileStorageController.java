@@ -29,14 +29,6 @@ import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.service.auth.FileStorageService;
 import com.financial.cloud.context.WebContext;
 
-/**
- * 文件上次实现/filestorage/upload/
- *
- * <p>上传文件到表MXK_FILE_STORAGE，当前无法存储大文件，需要第三方存储支持</p>
- *
- * @author Crystal.Sea
- *
- */
 @RequiredArgsConstructor
 @Slf4j
 @Controller

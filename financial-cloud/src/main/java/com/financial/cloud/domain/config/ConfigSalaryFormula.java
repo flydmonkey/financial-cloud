@@ -7,12 +7,6 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/2/8 17:46
- */
-
 @EqualsAndHashCode(callSuper = true)
 @TableName("config_salary_formula")
 @Data

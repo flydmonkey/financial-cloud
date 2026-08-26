@@ -6,13 +6,6 @@ import lombok.*;
 import java.io.Serial;
 import java.io.Serializable;
 
-/**
- * 凭证明细辅助核算关联对象 voucher_auxiliary
- *
- * @author wuyan
- * {@code @date} 2025-02-23
- */
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

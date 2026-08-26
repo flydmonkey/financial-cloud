@@ -16,10 +16,15 @@ const bookStore: any = defineStore(
             subjectCodeLen: [],
             // 初始化状态
             initializeStatus: false,
+            // 是否启用辅助核算
+            assistAccEnabled: false,
         }),
         actions: {
             updateBookId(id: any) {
                 this.bookId = id;
+            },
+            setAssistAccEnabled(enabled: boolean) {
+                this.assistAccEnabled = enabled;
             },
             getBookItem() {
                 for (let i = 0; i < this.setList.length; i++) {
@@ -50,6 +55,8 @@ const bookStore: any = defineStore(
                                     this.initializeStatus = true;
                                 }
                                 this.initializeTask = configValue;
+                            } else if (config.configKey === "sys.assist.acc.enabled") {
+                                this.assistAccEnabled = configValue === 'true';
                             } else if (config.configKey === "bookId") {
                                 this.bookId = configValue;
                             } else if (config.configKey === "sys.payment.term.current") {

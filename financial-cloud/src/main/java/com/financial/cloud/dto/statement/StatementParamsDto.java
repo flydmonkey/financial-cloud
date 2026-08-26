@@ -19,13 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- * 财务报表查询参数对象
- *
- * @author wuyan
- * {@code @date} 2025-02-03
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Builder

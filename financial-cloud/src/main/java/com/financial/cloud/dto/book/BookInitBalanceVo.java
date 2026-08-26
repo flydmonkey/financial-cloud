@@ -6,12 +6,6 @@ import lombok.*;
 import java.io.Serial;
 import java.io.Serializable;
 
-/**
- * 初期余额表视图对象
- *
- * @author Wuyan
- * {@code @date} 2025-03-11
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class BookInitBalanceVo extends BookInitBalance implements Serializable {

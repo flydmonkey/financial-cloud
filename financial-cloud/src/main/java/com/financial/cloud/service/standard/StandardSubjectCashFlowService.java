@@ -21,12 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2025/4/18 10:33
- */
-
 @Service
 @RequiredArgsConstructor
 public class StandardSubjectCashFlowService extends ServiceImpl<StandardSubjectCashFlowMapper, StandardSubjectCashFlow>{
@@ -91,9 +85,6 @@ public class StandardSubjectCashFlowService extends ServiceImpl<StandardSubjectC
         return Message.ok(standardSubjectCashFlowVo);
     }
 
-    /**
-     * 操作类型枚举
-     */
     private enum OperationType {
         ADD, DELETE, UPDATE, NONE
     }

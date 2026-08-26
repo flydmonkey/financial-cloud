@@ -12,9 +12,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.financial.cloud.configuration.ApplicationConfig;
 
-/**
- * 请求域名限定自动装配
- */
 @Slf4j
 @Configuration
 public class MvcRestrictHostAutoConfiguration implements WebMvcConfigurer {

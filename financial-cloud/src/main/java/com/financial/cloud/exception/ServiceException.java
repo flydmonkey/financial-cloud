@@ -1,8 +1,5 @@
 package com.financial.cloud.exception;
 
-/**
- * @deprecated Use {@link BusinessException} with an {@link ErrorCode} instead.
- */
 @Deprecated
 public class ServiceException extends BusinessException {
 

@@ -16,10 +16,6 @@ import com.financial.cloud.domain.idm.Organizations;
 import com.financial.cloud.domain.idm.UserInfo;
 
 
-/**
- * @author Crystal.Sea
- *
- */
 public interface UserInfoMapper  extends BaseMapper<UserInfo>{
 
 	Page<UserInfo> fetchPageResults(Page page, @Param("Dto") UserInfoPageDto dto);

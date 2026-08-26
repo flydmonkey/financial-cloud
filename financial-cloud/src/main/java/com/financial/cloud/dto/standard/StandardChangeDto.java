@@ -6,23 +6,18 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/27 17:11
- */
+import com.financial.cloud.constants.common.MessageKeys;
 
 @Data
 public class StandardChangeDto {
 
-    @NotEmpty(message = "编辑对象不能为空", groups = {EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     String id;
 
-    @NotEmpty(message = "会计准则不能为空", groups = {AddGroup.class, EditGroup.class})
-    @Size(max = 21, message = "会计准则的长度不能超过21位", groups = {AddGroup.class, EditGroup.class})
+    @NotEmpty(message = MessageKeys.Validation.STANDARD_ACCOUNTING_STANDARD_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    @Size(max = 21, message = MessageKeys.Validation.STANDARD_ACCOUNTING_STANDARD_MAX_LENGTH, groups = {AddGroup.class, EditGroup.class})
     String name;
 
-    @NotNull(message = "状态不能为null", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = MessageKeys.Validation.COMMON_STATUS_NOT_NULL, groups = {AddGroup.class, EditGroup.class})
     Integer status;
 }

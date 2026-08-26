@@ -17,12 +17,6 @@ import com.financial.cloud.domain.config.Institutions;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.service.config.InstitutionsService;
 
-/**
- * 机构查询
- *
- * @author Crystal.Sea
- *
- */
 @RequiredArgsConstructor
 @Slf4j
 @RestController

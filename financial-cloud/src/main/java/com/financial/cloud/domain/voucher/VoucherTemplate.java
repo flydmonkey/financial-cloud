@@ -10,13 +10,6 @@ import com.financial.cloud.common.BaseEntity;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * 凭证模板 voucher_template
- *
- * @author wuyan
- * {@code @date} 2025-05-08
- */
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("voucher_template")

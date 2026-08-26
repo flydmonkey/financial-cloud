@@ -23,6 +23,7 @@ import com.financial.cloud.repository.standard.StandardMapper;
 import com.financial.cloud.repository.standard.StandardSubjectMapper;
 import com.financial.cloud.service.standard.StandardSubjectService;
 import com.financial.cloud.util.StrUtils;
+import com.financial.cloud.util.SubjectDisplayNameUtils;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -34,12 +35,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-
-/**
- * @description:
- * @author: orangeBabu
- * @time: 2024/12/19 16:04
- */
 
 @RequiredArgsConstructor
 @Slf4j
@@ -84,9 +79,14 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
             extraMap.put("code", temp.getCode());
             extraMap.put("auxiliary", temp.getAuxiliary());
             //extraMap.put("balance", temp.getBalance());
-            extraMap.put("pinyinCode", temp.getPinyinCode());
-            extraMap.put("pinyinDisplayCode", temp.getPinyinDisplayCode());
-            extraMap.put("displayName", temp.getDisplayName());
+            extraMap.put("pinyinCode", StringUtils.isNotBlank(temp.getPinyinCode())
+                    ? temp.getPinyinCode() : StrUtils.getPinYinShort(temp.getName()));
+            String displayName = SubjectDisplayNameUtils.resolve(temp);
+            extraMap.put("pinyinDisplayCode", StringUtils.isNotBlank(temp.getPinyinDisplayCode())
+                    ? temp.getPinyinDisplayCode() : StrUtils.getPinYinShort(displayName.replace("_", "")));
+            extraMap.put("pinyinFull", StrUtils.getPinYinFull(temp.getName()));
+            extraMap.put("pinyinDisplayFull", StrUtils.getPinYinFull(displayName.replace("_", "")));
+            extraMap.put("displayName", displayName);
             stringTreeNode.setExtra(extraMap);
 
             treeNode.add(stringTreeNode);
@@ -212,16 +212,21 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
         if (Objects.nonNull(parentId)) {
             StandardSubject subjectParent = super.getById(parentId);
             if(subjectParent != null) {
-            	subject.setDisplayName(subjectParent.getDisplayName()+"_"+subject.getName());
+            	subject.setDisplayName(SubjectDisplayNameUtils.resolve(subjectParent)+"_"+subject.getName());
             	subject.setPinyinDisplayCode(subjectParent.getPinyinDisplayCode()+"_"+subject.getPinyinCode());
                 subject.setLevel(subjectParent.getLevel() + 1);
                 if (subjectParent.getIsCash() == 1) {
                     subject.setIsCash(1);
                 }
+            } else {
+                subject.setLevel(1);
+                subject.setDisplayName(subject.getName());
+                subject.setPinyinDisplayCode(subject.getPinyinCode());
             }
-            subject.setLevel(1);
         } else {
             subject.setLevel(1);
+            subject.setDisplayName(subject.getName());
+            subject.setPinyinDisplayCode(subject.getPinyinCode());
         }
 
         boolean save = super.save(subject);
@@ -286,11 +291,13 @@ public class StandardSubjectService extends ServiceImpl<StandardSubjectMapper, S
         if (Objects.isNull(parentId) || StringUtils.isEmpty(parentId)) {
             //设置等级
             subject.setLevel(1);
+            subject.setDisplayName(subject.getName());
+            subject.setPinyinDisplayCode(subject.getPinyinCode());
         } else {
             StandardSubject subjectParent = super.getById(parentId);
             subject.setLevel(subjectParent.getLevel() + 1);
             if(subjectParent != null) {
-            	subject.setDisplayName(subjectParent.getDisplayName()+"_"+subject.getName());
+            	subject.setDisplayName(SubjectDisplayNameUtils.resolve(subjectParent)+"_"+subject.getName());
             	subject.setPinyinDisplayCode(subjectParent.getPinyinDisplayCode()+"_"+subject.getPinyinCode());
             }
         }

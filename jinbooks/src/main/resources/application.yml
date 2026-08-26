@@ -53,7 +53,7 @@ jinbooks:
       enable: true
 
 mybatis-plus:
-  type-aliases-package: com.jinbooks.domain.voucher,com.jinbooks.domain.book,com.jinbooks.domain.journal,com.jinbooks.domain.statement,com.jinbooks.domain.idm,com.jinbooks.domain.permissions,com.jinbooks.domain.security,com.jinbooks.domain.config,com.jinbooks.domain.hr,com.jinbooks.domain.standard,com.jinbooks.domain.history,com.jinbooks.domain.auth,com.jinbooks.common
+  type-aliases-package: com.jinbooks.domain.voucher,com.jinbooks.domain.book,com.jinbooks.domain.journal,com.jinbooks.domain.statement,com.jinbooks.domain.idm,com.jinbooks.domain.permissions,com.jinbooks.domain.security,com.jinbooks.domain.config,com.jinbooks.domain.hr,com.jinbooks.domain.standard,com.jinbooks.domain.history,com.jinbooks.domain.auth,com.jinbooks.common,com.jinbooks.dto
   mapper-locations: classpath*:com/jinbooks/repository/**/*.xml
   configuration:
     map-underscore-to-camel-case: true

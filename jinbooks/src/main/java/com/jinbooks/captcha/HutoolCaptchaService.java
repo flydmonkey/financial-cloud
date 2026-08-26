@@ -29,6 +29,8 @@ public class HutoolCaptchaService {
 	private static final int CODE_LENGTH = 4;
 	private static final int LINE_COUNT = 20;
 
+	private static final MathGenerator MATH_GENERATOR = new MathGenerator();
+
 	private final Cache<String, String> captchaStore = Caffeine.newBuilder()
 			.expireAfterWrite(5, TimeUnit.MINUTES)
 			.maximumSize(200_000)
@@ -46,11 +48,23 @@ public class HutoolCaptchaService {
 		}
 		String expected = captchaStore.getIfPresent(state);
 		log.debug("captcha: {}, expected: {}", captcha, expected);
-		if (expected != null && captcha.equals(expected)) {
+		if (expected != null && matchesCaptcha(expected, captcha)) {
 			captchaStore.invalidate(state);
 			return true;
 		}
 		return false;
+	}
+
+	private boolean matchesCaptcha(String expected, String userInput) {
+		if (isArithmeticExpression(expected)) {
+			return MATH_GENERATOR.verify(expected, userInput);
+		}
+		return userInput.equals(expected);
+	}
+
+	private boolean isArithmeticExpression(String code) {
+		return code.indexOf('=') >= 0 || code.indexOf('+') >= 0 || code.indexOf('-') >= 0
+				|| code.indexOf('*') >= 0 || code.indexOf('/') >= 0 || code.indexOf('x') >= 0;
 	}
 
 	public CaptchaImage create(String captchaType) {

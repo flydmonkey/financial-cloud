@@ -104,8 +104,8 @@ import {getCurrentInstance, reactive, ref, toRefs} from "vue";
 import editForm from "./edit.vue";
 import modal from "@/plugins/modal";
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
-import {listBooksSets, deleteBatch} from "@/api/system/book/book";
-import {listStandardsAll} from "@/api/system/standard/standard";
+import {listBooksSets, deleteBatch} from "@/api/book/book";
+import {listStandardsAll} from "@/api/standard/standard";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 
 const {t} = useI18n()

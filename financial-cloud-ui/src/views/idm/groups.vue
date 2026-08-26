@@ -88,9 +88,9 @@
 import {ref, getCurrentInstance, reactive, toRefs} from "vue";
 import modal from "@/plugins/modal";
 import {useI18n} from "vue-i18n";
-import {deleteBatch, listGroup} from "@/api/system/group.js";
+import {deleteBatch, listGroup} from "@/api/idm/group.js";
 import editForm from "./group/edit.vue";
-import {getTree} from "@/api/system/dept";
+import {getTree} from "@/api/idm/dept";
 import {handleTree} from "@/utils/Jinbooks";
 import {set2String} from "@/utils"
 import memberComponent from './group/members.vue'

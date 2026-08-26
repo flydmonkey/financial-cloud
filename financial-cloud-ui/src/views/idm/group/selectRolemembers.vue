@@ -51,7 +51,7 @@
 import modal from "@/plugins/modal";
 import {useI18n} from "vue-i18n";
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";;
-import {addMemberGroup, memberNotInGroup} from "@/api/system/group.js";
+import {addMemberGroup, memberNotInGroup} from "@/api/idm/group.js";
 
 const {t} = useI18n()
 

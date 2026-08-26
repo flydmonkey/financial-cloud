@@ -217,11 +217,11 @@ import {
   getConfigBalanceSheet,
   delConfigBalanceSheet,
   listConfigBalanceSheet
-} from "@/api/system/standard/standard-statement-balance-sheet";
+} from "@/api/standard/standard-statement-balance-sheet";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
-import * as subjectApi from "@/api/system/standard/standard-subject";
-import {listStandardsAll} from "@/api/system/standard/standard";
+import * as subjectApi from "@/api/standard/standard-subject";
+import {listStandardsAll} from "@/api/standard/standard";
 
 const cascaderSubjectPropsOwn = ref<any>({...cascaderSubjectProps})
 cascaderSubjectPropsOwn.value.checkStrictly = true

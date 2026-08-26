@@ -89,10 +89,10 @@
 import modal from "@/plugins/modal";
 import {ref, getCurrentInstance, reactive, toRefs, watch} from "vue";
 import {useI18n} from "vue-i18n";
-import * as userApi from "@/api/system/user";
+import * as userApi from "@/api/idm/user";
 import addPermissionBook from './addPermissionBook.vue'
 import { set2String } from '@/utils';
-import {listStandardsAll} from "@/api/system/standard/standard";
+import {listStandardsAll} from "@/api/standard/standard";
 
 const {t} = useI18n()
 
@@ -180,7 +180,6 @@ function getStandards(): any {
   listStandardsAll({status: 1}).then((res: any) => {
     if (res.code === 0) {
       standardList.value = res.data;
-      console.log("standardList "+standardList.value[0].name);
     }
   });
 }

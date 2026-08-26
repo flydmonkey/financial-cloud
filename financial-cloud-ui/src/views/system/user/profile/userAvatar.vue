@@ -65,7 +65,7 @@ import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from 
 import modal from "@/plugins/modal";
 import "vue-cropper/dist/index.css";
 import {VueCropper} from "vue-cropper";
-import {uploadImage} from "@/api/system/user";
+import {uploadImage} from "@/api/idm/user";
 import useUserStore from "@/store/modules/user";
 import {useI18n} from "vue-i18n";
 

@@ -96,11 +96,10 @@ import {ref, getCurrentInstance, reactive, watch} from "vue";
 import {getCodeImg, loginPreGet, getThirdById} from "@/api/login";
 import {privateImage} from "@/utils/Jinbooks";
 import Cookies from "js-cookie";
-import {decrypt} from "@/utils/Jsencrypt";
 import useUserStore from '@/store/modules/user'
 import appStore from '@/store/modules/app'
 import {useI18n} from 'vue-i18n'
-import logoUrl from '@/assets/logo/logo.png'
+import {DEFAULT_LOGO, resolveInstitutionLogo} from '@/constants/branding'
 import modal from "@/plugins/modal"
 
 const {t} = useI18n()
@@ -129,7 +128,7 @@ const loginRules: any = reactive<FormRules>({
 });
 const state: any = ref("");
 const staticAppInfo: any = ref({
-  logo: logoUrl,
+  logo: DEFAULT_LOGO,
   consoleTitle: ""
 });
 const codeUrl: any = ref("");
@@ -208,7 +207,7 @@ function getCookie(): any {
   loginForm.value = {
     authType: "", captcha: "", state: "",
     username: username === undefined ? loginForm.value.username : username,
-    password: password === undefined ? loginForm.value.password : decrypt(password),
+    password: password === undefined ? loginForm.value.password : password,
     rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
   };
 }
@@ -217,11 +216,7 @@ function getState(): any {
   loginPreGet().then((res: any) => {
     if (res.code === 0) {
       staticAppInfo.value = res.data.inst
-      staticAppInfo.value.logo = logoUrl
-      // import(`/${res.data.inst.logo}`).then((logo: any) =>  {
-      //   staticAppInfo.value.logo = logo.default
-      //   console.log(staticAppInfo.value)
-      // })
+      staticAppInfo.value.logo = resolveInstitutionLogo(res.data.inst?.logo)
 
       appStore().setAppInfo(staticAppInfo.value)
       state.value = res.data.state
@@ -274,22 +269,16 @@ getState();
   height: 100%;
   width: 100%;
   color: #000000d9;
-  background-image: url('../assets/images/login-bg.jpg');
-  background-size: 100% 100%;
+  background: linear-gradient(145deg, #dbeafe 0%, #f0f4f8 42%, #e0f2fe 100%);
 }
 
 .login::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #f0f2f5;
-  //background-size: cover;
-  //background-position: center;
-  //transform: scaleX(-1);
-  z-index: -1; /* 确保背景图在内容后面 */
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Ccircle cx='10' cy='10' r='1.5' fill='%2394a3b8' fill-opacity='0.25'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  z-index: -1;
 }
 
 .top-box {
@@ -308,12 +297,15 @@ getState();
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 14px;
     text-align: center;
     margin: 0 0 0 10%;
 
     img {
-      width: 44px;
-      margin-right: 10px;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      object-fit: contain;
     }
   }
 

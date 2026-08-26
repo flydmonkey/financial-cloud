@@ -44,7 +44,7 @@ import {
   watch,
   PropType
 } from "vue";
-import {addNoUserGroup, listNoUserGroup} from "@/api/system/group";
+import {addNoUserGroup, listNoUserGroup} from "@/api/idm/group";
 
 const {t} = useI18n()
 

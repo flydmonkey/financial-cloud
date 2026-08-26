@@ -193,7 +193,7 @@ import modal from "@/plugins/modal";
 
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";;
 import {useI18n} from "vue-i18n";
-import {addOneUserHat, deleteUserHat, getHatsDetail, listHats, updateOneUserHat} from "@/api/system/user";
+import {addOneUserHat, deleteUserHat, getHatsDetail, listHats, updateOneUserHat} from "@/api/idm/user";
 
 const {t} = useI18n()
 

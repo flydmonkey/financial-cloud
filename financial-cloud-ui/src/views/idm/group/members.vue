@@ -110,7 +110,7 @@
 import modal from "@/plugins/modal";
 import {useI18n} from "vue-i18n";
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";;
-import {deleteUserGroup, listUserGroup} from "@/api/system/group.js";
+import {deleteUserGroup, listUserGroup} from "@/api/idm/group.js";
 import {set2String} from "@/utils";
 import selectRolemembers from './selectRolemembers.vue'
 import selectPosts from './selectPosts.vue'

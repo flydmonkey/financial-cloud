@@ -110,7 +110,6 @@ function getList() {
     total.value = response.data.total;
     loading.value = false;
 
-    console.log(sysCfgList.value)
   });
 }
 

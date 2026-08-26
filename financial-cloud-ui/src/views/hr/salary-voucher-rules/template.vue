@@ -82,9 +82,9 @@
 <script setup lang="ts">
 import {useI18n} from "vue-i18n";
 import {getCurrentInstance, reactive, ref, toRefs, watch} from "vue"
-import {addRule, getById, updateRule} from "@/api/system/hr/voucher-rule";
+import {addRule, getById, updateRule} from "@/api/hr/voucher-rule";
 import {ElForm} from "element-plus";
-import {delConfigBalanceSheet} from "@/api/system/standard/standard-statement-balance-sheet";
+import {delConfigBalanceSheet} from "@/api/standard/standard-statement-balance-sheet";
 import modal from "@/plugins/modal";
 const {t} = useI18n()
 const {proxy} = getCurrentInstance()!;

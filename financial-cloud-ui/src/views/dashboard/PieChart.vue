@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import * as echarts from 'echarts';
+import echarts from '@/utils/echarts';
 import 'echarts/theme/macarons'
 import resize from './mixins/resize'
 

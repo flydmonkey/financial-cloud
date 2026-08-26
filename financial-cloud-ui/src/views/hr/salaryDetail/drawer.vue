@@ -417,7 +417,7 @@ import {
   fetchPage,
   getCurrentDetail, reCalculateSalary,
   updateDetailTemp
-} from "@/api/system/hr/salary-detail";
+} from "@/api/hr/salary-detail";
 import {ElForm} from "element-plus";
 
 const {t} = useI18n()

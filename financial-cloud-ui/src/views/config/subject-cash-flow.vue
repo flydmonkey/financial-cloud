@@ -99,8 +99,8 @@
 
 <script setup lang="ts">
 import {reactive, toRefs, ref, nextTick} from "vue";
-import {listStandardsAll} from "@/api/system/standard/standard";
-import {getTree} from "@/api/system/standard/standard-subject";
+import {listStandardsAll} from "@/api/standard/standard";
+import {getTree} from "@/api/standard/standard-subject";
 import {fetchSelectItem, getSelectItem, saveSelectItem} from "@/api/config/cash-flow-balance";
 import bookStore from "@/store/modules/bookStore";
 import modal from "@/plugins/modal";

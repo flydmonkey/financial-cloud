@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
-import com.financial.cloud.configuration.ApplicationConfig;
 import com.financial.cloud.constants.ConstsHttpHeader;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
@@ -27,8 +26,6 @@ import com.financial.cloud.service.config.InstitutionsService;
 public class WebHttpInstRequestFilter  extends GenericFilterBean {
 
 	InstitutionsService institutionsService;
-
-	ApplicationConfig applicationConfig;
 
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
@@ -51,20 +48,13 @@ public class WebHttpInstRequestFilter  extends GenericFilterBean {
 			Institutions institution = institutionsService.getByInstIdOrDomain(host);
 			log.trace("institution {}" ,institution);
 			request.getSession().setAttribute(WebConstants.CURRENT_INST, institution);
-
-			String origin = request.getHeader(ConstsHttpHeader.HEADER_ORIGIN);
-			if(StringUtils.isEmpty(origin)) {
-				origin = applicationConfig.getFrontendUri();
-			}
-			log.trace("origin {}" ,origin);
 		}
         chain.doFilter(servletRequest, servletResponse);
 	}
 
-	public WebHttpInstRequestFilter(InstitutionsService institutionsService,ApplicationConfig applicationConfig) {
+	public WebHttpInstRequestFilter(InstitutionsService institutionsService) {
 		super();
 		this.institutionsService = institutionsService;
-		this.applicationConfig = applicationConfig;
 	}
 
 }

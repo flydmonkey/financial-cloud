@@ -124,7 +124,7 @@ import {
 } from "vue";
 
 ;
-import {addDept, getDept, updateDept} from "@/api/system/dept";
+import {addDept, getDept, updateDept} from "@/api/idm/dept";
 import {useI18n} from "vue-i18n";
 import exAttrsForm from "@/components/expandAttrsForm.vue";
 import {ElForm} from "element-plus";

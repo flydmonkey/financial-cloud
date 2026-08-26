@@ -10,7 +10,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.financial.cloud.configuration.ApplicationConfig;
 import com.financial.cloud.service.config.InstitutionsService;
 
 /**
@@ -21,12 +20,10 @@ import com.financial.cloud.service.config.InstitutionsService;
 public class MvcInstAutoConfiguration implements WebMvcConfigurer {
 
     @Bean
-    FilterRegistrationBean<Filter> webHttpInstRequestFilter(
-                                                InstitutionsService institutionsService,
-                                                ApplicationConfig applicationConfig) {
+    FilterRegistrationBean<Filter> webHttpInstRequestFilter(InstitutionsService institutionsService) {
         log.debug("WebHttpInstRequestFilter init for /* ");
         FilterRegistrationBean<Filter> registrationBean =
-        		new FilterRegistrationBean<>(new WebHttpInstRequestFilter(institutionsService,applicationConfig));
+        		new FilterRegistrationBean<>(new WebHttpInstRequestFilter(institutionsService));
         registrationBean.addUrlPatterns("/*");
         registrationBean.setName("webHttpInstRequestFilter");
         registrationBean.setOrder(5);

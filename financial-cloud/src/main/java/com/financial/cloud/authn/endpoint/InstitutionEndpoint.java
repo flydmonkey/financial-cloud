@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.financial.cloud.configuration.ApplicationConfig;
 import com.financial.cloud.domain.config.Institutions;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.service.config.InstitutionsService;
@@ -35,8 +34,6 @@ public class InstitutionEndpoint {
 	public static final String  HEADER_HOSTNAME 	= "hostname";
 
 	private final InstitutionsService institutionsService;
-
-	private final ApplicationConfig applicationConfig;
 
 	/**
 	 * 根据header参数读取机构信息

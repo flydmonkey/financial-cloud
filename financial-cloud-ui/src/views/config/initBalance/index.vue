@@ -280,8 +280,6 @@ const handleTrialBalance = (show?: boolean) => {
       isBalanced: new Decimal(totalDebitAmount).eq(new Decimal(totalCreditAmount))
     }
   ];
-  console.log("initialBalanceDiff " + initialBalanceDiff)
-  console.log("accumulatedAmountDiff " + accumulatedAmountDiff)
   trialDifference.value = new Decimal(initialBalanceDiff).eq(new Decimal(0)) && new Decimal(accumulatedAmountDiff).eq(new Decimal(0))
   if (!trialDifference.value || show) {
     dialog.title = '试算平衡结果';

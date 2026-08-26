@@ -124,13 +124,13 @@
 
 <script setup lang="ts">
 import {useI18n} from "vue-i18n";
-import * as apis from "@/api/system/voucher/voucher";
+import * as apis from "@/api/voucher/voucher";
 import {getCurrentInstance, reactive, ref, toRefs, watch, computed, onMounted} from "vue";
 import {useRoute} from "vue-router";
 import {formatAmount} from "@/utils";
 import {getSelectItem} from "@/api/config/cash-flow-balance";
 import modal from "@/plugins/modal";
-import {saveItemCodes} from "@/api/system/statement/statement-cash-flow";
+import {saveItemCodes} from "@/api/statement/statement-cash-flow";
 import editForm from "./edit-drawer.vue"
 import bookStore from "@/store/modules/bookStore";
 

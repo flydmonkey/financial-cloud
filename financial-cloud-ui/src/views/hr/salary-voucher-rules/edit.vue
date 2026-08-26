@@ -57,7 +57,7 @@
 import {useI18n} from "vue-i18n";
 import {getCurrentInstance, reactive, ref, toRefs, watch} from "vue";
 import {ElForm} from "element-plus";
-import {addRule, getById, updateRule} from "@/api/system/hr/voucher-rule";
+import {addRule, getById, updateRule} from "@/api/hr/voucher-rule";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance()!;

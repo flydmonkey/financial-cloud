@@ -275,8 +275,8 @@ import {computed, onBeforeUpdate, onMounted, reactive, ref, watch} from 'vue'
 import SelectAuxiliary from "./SelectAuxiliary/index.vue"
 import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'element-plus'
 import {parseTime} from "@/utils/Jinbooks";
-import * as subjectApi from "@/api/system/standard/standard-subject"
-import {draftVoucher, getOneVoucher, getVoucherAbleWordNum, submitVoucher} from "@/api/system/voucher/voucher";
+import * as subjectApi from "@/api/standard/standard-subject"
+import {draftVoucher, getOneVoucher, getVoucherAbleWordNum, submitVoucher} from "@/api/voucher/voucher";
 import {validateForm} from "@/utils"
 import {useRoute} from "vue-router";
 import bookStore from "@/store/modules/bookStore";
@@ -764,7 +764,6 @@ const rowClick = (row: any, column: any, event: Event) => {
 const cellClick = (row: any, column: any, cell: HTMLTableCellElement, event: Event) => {
   row.columnIndex = column.index
   rowClick(row, column, event)
-  console.log(column, row.columnIndex)
 }
 
 const headerClick = (column: any, event: Event) => {
@@ -837,7 +836,7 @@ function isCurrentOrFutureMonth(date: Date) {
 
 // 打印
 const onPrint = () => {
-  const url = "/financial-cloud/temporary/voucher-print?mode=print";
+  const url = `${import.meta.env.VITE_APP_CONTEXT_PATH}temporary/voucher-print?mode=print`;
   window.localStorage.setItem("voucher-print-data", JSON.stringify(formData.value))
   window.open(url, "_blank")
 
@@ -1118,7 +1117,6 @@ const handleInputKeydown = (event: KeyboardEvent, scope: any, columnIndex: numbe
   const key = event.key;
   if (key === 'Tab' || (key === 'Enter' && columnIndex !== 2 && columnIndex !== 1)) {
     event.preventDefault();
-    console.log('key', key, columnIndex, scope)
 
     // 阻止默认行为
     if (event.shiftKey && key === 'Tab') {
@@ -1142,7 +1140,6 @@ const handleCascaderKeydown = (event: KeyboardEvent, scope: any, columnIndex: nu
   const key = event.key;
   if (key === 'Tab') {
     event.preventDefault();
-    console.log('key', key, columnIndex, scope)
 
     if (event.shiftKey && key === 'Tab') {
       // Shift + Tab 向前移动
@@ -1251,13 +1248,6 @@ watch(
         formData.value = {...newVal};
         createTableData()
       }
-    },
-    {immediate: true}
-);
-watch(
-    () => props.edit,
-    (newVal: boolean) => {
-      console.log(newVal)
     },
     {immediate: true}
 );

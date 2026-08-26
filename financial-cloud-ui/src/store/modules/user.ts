@@ -11,7 +11,7 @@ import {
     removeRefreshToken,
     removeTokenInfo, getTokenInfo
 } from '@/utils/Auth'
-import defAva from '@/assets/images/profile.png'
+import defAva from '@/assets/images/default-avatar.svg'
 
 const useUserStore: any = defineStore(
     'user',

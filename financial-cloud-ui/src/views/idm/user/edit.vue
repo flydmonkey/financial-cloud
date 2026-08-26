@@ -122,9 +122,9 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, watch} from "vue";
 import {useI18n} from "vue-i18n";
-import {addUser, getImage, getUser, updateUser, uploadImage} from "@/api/system/user";
+import {addUser, getImage, getUser, updateUser, uploadImage} from "@/api/idm/user";
 import exAttrsForm from "@/components/expandAttrsForm.vue";
-import defAva from "@/assets/images/profile.png";
+import defAva from "@/assets/images/default-avatar.svg";
 import {ElForm, ElMessage} from 'element-plus';
 import modal from "@/plugins/modal"
 

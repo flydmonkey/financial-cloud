@@ -251,7 +251,7 @@
 </template>
 
 <script setup name="BooksVoucher">
-import * as voucherApis from "@/api/system/voucher/voucher";
+import * as voucherApis from "@/api/voucher/voucher";
 import {useI18n} from "vue-i18n";
 import voucherEdit from "./voucher-edit.vue";
 import {useRouter} from "vue-router";

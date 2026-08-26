@@ -6,8 +6,9 @@ import {version} from "./package.json"
 // https://vitejs.dev/config/
 export default defineConfig(({mode, command}) => {
     const env = loadEnv(mode, process.cwd())
-    const {VITE_APP_ENV} = env
+    const {VITE_APP_ENV, VITE_APP_CONTEXT_PATH} = env
     return {
+        base: VITE_APP_CONTEXT_PATH || '/',
         define: {
             __APP_VERSION__: JSON.stringify(version), // 必须转为字符串
         },
@@ -58,6 +59,31 @@ export default defineConfig(({mode, command}) => {
                         }
                     }
                 ]
+            }
+        },
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            if (id.includes('element-plus')) return 'element-plus'
+                            if (id.includes('echarts')) return 'echarts'
+                            if (id.includes('vue') || id.includes('pinia') || id.includes('@vue')) return 'vue-vendor'
+                            return 'vendor'
+                        }
+
+                        const moduleNames = [
+                            'voucher', 'hr', 'statement', 'standard', 'book',
+                            'journal', 'settlement', 'config', 'idm', 'audit',
+                            'dashboard', 'permissions', 'security'
+                        ]
+                        for (const name of moduleNames) {
+                            if (id.includes(`/src/views/${name}/`) || id.includes(`/src/api/${name}/`)) {
+                                return `module-${name}`
+                            }
+                        }
+                    }
+                }
             }
         }
     }

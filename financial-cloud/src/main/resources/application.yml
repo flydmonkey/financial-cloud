@@ -1,3 +1,6 @@
+server:
+  port: 2154
+
 application:
   title: 财务云
   formatted-version: v1.1.0 GA
@@ -33,15 +36,7 @@ spring:
     basename: classpath:messages/messages
     encoding: UTF-8
 
-server:
-  port: 2154
-
 financial-cloud:
-  server:
-    default:
-      uri: /main
-    frontend:
-      uri: http://localhost:5173
   security:
     legacy-secret-suffix: l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6
   session:

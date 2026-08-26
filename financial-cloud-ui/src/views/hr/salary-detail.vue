@@ -306,7 +306,7 @@
 <script setup lang="ts">
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
 import {useI18n} from "vue-i18n";
-import {delSalary, exportSalary, fetchPage, salarySummary, generateVoucherSubmit,deleteVoucherSubmit} from "@/api/system/hr/employee-salary";
+import {delSalary, exportSalary, fetchPage, salarySummary, generateVoucherSubmit,deleteVoucherSubmit} from "@/api/hr/employee-salary";
 import {ElForm} from "element-plus";
 import modal from "@/plugins/modal";
 import {formatAmount} from "@/utils";
@@ -314,7 +314,7 @@ import {useRouter} from "vue-router";
 import {h} from 'vue'
 import type {VNode} from 'vue'
 import booksSetStore from "@/store/modules/bookStore";
-import * as voucherApis from "@/api/system/voucher/voucher";
+import * as voucherApis from "@/api/voucher/voucher";
 import voucherEdit from "@/views/voucher/voucher-edit.vue";
 
 const router: any = useRouter();
@@ -419,7 +419,6 @@ const getSummaries = () => {
     sums[1] = '人数：' + tableSummary.peopleNumber;
     sums[2] = ''
     sums[3] = ''
-    console.log("tableSummary " + tableSummary);
     sums[4] = tableSummary.payBasic + tableSummary.payPost + tableSummary.payMerit + tableSummary.laborFee;
     sums[5] = tableSummary.payBasic;
     sums[6] = tableSummary.payPost;
@@ -552,7 +551,6 @@ function resetForm() {
 }
 
 function getCurrentYearMonth() {
-  console.log('11111',currBookStore.termCurrent)
 /*  const date = new Date();
   date.setMonth(date.getMonth() - 1);
   const year = date.getFullYear();

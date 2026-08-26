@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";
 import modal from "@/plugins/modal";
-import {changePass, updatePassword} from "@/api/system/user";
+import {changePass, updatePassword} from "@/api/idm/user";
 import {validatePass} from "@/api/commonApi";
 import {useI18n} from "vue-i18n";
 import {ElForm} from "element-plus";

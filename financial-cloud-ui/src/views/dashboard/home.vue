@@ -82,7 +82,7 @@
 </template>
 
 <script lang="ts">
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 import {
   getDashboard

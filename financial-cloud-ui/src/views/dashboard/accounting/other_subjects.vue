@@ -31,7 +31,7 @@ import {ref, reactive, toRefs, onMounted, onBeforeUnmount} from "vue";
 import bookStore from "@/store/modules/bookStore";
 import * as echarts from 'echarts'
 import {cascaderSubjectProps} from "@/utils/Subjects"
-import * as subjectApi from "@/api/system/standard/standard-subject";
+import * as subjectApi from "@/api/standard/standard-subject";
 import {statisticsOtherSubjects} from "@/api/dashboard"
 import {BaseValue} from "@/types/FundBalance";
 
@@ -236,7 +236,6 @@ onMounted(() => {
     subjectList.value = res.data
     //默认科目 1002 银行存款
     subjectCode.value = window.localStorage.getItem('fund_subject_code') || "1002"
-    console.log(window.localStorage.getItem('fund_subject_code')=='undefined')
     queryParams.value.subjectCodes = [subjectCode.value]
     getList()
   })

@@ -248,7 +248,7 @@ import {ref, getCurrentInstance, reactive, toRefs, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import {
   getTree,
-} from "@/api/system/standard/standard-subject";
+} from "@/api/standard/standard-subject";
 import {ElForm} from "element-plus";
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
 import {
@@ -258,7 +258,7 @@ import {
   saveSubject,
   updateSubject,
   reorgDisplayName
-} from "@/api/system/book/book-subject";
+} from "@/api/book/book-subject";
 import {handleTree} from "@/utils/Jinbooks";
 import bookStore from "@/store/modules/bookStore";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";

@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie'
-import logo from '@/assets/logo/logo.png'
+import {DEFAULT_LOGO, resolveInstitutionLogo} from '@/constants/branding'
 import {defineStore} from "pinia"
 
 const useAppStore: any = defineStore(
@@ -14,7 +14,7 @@ const useAppStore: any = defineStore(
             device: 'desktop',
             size: Cookies.get('size') || 'default',
             appTitle: import.meta.env.VITE_APP_TITLE,
-            logo: logo,
+            logo: DEFAULT_LOGO,
         }),
         actions: {
             toggleSideBar(withoutAnimation: any) {
@@ -43,7 +43,7 @@ const useAppStore: any = defineStore(
             },
             setAppInfo(info: any) {
                 this.appTitle = info.consoleTitle || import.meta.env.VITE_APP_TITLE
-                this.logo = info.logo || logo
+                this.logo = resolveInstitutionLogo(info.logo)
                 setTimeout(() => {
                     document.title = this.appTitle
                 }, 1000)

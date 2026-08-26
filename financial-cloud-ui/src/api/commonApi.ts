@@ -210,8 +210,6 @@ export const commonValidateNotEmptyAndMaxLength64AndNumberAndChar: any = () => {
 }
 
 export const validatePass: any = (rule: any, value: any, callback: any, policy: any) => {
-    console.log(policy)
-
     if (value === '') {
         callback(new Error("密码不能为空"));
         return;

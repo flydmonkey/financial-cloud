@@ -261,7 +261,6 @@ const getAssistDeptList = () => {
 /** 新增按钮操作 */
 function handleAdd() {
   reset();
-  console.log("assistType "+form.value.assistType);
   form.value.assistCodePlaceholder = form.value.assistType;
   dialog.visible = true;
   dialog.title = "添加辅助核算";

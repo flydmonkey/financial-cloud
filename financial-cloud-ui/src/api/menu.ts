@@ -132,7 +132,6 @@ export const getRouters: any = () => {
                 const index: any = tree[0].children[0]
                 tree[0].redirect = index.path
             }
-            console.log(tree)
             resolve({
                 code: 0,
                 data: tree

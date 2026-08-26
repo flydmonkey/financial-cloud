@@ -226,7 +226,7 @@
 import {useI18n} from "vue-i18n";
 import {getCurrentInstance, reactive, ref, toRefs, watch} from "vue";
 import {ElForm} from "element-plus";
-import {getCurrentDetail, saveDetail, updateDetail} from "@/api/system/hr/employee-salary";
+import {getCurrentDetail, saveDetail, updateDetail} from "@/api/hr/employee-salary";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance()!;

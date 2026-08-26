@@ -159,7 +159,7 @@ import {
   listDept,
   getTree,
   deleteBatch, exportOrgs, importOrgs
-} from "@/api/system/dept.js";
+} from "@/api/idm/dept.js";
 import {
   ref,
   getCurrentInstance,

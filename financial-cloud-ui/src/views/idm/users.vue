@@ -207,8 +207,8 @@
 import modal from "@/plugins/modal";
 import {ref, getCurrentInstance, reactive, toRefs} from "vue";
 import {useI18n} from "vue-i18n";
-import {getTree} from "@/api/system/dept";
-import {changeStatus, deleteBatch, exportUser, importUsers, listUsers} from "@/api/system/user";
+import {getTree} from "@/api/idm/dept";
+import {changeStatus, deleteBatch, exportUser, importUsers, listUsers} from "@/api/idm/user";
 import {RemoveFilled} from "@element-plus/icons-vue";
 import UserEdit from "./user/edit.vue"
 import changePassword from './user/changePas.vue'
@@ -471,7 +471,6 @@ function bookDrawerOpen(row: any): any {
   currentUsername.value = row.username;
   bookOpen.value = true;
   title.value = "账套"
-  console.log("bookDrawerOpen");
 }
 
 function dialogAndDrawClose(): any {

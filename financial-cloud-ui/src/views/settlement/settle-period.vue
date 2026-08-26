@@ -75,7 +75,7 @@
 import {ref, toRefs, reactive, getCurrentInstance} from 'vue'
 import type {TabsPaneContext} from 'element-plus'
 import {useRoute, useRouter} from "vue-router";
-import * as settlementApi from "@/api/system/book/settlement";
+import * as settlementApi from "@/api/book/settlement";
 import bookStore from "@/store/modules/bookStore";
 
 const currBookStore = bookStore()
@@ -201,7 +201,6 @@ function handleConfirm() {
 
 const next = () => {
   active.value++;
-  console.log("step active " + active)
 }
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {

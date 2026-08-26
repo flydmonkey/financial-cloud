@@ -39,7 +39,6 @@ const serviceRefresh: any = axios.create({
 
 function showReLoginToast(): any {
     if (!isRelogin.show) {
-        console.info('isRelogin', isRelogin)
         isRefreshing = false;
         isRelogin.show = true;
         ElMessageBox.confirm(

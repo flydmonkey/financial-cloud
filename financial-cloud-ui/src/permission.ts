@@ -9,7 +9,7 @@ import booksSetStore from '@/store/modules/bookStore'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
 import {loginPreGet} from "@/api/login.js";
-import logoUrl from "@/assets/logo/logo.png";
+import {resolveInstitutionLogo} from "@/constants/branding";
 import appStore from "@/store/modules/app.js";
 
 NProgress.configure({showSpinner: false});
@@ -36,7 +36,7 @@ router.beforeEach(async (to: any, from: any, next: any) => {
                     const res = await loginPreGet();
                     if (res.code === 0) {
                         const staticAppInfo: any = res.data.inst;
-                        staticAppInfo.logo = logoUrl;
+                        staticAppInfo.logo = resolveInstitutionLogo(staticAppInfo.logo);
                         appStore().setAppInfo(staticAppInfo);
                     }
 

@@ -280,7 +280,7 @@
 </template>
 
 <script setup name="ReportBalanceSheet" lang="ts">
-import * as reportApis from "@/api/system/statement/statement";
+import * as reportApis from "@/api/statement/statement";
 import {getCurrentQuarter, parseTime} from '@/utils/Jinbooks'
 import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs, VNode, nextTick} from 'vue'
 import {downloadData, formatAmount} from "@/utils";
@@ -292,11 +292,11 @@ import {
   getConfigBalanceSheet,
   listConfigBalanceSheet,
   delConfigBalanceSheet
-} from "@/api/system/statement/statement-config";
-import {getSubjectBalance} from "@/api/system/statement/statement";
+} from "@/api/statement/statement-config";
+import {getSubjectBalance} from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
-import * as subjectApi from "@/api/system/standard/standard-subject";
+import * as subjectApi from "@/api/standard/standard-subject";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
 
 const {t} = useI18n()

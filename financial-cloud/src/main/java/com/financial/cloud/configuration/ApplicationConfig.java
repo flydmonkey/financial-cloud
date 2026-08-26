@@ -19,9 +19,6 @@ import lombok.NoArgsConstructor;
 @Configuration
 public class ApplicationConfig {
 
-    @Value("${financial-cloud.server.frontend.uri:https://www.financial-cloud.com:4200}")
-    private String frontendUri;
-
     @Value("${server.port:8080}")
     private int port;
 

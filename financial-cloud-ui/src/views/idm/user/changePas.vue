@@ -24,7 +24,7 @@ import { ElForm } from "element-plus";
 import modal from "@/plugins/modal";
 import {useI18n} from "vue-i18n";
 import {ref, getCurrentInstance, reactive, toRefs, watch} from "vue";
-import {changePass, generateOnePas} from "@/api/system/user";
+import {changePass, generateOnePas} from "@/api/idm/user";
 
 const {t} = useI18n()
 

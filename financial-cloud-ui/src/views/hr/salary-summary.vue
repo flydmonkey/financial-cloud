@@ -245,8 +245,8 @@
 <script setup lang="ts">
 import {formatAmount} from "@/utils";
 import {reactive, ref, toRefs} from "vue";
-import * as voucherApis from "@/api/system/voucher/voucher";
-import {fetchPage, generateVoucherSubmit, saveSummary, salarySummary} from "@/api/system/hr/employee-summary";
+import * as voucherApis from "@/api/voucher/voucher";
+import {fetchPage, generateVoucherSubmit, saveSummary, salarySummary} from "@/api/hr/employee-summary";
 import {useI18n} from "vue-i18n";
 import {ElForm} from "element-plus";
 import modal from "@/plugins/modal";
@@ -329,7 +329,6 @@ function getList() {
     loading.value = false;
   });
   salarySummary(queryParams.value).then((res: any) => {
-    console.log(res.data);
     tableSummary = res.data;
   });
 }
@@ -340,7 +339,6 @@ const getSummaries = () => {
   if (tableSummary != null) {
     let sumsIndex = 0;
     sums[sumsIndex++] = h('div', {style: {textDecoration: 'underline'}}, ['合计',])
-    console.log("tableSummary " + tableSummary);
     sums[sumsIndex++] = "";
     sums[sumsIndex++] = "";
     sums[sumsIndex++] = tableSummary.payBasic + tableSummary.payPost + tableSummary.payMerit + tableSummary.laborFee;
@@ -463,9 +461,7 @@ function submitVoucherForm() {
       modal.msgError(res.message);
     }
   };
-  console.log("validate " + formVoucher.value.voucherType);
   voucherRef?.value?.validate((valid: any) => {
-    console.log("valid " + valid);
     if (valid) {
       const operation: any = generateVoucherSubmit;
       const successMessage: any = "操作成功"
@@ -477,7 +473,6 @@ function submitVoucherForm() {
 
 function generateVoucher(row: any, voucherType: number) {
   generateVoucherSubmit({id: row.id, voucherType: voucherType}).then((res: any) => {
-    console.log(res.data);
     if (res.code === 0) {
       getList();
       modal.msgSuccess("操作成功");

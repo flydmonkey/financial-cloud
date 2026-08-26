@@ -207,7 +207,7 @@ import {ElForm} from "element-plus";
 import * as GendersEnum from "@/utils/enums/GendersEnum";
 import * as EducationsEnum from "@/utils/enums/EducationsEnum";
 import booksSetStore from "@/store/modules/bookStore";
-import {addEmployee, getEmployee, updateEmployee} from "@/api/system/hr/employee";
+import {addEmployee, getEmployee, updateEmployee} from "@/api/hr/employee";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance()!;

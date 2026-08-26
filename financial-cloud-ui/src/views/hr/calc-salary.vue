@@ -226,7 +226,7 @@
 <script setup lang="ts">
 import {ElForm} from "element-plus";
 import {reactive, ref, toRefs,getCurrentInstance} from "vue";
-import {batchDelete, createDetailTemp, createFinalDetail, fetchPage} from "@/api/system/hr/salary-detail";
+import {batchDelete, createDetailTemp, createFinalDetail, fetchPage} from "@/api/hr/salary-detail";
 import {useI18n} from "vue-i18n";
 import {formatAmount} from "@/utils";
 import editForm from "./calc-salary/edit.vue";

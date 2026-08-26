@@ -201,14 +201,14 @@ import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from 
 import modal from "@/plugins/modal";
 import * as journalEntryService from "@/api/journal/journalentryservice";
 import * as journalAccountservice from "@/api/journal/journalaccountservice";
-import * as voucherApis from "@/api/system/voucher/voucher";
+import * as voucherApis from "@/api/voucher/voucher";
 import voucherEdit from "@/views/voucher/voucher-edit.vue";
 import booksSetStore from "@/store/modules/bookStore";
 import {formatAmount} from "@/utils"
 import Decimal from 'decimal.js'
 import {
   getTree,
-} from "@/api/system/standard/standard-subject";
+} from "@/api/standard/standard-subject";
 
 import {useI18n} from "vue-i18n";
 
@@ -341,8 +341,6 @@ function getAccList(): any {
           data: res.data[i]
         })
       }
-      console.log(accOptions);
-      //formRef.forceUpdate();
     }
   });
 }
@@ -399,7 +397,6 @@ function reset(): any {
     status: 1
   };
 
-  console.log(form.value);
   formRef.value?.clearValidate();
 }
 
@@ -447,13 +444,10 @@ function submitForm(): any {
 function handleAccIdChange(val: any) {
   for (let i = 0; i < accOptions.value.length; i++) {
     if (val === accOptions.value[i].value) {
-      console.log(accOptions.value[i].data);
       form.value.accCode = accOptions.value[i].data.accCode;
       form.value.accName = accOptions.value[i].data.accName;
       form.value.category = accOptions.value[i].data.category;
-      console.log("balance " + accOptions.value[i].data.balance);
       form.value.initBalance = new Decimal(accOptions.value[i].data.balance).eq(new Decimal(0));
-      console.log("initBalance " + form.value.initBalance);
     }
   }
 }

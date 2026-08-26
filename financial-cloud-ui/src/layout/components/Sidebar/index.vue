@@ -68,9 +68,6 @@ const isParentView = (route: any) => {
   return !route.raw.requestUrl
 }
 
-onMounted(() => {
-  console.log(sidebarRouters.value)
-})
 </script>
 <style scoped lang="scss">
 

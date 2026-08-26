@@ -120,7 +120,7 @@
                     <template #default="scope">
                                     <span v-if="!scope.row.editing || scope.row.columnIndex !== 1">
                                     {{
-                                        scope.row.subjectCode + " " + subjectKeyIdItem[scope.row.subjectCode]?.displayName
+                                        formatSubjectLabel(scope.row.subjectCode, subjectKeyIdItem)
                                       }}
                                     </span>
                       <el-cascader v-else style="width: 100%" filterable
@@ -168,7 +168,7 @@
                     </template>
                   </el-table-column>
                 </el-table>
-                <el-button icon="Plus" style="width: 100%" @click="form.items.push({direction:1})"></el-button>
+                <el-button icon="Plus" style="width: 100%" @click="addTemplateItem"></el-button>
               </el-form>
             </template>
             <template #footer>
@@ -203,12 +203,12 @@ import {getCurrentInstance, ref, onMounted, reactive, toRefs} from 'vue'
 import type {TabsPaneContext} from 'element-plus'
 import {useRoute} from "vue-router"
 import bookStore from "@/store/modules/bookStore";
-import * as subjectApi from "@/api/system/standard/standard-subject";
-import * as settlementApi from "@/api/system/book/settlement";
+import * as subjectApi from "@/api/standard/standard-subject";
+import * as settlementApi from "@/api/book/settlement";
 import {ElForm, FormInstance} from "element-plus";
-import * as voucherTemplateService from "@/api/system/voucher/voucher-template";
-import {cascaderSubjectProps} from "@/utils/Subjects"
-import * as voucherApis from "@/api/system/voucher/voucher";
+import * as voucherTemplateService from "@/api/voucher/voucher-template";
+import {cascaderSubjectProps, formatSubjectLabel, indexSubjectTree} from "@/utils/Subjects"
+import * as voucherApis from "@/api/voucher/voucher";
 import voucherEdit from "@/views/voucher/voucher-edit.vue";
 
 import {useI18n} from "vue-i18n";
@@ -250,7 +250,9 @@ const initFormData: any = {
   sortIndex: 1,
   itemName: "",
   items: [{
-    subjectCode: undefined,
+    direction: 1,
+    subjectCode: '',
+    summary: '',
   }]
 }
 
@@ -312,13 +314,7 @@ const cellMouseLeave = (row: any, column: any, cell: HTMLTableCellElement, event
 
 // 更新会计科目ID关联
 const updateSubjectKeys = (items: any) => {
-  for (let valueKey in items) {
-    const item = items[valueKey]
-    subjectKeyIdItem.value[item.code] = item
-    if (item.children && item.children.length > 0) {
-      updateSubjectKeys(item.children)
-    }
-  }
+  indexSubjectTree(items, subjectKeyIdItem.value)
 }
 
 function getSubjectList() {
@@ -330,8 +326,20 @@ function getSubjectList() {
 }
 
 const handleSubjectChange = (scope: any, value: any) => {
-  const subject = subjectKeyIdItem.value[scope.row.subjectCode]
-  scope.row.subjectId = subject.id
+  const code = value != null ? String(value) : String(scope.row.subjectCode || '')
+  const subject = subjectKeyIdItem.value[code]
+  if (subject) {
+    scope.row.subjectId = subject.id
+    scope.row.subjectCode = code
+  }
+}
+
+function addTemplateItem() {
+  form.value.items.push({
+    direction: 1,
+    subjectCode: '',
+    summary: '',
+  })
 }
 
 const handleSubjectVisibleChange = (show: any) => {
@@ -385,7 +393,6 @@ const submitForm = () => {
   voucherTemplateRef.value?.validate(async (valid: boolean) => {
     if (valid) {
       form.value.items = form.value.items.filter((item: any) => {
-        console.log("subjectCode "+item.subjectCode+ " summary " + item.summary +" direction "+ item.direction);
         return item.subjectCode && item.summary && item.direction
       })
 

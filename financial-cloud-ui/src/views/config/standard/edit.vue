@@ -34,7 +34,7 @@
 import {useI18n} from "vue-i18n";
 import {getCurrentInstance, reactive, ref, toRefs, watch} from "vue";
 import {ElForm} from "element-plus";
-import {getOne, saveOne, updateOne} from "@/api/system/standard/standard";
+import {getOne, saveOne, updateOne} from "@/api/standard/standard";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance()!;

@@ -273,7 +273,7 @@
 import {getCurrentInstance, reactive, ref, toRefs, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import {ElForm} from "element-plus";
-import {getCurrentDetail, reCalculateSalary, updateDetailTemp} from "@/api/system/hr/salary-detail";
+import {getCurrentDetail, reCalculateSalary, updateDetailTemp} from "@/api/hr/salary-detail";
 
 const {proxy} = getCurrentInstance()!;
 const {employee_types}

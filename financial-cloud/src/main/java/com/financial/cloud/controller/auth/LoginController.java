@@ -16,7 +16,6 @@ import com.financial.cloud.authn.dto.LoginConfigDto;
 import com.financial.cloud.authn.jwt.AuthJwt;
 import com.financial.cloud.authn.jwt.service.AuthTokenService;
 import com.financial.cloud.authn.provider.AbstractAuthenticationProvider;
-import com.financial.cloud.configuration.ApplicationConfig;
 import com.financial.cloud.configuration.LoginConfig;
 import com.financial.cloud.domain.config.Institutions;
 import com.financial.cloud.common.Message;
@@ -48,8 +47,6 @@ import org.springframework.http.MediaType;
 public class LoginController {
 
 	private final AuthTokenService authTokenService;
-
-	private final ApplicationConfig applicationConfig;
 
 	private final LoginConfig loginConfig;
 

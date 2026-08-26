@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import {listEmployee, delEmployee} from "@/api/system/hr/employee";
+import {listEmployee, delEmployee} from "@/api/hr/employee";
 import {useI18n} from "vue-i18n";
 import booksSetStore from "@/store/modules/bookStore";
 import * as GendersEnum from "@/utils/enums/GendersEnum";
@@ -145,7 +145,7 @@ import * as SysStatusEnum from "@/utils/enums/SysStatusEnum";
 import * as IdTypeEnum from "@/utils/enums/IdTypeEnum";
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
 import {parseTime} from "@/utils/Jinbooks";
-import {getTree} from "@/api/system/dept";
+import {getTree} from "@/api/idm/dept";
 import modal from "@/plugins/modal";
 import editForm from "./employee/edit.vue"
 import {getTypeName} from "@/utils/enums/IdTypeEnum";

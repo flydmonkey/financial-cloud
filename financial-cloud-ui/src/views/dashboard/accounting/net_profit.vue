@@ -64,7 +64,7 @@ import bookStore from "@/store/modules/bookStore";
 import {getAccountPeriod} from "@/utils/Jinbooks";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 import {statisticsNetProfit} from "@/api/dashboard"
 import {BaseValue} from "@/types/FundBalance";
 

@@ -76,7 +76,7 @@
 import {getCurrentInstance, ref, toRefs, reactive} from 'vue'
 import type {TabsPaneContext} from 'element-plus'
 import {useRoute, useRouter} from "vue-router";
-import * as settlementApi from "@/api/system/book/settlement";
+import * as settlementApi from "@/api/book/settlement";
 import bookStore from "@/store/modules/bookStore";
 import {parseTime} from "@/utils/Jinbooks";
 
@@ -122,7 +122,6 @@ const {queryParams, form, rules} = toRefs(data);
 function getList(): any {
   loading.value = true;
   queryParams.value.year = (queryParams.value.date + "").substring(0, 4);
-  console.log(queryParams.value.year)
   settlementApi.fetch(queryParams.value).then((res: any) => {
     loading.value = false;
     if (res.code === 0) {

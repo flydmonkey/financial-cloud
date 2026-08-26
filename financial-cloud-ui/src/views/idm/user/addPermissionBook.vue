@@ -52,8 +52,8 @@ import {
   watch,
   PropType
 } from "vue";
-import {listStandardsAll} from "@/api/system/standard/standard";
-import * as userApi from "@/api/system/user";
+import {listStandardsAll} from "@/api/standard/standard";
+import * as userApi from "@/api/idm/user";
 
 const {t} = useI18n()
 
@@ -148,7 +148,6 @@ function getStandards(): any {
   listStandardsAll({status: 1}).then((res: any) => {
     if (res.code === 0) {
       standardList.value = res.data;
-      console.log("standardList "+standardList.value[0].name);
     }
   });
 }

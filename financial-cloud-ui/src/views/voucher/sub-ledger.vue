@@ -134,8 +134,8 @@
 </template>
 
 <script setup name="VoucherItems" lang="ts">
-import * as subjectApi from "@/api/system/standard/standard-subject"
-import * as apis from "@/api/system/voucher/voucher";
+import * as subjectApi from "@/api/standard/standard-subject"
+import * as apis from "@/api/voucher/voucher";
 import {parseTime, getCurrentQuarter, handleTree} from '@/utils/Jinbooks'
 import {h, ref, shallowRef, reactive, toRefs, watch} from 'vue'
 import {formatAmount} from "@/utils"
@@ -217,7 +217,6 @@ function getList() {
     loading.value = false;
     // 初始化合并数据（首次渲染或数据变化时调用一次）
     spanDataMap.value = getSpanMap(recordsList.value, ['voucherDate', 'word'])
-    console.log(spanDataMap.value)
   });
 }
 

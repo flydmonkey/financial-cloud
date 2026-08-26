@@ -104,7 +104,7 @@ import ScreenFull from '@/components/Screenfull/index.vue'
 import CleanSession from '@/components/CleanSession/index.vue'
 import Hamburger from '@/components/Hamburger/index.vue'
 import useAppStore from '@/store/modules/app'
-import * as userService from "@/api/system/user";
+import * as userService from "@/api/idm/user";
 import useUserStore from '@/store/modules/user'
 import bookStore from '@/store/modules/bookStore'
 import {logoutApi} from "@/api/login";
@@ -121,7 +121,6 @@ const currentSet = computed({
   set: (id) => currBookStore.updateBookId(id),
 });
 const termCurrent = computed(() => {
-  console.log("currBookStore.termCurrent "+ currBookStore.termCurrent)
   //return parseTime(currBookStore.termCurrent, "{y}年{m}期")
   let  yyyyMM = (currBookStore.termCurrent+"").split("-");
   return yyyyMM[0]+'年'+yyyyMM[1]+'期'
@@ -171,7 +170,6 @@ function setLayout() {
 }
 
 function handleSwitchBook(val: any) {
-  console.log(currentSet.value)
   currentSet.value = val;
   userStore.bookId = val;
   userService.switchBook(val).then((res: any) => {
@@ -217,6 +215,21 @@ function handleSwitchBook(val: any) {
       text-align: left;
       margin-right: 30px;
       width: auto;
+
+      :deep(.sidebar-logo-container) {
+        width: auto;
+        text-align: left;
+        background: transparent !important;
+      }
+
+      :deep(.sidebar-logo-link) {
+        justify-content: flex-start;
+        padding: 0;
+      }
+
+      :deep(.sidebar-title) {
+        color: #111827;
+      }
     }
   }
 

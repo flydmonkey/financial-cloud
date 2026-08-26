@@ -119,7 +119,7 @@
 </template>
 
 <script setup name="ReportBalanceSheet" lang="ts">
-import * as reportApis from "@/api/system/statement/statement";
+import * as reportApis from "@/api/statement/statement";
 import {parseTime, getCurrentQuarter, handleTree} from '@/utils/Jinbooks'
 import {computed, h, ref, shallowRef, reactive, toRefs} from 'vue'
 import {downloadData, formatAmount} from "@/utils"

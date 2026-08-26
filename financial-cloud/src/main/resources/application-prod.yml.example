@@ -11,9 +11,6 @@ server:
   port: 2154
 
 financial-cloud:
-  server:
-    frontend:
-      uri: https://your-frontend.example.com
   security:
   # Override only if you must keep legacy MaxKey-encoded secrets compatible.
   # legacy-secret-suffix: your-production-suffix

@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {listStore} from "@/api/system/book/book";
+import {listStore} from "@/api/book/book";
 import {setSetList} from "@/utils/Auth";
 import {getConfigKey, getBooksConfigList} from "@/api/config/sys";
 

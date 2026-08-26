@@ -80,7 +80,7 @@
 import modal from "@/plugins/modal";
 import {ref, getCurrentInstance, reactive, toRefs, watch} from "vue";
 import {useI18n} from "vue-i18n";
-import {deleteUserGroup, listUserGroup} from "@/api/system/group";
+import {deleteUserGroup, listUserGroup} from "@/api/idm/group";
 import memberGroup from "./addGroupMember.vue"
 import {set2String} from '@/utils';
 

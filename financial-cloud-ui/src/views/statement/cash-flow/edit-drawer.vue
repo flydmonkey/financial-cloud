@@ -112,7 +112,7 @@ import {useI18n} from "vue-i18n";
 import {getSelectItem} from "@/api/config/cash-flow-balance";
 import modal from "@/plugins/modal";
 import {formatAmount} from "@/utils";
-import {getCashFlowItems, saveItemCodes} from "@/api/system/statement/statement-cash-flow";
+import {getCashFlowItems, saveItemCodes} from "@/api/statement/statement-cash-flow";
 import {Action, ElMessage, ElMessageBox} from 'element-plus'
 
 
@@ -200,8 +200,7 @@ function handleType() {
             getCashFlowItem();
             resetQuery();
           }).catch((error) => {
-            // ⭐ 关键：捕获 submitForm 的异常
-            console.log('submitForm 错误：', error);
+            console.error('submitForm 错误：', error);
             // 这里相当于用户点了取消（不切换类型）
             if (queryParams.value.cashFlowItemType === 0) {
               queryParams.value.cashFlowItemType = 1;
@@ -316,12 +315,6 @@ function submitForm(isChange: boolean): Promise<any> {
   // 比较差值与现金流量金额总和是否相等
   // 使用小数点精度容差处理浮点数精度问题
   isBalance.value = Math.abs(difference + totalCashFlow) < 0.01;
-
-  console.log(totalDebit, "借方")
-  console.log(totalCredit, "贷方")
-  console.log(difference, "借贷差")
-  console.log(totalCashFlow, "现金流量")
-  console.log(isBalance.value)
 
   //是否平衡
   if (isBalance.value) {

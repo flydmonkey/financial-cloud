@@ -200,15 +200,15 @@
 </template>
 
 <script setup lang="ts">
-import * as statementApis from "@/api/system/statement/statement";
+import * as statementApis from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import {useRouter} from "vue-router";
 import {parseTime, getCurrentQuarter} from '@/utils/Jinbooks'
 import {getCurrentInstance, reactive, ref, toRefs, shallowRef, h, computed, nextTick} from "vue";
 import editForm from "./cash-flow/edit.vue"
 import {formatBalance, validateNumber} from "@/utils/BalanceFormat";
-import {getNetProfit} from "@/api/system/statement/statement-income";
-import {saveCashFlowItem} from "@/api/system/statement/statement-cash-flow";
+import {getNetProfit} from "@/api/statement/statement-income";
+import {saveCashFlowItem} from "@/api/statement/statement-cash-flow";
 import modal from "@/plugins/modal";
 import booksSetStore from "@/store/modules/bookStore";
 import {downloadData} from "@/utils";
@@ -420,8 +420,6 @@ function checkBalance() {
   );
 
   if (targetItem) {
-    console.log(targetItem.currentAmount)
-    console.log(targetItem.monthlyAmount)
     endingYear.value = targetItem.currentAmount;
     endingTerm.value = targetItem.monthlyAmount;
     diff.value = endingYear.value - endingTerm.value;

@@ -29,6 +29,50 @@ export const cascaderSubjectProps = {
     }
 }
 
+export function getSubjectDisplayName(subject?: { displayName?: string; name?: string }) {
+    if (!subject) {
+        return ''
+    }
+    if (subject.displayName) {
+        return subject.displayName
+    }
+    if (!subject.name) {
+        return ''
+    }
+    const dashIndex = subject.name.indexOf('-')
+    if (dashIndex > -1) {
+        return subject.name.slice(dashIndex + 1)
+    }
+    return subject.name
+}
+
+export function indexSubjectTree(nodes: any[], subjectMap: Record<string, any>) {
+    if (!nodes?.length) {
+        return
+    }
+    for (const item of nodes) {
+        const code = item.code != null ? String(item.code) : ''
+        if (code) {
+            subjectMap[code] = item
+        }
+        if (item.children?.length) {
+            indexSubjectTree(item.children, subjectMap)
+        }
+    }
+}
+
+export function formatSubjectLabel(
+    subjectCode: string | undefined | null,
+    subjectMap: Record<string, { displayName?: string; name?: string }>
+) {
+    if (!subjectCode) {
+        return ''
+    }
+    const code = String(subjectCode)
+    const displayName = getSubjectDisplayName(subjectMap[code])
+    return displayName ? `${code} ${displayName}` : code
+}
+
 
 /**
  * 获取科目缩进

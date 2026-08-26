@@ -78,7 +78,7 @@ import {getCurrentInstance, reactive, ref, toRefs} from "vue";
 import {
   deleteBatch,
   listStandards
-} from "@/api/system/standard/standard";
+} from "@/api/standard/standard";
 import modal from "@/plugins/modal";
 import editForm from "./standard/edit.vue";
 import SvgIcon from "@/components/SvgIcon/index.vue";

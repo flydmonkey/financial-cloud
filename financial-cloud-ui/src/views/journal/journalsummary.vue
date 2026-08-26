@@ -217,7 +217,6 @@ function reset(): any {
     sortIndex: 1,
     status: 1
   };
-  console.log(form.value);
   formRef.value?.clearValidate();
 }
 

@@ -154,19 +154,19 @@
 </template>
 
 <script setup name="ReportBalanceSheet" lang="ts">
-import * as reportApis from "@/api/system/statement/statement";
+import * as reportApis from "@/api/statement/statement";
 import {getCurrentQuarter, parseTime} from '@/utils/Jinbooks'
 import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs, VNode} from 'vue'
 import {formatAmount} from "@/utils";
 import bookStore from "@/store/modules/bookStore";
 import {ElForm, FormInstance, TableColumnCtx} from "element-plus";
 import {cascaderSubjectProps} from "@/utils/Subjects"
-import * as standardStatementIncome from "@/api/system/standard/standard-statement-income";
-import {getSubjectBalance, selectGroupIncome} from "@/api/system/statement/statement";
+import * as standardStatementIncome from "@/api/standard/standard-statement-income";
+import {getSubjectBalance, selectGroupIncome} from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
-import * as subjectApi from "@/api/system/standard/standard-subject";
-import {listStandardsAll} from "@/api/system/standard/standard";
+import * as subjectApi from "@/api/standard/standard-subject";
+import {listStandardsAll} from "@/api/standard/standard";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();

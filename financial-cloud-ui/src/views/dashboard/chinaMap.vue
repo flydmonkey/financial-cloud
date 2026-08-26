@@ -5,8 +5,7 @@
 <script lang="ts" setup>
 import {ref, onMounted, watch} from 'vue';
 
-import * as echarts from 'echarts'
-import chinaJson from "@/assets/china-map.json"
+import echarts, {type ECharts} from '@/utils/echarts'
 
 const props = defineProps({
   data: {
@@ -15,15 +14,16 @@ const props = defineProps({
   }
 });
 
-const chart = ref<echarts.ECharts | null>(null);
+const chart = ref<ECharts | null>(null);
 const chartRef = ref<HTMLDivElement | null>(null);
 
 const getOption = () => {
+  const reportProvince = props.data?.reportProvince ?? []
   return {
     series: [{
       type: 'map',
       map: 'china',
-      layoutCenter: ['50%', '60%'], // 地图布局中心点
+      layoutCenter: ['50%', '60%'],
       layoutSize: 470,
       label: {
         show: true,
@@ -48,12 +48,10 @@ const getOption = () => {
           borderWidth: 2
         }
       },
-      data: props.data.reportProvince.map((item: any) => {
-        return {
-          name: item.reportName,
-          value: item.reportCount
-        }
-      })
+      data: reportProvince.map((item: any) => ({
+        name: item.reportName,
+        value: item.reportCount
+      }))
     }],
     visualMap: [{
       type: 'piecewise',
@@ -69,7 +67,7 @@ const getOption = () => {
       textStyle: {
         color: '#828994'
       },
-      itemWidth: 64, // 每个图元的宽度
+      itemWidth: 64,
       itemHeight: 12,
       top: "35%",
       left: "10",
@@ -86,11 +84,10 @@ const getOption = () => {
       },
     }],
     tooltip: {
-      trigger: 'item',  //数据项图形触发
+      trigger: 'item',
       backgroundColor: "#fff",
       borderWidth: 0,
       formatter: function (params: any) {
-        // params 包含了数据项的所有信息
         const name = params.name || '未知区域';
         const value = params.value != null ? params.value : '无数据';
         return `🗺 地区：<b>${name}</b><br/>📊 数据：<b>${value || 0}次</b>`;
@@ -112,11 +109,13 @@ const getOption = () => {
 const initCharts = () => {
   if (chartRef.value) {
     chart.value = echarts.init(chartRef.value);
-    window.addEventListener("resize", function () {
-      chart.value?.resize();
-    })
+    window.addEventListener("resize", handleResize)
     chart.value.setOption(getOption())
   }
+}
+
+const handleResize = () => {
+  chart.value?.resize();
 }
 
 watch(() => props.data, () => {
@@ -125,7 +124,8 @@ watch(() => props.data, () => {
   }
 }, {immediate: true});
 
-onMounted(() => {
+onMounted(async () => {
+  const {default: chinaJson} = await import('@/assets/china-map.json')
   echarts.registerMap('china', chinaJson as any);
   initCharts();
 });

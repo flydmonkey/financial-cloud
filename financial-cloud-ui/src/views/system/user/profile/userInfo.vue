@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";
 import modal from "@/plugins/modal";
-import {  updateUser } from "@/api/system/user";
+import {  updateUser } from "@/api/idm/user";
 import {useI18n} from "vue-i18n";
 
 const props: any = defineProps({

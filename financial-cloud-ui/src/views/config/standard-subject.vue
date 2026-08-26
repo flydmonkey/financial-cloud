@@ -152,11 +152,11 @@
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
 import {getCurrentInstance, reactive, ref, toRefs} from "vue";
 import {useI18n} from "vue-i18n";
-import {getTree, listSubjects,reorgDisplayName} from "@/api/system/standard/standard-subject";
-import {listStandardsAll} from "@/api/system/standard/standard";
+import {getTree, listSubjects,reorgDisplayName} from "@/api/standard/standard-subject";
+import {listStandardsAll} from "@/api/standard/standard";
 import editForm from "./standard-subject/edit.vue"
 import modal from "@/plugins/modal";
-import {deleteBatch} from "@/api/system/standard/standard-subject";
+import {deleteBatch} from "@/api/standard/standard-subject";
 import {handleTree, handleTreeToList} from "@/utils/Jinbooks";
 
 const {t} = useI18n()
@@ -245,7 +245,6 @@ function getList(): any {
     if (res.code === 0) {
       loading.value = false;
       subjectList.value = handleTree(res.data.records, "id", "parentId", "children");
-      console.log(subjectList.value);
       total.value = res.data.total;
     }
   })

@@ -234,7 +234,7 @@
 </template>
 
 <script setup name="ReportBalanceSheet" lang="ts">
-import * as incomeApis from "@/api/system/statement/statement-income";
+import * as incomeApis from "@/api/statement/statement-income";
 
 import {getCurrentQuarter, parseTime} from '@/utils/Jinbooks'
 import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs} from 'vue'
@@ -247,11 +247,11 @@ import {
   getConfigIncome,
   listConfigIncome,
   delConfigIncome
-} from "@/api/system/statement/statement-income-config";
-import {getSubjectBalance} from "@/api/system/statement/statement";
+} from "@/api/statement/statement-income-config";
+import {getSubjectBalance} from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
-import * as subjectApi from "@/api/system/standard/standard-subject";
+import * as subjectApi from "@/api/standard/standard-subject";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();

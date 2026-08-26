@@ -82,7 +82,7 @@
 import modal from "@/plugins/modal";
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";;
 import {useI18n} from "vue-i18n";
-import {deletePost, getUsersPosts, addPost} from "@/api/system/user";
+import {deletePost, getUsersPosts, addPost} from "@/api/idm/user";
 
 const {t} = useI18n()
 

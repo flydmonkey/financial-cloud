@@ -57,15 +57,23 @@ const logo = computed(() => appStore.logo);
   line-height: $base-navbar-height;
   background: #2b2f3a;
   text-align: center;
-  overflow: hidden;
+  overflow: visible;
 
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 12px;
+    box-sizing: border-box;
 
     & .sidebar-logo {
-      width: 50px;
-      height: 50px;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      object-fit: contain;
       vertical-align: middle;
     }
 
@@ -73,12 +81,13 @@ const logo = computed(() => appStore.logo);
       display: inline-block;
       margin: 0;
       color: #fff;
-      line-height: $base-navbar-height;
+      line-height: 1.2;
       font-size: 20px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
       vertical-align: middle;
       font-weight: bolder;
       letter-spacing: 2px;
+      white-space: nowrap;
     }
   }
 

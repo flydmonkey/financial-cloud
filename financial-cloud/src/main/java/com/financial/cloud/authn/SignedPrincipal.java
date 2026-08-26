@@ -3,9 +3,7 @@ package com.financial.cloud.authn;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
+import com.financial.cloud.authn.core.Authority;
 import com.financial.cloud.authn.session.Session;
 import com.financial.cloud.common.client.ClientResolve;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -15,141 +13,114 @@ import lombok.NoArgsConstructor;
 
 /**
  * 登录后颁发签名的当事人，包含用户信息，当前会话，用户角色，用户应用权限等
- * 
- * @author Crystal.Sea
- *
  */
-
 @Data
 @NoArgsConstructor
-public class SignedPrincipal implements  UserDetails {
+public class SignedPrincipal {
     private static final long serialVersionUID = -110742975439268030L;
-    
-    String 	sessionId;
-    
-    String 	style;
-    
-    String 	bookId;
-    
-    String  userId;
-    
-    String  username;
-    
-    String 	mobile;
-    
-    String 	email;
-    
-    int   	twoFactor;
-    
-    int 	passwordSetType;
-    
-    String 	deviceId;
-    
+
+    String sessionId;
+
+    String style;
+
+    String bookId;
+
+    String userId;
+
+    String username;
+
+    String mobile;
+
+    String email;
+
+    int twoFactor;
+
+    int passwordSetType;
+
+    String deviceId;
+
     UserInfo userInfo;
-    
+
     ClientResolve clientResolve;
-    
-    UserDetails userDetails;
-    
-    List<GrantedAuthority> grantedAuthority;
-    
-    List<GrantedAuthority> grantedApps;
-    
+
+    List<Authority> grantedAuthority;
+
+    List<Authority> grantedApps;
+
     boolean authenticated;
-    
+
     boolean roleAdministrators;
-    
-	boolean accountNonExpired;
 
-	boolean accountNonLocked;
+    boolean accountNonExpired;
 
-	boolean credentialsNonExpired;
+    boolean accountNonLocked;
 
-	boolean enabled;
+    boolean credentialsNonExpired;
 
-    /**
-     * SignPrincipal.
-     */
+    boolean enabled;
+
     public SignedPrincipal(UserInfo user) {
         this.userInfo = user;
         this.authenticated = true;
         this.passwordSetType = user.getPasswordSetType();
         this.accountNonExpired = true;
-        this.accountNonLocked  = true;
-        this.credentialsNonExpired =true;
+        this.accountNonLocked = true;
+        this.credentialsNonExpired = true;
         this.enabled = true;
     }
-    
-    public SignedPrincipal(UserInfo user,Session session) {
-    	this.userId = user.getId();
-    	this.username = user.getUsername();
-    	this.bookId = user.getBookId();
-    	this.email = user.getEmail();
-    	this.mobile = user.getMobile();
-    	this.passwordSetType = user.getPasswordSetType();
+
+    public SignedPrincipal(UserInfo user, Session session) {
+        this.userId = user.getId();
+        this.username = user.getUsername();
+        this.bookId = user.getBookId();
+        this.email = user.getEmail();
+        this.mobile = user.getMobile();
+        this.passwordSetType = user.getPasswordSetType();
         this.userInfo = user;
         this.authenticated = true;
         this.accountNonExpired = true;
-        this.accountNonLocked  = true;
-        this.credentialsNonExpired =true;
+        this.accountNonLocked = true;
+        this.credentialsNonExpired = true;
         this.enabled = true;
         this.sessionId = session.getId();
         this.userInfo.setSessionId(session.getId());
     }
-    
-    /**
-     * SigninPrincipal.
-     */
-    public SignedPrincipal(UserDetails userDetails) {
-        this.userDetails = userDetails;
-        this.authenticated = true;
-    }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public Collection<Authority> getAuthorities() {
         return grantedAuthority;
     }
 
-	public void clearTwoFactor() {
-		this.twoFactor = 0;
-	}
+    public void clearTwoFactor() {
+        this.twoFactor = 0;
+    }
 
-	@Override
     public boolean isAccountNonExpired() {
         return this.accountNonExpired;
     }
 
-    @Override
     public boolean isAccountNonLocked() {
         return this.accountNonLocked;
     }
 
-    @Override
     public boolean isCredentialsNonExpired() {
         return this.credentialsNonExpired;
     }
 
-    @Override
     public boolean isEnabled() {
         return this.enabled;
     }
 
-	@Override
     public String getUsername() {
-        if(this.userInfo != null) {
+        if (this.userInfo != null) {
             return this.userInfo.getUsername();
-        }else {
-            return this.userDetails.getUsername();
-        }        
-    }
-    
-    @Override
-    public String getPassword() {
-        if(this.userInfo != null) {
-            return this.userInfo.getPassword();
-        }else {
-            return this.userDetails.getPassword();
-        }  
+        }
+        return this.username;
     }
 
+    public String getPassword() {
+        if (this.userInfo != null) {
+            return this.userInfo.getPassword();
+        }
+        return null;
+    }
 }

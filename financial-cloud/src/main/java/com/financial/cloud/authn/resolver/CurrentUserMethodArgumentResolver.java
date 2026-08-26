@@ -1,7 +1,7 @@
 package com.financial.cloud.authn.resolver;
 
 import org.springframework.core.MethodParameter;
-import org.springframework.security.core.Authentication;
+import com.financial.cloud.authn.core.AuthAuthentication;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.RequestAttributes;
@@ -25,8 +25,7 @@ public class CurrentUserMethodArgumentResolver implements HandlerMethodArgumentR
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
     	//读取认证信息
-    	Authentication  authentication  = 
-    			(Authentication ) webRequest.getAttribute(
+    	AuthAuthentication authentication = (AuthAuthentication) webRequest.getAttribute(
     					WebConstants.AUTHENTICATION, RequestAttributes.SCOPE_SESSION);
     	UserInfo userInfo  = AuthorizationUtils.getUserInfo(authentication);
     	if (userInfo != null) {

@@ -7,15 +7,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.servlet.Filter;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.endpoint.ApiVersion;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.web.error.ErrorPage;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.server.servlet.ConfigurableServletWebServerFactory;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.http.HttpStatus;
@@ -24,9 +21,7 @@ import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
-import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
@@ -188,25 +183,6 @@ public class MvcAutoConfiguration implements WebMvcConfigurer {
                 factory.addErrorPages(errorPage400, errorPage404, errorPage500);
             }
         };
-    }
-
-    @Bean
-    SecurityContextHolderAwareRequestFilter securityContextHolderAwareRequestFilter() {
-        log.debug("securityContextHolderAwareRequestFilter init ");
-        return new SecurityContextHolderAwareRequestFilter();
-    }
-
-    @Bean
-    FilterRegistrationBean<Filter> delegatingFilterProxy() {
-        log.debug("delegatingFilterProxy init for /* ");
-        FilterRegistrationBean<Filter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new DelegatingFilterProxy("securityContextHolderAwareRequestFilter"));
-        registrationBean.addUrlPatterns("/*");
-        //registrationBean.
-        registrationBean.setName("delegatingFilterProxy");
-        registrationBean.setOrder(2);
-
-        return registrationBean;
     }
 
 }

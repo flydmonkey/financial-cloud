@@ -42,7 +42,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import com.financial.cloud.authn.core.AuthAuthentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -135,8 +135,8 @@ public class UserInfoController {
 		}
 		principal.setBookId(bookId);
 		principal.setUserInfo(currentUser);
-		UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(
+		AuthAuthentication authenticationToken =
+                AuthAuthentication.authenticated(
                 		principal,
                         null,
                         loginService.grantAuthority(currentUser)

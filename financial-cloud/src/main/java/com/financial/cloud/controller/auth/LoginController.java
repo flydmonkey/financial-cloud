@@ -4,7 +4,7 @@ package com.financial.cloud.controller.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
+import com.financial.cloud.authn.core.AuthAuthentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -79,7 +79,7 @@ public class LoginController {
 	public Message<AuthJwt> signin( @RequestBody LoginCredential credential) {
  		Message<AuthJwt> authJwtMessage = new Message<>(Message.FAIL);
  		if(authTokenService.validateState(credential.getState())){
-	 		Authentication authentication  = authenticationProvider.authenticate(credential);
+	 		AuthAuthentication authentication  = authenticationProvider.authenticate(credential);
 	 		if(authentication != null) {//success
 	 			AuthJwt authJwt = authTokenService.genAuthJwt(authentication);
 	 			authJwtMessage.setData(Message.SUCCESS,authJwt);

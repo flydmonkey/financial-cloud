@@ -8,19 +8,12 @@ import org.springframework.context.annotation.Bean;
 
 import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.authn.session.impl.InMemorySessionManager;
-import com.financial.cloud.authn.handler.HttpSessionListenerAdapter;
-import com.financial.cloud.authn.handler.SavedRequestAwareAuthenticationSuccessHandler;
 import com.financial.cloud.domain.security.ConfigLoginPolicy;
 import com.financial.cloud.service.security.ConfigLoginPolicyService;
 
 @Slf4j
 @Configuration
 public class SessionAutoConfiguration {
-
-	@Bean(name = "savedRequestSuccessHandler")
-	SavedRequestAwareAuthenticationSuccessHandler savedRequestAwareAuthenticationSuccessHandler() {
-		return new SavedRequestAwareAuthenticationSuccessHandler();
-	}
 
 	@Bean(name = "sessionManager")
 	SessionManager sessionManager(
@@ -34,10 +27,5 @@ public class SessionAutoConfiguration {
 		}
 		log.info("Using in-memory session store for single-node deployment (timeout {}s)", validitySeconds);
 		return new InMemorySessionManager(validitySeconds, maxSize);
-	}
-
-	@Bean
-	HttpSessionListenerAdapter httpSessionListenerAdapter() {
-		return new HttpSessionListenerAdapter();
 	}
 }

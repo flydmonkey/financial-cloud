@@ -6,8 +6,7 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import com.financial.cloud.authn.core.AuthAuthentication;
 
 import com.financial.cloud.authn.SignedPrincipal;
 import com.financial.cloud.authn.session.Session;
@@ -31,7 +30,7 @@ class AuthorizationUtilsTest {
                 sessionId,
                 sessionManager);
 
-        Authentication authentication = AuthorizationUtils.getAuthentication(request);
+        AuthAuthentication authentication = AuthorizationUtils.getAuthentication(request);
         assertThat(authentication).isNotNull();
         SignedPrincipal principal = (SignedPrincipal) authentication.getPrincipal();
         assertThat(principal.getSessionId()).isEqualTo(sessionId);
@@ -103,8 +102,8 @@ class AuthorizationUtilsTest {
         user.setSessionId(sessionId);
 
         SignedPrincipal principal = new SignedPrincipal(user, new Session(sessionId));
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+        AuthAuthentication authentication =
+                AuthAuthentication.authenticated(principal, null, Collections.emptyList());
 
         Session session = new Session(sessionId);
         session.setAuthentication(authentication);

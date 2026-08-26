@@ -6,10 +6,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 
 import com.financial.cloud.authn.SignedPrincipal;
+import com.financial.cloud.authn.core.AuthAuthentication;
 import com.financial.cloud.authn.session.Session;
 import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -97,16 +96,16 @@ public class AuthorizationUtils {
 		log.debug("Authenticated by session {}, type {}", sessionId, bearerType);
 	}
 
-	public static Authentication getAuthentication() {
+	public static AuthAuthentication getAuthentication() {
 		HttpServletRequest request = WebContext.getRequest();
 		return request == null ? null : getAuthentication(request);
 	}
 
-	public static Authentication getAuthentication(HttpServletRequest request) {
-		return (Authentication) request.getSession().getAttribute(WebConstants.AUTHENTICATION);
+	public static AuthAuthentication getAuthentication(HttpServletRequest request) {
+		return (AuthAuthentication) request.getSession().getAttribute(WebConstants.AUTHENTICATION);
 	}
 
-	public static void setAuthentication(HttpServletRequest request, Authentication authentication) {
+	public static void setAuthentication(HttpServletRequest request, AuthAuthentication authentication) {
 		if (request != null) {
 			request.getSession().setAttribute(WebConstants.AUTHENTICATION, authentication);
 		} else {
@@ -114,7 +113,7 @@ public class AuthorizationUtils {
 		}
 	}
 
-	public static void setAuthentication(Authentication authentication) {
+	public static void setAuthentication(AuthAuthentication authentication) {
 		WebContext.setAttribute(WebConstants.AUTHENTICATION, authentication);
 	}
 
@@ -139,24 +138,20 @@ public class AuthorizationUtils {
 	}
 
 	public static SignedPrincipal getPrincipal() {
-		Authentication authentication = getAuthentication();
+		AuthAuthentication authentication = getAuthentication();
 		return authentication == null ? null : getPrincipal(authentication);
 	}
 
-	public static SignedPrincipal getPrincipal(Authentication authentication) {
+	public static SignedPrincipal getPrincipal(AuthAuthentication authentication) {
 		return authentication == null ? null : (SignedPrincipal) authentication.getPrincipal();
 	}
 
-	public static UserInfo getUserInfo(Authentication authentication) {
+	public static UserInfo getUserInfo(AuthAuthentication authentication) {
 		SignedPrincipal principal = getPrincipal(authentication);
 		return principal == null ? null : principal.getUserInfo();
 	}
 
 	public static UserInfo getUserInfo() {
 		return getUserInfo(getAuthentication());
-	}
-
-	public static User getUser() {
-		return (User) getAuthentication().getPrincipal();
 	}
 }

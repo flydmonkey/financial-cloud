@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import com.financial.cloud.authn.core.AuthAuthentication;
 
 import com.financial.cloud.authn.SignedPrincipal;
 import com.financial.cloud.authn.session.Session;
@@ -46,7 +46,7 @@ class InMemorySessionManagerTest {
 
 		SignedPrincipal principal = new SignedPrincipal(user, new Session(sessionId));
 		Session session = new Session(sessionId);
-		session.setAuthentication(new UsernamePasswordAuthenticationToken(
+		session.setAuthentication(AuthAuthentication.authenticated(
 				principal, null, Collections.emptyList()));
 		return session;
 	}

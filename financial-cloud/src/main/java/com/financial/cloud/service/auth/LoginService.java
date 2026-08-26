@@ -11,8 +11,8 @@ import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.GrantedAuthority;
+import com.financial.cloud.authn.core.BadCredentialsException;
+import com.financial.cloud.authn.core.Authority;
 import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -84,7 +84,7 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
         }
 		return userInfo;
 	}
-	public List<GrantedAuthority> grantAuthority(UserInfo userInfo) {
+	public List<Authority> grantAuthority(UserInfo userInfo) {
 		return authzService.grantAuthority(userInfo);
 	}
 	 public Set<Resources> getResourcesBySubject(UserInfo user){

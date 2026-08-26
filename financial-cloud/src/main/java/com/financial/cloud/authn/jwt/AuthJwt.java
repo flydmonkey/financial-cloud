@@ -4,8 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
+import com.financial.cloud.authn.core.AuthAuthentication;
+import com.financial.cloud.authn.core.Authority;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -84,7 +84,7 @@ public class AuthJwt implements Serializable {
 	 * @param expiresIn
 	 * @param refreshToken
 	 */
-	public AuthJwt(String token, Authentication  authentication,int expiresIn,String refreshToken) {
+	public AuthJwt(String token, AuthAuthentication authentication, int expiresIn, String refreshToken) {
 		SignedPrincipal principal = ((SignedPrincipal)authentication.getPrincipal());
 		
 		this.token = token;
@@ -103,7 +103,7 @@ public class AuthJwt implements Serializable {
 		this.passwordSetType = principal.getPasswordSetType();
 		
 		this.authorities = new ArrayList<>();
-		for(GrantedAuthority grantedAuthority :authentication.getAuthorities()) {
+		for (Authority grantedAuthority : authentication.getAuthorities()) {
 			this.authorities.add(grantedAuthority.getAuthority());
 		}
 	}

@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import com.financial.cloud.service.auth.FileStorageService;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import com.financial.cloud.authn.core.Authority;
+import com.financial.cloud.authn.core.SimpleAuthority;
 import org.springframework.stereotype.Repository;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -50,18 +50,18 @@ public class AuthzService   extends ServiceImpl<AuthzMapper,UserInfo>{
      * @param userInfo
      * @return ArrayList<GrantedAuthority>
      */
-    public List<GrantedAuthority> grantAuthority(UserInfo userInfo) {
+    public List<Authority> grantAuthority(UserInfo userInfo) {
     	List<Roles> listGroup = queryRoles(userInfo);
         //set default groups
-        ArrayList<GrantedAuthority> grantedAuthority = new ArrayList<>();
+        ArrayList<Authority> grantedAuthority = new ArrayList<>();
         grantedAuthority.add(ConstsRoles.ROLE_USER);
         grantedAuthority.add(ConstsRoles.ROLE_ALL_USER);
         grantedAuthority.add(ConstsRoles.ROLE_GENERAL_USER);
         for (Roles group : listGroup) {
-            grantedAuthority.add(new SimpleGrantedAuthority(group.getId()));
+            grantedAuthority.add(new SimpleAuthority(group.getId()));
             //Group Code和id不同的情况
-            if(!grantedAuthority.contains(new SimpleGrantedAuthority(group.getRoleCode()))) {
-            	grantedAuthority.add(new SimpleGrantedAuthority(group.getRoleCode()));
+            if(!grantedAuthority.contains(new SimpleAuthority(group.getRoleCode()))) {
+            	grantedAuthority.add(new SimpleAuthority(group.getRoleCode()));
             }
             //判断角色类型
         	if(group.getCategory().equals(ConstsRoles.Category.SUPERVISOR)) {

@@ -18,7 +18,7 @@ import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.authn.session.UserSessions;
 import com.financial.cloud.domain.permissions.SessionList;
 
-import org.springframework.security.core.Authentication;
+import com.financial.cloud.authn.core.AuthAuthentication;
 
 /**
  * Single-node in-memory session store backed by Caffeine.
@@ -119,7 +119,7 @@ public class InMemorySessionManager implements SessionManager {
 		ConcurrentMap<String, Session> sessions = sessionStore.asMap();
 		List<String> toRemove = new ArrayList<>();
 		for (Map.Entry<String, Session> entry : sessions.entrySet()) {
-			Authentication authentication = entry.getValue().getAuthentication();
+			AuthAuthentication authentication = entry.getValue().getAuthentication();
 			if (authentication == null) {
 				continue;
 			}

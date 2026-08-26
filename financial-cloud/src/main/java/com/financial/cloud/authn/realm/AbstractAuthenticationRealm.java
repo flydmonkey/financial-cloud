@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Date;
 import java.util.List;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
+import com.financial.cloud.authn.core.AuthAuthentication;
+import com.financial.cloud.authn.core.Authority;
 
 import com.financial.cloud.authn.SignedPrincipal;
 import com.financial.cloud.common.client.ClientResolve;
@@ -55,7 +55,7 @@ public abstract class AbstractAuthenticationRealm {
      * @param userInfo
      * @return ArrayList<GrantedAuthority>
      */
-    public List<GrantedAuthority> grantAuthority(UserInfo userInfo) {
+    public List<Authority> grantAuthority(UserInfo userInfo) {
         return loginService.grantAuthority(userInfo);
     }
 
@@ -75,7 +75,7 @@ public abstract class AbstractAuthenticationRealm {
     public boolean insertLoginHistory(UserInfo userInfo,ClientResolve client, String type, String provider, String code, String message) {
         HistoryLogin historyLogin = new HistoryLogin();
         historyLogin.setSessionId(WebContext.genId());
-        Authentication  authentication  = (Authentication ) WebContext.getAttribute(WebConstants.AUTHENTICATION);
+        AuthAuthentication authentication = (AuthAuthentication) WebContext.getAttribute(WebConstants.AUTHENTICATION);
         if(authentication != null
         		&& authentication.getPrincipal() instanceof SignedPrincipal principal) {
               historyLogin.setSessionId(principal.getSessionId());

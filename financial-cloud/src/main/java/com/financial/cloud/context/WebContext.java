@@ -19,7 +19,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
@@ -149,7 +148,7 @@ public final class WebContext {
      *         http://www.website.com/webcontext
      */
     public static String getContextPath(HttpServletRequest request,boolean isContextPath) {
-    	String fullRequestUrl = UrlUtils.buildFullRequestUrl(request);
+    	String fullRequestUrl = buildFullRequestUrl(request);
         StringBuilder url = new StringBuilder(fullRequestUrl.substring(0, fullRequestUrl.indexOf(request.getContextPath())));
         if(isContextPath) {
         	url.append(request.getContextPath());
@@ -157,6 +156,15 @@ public final class WebContext {
         log.trace("http ContextPath {}" , url);
         return url.toString();
 
+    }
+
+    private static String buildFullRequestUrl(HttpServletRequest request) {
+        StringBuilder url = new StringBuilder(request.getRequestURL());
+        String queryString = request.getQueryString();
+        if (queryString != null) {
+            url.append('?').append(queryString);
+        }
+        return url.toString();
     }
     
     /**

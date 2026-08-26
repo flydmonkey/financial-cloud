@@ -5,15 +5,10 @@ package com.financial.cloud.configuration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.financial.cloud.authn.provider.AbstractAuthenticationProvider;
 import com.financial.cloud.authn.interceptor.PermissionInterceptor;
 
 @RequiredArgsConstructor
@@ -22,24 +17,7 @@ import com.financial.cloud.authn.interceptor.PermissionInterceptor;
 @Configuration
 public class FinancialCloudMvcConfig implements WebMvcConfigurer {
     
-    private final AbstractAuthenticationProvider authenticationProvider;
-    
     private final PermissionInterceptor permissionInterceptor;
-    
-    @Bean
-    SecurityFilterChain applicationSecurityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable())
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(formLogin -> formLogin.disable())
-                .logout(logout -> logout.disable())
-                .headers(headers -> headers
-                        .contentTypeOptions(Customizer.withDefaults())
-                        .frameOptions(frame -> frame.sameOrigin())
-                        .cacheControl(Customizer.withDefaults()))
-                .build();
-    }
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

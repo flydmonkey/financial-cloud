@@ -3,7 +3,7 @@ package com.financial.cloud.authn.jwt.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.core.Authentication;
+import com.financial.cloud.authn.core.AuthAuthentication;
 
 import com.financial.cloud.authn.jwt.AuthJwt;
 import com.financial.cloud.context.WebContext;
@@ -28,7 +28,7 @@ public class AuthTokenService {
 		return StringUtils.isNotBlank(state);
 	}
 
-	public AuthJwt genAuthJwt(Authentication authentication) {
+	public AuthJwt genAuthJwt(AuthAuthentication authentication) {
 		if (authentication == null) {
 			return null;
 		}

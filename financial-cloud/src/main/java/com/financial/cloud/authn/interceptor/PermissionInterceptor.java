@@ -11,8 +11,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
+import com.financial.cloud.authn.core.AuthAuthentication;
+import com.financial.cloud.authn.core.Authority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
 
@@ -51,10 +51,10 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 		}
 		UserInfo userInfo = principal.getUserInfo();
 		if (userInfo != null) {
-			List<GrantedAuthority> authorities = loginService.grantAuthority(userInfo);
+			List<Authority> authorities = loginService.grantAuthority(userInfo);
 			principal.setAuthenticated(true);
-			UsernamePasswordAuthenticationToken authenticationToken =
-					new UsernamePasswordAuthenticationToken(principal, null, authorities);
+			AuthAuthentication authenticationToken =
+					AuthAuthentication.authenticated(principal, null, authorities);
 			AuthorizationUtils.setAuthentication(request, authenticationToken);
 		}
 		return true;

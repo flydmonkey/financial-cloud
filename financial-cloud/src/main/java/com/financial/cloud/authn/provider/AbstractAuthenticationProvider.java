@@ -5,11 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import com.financial.cloud.authn.core.AuthAuthentication;
+import com.financial.cloud.authn.core.AuthDetails;
+import com.financial.cloud.authn.core.Authority;
+import com.financial.cloud.authn.core.BadCredentialsException;
 
 import com.financial.cloud.authn.LoginCredential;
 import com.financial.cloud.authn.SignedPrincipal;
@@ -65,14 +64,14 @@ public abstract class AbstractAuthenticationProvider {
 
     public abstract String getProviderName();
 
-    public abstract Authentication doAuthenticate(LoginCredential credential);
+    public abstract AuthAuthentication doAuthenticate(LoginCredential credential);
 
     @SuppressWarnings("rawtypes")
     public boolean supports(Class authentication) {
-        return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
+        return LoginCredential.class.isAssignableFrom(authentication);
     }
 
-    public Authentication authenticate(LoginCredential credential){
+    public AuthAuthentication authenticate(LoginCredential credential) {
     	log.debug("credential {}",credential);
     	return null;
     }
@@ -83,7 +82,7 @@ public abstract class AbstractAuthenticationProvider {
      * @param userInfo
      * @return
      */
-    public UsernamePasswordAuthenticationToken createOnlineTicket(LoginCredential credential,UserInfo userInfo,ClientResolve client) {
+    public AuthAuthentication createOnlineTicket(LoginCredential credential, UserInfo userInfo, ClientResolve client) {
         //create session/创建新用户会话
         Session session = new Session();
 
@@ -92,28 +91,22 @@ public abstract class AbstractAuthenticationProvider {
         //set session with principal。设置认证当事人
         SignedPrincipal principal = new SignedPrincipal(userInfo,session);
         //读取用户授权角色
-        List<GrantedAuthority> grantedAuthoritys = authenticationRealm.grantAuthority(userInfo);
+        List<Authority> grantedAuthoritys = authenticationRealm.grantAuthority(userInfo);
         principal.setAuthenticated(true);
         principal.setStyle(session.getStyle());
         //判断管理员角色
-        for(GrantedAuthority adminAuthority : ConstsRoles.grantedAdminAuthoritys) {
-            if(grantedAuthoritys.contains(adminAuthority)) {
+        for (Authority adminAuthority : ConstsRoles.grantedAdminAuthoritys) {
+            if (grantedAuthoritys.contains(adminAuthority)) {
             	principal.setRoleAdministrators(true);
                 log.trace("ROLE ADMINISTRATORS Authentication .");
             }
         }
         log.debug("Granted Authority {}" , grantedAuthoritys);
 
-        //创建认证token
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(
-                		principal,
-                        "PASSWORD",
-                        grantedAuthoritys
-                );
+        AuthAuthentication authenticationToken =
+                AuthAuthentication.authenticated(principal, "PASSWORD", grantedAuthoritys);
 
-        authenticationToken.setDetails(
-                new WebAuthenticationDetails(WebContext.getRequest()));
+        authenticationToken.setDetails(new AuthDetails(WebContext.getRequest()));
 
         /*
          *  put Authentication to current session context，设置会话的认证token

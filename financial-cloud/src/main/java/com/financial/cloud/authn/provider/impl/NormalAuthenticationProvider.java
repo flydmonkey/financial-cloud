@@ -2,10 +2,9 @@ package com.financial.cloud.authn.provider.impl;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import com.financial.cloud.authn.core.AuthAuthentication;
+import com.financial.cloud.authn.core.AuthenticationException;
+import com.financial.cloud.authn.core.BadCredentialsException;
 
 import com.financial.cloud.authn.LoginCredential;
 import com.financial.cloud.authn.jwt.service.AuthTokenService;
@@ -57,8 +56,8 @@ public class NormalAuthenticationProvider extends AbstractAuthenticationProvider
 	}
 
     @Override
-	public Authentication doAuthenticate(LoginCredential loginCredential) {
-		UsernamePasswordAuthenticationToken authenticationToken = null;
+	public AuthAuthentication doAuthenticate(LoginCredential loginCredential) {
+		AuthAuthentication authenticationToken = null;
 		loginCredential.setStyle(Session.STYLE.MGMT);
 		log.debug("Trying to authenticate user {} via {}", loginCredential.getPrincipal(), getProviderName());
         try {

@@ -66,18 +66,39 @@ jobs:
         run: |
           docker compose up -d mysql
           npx --yes wait-on tcp:3307 --timeout 120000
+          for i in $(seq 1 30); do
+            if docker compose exec -T mysql mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; then
+              break
+            fi
+            sleep 2
+          done
       - name: Install Python deps for E2E book reset
         run: pip install pymysql
+      - name: Initialize database schema
+        run: python tools/run_init_sql.py
+      - name: Build backend
+        working-directory: financial-cloud
+        run: ./mvnw -B -DskipTests package
       - name: Start backend
         working-directory: financial-cloud
         run: |
-          ./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=2154" &
-          npx --yes wait-on http://localhost:2154/api/login/get --timeout 120000
+          JAR=$(ls target/*.jar | grep -v '\.original$' | head -n1)
+          echo "Starting $JAR"
+          java -jar "$JAR" --server.port=2154 > ../backend-ci.log 2>&1 &
+          if ! npx --yes wait-on http://localhost:2154/api/login/get --timeout 300000; then
+            echo "==== backend log (tail) ===="
+            tail -n 200 ../backend-ci.log || true
+            exit 1
+          fi
       - name: Start frontend
         working-directory: financial-cloud-ui
         run: |
-          npm run dev &
-          npx --yes wait-on http://localhost:3154 --timeout 120000
+          npm run dev > ../frontend-ci.log 2>&1 &
+          if ! npx --yes wait-on http://localhost:3154 --timeout 120000; then
+            echo "==== frontend log (tail) ===="
+            tail -n 100 ../frontend-ci.log || true
+            exit 1
+          fi
       - name: Run E2E accounting suite
         working-directory: financial-cloud-ui
         run: npm run test:e2e:accounting

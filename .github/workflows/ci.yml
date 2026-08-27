@@ -149,9 +149,17 @@ jobs:
           if [ $code -ne 0 ]; then
             echo "::error::E2E accounting suite exited with $code"
             # Surface the most useful lines in check annotations (readable without private logs).
-            grep -E 'Error:|error:|failed|Executable|globalSetup|Timeout|not found|Code:' ../e2e-accounting.log | tail -n 30 | while IFS= read -r line; do
+            grep -E 'Error:|✘|› |expect\(|[0-9]+ failed|Timeout|not found|Code:|globalSetup:' ../e2e-accounting.log | tail -n 40 | while IFS= read -r line; do
               echo "::error::$line"
             done
+            echo "==== last 80 lines of e2e log ===="
+            tail -n 80 ../e2e-accounting.log
+            {
+              echo '## E2E accounting failure (last 80 lines)'
+              echo '```'
+              tail -n 80 ../e2e-accounting.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
             echo "==== frontend log (tail) ===="
             tail -n 80 ../frontend-ci.log || true
             echo "==== backend log (tail) ===="

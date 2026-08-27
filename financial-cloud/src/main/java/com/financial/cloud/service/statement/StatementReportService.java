@@ -38,10 +38,10 @@ import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
+import com.financial.cloud.util.excel.ExportTemplateFiles;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,13 +84,7 @@ public class StatementReportService{
         dto.parse();
         List<StatementCashFlow> cashFlows = cashFlowStatement(dto).getData();
         Book book = bookMapper.selectById(dto.getBookId());
-        String templatePath = ResourceUtils
-                .getURL("classpath:static/export-template/template-cash-flow.xlsx")
-                .getPath();
-        // 注意：Windows下getPath()前会带'/'，可做处理
-        if (templatePath.startsWith("/")) {
-            templatePath = templatePath.substring(1);
-        }
+        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-cash-flow.xlsx", "template-cash-flow_src_");
         Path tempFilePath = Files.createTempFile("template-cash-flow_", ".xlsx");
         File tempFile = tempFilePath.toFile();
 
@@ -117,7 +111,7 @@ public class StatementReportService{
                 .enableMergeCells(false)
                 .autoSizeColumns(false)
                 .recalculateFormulas(true)
-                .templateFilePath(templatePath)
+                .templateFilePath(templateSource.getAbsolutePath())
                 .build();
         ExcelExporter.export(paramsObj);
         // 列表数据渲染
@@ -134,6 +128,7 @@ public class StatementReportService{
         ExcelExporter.export(paramsList);
         // 最后删除临时文件
         if (tempFile.exists()) tempFile.delete();
+        if (templateSource.exists()) templateSource.delete();
     }
 
     /**
@@ -143,13 +138,7 @@ public class StatementReportService{
         dto.parse();
         List<StatementSubjectBalance> subjectBalances = subjectBalance(dto).getData();
         Book book = bookMapper.selectById(dto.getBookId());
-        String templatePath = ResourceUtils
-                .getURL("classpath:static/export-template/template-subject-balance.xlsx")
-                .getPath();
-        // 注意：Windows下getPath()前会带'/'，可做处理
-        if (templatePath.startsWith("/")) {
-            templatePath = templatePath.substring(1);
-        }
+        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-subject-balance.xlsx", "template-subject-balance_src_");
         Path tempFilePath = Files.createTempFile("template-subject-balance_", ".xlsx");
         File tempFile = tempFilePath.toFile();
 
@@ -167,7 +156,7 @@ public class StatementReportService{
                 .enableMergeCells(false)
                 .autoSizeColumns(false)
                 .recalculateFormulas(true)
-                .templateFilePath(templatePath)
+                .templateFilePath(templateSource.getAbsolutePath())
                 .build();
         ExcelExporter.export(paramsObj);
         // 列表数据渲染
@@ -184,6 +173,7 @@ public class StatementReportService{
         ExcelExporter.export(paramsList);
         // 最后删除临时文件
         if (tempFile.exists()) tempFile.delete();
+        if (templateSource.exists()) templateSource.delete();
     }
 
     /**
@@ -204,13 +194,7 @@ public class StatementReportService{
         String voucherNumber = result.get("total").toString();
         String voucherFileNum = result.get("files").toString();
 
-        String templatePath = ResourceUtils
-                .getURL("classpath:static/export-template/template-voucher-summary.xlsx")
-                .getPath();
-        // 注意：Windows下getPath()前会带'/'，可做处理
-        if (templatePath.startsWith("/")) {
-            templatePath = templatePath.substring(1);
-        }
+        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-voucher-summary.xlsx", "template-voucher-summary_src_");
         Path tempFilePath = Files.createTempFile("template-voucher-summary_", ".xlsx");
         File tempFile = tempFilePath.toFile();
 
@@ -229,7 +213,7 @@ public class StatementReportService{
                 .enableMergeCells(false)
                 .autoSizeColumns(false)
                 .recalculateFormulas(true)
-                .templateFilePath(templatePath)
+                .templateFilePath(templateSource.getAbsolutePath())
                 .build();
         ExcelExporter.export(paramsObj);
         // 列表数据渲染
@@ -246,6 +230,7 @@ public class StatementReportService{
         ExcelExporter.export(paramsList);
         // 最后删除临时文件
         if (tempFile.exists()) tempFile.delete();
+        if (templateSource.exists()) templateSource.delete();
     }
 
     private Map<String, Boolean> checkTermIfSameYear(StatementParamsDto dto) {

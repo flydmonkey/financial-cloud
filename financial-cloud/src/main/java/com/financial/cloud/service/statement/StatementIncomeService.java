@@ -33,6 +33,7 @@ import com.financial.cloud.service.statement.StatementIncomeService;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
+import com.financial.cloud.util.excel.ExportTemplateFiles;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 
 
 @Slf4j
@@ -436,13 +436,7 @@ public class StatementIncomeService{
     public void export(StatementParamsDto dto, HttpServletResponse response) throws IOException {
         StatementIncome incomeStatement = getIncomeStatement(dto, true).getData();
         Book book = bookMapper.selectById(dto.getBookId());
-        String templatePath = ResourceUtils
-                .getURL("classpath:static/export-template/template-income.xlsx")
-                .getPath();
-        // 注意：Windows下getPath()前会带'/'，可做处理
-        if (templatePath.startsWith("/")) {
-            templatePath = templatePath.substring(1);
-        }
+        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-income.xlsx", "template-income_src_");
         Path tempFilePath = Files.createTempFile("template-income_", ".xlsx");
         File tempFile = tempFilePath.toFile();
 
@@ -469,7 +463,7 @@ public class StatementIncomeService{
                 .enableMergeCells(false)
                 .autoSizeColumns(false)
                 .recalculateFormulas(true)
-                .templateFilePath(templatePath)
+                .templateFilePath(templateSource.getAbsolutePath())
                 .build();
         ExcelExporter.export(paramsObj);
         // 列表数据渲染
@@ -486,6 +480,7 @@ public class StatementIncomeService{
         ExcelExporter.export(paramsList);
         // 最后删除临时文件
         if (tempFile.exists()) tempFile.delete();
+        if (templateSource.exists()) templateSource.delete();
     }
     public boolean deleteByBookIds(List<String> bookIds) {
         LambdaQueryWrapper<StatementIncome> slqw = Wrappers.lambdaQuery();

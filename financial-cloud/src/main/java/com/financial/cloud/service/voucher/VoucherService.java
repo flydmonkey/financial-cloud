@@ -46,6 +46,7 @@ import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.VoucherUtils;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
+import com.financial.cloud.util.excel.ExportTemplateFiles;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.*;
 
@@ -54,7 +55,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ResourceUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -875,13 +875,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     public void export(VoucherPageDto dto, HttpServletResponse response) throws IOException {
         List<VoucherVo> data = pageList(dto).getData().getRecords();
 
-        String templatePath = ResourceUtils
-                .getURL("classpath:static/export-template/template-voucher.xlsx")
-                .getPath();
-        // 注意：Windows下getPath()前会带'/'，可做处理
-        if (templatePath.startsWith("/")) {
-            templatePath = templatePath.substring(1);
-        }
+        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-voucher.xlsx", "template-voucher_");
         ExcelParams<List<VoucherVo>> paramsObj = ExcelParams.<List<VoucherVo>>builder()
                 .httpResponse(response)
                 .dataModel(data)
@@ -890,9 +884,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                 .enableMergeCells(true)
                 .autoSizeColumns(false)
                 .recalculateFormulas(true)
-                .templateFilePath(templatePath)
+                .templateFilePath(templateSource.getAbsolutePath())
                 .build();
         ExcelExporter.export(paramsObj);
+        if (templateSource.exists()) templateSource.delete();
     }
 
     /**

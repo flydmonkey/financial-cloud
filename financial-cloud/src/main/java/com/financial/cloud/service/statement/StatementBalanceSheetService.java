@@ -33,6 +33,7 @@ import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
+import com.financial.cloud.util.excel.ExportTemplateFiles;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -237,13 +237,7 @@ public class StatementBalanceSheetService{
         List<StatementBalanceSheetItem> maxData = assets.size() > liability.size() ? assets : liability;
         Book book = bookMapper.selectById(dto.getBookId());
 
-        String templatePath = ResourceUtils
-                .getURL("classpath:static/export-template/template-balance-sheet.xlsx")
-                .getPath();
-        // 注意：Windows下getPath()前会带'/'，可做处理
-        if (templatePath.startsWith("/")) {
-            templatePath = templatePath.substring(1);
-        }
+        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-balance-sheet.xlsx", "template-balance-sheet_src_");
         Path tempFilePath = Files.createTempFile("template-balance-sheet_", ".xlsx");
         File tempFile = tempFilePath.toFile();
 
@@ -288,7 +282,7 @@ public class StatementBalanceSheetService{
                 .enableMergeCells(false)
                 .autoSizeColumns(false)
                 .recalculateFormulas(true)
-                .templateFilePath(templatePath)
+                .templateFilePath(templateSource.getAbsolutePath())
                 .build();
         ExcelExporter.export(paramsObj);
         // 列表数据渲染
@@ -305,6 +299,7 @@ public class StatementBalanceSheetService{
         ExcelExporter.export(paramsList);
         // 最后删除临时文件
         if (tempFile.exists()) tempFile.delete();
+        if (templateSource.exists()) templateSource.delete();
     }
     public boolean deleteByBookIds(List<String> bookIds) {
         LambdaQueryWrapper<StatementBalanceSheet> slqw = Wrappers.lambdaQuery();

@@ -7,7 +7,6 @@ import {
     createDraftVoucher,
     ensureVoucherReviewEnabled,
     getVoucherDetail,
-    postVoucher,
     runVoucherToPosted,
     submitVoucher,
     tryBatchPostVoucher,

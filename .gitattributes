@@ -1,1 +1,4 @@
 *.html linguist-language=java
+financial-cloud/mvnw text eol=lf
+financial-cloud/mvnw.cmd text eol=crlf
+financial-cloud/mvnw.ps1 text eol=crlf

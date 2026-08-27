@@ -9,7 +9,7 @@ export function validateFields(component : any, fieldsToValidate : any, form : a
     return new Promise((resolve: any, reject: any) => {
         Promise.all(
             fieldsToValidate.map((field: any) => {
-                return new Promise((resolve: any, reject: any) => {
+                return new Promise((resolve: any, _reject: any) => {
                     component.$refs[form].validateField(field, (isValid: any) => {
                         resolve(isValid);
                     });
@@ -246,7 +246,7 @@ export const validatePass: any = (rule: any, value: any, callback: any, policy: 
 
     if (data.specialChar === 1) {
         // 必须包含标点符号
-        if (!/[!@#$%^&*()_+={}\[\]:;<>,.?~\\-]/.test(value)) {
+        if (!/[!@#$%^&*()_+={}[\]:;<>,.?~\\-]/.test(value)) {
             errors.push("必须包含特殊字符");
         }
     }

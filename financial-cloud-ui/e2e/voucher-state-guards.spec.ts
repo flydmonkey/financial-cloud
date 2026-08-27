@@ -148,7 +148,6 @@ test.describe.serial('voucher state guards', () => {
     })
 
     test('TC-VCH-042: draft can be deleted', async ({request}) => {
-        const subjects = await fetchBookSubjects(request, ctx.headers, ctx.bookId)
         const payload = await buildBalancedVoucherPayload(
             request, ctx.headers, ctx.bookId, '守卫-待删', 9,
         )

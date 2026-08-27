@@ -91,7 +91,7 @@ export function formatVoucherWord(head: string, term: string, wordNum: number): 
 export async function getCurrentTerm(
     request: APIRequestContext,
     headers: Record<string, string>,
-    bookId: string,
+    _bookId: string,
 ): Promise<string> {
     const res = await request.get('/api/config/sys/books', {headers})
     const body = await res.json()

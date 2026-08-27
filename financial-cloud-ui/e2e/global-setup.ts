@@ -26,7 +26,7 @@ export default async function globalSetup(config: FullConfig) {
             console.warn('[globalSetup] expected needsSetup after clear_books, continuing setup')
         }
         await setupE2eBookViaApi(api, auth.headers)
-        console.log('[globalSetup] E2E book ready')
+        console.warn('[globalSetup] E2E book ready')
     } finally {
         await api.dispose()
     }

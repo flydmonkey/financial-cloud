@@ -8,7 +8,7 @@ import {
     generateCarryVoucher,
     cleanupExistingCarryVouchers,
 } from './helpers/settlement-carry'
-import {checkoutCurrentPeriod, verifySettlement} from './helpers/settlement'
+import {verifySettlement} from './helpers/settlement'
 import {
     createAndPostVoucher,
     ensureVoucherReviewEnabled,
@@ -17,7 +17,6 @@ import {
     getVoucherDetail,
     pickStandardBusinessSubjects,
     runVoucherToPosted,
-    submitVoucher,
     tryDeleteVoucher,
 } from './helpers/voucher'
 

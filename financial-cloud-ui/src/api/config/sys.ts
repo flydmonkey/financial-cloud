@@ -18,7 +18,7 @@ export function listConfig(query: any) {
 }
 
 // 查询参数详细
-export function getConfig(configId: any) {0
+export function getConfig(configId: any) {
   return request({
     url: '/config/sys/get/' + configId,
     method: 'get'

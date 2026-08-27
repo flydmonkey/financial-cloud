@@ -63,7 +63,9 @@ package-lock.json
 # Windows local scripts (not for repo)
 scripts/
 *.ps1
+!financial-cloud/mvnw
 !financial-cloud/mvnw.ps1
+!financial-cloud/mvnw.cmd
 *.bat
 
 # Agent session artifacts

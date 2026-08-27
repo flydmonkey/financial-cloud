@@ -233,8 +233,8 @@ const props: any = defineProps({
 })
 const tabTitles: any = ref(["秒", "分钟", "小时", "日", "月", "周", "年"])
 const tabActive: any = ref(0)
-const hideComponent: any = ref<any>([])
-const expression: any = ref('')
+const hideComponentList: any = ref<any>([])
+const expressionValue: any = ref('')
 const crontabValueObj: any = ref({
     second: "*",
     min: "*",
@@ -259,14 +259,14 @@ const crontabValueString: any = computed(() => {
         + obj.week
         + (obj.year === "" ? "" : " " + obj.year)
 })
-watch(expression, () => resolveExp())
+watch(expressionValue, () => resolveExp())
 function shouldHide(key: any): any {
-    return !(hideComponent.value && hideComponent.value.includes(key))
+    return !(hideComponentList.value && hideComponentList.value.includes(key))
 }
 function resolveExp(): any {
     // 反解析 表达式
-    if (expression.value) {
-        const arr: any = expression.value.split(/\s+/)
+    if (expressionValue.value) {
+        const arr: any = expressionValue.value.split(/\s+/)
         if (arr.length >= 6) {
             //6 位以上是合法表达式
             let obj: any = {
@@ -328,8 +328,8 @@ function clearCron(): any {
     }
 }
 onMounted(() => {
-    expression.value = props.expression
-    hideComponent.value = props.hideComponent
+    expressionValue.value = props.expression
+    hideComponentList.value = props.hideComponent
 })
 </script>
 

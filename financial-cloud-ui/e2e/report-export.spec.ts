@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test'
 import {getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-import {exportStatementReport, fetchBalanceSheet, fetchCashFlowStatement, fetchIncomeStatement, fetchSubjectBalances, num} from './helpers/reports'
+import {exportStatementReport, fetchBalanceSheet, fetchCashFlowStatement, fetchIncomeStatement, fetchSubjectBalances} from './helpers/reports'
 import {ensureCashFlowConfigInitialized} from './helpers/cash-flow'
 
 /** TC-RPT-007：报表导出接口可下载 xlsx */

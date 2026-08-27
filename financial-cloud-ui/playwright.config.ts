@@ -3,10 +3,7 @@ import path from 'path'
 import {fileURLToPath} from 'url'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
-// Local installs pin browsers under the repo; CI uses the default Playwright cache.
-if (!process.env.CI && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
-    process.env.PLAYWRIGHT_BROWSERS_PATH = path.join(rootDir, '.playwright-browsers')
-}
+process.env.PLAYWRIGHT_BROWSERS_PATH ??= path.join(rootDir, '.playwright-browsers')
 if (process.env.npm_lifecycle_event === 'test:e2e:ui-pages') {
     process.env.E2E_ENABLE_UI = '1'
 }

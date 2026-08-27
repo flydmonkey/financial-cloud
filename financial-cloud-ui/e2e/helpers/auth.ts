@@ -18,7 +18,13 @@ export interface BookSubjectRef {
 
 export async function loginViaApi(request: APIRequestContext): Promise<AuthSession> {
     const init = await request.get('/api/login/get?_allow_anonymous=true')
+    if (!init.ok()) {
+        throw new Error(`login/get failed: HTTP ${init.status()}`)
+    }
     const initBody = await init.json()
+    if (initBody.code !== 0 && initBody.code !== undefined) {
+        throw new Error(`login/get business error: ${initBody.message || JSON.stringify(initBody)}`)
+    }
     const signin = await request.post('/api/login/signin?_allow_anonymous=true', {
         data: {
             username,
@@ -28,8 +34,17 @@ export async function loginViaApi(request: APIRequestContext): Promise<AuthSessi
             authType: 'normal',
         },
     })
+    if (!signin.ok()) {
+        throw new Error(`login/signin failed: HTTP ${signin.status()}`)
+    }
     const signinBody = await signin.json()
-    const token = signinBody.data.token as string
+    if (signinBody.code !== 0 && signinBody.code !== undefined) {
+        throw new Error(`login/signin business error: ${signinBody.message || JSON.stringify(signinBody)}`)
+    }
+    const token = signinBody.data?.token as string
+    if (!token) {
+        throw new Error(`login/signin missing token: ${JSON.stringify(signinBody)}`)
+    }
     return {
         token,
         state: initBody.data.state,

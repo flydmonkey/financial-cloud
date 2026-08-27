@@ -16,17 +16,26 @@ export default async function globalSetup(config: FullConfig) {
         throw new Error('globalSetup: missing baseURL in playwright config')
     }
 
-    clearBooksViaScript()
+    try {
+        clearBooksViaScript()
+    } catch (err) {
+        throw new Error(`globalSetup: clear_books failed: ${err instanceof Error ? err.message : err}`)
+    }
 
     const api = await request.newContext({baseURL})
     try {
         const auth = await loginViaApi(api)
+        if (!auth.token) {
+            throw new Error('globalSetup: login returned empty token')
+        }
         const status = await getOnboardingStatus(api, auth.headers)
         if (!status.needsSetup) {
             console.warn('[globalSetup] expected needsSetup after clear_books, continuing setup')
         }
         await setupE2eBookViaApi(api, auth.headers)
         console.warn('[globalSetup] E2E book ready')
+    } catch (err) {
+        throw new Error(`globalSetup: book setup failed against ${baseURL}: ${err instanceof Error ? err.message : err}`)
     } finally {
         await api.dispose()
     }

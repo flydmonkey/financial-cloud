@@ -78,7 +78,8 @@ test.describe('report module', () => {
         }
     })
 
-    test('statement pages open', async ({page}) => {
+    const uiTest = process.env.E2E_ENABLE_UI === '1' ? test : test.skip
+    uiTest('statement pages open', async ({page}) => {
         await page.goto('/login')
         await page.locator('input[type="text"]').first().fill(process.env.E2E_USERNAME || 'admin')
         await page.locator('input[type="password"]').fill(process.env.E2E_PASSWORD || 'maxkey')

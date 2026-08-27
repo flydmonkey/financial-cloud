@@ -49,6 +49,9 @@ setEnvVars.bat
 .vscode/settings.json
 
 node_modules/
+.playwright-browsers/
+test-results/
+playwright-report/
 
 vite.config.js.**
 

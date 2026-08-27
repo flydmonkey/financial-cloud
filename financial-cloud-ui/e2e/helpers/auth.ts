@@ -13,6 +13,7 @@ export interface AuthSession {
 export interface BookSubjectRef {
     id: string
     name: string
+    code?: string
 }
 
 export async function loginViaApi(request: APIRequestContext): Promise<AuthSession> {
@@ -50,6 +51,7 @@ function flattenTree(nodes: any[], output: BookSubjectRef[] = []): BookSubjectRe
             output.push({
                 id: String(node.id),
                 name: node.name || node.label || String(node.id),
+                code: node.code,
             })
         }
     }
@@ -62,7 +64,7 @@ export async function fetchBookSubjects(
     bookId: string,
 ): Promise<BookSubjectRef[]> {
     const pageRes = await request.get(
-        `/api/booksubject/fetch?bookId=${bookId}&pageNum=1&pageSize=200&status=1`,
+        `/api/booksubject/fetch?bookId=${bookId}&pageNum=1&pageSize=500&status=1`,
         {headers},
     )
     const pageBody = await pageRes.json()
@@ -71,6 +73,7 @@ export async function fetchBookSubjects(
         return records.map((item: any) => ({
             id: item.id,
             name: item.displayName || item.name || item.code,
+            code: item.code,
         }))
     }
 

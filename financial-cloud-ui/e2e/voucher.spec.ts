@@ -111,7 +111,8 @@ test.describe('voucher module', () => {
         expect(['completed', 'reviewing']).toContain(detailBody.data.status)
     })
 
-    test('voucher list and edit pages render', async ({page}) => {
+    const uiTest = process.env.E2E_ENABLE_UI === '1' ? test : test.skip
+    uiTest('voucher list and edit pages render', async ({page}) => {
         await page.goto('/login')
         await page.locator('input[type="text"]').first().fill(process.env.E2E_USERNAME || 'admin')
         await page.locator('input[type="password"]').fill(process.env.E2E_PASSWORD || 'maxkey')
@@ -124,6 +125,7 @@ test.describe('voucher module', () => {
 
         await page.goto('/voucher/voucher-edit')
         await expect(page.getByRole('button', {name: '暂存'})).toBeVisible({timeout: 15_000})
-        await expect(page.getByRole('button', {name: '提交'})).toBeVisible()
+        // 编辑页以「保存」提交（开启审核时等同提交审核流）
+        await expect(page.getByRole('button', {name: '保存'})).toBeVisible()
     })
 })

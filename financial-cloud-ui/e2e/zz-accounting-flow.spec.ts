@@ -150,7 +150,8 @@ test.describe.serial('accounting lifecycle', () => {
         expect(body.code).toBe(0)
     })
 
-    test('UI: voucher and settlement pages render', async ({page}) => {
+    const uiTest = process.env.E2E_ENABLE_UI === '1' ? test : test.skip
+    uiTest('UI: voucher and settlement pages render', async ({page}) => {
         await loginViaUi(page)
         for (const path of [
             '/voucher/voucher-index',

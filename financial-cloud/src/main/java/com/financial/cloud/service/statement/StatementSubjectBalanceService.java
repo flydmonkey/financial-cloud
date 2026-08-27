@@ -26,6 +26,7 @@ import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
+import com.financial.cloud.util.SubjectBalanceAncestors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -202,19 +203,21 @@ public class StatementSubjectBalanceService{
             }
             subjectBalanceMapper.insert(subjectBalance);
 
-            // 查找是否存在
-            List<String> subjectParentIds = Arrays.asList(bookSubject.getIdPath().split("/"));
-            queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(StatementSubjectBalance::getBookId, bookId);
-            queryWrapper.eq(StatementSubjectBalance::getYearPeriod, yearPeriod);
-            queryWrapper.in(StatementSubjectBalance::getSourceId, subjectParentIds);
-            queryWrapper.select(StatementSubjectBalance::getSourceId);
-            List<String> existSubjectIds = subjectBalanceMapper.selectList(queryWrapper)
-                    .stream()
-                    .map(StatementSubjectBalance::getSourceId)
-                    .toList();
-            // 去重
-            subjectParentIds = subjectParentIds.stream().filter(id -> !existSubjectIds.contains(id)).toList();
+            // 查找是否存在（忽略 idPath 前导 / 产生的空段，避免匹配 source_id='' 脏行）
+            List<String> subjectParentIds = SubjectBalanceAncestors.sourceIdsFromIdPath(bookSubject.getIdPath());
+            if (!subjectParentIds.isEmpty()) {
+                queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(StatementSubjectBalance::getBookId, bookId);
+                queryWrapper.eq(StatementSubjectBalance::getYearPeriod, yearPeriod);
+                queryWrapper.in(StatementSubjectBalance::getSourceId, subjectParentIds);
+                queryWrapper.select(StatementSubjectBalance::getSourceId);
+                List<String> existSubjectIds = subjectBalanceMapper.selectList(queryWrapper)
+                        .stream()
+                        .map(StatementSubjectBalance::getSourceId)
+                        .toList();
+                // 去重
+                subjectParentIds = subjectParentIds.stream().filter(id -> !existSubjectIds.contains(id)).toList();
+            }
             if (!subjectParentIds.isEmpty()) {
                 LambdaQueryWrapper<BookSubject> lqwSubject = new LambdaQueryWrapper<>();
                 lqwSubject.eq(BookSubject::getBookId, bookId);
@@ -231,16 +234,19 @@ public class StatementSubjectBalanceService{
         }
 
         // 获取包括父级所有科目,都需要同步余额
-        queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(StatementSubjectBalance::getBookId, bookId);
-        queryWrapper.eq(StatementSubjectBalance::getYearPeriod, yearPeriod);
         StatementSubjectBalance finalSubjectBalance = subjectBalance;
-        List<String> subjectParentIds = Arrays.asList(bookSubject.getIdPath().split("/"));
-        subjectParentIds = subjectParentIds.stream()
-                .filter(id -> !id.equals(finalSubjectBalance.getSourceId()))
-                .toList();
-        queryWrapper.in(StatementSubjectBalance::getSourceId, subjectParentIds);
-        List<StatementSubjectBalance> subjectBalances = subjectBalanceMapper.selectList(queryWrapper);
+        List<String> subjectParentIds = SubjectBalanceAncestors.ancestorSourceIds(
+                bookSubject.getIdPath(), finalSubjectBalance.getSourceId());
+        List<StatementSubjectBalance> subjectBalances;
+        if (subjectParentIds.isEmpty()) {
+            subjectBalances = new ArrayList<>();
+        } else {
+            queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(StatementSubjectBalance::getBookId, bookId);
+            queryWrapper.eq(StatementSubjectBalance::getYearPeriod, yearPeriod);
+            queryWrapper.in(StatementSubjectBalance::getSourceId, subjectParentIds);
+            subjectBalances = subjectBalanceMapper.selectList(queryWrapper);
+        }
 
         // 查询同级科目凭证，用于判定记录是否存在凭证
         LambdaQueryWrapper<VoucherItem> itemLqw = Wrappers.lambdaQuery();

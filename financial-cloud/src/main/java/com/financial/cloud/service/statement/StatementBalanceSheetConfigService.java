@@ -19,6 +19,7 @@ import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementBalanceSheetConfigService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
 
+import com.financial.cloud.util.SubjectCodeCompat;
 import lombok.RequiredArgsConstructor;
 
 import org.apache.commons.lang3.StringUtils;
@@ -57,16 +58,19 @@ public class StatementBalanceSheetConfigService{
 
         if (!rules.isEmpty()) {
             Map<String, StatementRules> rulesMap = new HashMap<>();
-            List<String> codes = rules.stream().map(item -> {
-                rulesMap.put(item.getSubjectCode(), item);
-                return item.getSubjectCode();
-            }).toList();
+            for (StatementRules item : rules) {
+                for (String candidate : SubjectCodeCompat.lookupCandidates(item.getSubjectCode())) {
+                    rulesMap.putIfAbsent(candidate, item);
+                }
+            }
+            Set<String> codes = SubjectCodeCompat.expandLookupCodes(
+                    rules.stream().map(StatementRules::getSubjectCode).toList());
             LambdaQueryWrapper<StatementSubjectBalance> lqwSubject = Wrappers.lambdaQuery();
             lqwSubject.eq(StatementSubjectBalance::getBookId, bookId);
             lqwSubject.in(StatementSubjectBalance::getSubjectCode, codes);
             List<StatementSubjectBalance> subjectBalances = subjectBalanceMapper.selectList(lqwSubject);
             for (StatementSubjectBalance subjectBalance : subjectBalances) {
-                StatementRules statementRules = rulesMap.get(subjectBalance.getSubjectCode());
+                StatementRules statementRules = SubjectCodeCompat.resolveFromMap(rulesMap, subjectBalance.getSubjectCode());
                 statementBalanceSheetService.updateRuleBalance(subjectBalance, statementRules);
             }
         }

@@ -356,7 +356,7 @@ public class StatementReportService{
             LambdaQueryWrapper<StatementSubjectBalance> lqw = Wrappers.lambdaQuery();
             lqw.in(StatementSubjectBalance::getYearPeriod, allMonths);
             lqw.eq(StatementSubjectBalance::getBookId, dto.getBookId());
-            lqw.eq(!dto.getShowAll(), StatementSubjectBalance::getIsVoucher, YesNoEnum.y.name());
+            lqw.eq(Boolean.FALSE.equals(dto.getShowAll()), StatementSubjectBalance::getIsVoucher, YesNoEnum.y.name());
             res = subjectBalanceMapper.selectList(lqw);
         }
 

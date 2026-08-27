@@ -21,6 +21,25 @@ public final class SubjectCodeCompat {
             Map.entry("660222", "4002")
     );
 
+    /** 企业准则模板科目 → 小企业准则等价科目（结转、报表规则共用） */
+    private static final Map<String, String> CARRY_FORWARD_ALIASES = Map.ofEntries(
+            Map.entry("6001", "5001"),
+            Map.entry("6301", "5051"),
+            Map.entry("6051", "5051"),
+            Map.entry("6401", "5401"),
+            Map.entry("6405", "5403"),
+            Map.entry("6601", "5601"),
+            Map.entry("6602", "5602"),
+            Map.entry("6603", "5603"),
+            Map.entry("6711", "5711"),
+            Map.entry("6801", "5801"),
+            Map.entry("4001", "3001"),
+            Map.entry("4002", "3002"),
+            Map.entry("4103", "3103"),
+            Map.entry("4104", "3104"),
+            Map.entry("410406", "3104.02")
+    );
+
     private SubjectCodeCompat() {
     }
 
@@ -39,12 +58,32 @@ public final class SubjectCodeCompat {
             if (modern != null) {
                 candidates.add(modern);
             }
+            String alias = CARRY_FORWARD_ALIASES.get(code);
+            if (alias != null) {
+                candidates.add(alias);
+            }
             String derived = deriveDotCode(code);
             if (derived != null) {
                 candidates.add(derived);
             }
         }
         return candidates;
+    }
+
+    /** 结转损益模板科目编码候选（模板编码优先，再尝试准则别名） */
+    public static java.util.List<String> carryForwardSubjectCodes(String templateCode) {
+        return new java.util.ArrayList<>(lookupCandidates(templateCode));
+    }
+
+    /** 报表规则绑定的科目编码及其准则别名（用于 IN 查询与余额映射） */
+    public static Set<String> expandLookupCodes(java.util.Collection<String> codes) {
+        LinkedHashSet<String> expanded = new LinkedHashSet<>();
+        if (codes != null) {
+            for (String code : codes) {
+                expanded.addAll(lookupCandidates(code));
+            }
+        }
+        return expanded;
     }
 
     public static <T> T resolveFromMap(Map<String, T> map, String code) {

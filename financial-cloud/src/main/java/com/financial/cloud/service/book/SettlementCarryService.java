@@ -126,55 +126,45 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
             voucherChangeDto.setCarryForward("y");
 
             if (voucherTemplate.getCode().equals("qm_jz_sr")) {//结转收入
-                //贷
-                //主营业务收入
-                addVoucherItems(bookId, "6001", voucherItems, itemsMap.get("6001"));
-                //其他业务收入
-                addVoucherItems(bookId, "6301", voucherItems, itemsMap.get("6301"));
-                //营业外收入
-                addVoucherItems(bookId, "6051", voucherItems, itemsMap.get("6051"));
+                //贷方收入科目 → 借方结转
+                addCarryVoucherItems(bookId, "6001", voucherItems, itemsMap, 1);
+                addCarryVoucherItems(bookId, "6301", voucherItems, itemsMap, 1);
+                addCarryVoucherItems(bookId, "6051", voucherItems, itemsMap, 1);
                 for (VoucherItemChangeDto vt : voucherItems) {
                     debitAmount = debitAmount.add(vt.getDebitAmount());
                 }
                 creditAmount = debitAmount;
-                //借
-                //本年利润
-                voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("4103"), debitAmount));
+                //贷 本年利润
+                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", debitAmount, 2));
             } else if (voucherTemplate.getCode().equals("qm_jz_cbfy")) {//结转成本
-                //主营业务成本
-                addVoucherItems(bookId, "6401", voucherItems, itemsMap.get("6401"));
-                //营业税金及附加
-                addVoucherItems(bookId, "6405", voucherItems, itemsMap.get("6405"));
-                //销售费用
-                addVoucherItems(bookId, "6601", voucherItems, itemsMap.get("6601"));
-                //管理费用
-                addVoucherItems(bookId, "6602", voucherItems, itemsMap.get("6602"));
-                //财务费用
-                addVoucherItems(bookId, "6603", voucherItems, itemsMap.get("6603"));
-                //营业外支出
-                addVoucherItems(bookId, "6711", voucherItems, itemsMap.get("6711"));
+                addCarryVoucherItems(bookId, "6401", voucherItems, itemsMap, 2);
+                addCarryVoucherItems(bookId, "6405", voucherItems, itemsMap, 2);
+                addCarryVoucherItems(bookId, "6601", voucherItems, itemsMap, 2);
+                addCarryVoucherItems(bookId, "6602", voucherItems, itemsMap, 2);
+                addCarryVoucherItems(bookId, "6603", voucherItems, itemsMap, 2);
+                addCarryVoucherItems(bookId, "6711", voucherItems, itemsMap, 2);
                 for (VoucherItemChangeDto vt : voucherItems) {
                     creditAmount = creditAmount.add(vt.getCreditAmount());
                 }
                 debitAmount = creditAmount;
-                //本年利润
-                voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("4103"), debitAmount));
+                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", debitAmount, 1));
             } else if (voucherTemplate.getCode().equals("qm_jz_sds")) {//结转所得税
-                //所得税
-                addVoucherItems(bookId, "6801", voucherItems, itemsMap.get("6801"));
+                addCarryVoucherItems(bookId, "6801", voucherItems, itemsMap, 2);
                 for (VoucherItemChangeDto vt : voucherItems) {
                     creditAmount = creditAmount.add(vt.getCreditAmount());
                 }
                 debitAmount = creditAmount;
-                //本年利润
-                voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("4103"), debitAmount));
+                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", debitAmount, 1));
             } else if (voucherTemplate.getCode().equals("qm_jz_bnlr")) {//年末 结转本年利润
                 if (month == 12) {
-                    StatementSubjectBalance subjectBalance = statementSubjectBalanceService.getSubjectBalance(bookId, "4103");
-                    voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("4103"), subjectBalance.getBalance()));
-                    //未分配利润
-                    subjectBalance = statementSubjectBalanceService.getSubjectBalance(bookId, "410406");
-                    voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("410406"), subjectBalance.getBalance()));
+                    StatementSubjectBalance profitBalance = getCarrySubjectBalance(bookId, "4103");
+                    if (profitBalance == null || profitBalance.getBalance() == null
+                            || profitBalance.getBalance().compareTo(BigDecimal.ZERO) == 0) {
+                        return Message.failed("本年利润无余额，无需结转");
+                    }
+                    BigDecimal amount = profitBalance.getBalance().abs();
+                    voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", amount, 1));
+                    voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "410406", amount, 2));
                 } else {
                     return Message.failed("非年末，无需结转本年利润");
                 }
@@ -260,11 +250,21 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         }
 
         voucherChangeDto.setItems(voucherItems);
+        debitAmount = BigDecimal.ZERO;
+        creditAmount = BigDecimal.ZERO;
+        for (VoucherItemChangeDto item : voucherItems) {
+            debitAmount = debitAmount.add(item.getDebitAmount() != null ? item.getDebitAmount() : BigDecimal.ZERO);
+            creditAmount = creditAmount.add(item.getCreditAmount() != null ? item.getCreditAmount() : BigDecimal.ZERO);
+        }
+        voucherChangeDto.setDebitAmount(debitAmount);
+        voucherChangeDto.setCreditAmount(creditAmount);
         //草稿阶段
         voucherChangeDto.setStatus(VoucherStatusEnum.DRAFT.getValue());
         log.debug("voucherChangeDto {}", voucherChangeDto);
-        //保持凭证
-        voucherService.save(voucherChangeDto);
+        Message<String> saveResult = voucherService.save(voucherChangeDto);
+        if (saveResult.getCode() != Message.SUCCESS) {
+            return saveResult;
+        }
 
         //结转记录
         SettlementCarryforward settlementCarryforward = new SettlementCarryforward();
@@ -277,6 +277,79 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         settlementCarryforwardMapper.insert(settlementCarryforward);
         //返回凭证ID编码
         return Message.ok(voucherChangeDto.getId());
+    }
+
+    private void addCarryVoucherItems(String bookId, String templateSubjectCode,
+                                      List<VoucherItemChangeDto> items,
+                                      Map<String, VoucherTemplateItem> itemsMap,
+                                      int fallbackDirection) {
+        VoucherTemplateItem templateItem = SubjectCodeCompat.resolveFromMap(itemsMap, templateSubjectCode);
+        for (String subjectCode : SubjectCodeCompat.carryForwardSubjectCodes(templateSubjectCode)) {
+            List<BookSubject> subjectList = bookSubjectService.selectSubjectAndChild(bookId, subjectCode);
+            if (subjectList.isEmpty()) {
+                continue;
+            }
+            boolean added = false;
+            for (BookSubject s : subjectList) {
+                if (isLeafSubject(s, subjectList) && s.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+                    VoucherTemplateItem item = templateItem != null
+                            ? templateItem
+                            : fallbackTemplateItem(s.getCode(), fallbackDirection);
+                    items.add(createVoucherItemDtoBySubject(bookId, s, item, s.getBalance().abs()));
+                    added = true;
+                }
+            }
+            if (!added) {
+                for (BookSubject s : subjectList) {
+                    if (s.getCode().equals(subjectCode) && s.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+                        VoucherTemplateItem item = templateItem != null
+                                ? templateItem
+                                : fallbackTemplateItem(s.getCode(), fallbackDirection);
+                        items.add(createVoucherItemDtoBySubject(bookId, s, item, s.getBalance().abs()));
+                        break;
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    private VoucherTemplateItem fallbackTemplateItem(String subjectCode, int direction) {
+        VoucherTemplateItem item = new VoucherTemplateItem();
+        item.setSubjectCode(subjectCode);
+        item.setSummary("结转");
+        item.setDirection(direction);
+        return item;
+    }
+
+    private VoucherItemChangeDto createCarryVoucherItemDto(String bookId,
+                                                           Map<String, VoucherTemplateItem> itemsMap,
+                                                           String templateSubjectCode,
+                                                           BigDecimal amount,
+                                                           int fallbackDirection) {
+        VoucherTemplateItem templateItem = SubjectCodeCompat.resolveFromMap(itemsMap, templateSubjectCode);
+        if (templateItem == null) {
+            for (String code : SubjectCodeCompat.carryForwardSubjectCodes(templateSubjectCode)) {
+                if (!bookSubjectService.selectSubjectAndChild(bookId, code).isEmpty()) {
+                    templateItem = fallbackTemplateItem(code, fallbackDirection);
+                    break;
+                }
+            }
+        }
+        if (templateItem == null) {
+            templateItem = fallbackTemplateItem(templateSubjectCode, fallbackDirection);
+        }
+        return createVoucherItemDto(bookId, templateItem, amount);
+    }
+
+    private StatementSubjectBalance getCarrySubjectBalance(String bookId, String templateSubjectCode) {
+        for (String code : SubjectCodeCompat.carryForwardSubjectCodes(templateSubjectCode)) {
+            StatementSubjectBalance balance = statementSubjectBalanceService.getSubjectBalance(bookId, code);
+            if (balance != null) {
+                return balance;
+            }
+        }
+        return statementSubjectBalanceService.getSubjectBalance(bookId, templateSubjectCode);
     }
 
     private boolean addVoucherItems(String bookId, String subjectCode, List<VoucherItemChangeDto> items, VoucherTemplateItem templateItem) {
@@ -338,7 +411,19 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
      */
     private VoucherItemChangeDto createVoucherItemDto(String bookId,
                                                       VoucherTemplateItem item, BigDecimal amount) {
-        BookSubject bookSubject = bookSubjectService.selectSubject(bookId, item.getSubjectCode());
+        String subjectCode = item.getSubjectCode();
+        BookSubject bookSubject = null;
+        for (String candidate : SubjectCodeCompat.carryForwardSubjectCodes(subjectCode)) {
+            List<BookSubject> subjects = bookSubjectService.selectSubjectAndChild(bookId, candidate);
+            if (!subjects.isEmpty()) {
+                bookSubject = bookSubjectService.selectSubject(bookId, candidate);
+                subjectCode = candidate;
+                break;
+            }
+        }
+        if (bookSubject == null) {
+            bookSubject = bookSubjectService.selectSubject(bookId, subjectCode);
+        }
 
         VoucherItemChangeDto itemDto = new VoucherItemChangeDto();
         itemDto.setSummary(item.getSummary());
@@ -383,12 +468,18 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         carryLqw.eq(SettlementCarryforward::getBookId, bookId);
         carryLqw.eq(SettlementCarryforward::getVoucherId, voucherId);
         SettlementCarryforward settlementCarryforward = settlementCarryforwardMapper.selectOne(carryLqw);
+        if (settlementCarryforward == null) {
+            return Message.failed("结转记录不存在");
+        }
         ArrayList<String> voucherIds = new ArrayList<String>();
         voucherIds.add(settlementCarryforward.getVoucherId());
-        voucherService.delete(voucherIds, bookId);
+        Message<String> deleteResult = voucherService.delete(voucherIds, bookId);
+        if (deleteResult.getCode() != Message.SUCCESS) {
+            return deleteResult;
+        }
 
         settlementCarryforwardMapper.delete(carryLqw);
-        return null;
+        return Message.ok("删除成功");
     }
 
 }

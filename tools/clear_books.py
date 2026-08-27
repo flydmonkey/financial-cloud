@@ -16,7 +16,6 @@ SKIP_TABLES = {
     "permission",
     "role_member",
     "config_login_policy",
-    "config",
     "institutions",
     "socials_provider",
 }
@@ -55,8 +54,12 @@ def main() -> int:
 
         cur.execute("SET FOREIGN_KEY_CHECKS=0")
         for table in tables:
-            if table == "config_cash_flow_balance":
-                sql = f"DELETE FROM `{table}` WHERE book_id IN ({placeholders})"
+            if table == "config":
+                # 保留 template 全局模板配置，仅清理账套配置
+                sql = (
+                    f"DELETE FROM `{table}` WHERE book_id IN ({placeholders}) "
+                    "AND book_id <> 'template'"
+                )
             else:
                 sql = f"DELETE FROM `{table}` WHERE book_id IN ({placeholders})"
             cur.execute(sql, book_ids)

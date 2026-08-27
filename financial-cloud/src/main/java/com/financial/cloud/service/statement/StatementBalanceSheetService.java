@@ -29,6 +29,7 @@ import com.financial.cloud.enums.statement.StatementTypeEnum;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
 import com.financial.cloud.enums.book.SubjectDirectionEnum;
+import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
@@ -378,8 +379,9 @@ public class StatementBalanceSheetService{
         lqwRule.eq(StatementRules::getType, StatementTypeEnum.balance_sheet.name());
         // 相关的所有规则
         List<StatementRules> rules = rulesMapper.selectList(lqwRule);
-        // 所有规则下的绑定科目编号
-        List<String> subjectCodes = rules.stream().map(StatementRules::getSubjectCode).toList();
+        // 所有规则下的绑定科目编号（含小企业准则别名）
+        Set<String> subjectCodes = SubjectCodeCompat.expandLookupCodes(
+                rules.stream().map(StatementRules::getSubjectCode).toList());
         if (CollectionUtils.isNotEmpty(subjectCodes)) {
             // 查询科目余额
             LambdaQueryWrapper<StatementSubjectBalance> lqwSubject = Wrappers.lambdaQuery();
@@ -391,7 +393,8 @@ public class StatementBalanceSheetService{
                     .collect(Collectors.toMap(StatementSubjectBalance::getSubjectCode, item -> item));
             // 更新对应规则的余额和报表余额
             for (StatementRules statementRules : rules) {
-                StatementSubjectBalance subjectBalance = subjectMap.get(statementRules.getSubjectCode());
+                StatementSubjectBalance subjectBalance = SubjectCodeCompat.resolveFromMap(
+                        subjectMap, statementRules.getSubjectCode());
                 updateRuleBalance(subjectBalance, statementRules);
                 StatementBalanceSheetItem balanceSheet = mapSheet.get(statementRules.getItemCode());
                 if (StatementSymbolEnum.PLUS.getValue().equals(statementRules.getSymbol())) {

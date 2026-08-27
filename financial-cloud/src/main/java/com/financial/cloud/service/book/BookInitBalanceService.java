@@ -178,14 +178,20 @@ public class BookInitBalanceService extends ServiceImpl<BookInitBalanceMapper, B
                 }
             }
         }
-        // 更新科目余额
-        Map<String, BookSubject> map = new HashMap<>();
+        // 更新科目余额：必须带上 BookSubject.id，否则 source_id 为空会被 idPath 空段误匹配
         List<String> codes = bookInitBalances.stream().map(BookInitBalance::getCode).toList();
+        String bookId = dtos.get(0).getBookId();
+        Map<String, BookSubject> map = bookSubjectMapper.selectList(
+                        Wrappers.<BookSubject>lambdaQuery()
+                                .eq(BookSubject::getBookId, bookId)
+                                .in(BookSubject::getCode, codes))
+                .stream()
+                .collect(Collectors.toMap(BookSubject::getCode, item -> item, (a, b) -> a));
 
         // 更新科目余额表
         LambdaQueryWrapper<StatementSubjectBalance> balanceLqw = Wrappers.lambdaQuery();
         balanceLqw.in(StatementSubjectBalance::getSubjectCode, codes);
-        balanceLqw.eq(StatementSubjectBalance::getBookId, dtos.get(0).getBookId());
+        balanceLqw.eq(StatementSubjectBalance::getBookId, bookId);
         balanceLqw.eq(StatementSubjectBalance::getPeriodType, StatementPeriodTypeEnum.MONTH.getValue());
         balanceLqw.eq(StatementSubjectBalance::getYearPeriod, currentTerm);
         List<StatementSubjectBalance> balances = statementSubjectBalanceMapper.selectList(balanceLqw);
@@ -203,8 +209,8 @@ public class BookInitBalanceService extends ServiceImpl<BookInitBalanceMapper, B
                         .bookId(bookInitBalance.getBookId())
                         .periodType(StatementPeriodTypeEnum.MONTH.getValue())
                         .yearPeriod(currentTerm)
-                        .sourceId(bookSubject != null ? bookSubject.getId() : "")
-                        .parentId(bookSubject != null ? bookSubject.getParentId() : "")
+                        .sourceId(bookSubject != null ? bookSubject.getId() : null)
+                        .parentId(bookSubject != null ? bookSubject.getParentId() : null)
                         .subjectCode(bookInitBalance.getCode())
                         .subjectName(bookInitBalance.getName())
                         .direction(bookInitBalance.getDirection())
@@ -214,8 +220,10 @@ public class BookInitBalanceService extends ServiceImpl<BookInitBalanceMapper, B
                 String currentId = identifierGenerator.nextId(balance).toString();
                 balance.setId(currentId);
             }
-            balance.setSourceId(bookSubject != null ? bookSubject.getId() : "");
-            balance.setParentId(bookSubject != null ? bookSubject.getParentId() : "");
+            if (bookSubject != null) {
+                balance.setSourceId(bookSubject.getId());
+                balance.setParentId(bookSubject.getParentId());
+            }
             // 年初
             balance.setOpeningYearBalanceDebit(bookInitBalance.getOpeningYearBalanceDebit());
             balance.setOpeningYearBalanceCredit(bookInitBalance.getOpeningYearBalanceCredit());
@@ -244,13 +252,26 @@ public class BookInitBalanceService extends ServiceImpl<BookInitBalanceMapper, B
             }
             
             //上月期末余额
-            balance.setPrevBalance(balance.getBalance());
+            balance.setPrevBalance(
+                    balance.getPrevBalance() != null ? balance.getPrevBalance() : balance.getBalance());
             //上月期末借贷余额
-            balance.setPrevClosingBalanceDebit(balance.getPrevClosingBalanceDebit());
-            balance.setPrevClosingBalanceCredit(balance.getPrevClosingBalanceCredit());
+            balance.setPrevClosingBalanceDebit(
+                    balance.getPrevClosingBalanceDebit() != null
+                            ? balance.getPrevClosingBalanceDebit()
+                            : Optional.ofNullable(balance.getClosingBalanceDebit()).orElse(BigDecimal.ZERO));
+            balance.setPrevClosingBalanceCredit(
+                    balance.getPrevClosingBalanceCredit() != null
+                            ? balance.getPrevClosingBalanceCredit()
+                            : Optional.ofNullable(balance.getClosingBalanceCredit()).orElse(BigDecimal.ZERO));
             //上月期末年度累计
-            balance.setPrevYearToDateDebit(balance.getYearToDateDebit());
-            balance.setPrevYearToDateCredit(balance.getYearToDateCredit());
+            balance.setPrevYearToDateDebit(
+                    balance.getPrevYearToDateDebit() != null
+                            ? balance.getPrevYearToDateDebit()
+                            : Optional.ofNullable(balance.getYearToDateDebit()).orElse(BigDecimal.ZERO));
+            balance.setPrevYearToDateCredit(
+                    balance.getPrevYearToDateCredit() != null
+                            ? balance.getPrevYearToDateCredit()
+                            : Optional.ofNullable(balance.getYearToDateCredit()).orElse(BigDecimal.ZERO));
             
             updateBalances.add(balance);
         }

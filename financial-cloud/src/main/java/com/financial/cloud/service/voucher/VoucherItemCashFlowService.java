@@ -68,7 +68,7 @@ public class VoucherItemCashFlowService extends ServiceImpl<VoucherItemCashFlowM
                     .filter(id -> !existingIds.contains(id))
                     .toList();
             super.removeBatchByIds(idsToBeDeleted);
-        } else {
+        } else if (!nonNullIdList.isEmpty()) {
             VoucherItemCashFlow voucherItemCashFlow = nonNullIdList.get(0);
             //获取当前所选项目的余额方向
             Integer direction = configCashFlowBalanceMapper.selectList(Wrappers.<ConfigCashFlowBalance>lambdaQuery()

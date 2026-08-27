@@ -163,19 +163,8 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 			settlementMapper.insert(settlement);
 			//更新当前账期
 			configSysService.termToNext(dto.getBookId());
-        }else {
-        	//测试用
-        	Settlement settlement = new Settlement();
-	    	settlement.setBookId(dto.getBookId());
-	    	settlement.setYear(currentTermYearMonth.getYear());
-	    	settlement.setYearPeriod(currentTerm);
-	    	//当前期
-	    	settlement.setCurrentTerm(currentTerm);
-	    	//下一期
-	    	settlement.setNextTerm(currentTermYearMonth.plusMonths(1).toString());
-	    	settlement.setStatus(6);
-	    	//statementSubjectBalanceService.checkout(settlement);
-	    	//statementIncomeService.checkout(settlement);
+        } else {
+        	return Message.failed("账期[" + currentTerm + "]已结账");
         }
 		return new Message<>(Message.SUCCESS, "结账完成");
 	}

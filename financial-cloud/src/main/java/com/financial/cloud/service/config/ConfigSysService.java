@@ -289,14 +289,16 @@ public class ConfigSysService{
      * @param config 参数配置信息
      * @return 结果
      */
-    @CachePut(cacheNames = CONFIG_SYS, key = "#config.configKey")
+    @CachePut(cacheNames = CONFIG_SYS, key = "#config.bookId + '_' + #config.configKey")
     public Message<String> update(ConfigSys config) {
         int row = 0;
         if (config.getConfigId() != null) {
             row = baseMapper.updateById(config);
         } else {
-            row = baseMapper.update(config, new LambdaQueryWrapper<ConfigSys>()
-                    .eq(ConfigSys::getConfigKey, config.getConfigKey()));
+            LambdaQueryWrapper<ConfigSys> wrapper = new LambdaQueryWrapper<ConfigSys>()
+                    .eq(ConfigSys::getConfigKey, config.getConfigKey())
+                    .eq(StringUtils.isNotBlank(config.getBookId()), ConfigSys::getBookId, config.getBookId());
+            row = baseMapper.update(config, wrapper);
         }
         if (row > 0) {
             return Message.ok(config.getConfigValue());

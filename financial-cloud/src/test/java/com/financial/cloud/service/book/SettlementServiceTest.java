@@ -1,7 +1,12 @@
 package com.financial.cloud.service.book;
 
+import com.financial.cloud.common.Message;
+import com.financial.cloud.domain.book.Settlement;
+import com.financial.cloud.dto.book.SettlementPageDto;
+import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.book.SettlementMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
+import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.journal.JournalAccountService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
@@ -11,11 +16,6 @@ import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.financial.cloud.common.Message;
-import com.financial.cloud.domain.book.Settlement;
-import com.financial.cloud.dto.book.SettlementPageDto;
-import com.financial.cloud.repository.book.BookMapper;
-import com.financial.cloud.service.book.BookSubjectService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,5 +79,21 @@ class SettlementServiceTest {
         assertEquals(Message.SUCCESS, result.getCode());
         assertEquals(2025, dto.getYear());
         assertEquals(12, result.getData().getRecords().size());
+    }
+
+    @Test
+    void checkout_rejectsWhenCurrentTermAlreadySettled() {
+        Settlement dto = new Settlement();
+        dto.setBookId(BOOK_ID);
+        dto.setYear(2025);
+
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
+        when(settlementMapper.selectOne(any())).thenReturn(new Settlement());
+
+        Message<Settlement> result = settlementService.checkout(dto);
+
+        assertEquals(Message.FAIL, result.getCode());
+        assertTrue(result.getMessage().contains("已结账"));
+        verify(configSysService, never()).termToNext(BOOK_ID);
     }
 }

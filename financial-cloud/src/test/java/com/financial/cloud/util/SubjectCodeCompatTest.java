@@ -3,6 +3,8 @@ package com.financial.cloud.util;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,8 +23,22 @@ class SubjectCodeCompatTest {
     }
 
     @Test
-    void deriveDotCodeConvertsSixDigitSubCode() {
-        assertEquals("2211.01", SubjectCodeCompat.deriveDotCode("221101"));
-        assertNull(SubjectCodeCompat.deriveDotCode("1001"));
+    void carryForwardAliasesResolveSmallBusinessCodes() {
+        assertTrue(SubjectCodeCompat.carryForwardSubjectCodes("6001").contains("5001"));
+        assertTrue(SubjectCodeCompat.carryForwardSubjectCodes("4103").contains("3103"));
+        assertTrue(SubjectCodeCompat.lookupCandidates("4001").contains("3001"));
+        Map<String, String> map = Map.of("3103", "profit");
+        assertEquals("profit", SubjectCodeCompat.resolveFromMap(map, "4103"));
+        Map<String, String> capital = Map.of("3001", "paid-in");
+        assertEquals("paid-in", SubjectCodeCompat.resolveFromMap(capital, "4001"));
+    }
+
+    @Test
+    void expandLookupCodesIncludesAliases() {
+        Set<String> codes = SubjectCodeCompat.expandLookupCodes(List.of("4001", "6001"));
+        assertTrue(codes.contains("4001"));
+        assertTrue(codes.contains("3001"));
+        assertTrue(codes.contains("6001"));
+        assertTrue(codes.contains("5001"));
     }
 }

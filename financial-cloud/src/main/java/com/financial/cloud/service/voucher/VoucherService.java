@@ -731,12 +731,19 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (unauditVouchers.isEmpty()) {
             return Message.failed("没有可以反审核的凭证（需为已审核且未过账）");
         }
-        boolean b = Db.updateBatchById(unauditVouchers);
-        return b ? new Message<>(Message.SUCCESS,
+        for (Voucher voucher : unauditVouchers) {
+            baseMapper.update(null, Wrappers.<Voucher>lambdaUpdate()
+                    .eq(Voucher::getId, voucher.getId())
+                    .set(Voucher::getStatus, voucher.getStatus())
+                    .set(Voucher::getAuditMemberId, null)
+                    .set(Voucher::getAuditMemberName, null)
+                    .set(Voucher::getAuditDate, null));
+        }
+        return new Message<>(Message.SUCCESS,
                 "操作总数：" + ids.size()
                         + "; 成功：" + unauditVouchers.size()
                         + "; 失败：" + (vouchers.size() - unauditVouchers.size())
-        ) : Message.failed("操作失败");
+        );
     }
 
     /**
@@ -768,9 +775,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                 BeanUtil.copyProperties(itemVo, build);
                 return build;
             }).toList();
-            if (YesNoEnum.n.name().equals(voucher.getCarryForward())) {
-                updateSubjectBalance(items, auxiliaries, false);
-            }
+            updateSubjectBalance(items, auxiliaries, false);
             setVoucherItemCashFlow(toChangeDto(voucherVo));
 
             voucher.setSenderId(userInfo.getId());
@@ -818,9 +823,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                 BeanUtil.copyProperties(itemVo, build);
                 return build;
             }).toList();
-            if (YesNoEnum.n.name().equals(voucher.getCarryForward())) {
-                updateSubjectBalance(items, auxiliaries, true);
-            }
+            updateSubjectBalance(items, auxiliaries, true);
             removeVoucherItemCashFlow(voucher.getId());
 
             voucher.setSenderId(null);
@@ -831,12 +834,18 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (unsenderVouchers.isEmpty()) {
             return Message.failed("没有可以反过账的凭证（需为已过账且所在期间未结账）");
         }
-        boolean b = Db.updateBatchById(unsenderVouchers);
-        return b ? new Message<>(Message.SUCCESS,
+        for (Voucher voucher : unsenderVouchers) {
+            baseMapper.update(null, Wrappers.<Voucher>lambdaUpdate()
+                    .eq(Voucher::getId, voucher.getId())
+                    .set(Voucher::getSenderId, null)
+                    .set(Voucher::getSenderDate, null)
+                    .set(Voucher::getSenderName, null));
+        }
+        return new Message<>(Message.SUCCESS,
                 "操作总数：" + ids.size()
                         + "; 成功：" + unsenderVouchers.size()
                         + "; 失败：" + (vouchers.size() - unsenderVouchers.size())
-        ) : Message.failed("操作失败");
+        );
     }
 
     /**

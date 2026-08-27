@@ -4,11 +4,15 @@ import {fileURLToPath} from 'url'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= path.join(rootDir, '.playwright-browsers')
+if (process.env.npm_lifecycle_event === 'test:e2e:ui-pages') {
+    process.env.E2E_ENABLE_UI = '1'
+}
 
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3154'
 
 export default defineConfig({
     testDir: './e2e',
+    globalSetup: path.join(rootDir, 'e2e/global-setup.ts'),
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,

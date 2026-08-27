@@ -6,8 +6,21 @@ import {expect} from '@playwright/test'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 
+function resolvePython(): string {
+    for (const candidate of ['python3', 'python']) {
+        try {
+            execSync(`${candidate} --version`, {stdio: 'ignore'})
+            return candidate
+        } catch {
+            // try next
+        }
+    }
+    return 'python3'
+}
+
 export function clearBooksViaScript() {
-    execSync('python tools/clear_books.py', {
+    const python = resolvePython()
+    execSync(`${python} tools/clear_books.py`, {
         cwd: repoRoot,
         stdio: 'inherit',
         encoding: 'utf-8',

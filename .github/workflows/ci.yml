@@ -103,11 +103,13 @@ jobs:
         working-directory: financial-cloud-ui
         run: npm run test:e2e:accounting
         env:
+          CI: 'true'
           E2E_BASE_URL: http://localhost:3154
           E2E_RESET_BOOK: '1'
       - name: Run E2E year-end suite
         working-directory: financial-cloud-ui
         run: npm run test:e2e:year-end
         env:
+          CI: 'true'
           E2E_BASE_URL: http://localhost:3154
           E2E_RESET_BOOK: '1'

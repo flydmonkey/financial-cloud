@@ -143,10 +143,15 @@ jobs:
         working-directory: financial-cloud-ui
         run: |
           set +e
-          npm run test:e2e:accounting
+          npm run test:e2e:accounting > ../e2e-accounting.log 2>&1
           code=$?
+          cat ../e2e-accounting.log
           if [ $code -ne 0 ]; then
             echo "::error::E2E accounting suite exited with $code"
+            # Surface the most useful lines in check annotations (readable without private logs).
+            grep -E 'Error:|error:|failed|Executable|globalSetup|Timeout|not found|Code:' ../e2e-accounting.log | tail -n 30 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
             echo "==== frontend log (tail) ===="
             tail -n 80 ../frontend-ci.log || true
             echo "==== backend log (tail) ===="

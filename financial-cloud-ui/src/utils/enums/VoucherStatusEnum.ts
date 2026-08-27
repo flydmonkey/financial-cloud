@@ -31,7 +31,7 @@ export function getVoucherStatusDesc(value: string, senderId?: string | null): s
         if (senderId) {
             return `<span style="color: #409EFF">已过账</span>`;
         }
-        return `<span style="color: #67C23A">已审核·待过账</span>`;
+        return `<span style="color: #E6A23C">待过账</span>`;
     }
     if (status) {
         const color = statusColors[status];

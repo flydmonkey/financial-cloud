@@ -455,10 +455,10 @@ const data = reactive({
     word: null,
     bookId: null,
     companyName: null,
-    voucherYear: currBookStore.termCurrent ? currBookStore.termCurrent.substring(0, 4) : parseTime(new Date(), "{y}"),
-    voucherMonth: currBookStore.termCurrent ? currBookStore.termCurrent.substring(5, 7) : parseTime(new Date(), "{m}"),
-    voucherYear: currBookStore.termCurrent ? currBookStore.termCurrent.substring(0, 4) : parseTime(new Date(), "{y}"),
-    voucherMonth: currBookStore.termCurrent ? currBookStore.termCurrent.substring(5, 7) : parseTime(new Date(), "{m}"),
+    voucherYear: null,
+    voucherMonth: null,
+    voucherDateStart: null,
+    voucherDateEnd: null,
     voucherDate: null,
     includeItems: true,
   },
@@ -469,6 +469,7 @@ const {queryParams, form} = toRefs(data);
 function initPeriodRange() {
   const term = currBookStore.termCurrent || parseTime(new Date(), "{y}-{m}")
   periodRange.value = [term, term]
+  applyPeriodRange(periodRange.value)
 }
 
 function buildTableRows(vouchers) {
@@ -592,13 +593,29 @@ function getSummaries(param) {
   return sums
 }
 
-function handlePeriodChange(range) {
+function lastDayOfMonth(yearMonth) {
+  const [year, month] = yearMonth.split('-').map(Number)
+  const day = new Date(year, month, 0).getDate()
+  return `${yearMonth}-${String(day).padStart(2, '0')}`
+}
+
+function applyPeriodRange(range) {
   if (!range || range.length !== 2) {
+    queryParams.value.voucherDateStart = null
+    queryParams.value.voucherDateEnd = null
+    queryParams.value.voucherYear = null
+    queryParams.value.voucherMonth = null
     return
   }
-  const [start] = range
-  queryParams.value.voucherYear = start.substring(0, 4)
-  queryParams.value.voucherMonth = start.substring(5, 7)
+  const [start, end] = range
+  queryParams.value.voucherYear = null
+  queryParams.value.voucherMonth = null
+  queryParams.value.voucherDateStart = `${start}-01`
+  queryParams.value.voucherDateEnd = lastDayOfMonth(end)
+}
+
+function handlePeriodChange(range) {
+  applyPeriodRange(range)
   handleQuery()
 }
 

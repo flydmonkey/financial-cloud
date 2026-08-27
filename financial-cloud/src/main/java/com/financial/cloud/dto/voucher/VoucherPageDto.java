@@ -54,6 +54,20 @@ public class VoucherPageDto extends PageQuery {
     private Integer voucherMonth;
 
     /**
+     * 凭证日期起（期间范围）
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date voucherDateStart;
+
+    /**
+     * 凭证日期止（期间范围）
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date voucherDateEnd;
+
+    /**
      * 日期
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")

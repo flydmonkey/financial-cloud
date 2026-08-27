@@ -975,8 +975,13 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     private LambdaQueryWrapper<Voucher> buildQueryWrapper(VoucherPageDto bo) {
         LambdaQueryWrapper<Voucher> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getBookId() != null, Voucher::getBookId, bo.getBookId());
-        lqw.eq(bo.getVoucherYear() != null, Voucher::getVoucherYear, bo.getVoucherYear());
-        lqw.eq(bo.getVoucherMonth() != null, Voucher::getVoucherMonth, bo.getVoucherMonth());
+        if (bo.getVoucherDateStart() != null && bo.getVoucherDateEnd() != null) {
+            lqw.ge(Voucher::getVoucherDate, bo.getVoucherDateStart());
+            lqw.le(Voucher::getVoucherDate, bo.getVoucherDateEnd());
+        } else {
+            lqw.eq(bo.getVoucherYear() != null, Voucher::getVoucherYear, bo.getVoucherYear());
+            lqw.eq(bo.getVoucherMonth() != null, Voucher::getVoucherMonth, bo.getVoucherMonth());
+        }
         lqw.eq(bo.getVoucherDate() != null, Voucher::getVoucherDate, bo.getVoucherDate());
         lqw.likeRight(StringUtils.isNotBlank(bo.getWord()), Voucher::getWord, bo.getWord());
         lqw.like(StringUtils.isNotBlank(bo.getCompanyName()), Voucher::getCompanyName, bo.getCompanyName());

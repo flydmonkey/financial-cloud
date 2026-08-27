@@ -85,7 +85,7 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
         		userInfo.setBookId(books.get(0).getId());
         		userInfoService.switchBook(userInfo);
         	}else {
-        		userInfo.setBookId(userInfo.getId());
+        		userInfo.setBookId(null);
         	}
         }
 		return userInfo;

@@ -84,4 +84,9 @@ public class VoucherPageDto extends PageQuery {
      * 状态：暂存 - Draft,审核中 - Reviewing，已完成 - Completed，被拒绝 - Rejected，已取消 - Cancelled
      */
     private String status;
+
+    /**
+     * 列表查询是否附带凭证明细分录
+     */
+    private Boolean includeItems;
 }

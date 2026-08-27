@@ -10,7 +10,9 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.dto.book.BookChangeDto;
 import com.financial.cloud.dto.book.BookPageDto;
+import com.financial.cloud.dto.book.BookSetupVo;
 import com.financial.cloud.dto.book.BookVo;
+import com.financial.cloud.dto.book.OnboardingStatusVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.service.book.BookService;
@@ -68,5 +70,17 @@ public class BookController {
     @GetMapping("/fetchAll")
     public Message<List<BookVo>> listStore(@CurrentUser UserInfo currentUser) {
         return Message.ok(bookService.listBooks(currentUser.getId()));
+    }
+
+    @GetMapping("/onboarding-status")
+    public Message<OnboardingStatusVo> onboardingStatus(@CurrentUser UserInfo currentUser) {
+        return Message.ok(bookService.onboardingStatus(currentUser.getId()));
+    }
+
+    @PostMapping("/setup")
+    public Message<BookSetupVo> setup(@Validated(value = AddGroup.class) @RequestBody BookChangeDto dto,
+                                        @CurrentUser UserInfo currentUser) {
+        log.debug("setup {} for user {}", dto, currentUser.getId());
+        return bookService.setup(dto, currentUser);
     }
 }

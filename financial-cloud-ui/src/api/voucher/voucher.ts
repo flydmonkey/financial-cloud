@@ -154,12 +154,34 @@ export function auditBatch(ids: any): any {
 }
 
 /**
+ * 反审核凭证
+ * @param ids
+ */
+export function unauditBatch(ids: any): any {
+    return request({
+        url: '/voucher/unaudit/' + ids,
+        method: 'put'
+    })
+}
+
+/**
  * 过账凭证
  * @param ids
  */
 export function senderBatch(ids: any): any {
     return request({
         url: '/voucher/sender/' + ids,
+        method: 'put'
+    })
+}
+
+/**
+ * 反过账凭证
+ * @param ids
+ */
+export function unsenderBatch(ids: any): any {
+    return request({
+        url: '/voucher/unsender/' + ids,
         method: 'put'
     })
 }

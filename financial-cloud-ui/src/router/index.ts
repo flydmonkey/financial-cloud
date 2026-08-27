@@ -58,6 +58,12 @@ export const constantRoutes: any = [
         hidden: true
     },
     {
+        path: '/onboarding',
+        component: () => import('@/views/onboarding/index.vue'),
+        hidden: true,
+        meta: {title: '初始化账套'}
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import('@/views/system/error/404.vue'),
         hidden: true

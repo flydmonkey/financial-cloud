@@ -24,7 +24,11 @@ import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.service.book.BookService;
-import com.financial.cloud.service.book.BookSubjectService;
+import com.financial.cloud.domain.permissions.PermissionBook;
+import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.dto.book.BookSetupVo;
+import com.financial.cloud.dto.book.OnboardingStatusVo;
+import com.financial.cloud.service.permissions.PermissionBookService;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
@@ -54,6 +58,8 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
     private final VoucherTemplateService voucherTemplateService;
 
     private final StandardSubjectCashFlowService standardSubjectCashFlowService;
+
+    private final PermissionBookService permissionBookService;
     public Message<Page<Book>> pageList(BookPageDto dto) {
         Page<Book> page = bookMapper.pageList(dto.build(), dto);
 
@@ -164,6 +170,23 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
     }
     public List<BookVo> listBooks(String userId) {
         return bookMapper.listBooks(userId);
+    }
+
+    public OnboardingStatusVo onboardingStatus(String userId) {
+        return new OnboardingStatusVo(listBooks(userId).isEmpty());
+    }
+
+    @Transactional
+    public Message<BookSetupVo> setup(BookChangeDto dto, UserInfo currentUser) {
+        if (!listBooks(currentUser.getId()).isEmpty()) {
+            return new Message<>(Message.FAIL, "账套已存在，无需初始化");
+        }
+        Message<String> saveResult = save(dto);
+        if (saveResult.getCode() != Message.SUCCESS) {
+            return new Message<>(saveResult.getCode(), saveResult.getMessage());
+        }
+        permissionBookService.save(new PermissionBook(currentUser.getId(), dto.getId()));
+        return Message.ok(new BookSetupVo(dto.getId()));
     }
 
 }

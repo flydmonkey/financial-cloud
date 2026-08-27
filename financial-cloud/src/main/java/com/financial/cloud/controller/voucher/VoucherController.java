@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemPageDto;
 import com.financial.cloud.dto.voucher.VoucherPageDto;
@@ -72,12 +73,18 @@ public class VoucherController {
     public Message<String> draft(@Validated(value = AddGroup.class) @RequestBody VoucherChangeDto dto,
                                  @CurrentUser UserInfo userInfo) {
         dto.setBookId(userInfo.getBookId());
-        dto.setStatus(VoucherStatusEnum.DRAFT.getValue());
         if (StringUtils.isEmpty(dto.getId())) {
+            dto.setStatus(VoucherStatusEnum.DRAFT.getValue());
             return voucherService.save(dto);
-        } else {
-            return voucherService.update(dto);
         }
+        Voucher existing = voucherService.getById(dto.getId());
+        if (existing != null && StringUtils.isBlank(existing.getSenderId())
+                && !VoucherStatusEnum.CANCELLED.getValue().equals(existing.getStatus())) {
+            dto.setStatus(existing.getStatus());
+        } else {
+            dto.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        }
+        return voucherService.update(dto);
     }
 
     @PutMapping("/update")
@@ -134,10 +141,22 @@ public class VoucherController {
         return voucherService.audit(ids, userInfo);
     }
 
+    @PutMapping("/unaudit/{ids}")
+    public Message<Void> unaudit(@PathVariable(name = "ids") List<String> ids,
+                                   @CurrentUser UserInfo userInfo) {
+        return voucherService.unaudit(ids, userInfo.getBookId());
+    }
+
     @PutMapping("/sender/{ids}")
     public Message<Void> sender(@PathVariable(name = "ids") List<String> ids,
                                 @CurrentUser UserInfo userInfo) {
         return voucherService.sender(ids, userInfo);
+    }
+
+    @PutMapping("/unsender/{ids}")
+    public Message<Void> unsender(@PathVariable(name = "ids") List<String> ids,
+                                  @CurrentUser UserInfo userInfo) {
+        return voucherService.unsender(ids, userInfo.getBookId());
     }
 
     @PutMapping("/manage-audit/{ids}")

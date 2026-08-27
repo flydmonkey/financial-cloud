@@ -217,7 +217,56 @@ public class ConfigSysService{
             }
         }
         boolean insertBatch = Db.saveBatch(data);
+        ensureBookConfigsComplete(bookId);
         return Message.ok(insertBatch);
+    }
+
+    /**
+     * 从 template 补全账套缺失的系统参数（兼容旧账套或新增参数项）
+     */
+    @Transactional
+    public void ensureBookConfigsComplete(String bookId) {
+        if (StringUtils.isBlank(bookId) || ConstsSysConfig.SYS_CONFIG_TEMPLATE_ID.equals(bookId)) {
+            return;
+        }
+        Map<String, String> existing = getBookConfigMap(bookId);
+        for (String configKey : BOOKS_KEYS) {
+            if (existing.containsKey(configKey)) {
+                continue;
+            }
+            ConfigSys template = baseMapper.selectOne(new LambdaQueryWrapper<ConfigSys>()
+                    .eq(ConfigSys::getBookId, ConstsSysConfig.SYS_CONFIG_TEMPLATE_ID)
+                    .eq(ConfigSys::getConfigKey, configKey));
+            if (template == null) {
+                String defaultValue = defaultBookConfigValue(configKey);
+                if (defaultValue == null) {
+                    continue;
+                }
+                ConfigSys copy = new ConfigSys();
+                copy.setBookId(bookId);
+                copy.setConfigName(configKey);
+                copy.setConfigKey(configKey);
+                copy.setConfigValue(defaultValue);
+                copy.setConfigType("y");
+                baseMapper.insert(copy);
+                continue;
+            }
+            ConfigSys copy = new ConfigSys();
+            copy.setBookId(bookId);
+            copy.setConfigName(template.getConfigName());
+            copy.setConfigKey(template.getConfigKey());
+            copy.setConfigValue(template.getConfigValue());
+            copy.setConfigType(template.getConfigType());
+            copy.setRemark(template.getRemark());
+            baseMapper.insert(copy);
+        }
+    }
+
+    private String defaultBookConfigValue(String configKey) {
+        if (ConstsSysConfig.SYS_ASSIST_ACC_ENABLED.equals(configKey)) {
+            return "false";
+        }
+        return null;
     }
 
     /**

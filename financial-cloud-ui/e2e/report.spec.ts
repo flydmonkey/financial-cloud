@@ -1,16 +1,6 @@
 import {expect, test} from '@playwright/test'
 import {getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-
-function sheetGrandTotal(items: Array<{itemCode?: string; currentBalance?: number | string}>) {
-    const totals = items.filter((item) => (item.itemCode || '').endsWith('99'))
-    if (totals.length === 0) {
-        return null
-    }
-    const grand = totals.reduce((max, item) =>
-        (item.itemCode || '') > (max.itemCode || '') ? item : max,
-    )
-    return Number(grand.currentBalance ?? 0)
-}
+import {sheetGrandTotal} from './helpers/reports'
 
 test.describe('report module', () => {
     test('balance sheet API returns total rows', async ({request}) => {

@@ -46,7 +46,7 @@
           v-loading="submitButtonLoading"
           @click="onSubmit"
         >
-          提交
+          保存
         </el-button>
       </el-tooltip>
       <el-tooltip
@@ -792,7 +792,7 @@ const props: any = defineProps({
 const auxiliaryVisible = ref<Array<boolean>>([])
 const route: any = useRoute()
 const router: any = useRouter()
-// 定义回调接口，提交按钮触发
+// 定义回调接口，保存按钮触发
 const emit: any = defineEmits(['submit', "update:modelValue"])
 const visibleContextmenu = ref(false)
 const submitButtonLoading = ref(false)
@@ -1842,22 +1842,35 @@ const onReset = () => {
   }
 }
 
-// 提交数据
+function ensureVoucherPeriodFields() {
+  const dateStr = formData.value.voucherDate
+  if (!dateStr) {
+    return
+  }
+  formData.value.voucherYear = Number(dateStr.substring(0, 4))
+  formData.value.voucherMonth = Number(dateStr.substring(5, 7))
+}
+
+function shouldUseSubmitFlow() {
+  const status = formData.value.status
+  return !formData.value.id || !status || status === 'draft'
+}
+
+// 保存数据（新建可直接保存，无需先暂存）
 const onSubmit = () => {
   if (submitButtonLoading.value) {
     return false
-  }
-  if (!formData.value.id) {
-    ElMessage.error(`请先暂存后提交`)
-    return false;
   }
 
   validateForm(formData.value, {
     bookId: [
       {required: true, message: '所属账套不能为空', trigger: 'blur'},
     ],
-    word: [
+    wordHead: [
       {required: true, message: '凭证字不能为空', trigger: 'blur'},
+    ],
+    wordNum: [
+      {required: true, message: '凭证号不能为空', trigger: 'blur'},
     ],
     companyName: [
       {required: true, message: '公司名称不能为空', trigger: 'blur'},
@@ -1872,19 +1885,32 @@ const onSubmit = () => {
       return false
     }
 
+    closeOverlayOnly()
+    ensureVoucherPeriodFields()
     submitButtonLoading.value = true
-    submitVoucher({
+    const payload = {
       ...formData.value,
       items: preparedItems,
-    }).then((res: any) => {
-      ElMessage.success(res.message || `提交成功`)
+    }
+    const saveRequest = shouldUseSubmitFlow()
+        ? submitVoucher(payload)
+        : draftVoucher(payload)
+
+    saveRequest.then((res: any) => {
+      ElMessage.success(res.message || `保存成功`)
+      const voucherId = res.data || formData.value.id
+      if (voucherId) {
+        getOneVoucher(voucherId).then((voucherRes: any) => {
+          applyLoadedVoucherData(voucherRes.data)
+        })
+      }
       if (props.dialog) {
         emit("submit", res)
       } else {
         router.push({path: "/voucher/voucher-index"})
       }
     }).catch((err: any) => {
-      ElMessage.error(err?.message || '提交失败')
+      ElMessage.error(err?.message || '保存失败')
       emit("submit", err)
     }).finally(() => {
       submitButtonLoading.value = false

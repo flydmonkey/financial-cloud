@@ -6,6 +6,12 @@ const {t} = i18n.global;
 
 let loadingInstance: any;
 
+export function isModalCancel(err: unknown): boolean {
+    return err === 'cancel' || err === 'close'
+        || (typeof err === 'object' && err !== null
+            && ((err as { action?: string }).action === 'cancel'
+                || (err as { action?: string }).action === 'close'))
+}
 
 export default {
     // 消息提示
@@ -63,6 +69,9 @@ export default {
             cancelButtonText: t('jbx.text.cancel'),
             type: "warning",
         })
+    },
+    isCancel(err: unknown) {
+        return isModalCancel(err)
     },
     // 提交内容
     prompt(content: any) {

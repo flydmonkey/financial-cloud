@@ -770,7 +770,17 @@ public class FundDashboardService{
         // 资产负载数据
         String currentLiabilitiesCode = configMap.get(ConstsSysConfig.SYS_DEFAULT_CURRENT_LIABILITIES);
         StatementBalanceSheet statementBalanceSheet = balanceSheetService.queryBalanceSheet(params, false).getData();
-        StatementBalanceSheetItemListVo itemListVo = statementBalanceSheet.getItems();
+        StatementBalanceSheetItemListVo itemListVo = statementBalanceSheet != null ? statementBalanceSheet.getItems() : null;
+        if (itemListVo == null || itemListVo.getLiability() == null || itemListVo.getAssets() == null) {
+            if (isLast) {
+                data.setCashRatioLastYear(0f);
+                data.setQuickRatioLastYear(0f);
+            } else {
+                data.setCashRatio(0f);
+                data.setQuickRatio(0f);
+            }
+            return;
+        }
         List<StatementBalanceSheetItem> assetItems = itemListVo.getAssets();
         List<StatementBalanceSheetItem> liabilityItems = itemListVo.getLiability();
         Optional<StatementBalanceSheetItem> maxItem = liabilityItems.stream()

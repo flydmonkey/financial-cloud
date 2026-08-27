@@ -21,6 +21,7 @@ import com.financial.cloud.domain.statement.StatementSubjectBalance;
 import com.financial.cloud.domain.voucher.VoucherTemplate;
 import com.financial.cloud.domain.voucher.VoucherTemplateItem;
 import com.financial.cloud.dto.voucher.GenerateVoucherDto;
+import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
 import com.financial.cloud.dto.voucher.VoucherTemplatePageDto;
@@ -211,19 +212,19 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
 	        		//银行存款计算
 	        		 BigDecimal creditYyckAmount = BigDecimal.ZERO;
 	        		 //应付职工薪酬
-	        		 if(itemsMap.containsKey("221101")) {
+	        		 if(SubjectCodeCompat.mapContains(itemsMap, "221101")) {
 	        			 debitAmount = summary.getPayAmount();
 	        			 creditYyckAmount = debitAmount;
-	        			 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("221101"), debitAmount));
+	        			 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "221101"), debitAmount));
 	        		 }
 	        		 //个人社保
-	        		 if(itemsMap.containsKey("122102")) {
-	        			 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("122102"), summary.getTotalSocialInsurance()));
+	        		 if(SubjectCodeCompat.mapContains(itemsMap, "122102")) {
+	        			 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "122102"), summary.getTotalSocialInsurance()));
 	        			 creditYyckAmount = creditYyckAmount.subtract(summary.getTotalSocialInsurance());
 	        		 }
 	        		 //个人所得税
-	        		 if(itemsMap.containsKey("222114")) {
-	        			 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("222114"), summary.getBusinessSocialInsurance()));
+	        		 if(SubjectCodeCompat.mapContains(itemsMap, "222114")) {
+	        			 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "222114"), summary.getBusinessSocialInsurance()));
 	        			 creditYyckAmount = creditYyckAmount.subtract(summary.getBusinessSocialInsurance());
 	        		 }
 	        		 
@@ -234,15 +235,15 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
 	                 }
 	        		 creditAmount = debitAmount;
 	        	 }else if (voucherTemplate.getCode().startsWith("zf_shebao")){
-		        	if(itemsMap.containsKey("122102")) {
+		        	if(SubjectCodeCompat.mapContains(itemsMap, "122102")) {
 		        		 //社保-个人
 		        		 debitAmount = debitAmount.add(summary.getTotalSocialInsurance());
-		        		 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("122102"), summary.getTotalSocialInsurance()));
+		        		 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "122102"), summary.getTotalSocialInsurance()));
 		        	}
-		        	if(itemsMap.containsKey("221103")) {
+		        	if(SubjectCodeCompat.mapContains(itemsMap, "221103")) {
 		        		 //社保-单位
 		        		 debitAmount = debitAmount.add(summary.getBusinessSocialInsurance());
-		        		 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("221103"), summary.getBusinessSocialInsurance()));
+		        		 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "221103"), summary.getBusinessSocialInsurance()));
 		        	}
 	        		 for (VoucherTemplateItem item : items) {
 	        			 if(item.getSubjectCode().startsWith("1002")) {

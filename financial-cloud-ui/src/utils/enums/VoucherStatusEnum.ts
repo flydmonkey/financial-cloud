@@ -10,7 +10,7 @@ enum Status {
 const statusDescriptions: { [key in Status]: string } = {
     [Status.DRAFT]: "暂存",
     [Status.UNDER_REVIEW]: "审核中",
-    [Status.COMPLETED]: "已完成",
+    [Status.COMPLETED]: "已审核",
     [Status.REJECTED]: "被拒绝",
     [Status.CANCELLED]: "已取消"
 };
@@ -25,13 +25,16 @@ const statusColors: { [key in Status]: string } = {
 };
 
 // 根据输入值获取中文描述，并添加颜色
-export function getVoucherStatusDesc(value: string): string {
-    // 使用枚举值反向查找映射
+export function getVoucherStatusDesc(value: string, senderId?: string | null): string {
     const status = Object.values(Status).find(status => status === value);
+    if (status === Status.COMPLETED) {
+        if (senderId) {
+            return `<span style="color: #409EFF">已过账</span>`;
+        }
+        return `<span style="color: #67C23A">已审核·待过账</span>`;
+    }
     if (status) {
-        // 获取对应状态的颜色
         const color = statusColors[status];
-        // 返回带有颜色的 span 标签
         return `<span style="color: ${color}">${statusDescriptions[status]}</span>`;
     }
     return value;

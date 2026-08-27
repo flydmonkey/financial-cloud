@@ -30,7 +30,7 @@
     <el-sub-menu
       v-else
       ref="subMenu"
-      :index="resolvePath(item.path)"
+      :index="menuIndex(item)"
       teleported
     >
       <template
@@ -48,8 +48,8 @@
       </template>
 
       <sidebar-item
-        v-for="(child, index) in item.children"
-        :key="child.path + index"
+        v-for="child in item.children"
+        :key="child.name || child.path"
         :is-nest="true"
         :item="child"
         :base-path="resolvePath(child.path)"
@@ -118,6 +118,14 @@ function hasOneShowingChild(children: any = [], parent: any) {
   }
 
   return false
+}
+
+function menuIndex(item: any) {
+  const path = resolvePath(item.path)
+  if (path) {
+    return path
+  }
+  return item.name || item.id || item.meta?.title
 }
 
 function resolvePath(routePath: any, routeQuery?: any) {

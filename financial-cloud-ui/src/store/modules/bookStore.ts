@@ -36,8 +36,15 @@ const bookStore: any = defineStore(
             },
             refreshData() {
                 return listStore().then((res: any) => {
-                    this.setList = res.data;
+                    this.setList = res.data || [];
                     setSetList(this.setList);
+
+                    if (this.setList.length === 0) {
+                        this.bookId = "";
+                        this.termCurrent = undefined;
+                        this.termStart = undefined;
+                        return Promise.resolve();
+                    }
 
                     if (!this.bookId && this.setList.length > 0) {
                         const item: any = this.setList[0];

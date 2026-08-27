@@ -14,7 +14,7 @@ import appStore from "@/store/modules/app.js";
 
 NProgress.configure({showSpinner: false});
 
-const whiteList: any = ['/login', '/register', '/callback', '/forgot'];
+const whiteList: any = ['/login', '/register', '/callback', '/forgot', '/onboarding'];
 
 router.beforeEach(async (to: any, from: any, next: any) => {
     NProgress.start();
@@ -44,6 +44,22 @@ router.beforeEach(async (to: any, from: any, next: any) => {
                     await booksSetStore().refreshData();
 
                     await userStore.currentUser();
+
+                    if (booksSetStore().setList.length === 0) {
+                        if (to.path !== '/onboarding') {
+                            next({path: '/onboarding', replace: true});
+                            NProgress.done();
+                            return;
+                        }
+                        next();
+                        return;
+                    }
+
+                    if (to.path === '/onboarding') {
+                        next({path: '/', replace: true});
+                        return;
+                    }
+
                     const accessRoutes = await usePermissionStore().generateRoutes();
 
                     accessRoutes.forEach((route: any) => {
@@ -60,6 +76,16 @@ router.beforeEach(async (to: any, from: any, next: any) => {
                     next({path: '/'});
                 }
             } else {
+                const booksStore = booksSetStore();
+                if (booksStore.setList.length === 0 && to.path !== '/onboarding') {
+                    next({path: '/onboarding', replace: true});
+                    NProgress.done();
+                    return;
+                }
+                if (booksStore.setList.length > 0 && to.path === '/onboarding') {
+                    next({path: '/', replace: true});
+                    return;
+                }
                 next();
             }
         }

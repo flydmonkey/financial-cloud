@@ -47,4 +47,18 @@ export function listStore(): any {
     })
 }
 
+export function getOnboardingStatus(): any {
+    return request({
+        url: '/book/onboarding-status',
+        method: 'get'
+    })
+}
+
+export function setupBook(data: any): any {
+    return request({
+        url: '/book/setup',
+        method: 'post',
+        data: data
+    })
+}
 

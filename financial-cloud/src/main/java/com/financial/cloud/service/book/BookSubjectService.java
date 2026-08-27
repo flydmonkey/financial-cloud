@@ -32,6 +32,7 @@ import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.util.StrUtils;
 import com.financial.cloud.util.SubjectDisplayNameUtils;
+import com.financial.cloud.util.SubjectHierarchyUtils;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -513,67 +514,20 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         for (BookSubject subject : subjectList) {
             subjectMap.put(subject.getCode(), subject);
         }
-        //1级
         for (BookSubject subject : subjectList) {
-            if (subject.getCode().length() == 4) {
-            	subject.setIdPath("/"+subject.getId());
+            String parentCode = SubjectHierarchyUtils.resolveParentCode(subject.getCode());
+            BookSubject parentSubject = parentCode == null ? null : subjectMap.get(parentCode);
+            if (parentSubject == null) {
+                subject.setIdPath("/" + subject.getId());
                 subject.setDisplayName(subject.getName());
                 subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
                 subject.setPinyinDisplayCode(subject.getPinyinCode());
-            }
-        }
-        //2级
-        for (BookSubject subject : subjectList) {
-            if (subject.getCode().length() == 6) {
-                String parentCode = subject.getCode().substring(0, 4);
-                BookSubject parentSubject = subjectMap.get(parentCode);
-                if (parentSubject != null) {
-                    subject.setParentId(parentSubject.getId());
-                    subject.setIdPath(parentSubject.getIdPath()+"/"+subject.getId());
-                    subject.setDisplayName(parentSubject.getDisplayName() + "_" + subject.getName());
-                    subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
-                    subject.setPinyinDisplayCode(parentSubject.getPinyinDisplayCode() + "_" + subject.getPinyinCode());
-                } else {
-                    subject.setDisplayName(subject.getName());
-                    subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
-                    subject.setPinyinDisplayCode(subject.getPinyinCode());
-                }
-            }
-        }
-        //3级
-        for (BookSubject subject : subjectList) {
-            if (subject.getCode().length() == 8) {
-                String parentCode = subject.getCode().substring(0, 6);
-                BookSubject parentSubject = subjectMap.get(parentCode);
-                if (parentSubject != null) {
-                    subject.setParentId(parentSubject.getId());
-                    subject.setIdPath(parentSubject.getIdPath()+"/"+subject.getId());
-                    subject.setDisplayName(parentSubject.getDisplayName() + "_" + subject.getName());
-                    subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
-                    subject.setPinyinDisplayCode(parentSubject.getPinyinDisplayCode() + "_" + subject.getPinyinCode());
-                } else {
-                    subject.setDisplayName(subject.getName());
-                    subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
-                    subject.setPinyinDisplayCode(subject.getPinyinCode());
-                }
-            }
-        }
-        //4级
-        for (BookSubject subject : subjectList) {
-            if (subject.getCode().length() == 12) {
-                String parentCode = subject.getCode().substring(0, 8);
-                BookSubject parentSubject = subjectMap.get(parentCode);
-                if (parentSubject != null) {
-                    subject.setParentId(parentSubject.getId());
-                    subject.setIdPath(parentSubject.getIdPath()+"/"+subject.getId());
-                    subject.setDisplayName(parentSubject.getDisplayName() + "_" + subject.getName());
-                    subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
-                    subject.setPinyinDisplayCode(parentSubject.getPinyinDisplayCode() + "_" + subject.getPinyinCode());
-                } else {
-                    subject.setDisplayName(subject.getName());
-                    subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
-                    subject.setPinyinDisplayCode(subject.getPinyinCode());
-                }
+            } else {
+                subject.setParentId(parentSubject.getId());
+                subject.setIdPath(parentSubject.getIdPath() + "/" + subject.getId());
+                subject.setDisplayName(parentSubject.getDisplayName() + "_" + subject.getName());
+                subject.setPinyinCode(StrUtils.getPinYinShort(subject.getName()));
+                subject.setPinyinDisplayCode(parentSubject.getPinyinDisplayCode() + "_" + subject.getPinyinCode());
             }
         }
         Db.saveOrUpdateBatch(subjectList);

@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.book.BookSubject;
+import com.financial.cloud.domain.statement.StatementSubjectBalance;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.voucher.*;
 import com.financial.cloud.dto.voucher.*;
@@ -347,12 +348,26 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (CollUtil.isNotEmpty(page.getRecords())) {
             result.setRecords(BeanUtil.copyToList(page.getRecords(), VoucherVo.class));
         }
-        // 更新制单人名称
+        // 更新制单人名称，可选加载分录明细
         if (!result.getRecords().isEmpty()) {
-            List<String> userIds = result.getRecords().stream().map(VoucherVo::getCreatedBy).toList();
-            Map<String, String> userMap = new HashMap<>();
-            userInfoMapper.selectByIds(userIds).forEach(user -> userMap.put(user.getId(), user.getDisplayName()));
-            result.getRecords().forEach(t -> t.setCreatedName(userMap.get(t.getCreatedBy())));
+            if (Boolean.TRUE.equals(dto.getIncludeItems())) {
+                List<String> voucherIds = result.getRecords().stream().map(VoucherVo::getId).toList();
+                Map<String, VoucherVo> loaded = loadVouchers(voucherIds).vouchers();
+                result.getRecords().forEach(v -> {
+                    VoucherVo full = loaded.get(v.getId());
+                    if (full != null) {
+                        v.setItems(full.getItems());
+                        v.setCreatedName(full.getCreatedName());
+                    } else {
+                        v.setItems(List.of());
+                    }
+                });
+            } else {
+                List<String> userIds = result.getRecords().stream().map(VoucherVo::getCreatedBy).toList();
+                Map<String, String> userMap = new HashMap<>();
+                userInfoMapper.selectByIds(userIds).forEach(user -> userMap.put(user.getId(), user.getDisplayName()));
+                result.getRecords().forEach(t -> t.setCreatedName(userMap.get(t.getCreatedBy())));
+            }
         }
         return new Message<>(Message.SUCCESS, result);
     }
@@ -416,13 +431,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             dto.setStatus(VoucherStatusEnum.COMPLETED.getValue());
         }
 
-        // 重新提交变更，保证余额信息更新
+        // 重新提交变更状态（余额在过账时更新）
         Message<String> updateResult = update(dto);
-
-        // 根据科目现金流量默认关系添加凭证项和现金流量关系
-        if (updateResult.getCode() == Message.SUCCESS && VoucherStatusEnum.COMPLETED.getValue().equals(dto.getStatus())) {
-            setVoucherItemCashFlow(dto);
-        }
 
         return updateResult;
     }
@@ -566,6 +576,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 //        dto.setWordHead(null);
 //        dto.setVoucherYear(null);
         Voucher currentVoucher = baseMapper.selectById(currentId);
+        if (currentVoucher == null) {
+            return new Message<>(Message.FAIL, "凭证不存在");
+        }
 
         Voucher booksVoucher = Voucher.builder().build();
         BeanUtil.copyProperties(dto, booksVoucher);
@@ -606,7 +619,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         booksVoucher.setWord(word);
 
-        if (!VoucherStatusEnum.DRAFT.getValue().equals(currentVoucher.getStatus())) {
+        if (!canModifyUnpostedVoucher(currentVoucher)) {
             return new Message<>(Message.FAIL, "当前不允许修改");
         }
 
@@ -616,12 +629,6 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         // 插入新数据
         if (!insertItems.isEmpty()) {
-            // 只有审核完成，才更新余额
-            if (VoucherStatusEnum.COMPLETED.getValue().equals(dto.getStatus())) {
-                //if (VoucherStatusEnum.COMPLETED.getValue().equals(dto.getStatus())
-                //        && YesNoEnum.n.name().equals(booksVoucher.getCarryForward())) {
-                updateSubjectBalance(insertItems, insertAuxiliary, false);
-            }
             boolean saveItems = Db.saveBatch(insertItems);
             if (!saveItems) {
                 return new Message<>(Message.FAIL, "修改失败:凭证明细");
@@ -671,14 +678,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                 items.add(itemChangeDto);
             }
             voucherChangeDto.setItems(items);
-            // 更新余额和数据
+            // 更新凭证明细（余额在过账时更新）
             BooksVoucherItemProvider booksVoucherItemProvider = updateItemsAndCount(auditVoucher, voucherChangeDto, auditVoucher.getId(), true);
             List<VoucherItem> insertItems = booksVoucherItemProvider.getItems();
-            List<VoucherAuxiliary> insertAuxiliary = booksVoucherItemProvider.getAuxiliary();
 
-            if (YesNoEnum.n.name().equals(voucher.getCarryForward())) {
-                updateSubjectBalance(insertItems, insertAuxiliary, false);
-            }
             Db.updateBatchById(insertItems);
             super.updateById(voucher);
         }
@@ -692,27 +695,147 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     }
 
     /**
-     * 过账记录
+     * 反审核：已审核且未过账的凭证退回待审/暂存
+     */
+    @Transactional
+    public Message<Void> unaudit(List<String> ids, String bookId) {
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            return Message.failed("账套不存在");
+        }
+        List<Voucher> vouchers = baseMapper.selectByIds(ids);
+        List<Voucher> unauditVouchers = new ArrayList<>();
+        for (Voucher voucher : vouchers) {
+            if (!bookId.equals(voucher.getBookId())) {
+                continue;
+            }
+            if (!VoucherStatusEnum.COMPLETED.getValue().equals(voucher.getStatus())) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(voucher.getSenderId())) {
+                continue;
+            }
+            if (!isVoucherInOpenPeriod(voucher)) {
+                continue;
+            }
+            if (VoucherReviewedOnOffEnum.ON.getCode().equals(book.getVoucherReviewed())) {
+                voucher.setStatus(VoucherStatusEnum.UNDER_REVIEW.getValue());
+            } else {
+                voucher.setStatus(VoucherStatusEnum.DRAFT.getValue());
+            }
+            voucher.setAuditMemberId(null);
+            voucher.setAuditMemberName(null);
+            voucher.setAuditDate(null);
+            unauditVouchers.add(voucher);
+        }
+        if (unauditVouchers.isEmpty()) {
+            return Message.failed("没有可以反审核的凭证（需为已审核且未过账）");
+        }
+        boolean b = Db.updateBatchById(unauditVouchers);
+        return b ? new Message<>(Message.SUCCESS,
+                "操作总数：" + ids.size()
+                        + "; 成功：" + unauditVouchers.size()
+                        + "; 失败：" + (vouchers.size() - unauditVouchers.size())
+        ) : Message.failed("操作失败");
+    }
+
+    /**
+     * 过账：写入过账标记并更新科目余额
      */
     @Transactional
     public Message<Void> sender(List<String> ids, UserInfo userInfo) {
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
-        List<Voucher> senderVouchers = vouchers.stream()
-                .filter(item -> VoucherStatusEnum.COMPLETED.getValue().equals(item.getStatus()))
-                .toList();
-        for (Voucher voucher : senderVouchers) {
+        VoucherBatchLoad batchLoad = loadVouchers(ids);
+        List<Voucher> senderVouchers = new ArrayList<>();
+        for (Voucher voucher : vouchers) {
+            if (!VoucherStatusEnum.COMPLETED.getValue().equals(voucher.getStatus())) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(voucher.getSenderId())) {
+                continue;
+            }
+            if (!isVoucherInOpenPeriod(voucher)) {
+                continue;
+            }
+            VoucherVo voucherVo = batchLoad.vouchers().get(voucher.getId());
+            if (voucherVo == null) {
+                continue;
+            }
+            List<VoucherAuxiliary> auxiliaries =
+                    batchLoad.auxiliariesByVoucher().getOrDefault(voucher.getId(), List.of());
+            List<VoucherItem> items = voucherVo.getItems().stream().map(itemVo -> {
+                VoucherItem build = VoucherItem.builder().build();
+                BeanUtil.copyProperties(itemVo, build);
+                return build;
+            }).toList();
+            if (YesNoEnum.n.name().equals(voucher.getCarryForward())) {
+                updateSubjectBalance(items, auxiliaries, false);
+            }
+            setVoucherItemCashFlow(toChangeDto(voucherVo));
+
             voucher.setSenderId(userInfo.getId());
             voucher.setSenderDate(new Date());
             voucher.setSenderName(userInfo.getDisplayName());
+            senderVouchers.add(voucher);
         }
         if (senderVouchers.isEmpty()) {
-            return Message.failed("没有可以过账的凭证（需为已完成状态）");
+            return Message.failed("没有可以过账的凭证（需为已审核且未过账状态）");
         }
         boolean b = Db.updateBatchById(senderVouchers);
         return b ? new Message<>(Message.SUCCESS,
                 "操作总数：" + ids.size()
                         + "; 成功：" + senderVouchers.size()
                         + "; 失败：" + (vouchers.size() - senderVouchers.size())
+        ) : Message.failed("操作失败");
+    }
+
+    /**
+     * 反过账：清除过账标记并回滚科目余额
+     */
+    @Transactional
+    public Message<Void> unsender(List<String> ids, String bookId) {
+        List<Voucher> vouchers = baseMapper.selectByIds(ids);
+        VoucherBatchLoad batchLoad = loadVouchers(ids);
+        List<Voucher> unsenderVouchers = new ArrayList<>();
+        for (Voucher voucher : vouchers) {
+            if (!bookId.equals(voucher.getBookId())) {
+                continue;
+            }
+            if (StringUtils.isBlank(voucher.getSenderId())) {
+                continue;
+            }
+            if (!isVoucherInOpenPeriod(voucher)) {
+                continue;
+            }
+            VoucherVo voucherVo = batchLoad.vouchers().get(voucher.getId());
+            if (voucherVo == null) {
+                continue;
+            }
+            List<VoucherAuxiliary> auxiliaries =
+                    batchLoad.auxiliariesByVoucher().getOrDefault(voucher.getId(), List.of());
+            List<VoucherItem> items = voucherVo.getItems().stream().map(itemVo -> {
+                VoucherItem build = VoucherItem.builder().build();
+                BeanUtil.copyProperties(itemVo, build);
+                return build;
+            }).toList();
+            if (YesNoEnum.n.name().equals(voucher.getCarryForward())) {
+                updateSubjectBalance(items, auxiliaries, true);
+            }
+            removeVoucherItemCashFlow(voucher.getId());
+
+            voucher.setSenderId(null);
+            voucher.setSenderDate(null);
+            voucher.setSenderName(null);
+            unsenderVouchers.add(voucher);
+        }
+        if (unsenderVouchers.isEmpty()) {
+            return Message.failed("没有可以反过账的凭证（需为已过账且所在期间未结账）");
+        }
+        boolean b = Db.updateBatchById(unsenderVouchers);
+        return b ? new Message<>(Message.SUCCESS,
+                "操作总数：" + ids.size()
+                        + "; 成功：" + unsenderVouchers.size()
+                        + "; 失败：" + (vouchers.size() - unsenderVouchers.size())
         ) : Message.failed("操作失败");
     }
 
@@ -775,10 +898,21 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (ids == null || ids.isEmpty()) {
             return new Message<>(Message.SUCCESS);
         }
-        // 删除之前先取消
-        Message<Integer> cancelRes = cancelByIds(ids, bookId);
-        if (cancelRes.getCode() != Message.SUCCESS) {
-            return new Message<>(Message.FAIL, cancelRes.getMessage());
+
+        LambdaQueryWrapper<Voucher> checkLqw = Wrappers.lambdaQuery();
+        checkLqw.in(Voucher::getId, ids);
+        checkLqw.eq(Voucher::getBookId, bookId);
+        List<Voucher> toDelete = baseMapper.selectList(checkLqw);
+        if (toDelete.size() != ids.size()) {
+            return new Message<>(Message.FAIL, "部分凭证不存在");
+        }
+        for (Voucher voucher : toDelete) {
+            if (!VoucherStatusEnum.DRAFT.getValue().equals(voucher.getStatus())) {
+                return new Message<>(Message.FAIL, "仅暂存状态的凭证可以删除");
+            }
+            if (StringUtils.isNotBlank(voucher.getSenderId())) {
+                return new Message<>(Message.FAIL, "已过账的凭证不能删除");
+            }
         }
 
         // 删除凭证项和现金流量的关系
@@ -798,35 +932,6 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         // 删除凭证项
         voucherItemMapper.delete(new LambdaUpdateWrapper<VoucherItem>().in(VoucherItem::getVoucherId, ids));
         voucherItemAuxiliaryMapper.delete(new LambdaQueryWrapper<VoucherAuxiliary>().in(VoucherAuxiliary::getVoucherId, ids));
-
-        // 还原科目余额
-        LambdaQueryWrapper<Voucher> lqw = Wrappers.lambdaQuery();
-        lqw.in(Voucher::getId, ids);
-        lqw.eq(Voucher::getBookId, bookId);
-        lqw.eq(Voucher::getStatus, VoucherStatusEnum.COMPLETED.getValue());
-        List<Voucher> booksVouchers = baseMapper.selectList(lqw);
-        if (!booksVouchers.isEmpty()) {
-            List<String> voucherIds = booksVouchers.stream().map(Voucher::getId).toList();
-            VoucherBatchLoad batchLoad = loadVouchers(voucherIds);
-            Map<String, VoucherVo> voucherMap = batchLoad.vouchers();
-            Map<String, List<VoucherAuxiliary>> auxiliariesByVoucher = batchLoad.auxiliariesByVoucher();
-            for (Voucher t : booksVouchers) {
-                VoucherVo booksVoucher = voucherMap.get(t.getId());
-                if (booksVoucher == null) {
-                    continue;
-                }
-                List<VoucherAuxiliary> insertAuxiliary =
-                        auxiliariesByVoucher.getOrDefault(booksVoucher.getId(), List.of());
-                List<VoucherItem> items = booksVoucher.getItems().stream().map(itemVo -> {
-                    VoucherItem build = VoucherItem.builder().build();
-                    BeanUtil.copyProperties(itemVo, build);
-                    return build;
-                }).toList();
-                if (YesNoEnum.n.name().equals(booksVoucher.getCarryForward())) {
-                    updateSubjectBalance(items, insertAuxiliary, true);
-                }
-            }
-        }
 
         int update = baseMapper.delete(new LambdaUpdateWrapper<Voucher>().in(Voucher::getId, ids));
 
@@ -854,7 +959,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         List<Voucher> booksVouchers = baseMapper.selectList(lqw);
 
         if (!booksVouchers.isEmpty()) {
-            booksVouchers.forEach(t -> t.setStatus(VoucherStatusEnum.CANCELLED.getValue()));
+            booksVouchers.forEach(t -> t.setStatus(VoucherStatusEnum.DRAFT.getValue()));
             Db.updateBatchById(booksVouchers);
         }
 
@@ -894,6 +999,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         List<VoucherAuxiliary> insertAuxiliary = new ArrayList<>();
         List<VoucherItem> insertItems = items.stream().map(t -> {
             prepareVoucherItem(t);
+            enrichItemBalance(dto.getBookId(), t);
+            if (t.getCarryForward() == null) {
+                t.setCarryForward(0);
+            }
             if (!isUpdate) {
                 String itemId = identifierGenerator.nextId(booksVoucher).toString();
                 t.setId(itemId);
@@ -1017,6 +1126,28 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
     }
 
+    private void enrichItemBalance(String bookId, VoucherItemChangeDto item) {
+        if (item.getSubjectBalance() != null) {
+            return;
+        }
+        if (StringUtils.isBlank(bookId) || StringUtils.isBlank(item.getSubjectId())) {
+            item.setSubjectBalance(BigDecimal.ZERO);
+            return;
+        }
+        BookSubject subject = bookSubjectService.getById(item.getSubjectId());
+        if (subject == null || StringUtils.isBlank(subject.getCode())) {
+            item.setSubjectBalance(BigDecimal.ZERO);
+            return;
+        }
+        List<StatementSubjectBalance> balances = subjectBalanceService.selectSubjectBalance(
+                bookId, List.of(subject.getCode()));
+        if (CollectionUtils.isEmpty(balances) || balances.get(0).getBalance() == null) {
+            item.setSubjectBalance(BigDecimal.ZERO);
+        } else {
+            item.setSubjectBalance(balances.get(0).getBalance());
+        }
+    }
+
     private Message<String> validateItemsForSubmit(List<VoucherItemChangeDto> items) {
         Message<String> saveValidation = validateItemsForSave(items);
         if (saveValidation.getCode() != Message.SUCCESS) {
@@ -1127,6 +1258,60 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         private List<VoucherAuxiliary> auxiliary;
     }
 
+
+    /**
+     * 未过账凭证是否允许修改（未过账、未作废、所在期间未结账）
+     */
+    private boolean canModifyUnpostedVoucher(Voucher voucher) {
+        if (voucher == null) {
+            return false;
+        }
+        if (StringUtils.isNotBlank(voucher.getSenderId())) {
+            return false;
+        }
+        if (VoucherStatusEnum.CANCELLED.getValue().equals(voucher.getStatus())) {
+            return false;
+        }
+        return isVoucherInOpenPeriod(voucher);
+    }
+
+    /**
+     * 凭证所在会计期间是否未结账（凭证期间 >= 账套当前期）
+     */
+    private boolean isVoucherInOpenPeriod(Voucher voucher) {
+        if (voucher == null || voucher.getVoucherDate() == null || StringUtils.isBlank(voucher.getBookId())) {
+            return false;
+        }
+        String currentTerm = configSysService.getCurrentTerm(voucher.getBookId());
+        String voucherTerm = DateUtils.format(voucher.getVoucherDate(), DateUtils.FORMAT_DATE_YYYY_MM);
+        return currentTerm.compareTo(voucherTerm) <= 0;
+    }
+
+    private VoucherChangeDto toChangeDto(VoucherVo voucherVo) {
+        VoucherChangeDto dto = new VoucherChangeDto();
+        BeanUtils.copyProperties(voucherVo, dto);
+        List<VoucherItemChangeDto> items = voucherVo.getItems().stream().map(itemVo -> {
+            VoucherItemChangeDto itemChangeDto = new VoucherItemChangeDto();
+            BeanUtils.copyProperties(itemVo, itemChangeDto);
+            return itemChangeDto;
+        }).toList();
+        dto.setItems(items);
+        return dto;
+    }
+
+    private void removeVoucherItemCashFlow(String voucherId) {
+        var voucherItems = voucherItemMapper.selectList(
+                Wrappers.<VoucherItem>lambdaQuery().eq(VoucherItem::getVoucherId, voucherId)
+        );
+        if (ObjectUtils.isNotEmpty(voucherItems)) {
+            var voucherItemIds = voucherItems.stream()
+                    .map(VoucherItem::getId)
+                    .toList();
+            voucherItemCashFlowMapper.delete(
+                    Wrappers.<VoucherItemCashFlow>lambdaQuery().in(VoucherItemCashFlow::getVoucherItemId, voucherItemIds)
+            );
+        }
+    }
 
     /**
      * 更新科目余额

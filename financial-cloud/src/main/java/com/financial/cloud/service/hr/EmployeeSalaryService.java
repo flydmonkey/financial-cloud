@@ -20,6 +20,7 @@ import com.financial.cloud.domain.hr.*;
 import com.financial.cloud.domain.voucher.VoucherTemplate;
 import com.financial.cloud.domain.voucher.VoucherTemplateItem;
 import com.financial.cloud.dto.voucher.GenerateVoucherDto;
+import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
 import com.financial.cloud.enums.voucher.VoucherStatusEnum;
@@ -325,26 +326,26 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         }
         
         if (voucherTemplate.getCode().equals("fp_lwf")) {//收发票
-        	if(itemsMap.containsKey("660222")) {
+        	if(SubjectCodeCompat.mapContains(itemsMap, "660222")) {
 	       		 //劳务费
 	       		 debitAmount = debitAmount.add(salary.getPayAmount());
-	       		 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("660222"), salary.getPayAmount()));
+	       		 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "660222"), salary.getPayAmount()));
         	}
-        	if(itemsMap.containsKey("222114")) {
+        	if(SubjectCodeCompat.mapContains(itemsMap, "222114")) {
 	       		 //个税
         		creditAmount = creditAmount.add(salary.getPersonalTax());
-	       		 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("222114"), salary.getPersonalTax()));
+	       		 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "222114"), salary.getPersonalTax()));
         	}
-        	if(itemsMap.containsKey("224101")) {
+        	if(SubjectCodeCompat.mapContains(itemsMap, "224101")) {
 	       		 //应付个人
         		 creditAmount = creditAmount.add(salary.getTotalAmount());
-	       		 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("224101"), salary.getTotalAmount()));
+	       		 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "224101"), salary.getTotalAmount()));
         	}
         }else if (voucherTemplate.getCode().equals("zf_lwf")) {//发放劳务费
-        	if(itemsMap.containsKey("224101")) {
+        	if(SubjectCodeCompat.mapContains(itemsMap, "224101")) {
 	       		 //发放金额
 	       		 debitAmount = debitAmount.add(salary.getTotalAmount());
-	       		 voucherItems.add(createVoucherItemDto(bookId, itemsMap.get("224101"), salary.getTotalAmount()));
+	       		 voucherItems.add(createVoucherItemDto(bookId, SubjectCodeCompat.resolveFromMap(itemsMap, "224101"), salary.getTotalAmount()));
         	}
        	
 	   		for (VoucherTemplateItem item : items) {

@@ -126,6 +126,7 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	 */
 	@Transactional
 	public Message<Settlement> checkout(Settlement dto) {
+		configSysService.ensureBookConfigsComplete(dto.getBookId());
 		//结账逻辑检测
 		String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
 		YearMonth currentTermYearMonth = YearMonth.parse(currentTerm);

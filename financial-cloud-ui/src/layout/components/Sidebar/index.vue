@@ -16,8 +16,8 @@
         mode="vertical"
       >
         <sidebar-item
-          v-for="(route, index) in sidebarRouters"
-          :key="route.path + index"
+          v-for="route in sidebarRouters"
+          :key="route.name || route.path"
           :item="route"
           :base-path="isParentView(route) ? '' : route.path"
         />

@@ -134,6 +134,11 @@ public class StatementBalanceSheetService{
         }
 
         StatementBalanceSheetItemListVo itemListVo = insertSubtotals(items);
+        if (itemListVo == null) {
+            itemListVo = new StatementBalanceSheetItemListVo();
+            itemListVo.setAssets(new ArrayList<>());
+            itemListVo.setLiability(new ArrayList<>());
+        }
         reconcileGrandTotals(itemListVo);
         itemListVo.getAssets().sort(Comparator.comparing(StatementBalanceSheetItem::getItemCode));
         itemListVo.getLiability().sort(Comparator.comparing(StatementBalanceSheetItem::getItemCode));

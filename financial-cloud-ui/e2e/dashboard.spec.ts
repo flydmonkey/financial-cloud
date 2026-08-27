@@ -11,6 +11,7 @@ test.describe('dashboard module', () => {
             `/api/statistics/fund-balance?periodType=month&reportDate=${term}`,
             `/api/statistics/net-profit?periodType=month&reportDate=${term}`,
             `/api/statistics/revenue-cost?periodType=month&reportDate=${term}`,
+            `/api/statistics/able-cash?periodType=month&reportDate=${term}`,
         ]
 
         for (const url of endpoints) {

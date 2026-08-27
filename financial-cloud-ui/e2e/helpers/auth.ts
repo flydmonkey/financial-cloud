@@ -79,6 +79,12 @@ export async function fetchBookSubjects(
     return flattenTree(treeBody.data || [])
 }
 
+export function formatVoucherWord(head: string, term: string, wordNum: number): string {
+    const year = term.slice(0, 4)
+    const month = String(Number(term.slice(5, 7))).padStart(2, '0')
+    return `${head}${year}${month}第${String(wordNum).padStart(4, '0')}号`
+}
+
 export async function getCurrentTerm(
     request: APIRequestContext,
     headers: Record<string, string>,

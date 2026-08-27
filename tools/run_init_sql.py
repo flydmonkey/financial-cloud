@@ -10,6 +10,7 @@ from pymysql.constants import CLIENT
 
 ROOT = Path(__file__).resolve().parents[1]
 INIT_SQL = ROOT / "sql" / "jinbooks_init.sql"
+CASH_FLOW_SEED_SQL = ROOT / "sql" / "seed" / "config_cash_flow_balance.sql"
 
 HOST = "127.0.0.1"
 PORT = 3307
@@ -122,13 +123,31 @@ def main() -> int:
             print(f"Executing {INIT_SQL} ...")
             execute_sql_script(cursor, sql)
 
+            if CASH_FLOW_SEED_SQL.exists():
+                print(f"Executing {CASH_FLOW_SEED_SQL} ...")
+                execute_sql_script(
+                    cursor, CASH_FLOW_SEED_SQL.read_text(encoding="utf-8")
+                )
+
             cursor.execute("SELECT COUNT(*) FROM standard_subject")
             subject_count = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM userinfo")
             user_count = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM book")
             book_count = cursor.fetchone()[0]
-            print(f"Done. standard_subject={subject_count}, userinfo={user_count}, book={book_count}")
+            cursor.execute(
+                "SELECT COUNT(*) FROM config_cash_flow_balance WHERE book_id IS NULL"
+            )
+            cash_flow_templates = cursor.fetchone()[0]
+            print(
+                f"Done. standard_subject={subject_count}, userinfo={user_count}, "
+                f"book={book_count}, cash_flow_templates={cash_flow_templates}"
+            )
+            if cash_flow_templates <= 0:
+                raise RuntimeError(
+                    "config_cash_flow_balance templates missing after init "
+                    f"(expected rows from {CASH_FLOW_SEED_SQL})"
+                )
     finally:
         conn.close()
     return 0

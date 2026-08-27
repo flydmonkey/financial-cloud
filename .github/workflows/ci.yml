@@ -96,26 +96,71 @@ jobs:
         working-directory: financial-cloud-ui
         run: |
           npm run dev > ../frontend-ci.log 2>&1 &
-          if ! npx --yes wait-on http://localhost:3154 --timeout 120000; then
+          if ! npx --yes wait-on http://localhost:3154/api/login/get --timeout 120000; then
             echo "==== frontend log (tail) ===="
             tail -n 100 ../frontend-ci.log || true
             exit 1
           fi
-      - name: Smoke clear books + login
+      - name: Smoke clear books + login via UI proxy
         run: |
           python3 tools/clear_books.py
-          curl -sf "http://localhost:2154/api/login/get?_allow_anonymous=true" | head -c 400
+          echo "backend:"
+          curl -sf "http://localhost:2154/api/login/get?_allow_anonymous=true" | head -c 200
           echo
+          echo "ui-proxy:"
+          curl -sf "http://localhost:3154/api/login/get?_allow_anonymous=true" | head -c 200
+          echo
+          python3 - <<'PY'
+          import json, urllib.request
+          def login(base):
+              init = json.load(urllib.request.urlopen(f"{base}/api/login/get?_allow_anonymous=true"))
+              state = init["data"]["state"]
+              req = urllib.request.Request(
+                  f"{base}/api/login/signin?_allow_anonymous=true",
+                  data=json.dumps({
+                      "username": "admin",
+                      "password": "maxkey",
+                      "captcha": "",
+                      "state": state,
+                      "authType": "normal",
+                  }).encode(),
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              body = json.load(urllib.request.urlopen(req))
+              assert body.get("code") == 0, body
+              assert body["data"]["token"], body
+              print(f"login ok via {base}")
+          login("http://localhost:2154")
+          login("http://localhost:3154")
+          PY
+          echo "browsers:"
           ls -la "$PLAYWRIGHT_BROWSERS_PATH" | head
+          cd financial-cloud-ui
+          npx playwright --version
+          npx playwright test --list e2e/00-opening-balance-report.spec.ts
       - name: Run E2E accounting suite
         working-directory: financial-cloud-ui
-        run: npm run test:e2e:accounting
+        run: |
+          set +e
+          npm run test:e2e:accounting
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "::error::E2E accounting suite exited with $code"
+            echo "==== frontend log (tail) ===="
+            tail -n 80 ../frontend-ci.log || true
+            echo "==== backend log (tail) ===="
+            tail -n 80 ../backend-ci.log || true
+          fi
+          exit $code
         env:
           E2E_BASE_URL: http://localhost:3154
+          E2E_API_URL: http://localhost:2154
           E2E_RESET_BOOK: '1'
       - name: Run E2E year-end suite
         working-directory: financial-cloud-ui
         run: npm run test:e2e:year-end
         env:
           E2E_BASE_URL: http://localhost:3154
+          E2E_API_URL: http://localhost:2154
           E2E_RESET_BOOK: '1'

@@ -11,7 +11,8 @@ export default async function globalSetup(config: FullConfig) {
         return
     }
 
-    const baseURL = config.projects[0]?.use?.baseURL as string | undefined
+    const baseURL = (process.env.E2E_API_URL
+        || (config.projects[0]?.use?.baseURL as string | undefined))
     if (!baseURL) {
         throw new Error('globalSetup: missing baseURL in playwright config')
     }
@@ -33,7 +34,7 @@ export default async function globalSetup(config: FullConfig) {
             console.warn('[globalSetup] expected needsSetup after clear_books, continuing setup')
         }
         await setupE2eBookViaApi(api, auth.headers)
-        console.warn('[globalSetup] E2E book ready')
+        console.warn('[globalSetup] E2E book ready via', baseURL)
     } catch (err) {
         throw new Error(`globalSetup: book setup failed against ${baseURL}: ${err instanceof Error ? err.message : err}`)
     } finally {

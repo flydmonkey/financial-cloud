@@ -319,11 +319,13 @@ export async function exportStatementReport(
     const contentType = res.headers()['content-type'] || ''
     const body = await res.body()
     if (contentType.includes('json')) {
-        expect(res.ok(), body.toString()).toBeTruthy()
-    } else {
-        expect(res.ok()).toBeTruthy()
-        expect(contentType).toMatch(/spreadsheet|octet-stream|excel|zip|openxmlformats/i)
-        expect(body.length).toBeGreaterThan(500)
+        const text = body.toString('utf-8')
+        throw new Error(`expected spreadsheet export from ${path}, got JSON: ${text.slice(0, 300)}`)
     }
+    expect(res.ok(), `export ${path} HTTP ${res.status()}`).toBeTruthy()
+    expect(contentType).toMatch(/spreadsheet|octet-stream|excel|zip|openxmlformats/i)
+    expect(body.length).toBeGreaterThan(500)
+    // xlsx is a zip package
+    expect(body.subarray(0, 2).toString('latin1'), `export ${path} is not xlsx/zip`).toBe('PK')
     return body
 }

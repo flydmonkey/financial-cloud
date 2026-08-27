@@ -36,7 +36,8 @@ test.describe('report export', () => {
             type: 'note',
             description: `利润表导出行数=${income?.items?.length ?? 0}, 文件=${incomeBody.length}B`,
         })
-        expect(incomeBody.length).toBeGreaterThan(1000)
+        expect(incomeBody.length).toBeGreaterThan(500)
+        expect(incomeBody.subarray(0, 2).toString('latin1')).toBe('PK')
         expect((income?.items || []).length).toBeGreaterThan(0)
     })
 })

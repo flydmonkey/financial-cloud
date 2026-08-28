@@ -40,5 +40,23 @@ class SubjectCodeCompatTest {
         assertTrue(codes.contains("3001"));
         assertTrue(codes.contains("6001"));
         assertTrue(codes.contains("5001"));
+        assertTrue(SubjectCodeCompat.lookupCandidates("1131").contains("1122"));
+    }
+
+    @Test
+    void incomeRuleMatchesVoucherSubject_resolvesSmallBusinessAliases() {
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("6001", "5001"));
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("660201", "5602"));
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("680101", "5801"));
+        assertFalse(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("6001", "5602"));
+    }
+
+    @Test
+    void mapIncomeRuleSubject_collapsesEnterpriseSubCodes() {
+        assertEquals("5001", SubjectCodeCompat.mapIncomeRuleSubject("6001"));
+        assertEquals("5602", SubjectCodeCompat.mapIncomeRuleSubject("660201"));
+        assertEquals("5602", SubjectCodeCompat.mapIncomeRuleSubject("660226"));
+        assertEquals("5801", SubjectCodeCompat.mapIncomeRuleSubject("680101"));
+        assertEquals("5001", SubjectCodeCompat.mapIncomeRuleSubject("5001"));
     }
 }

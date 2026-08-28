@@ -44,10 +44,19 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 | 报表 | API | 数据源 | 过滤条件 |
 |------|-----|--------|----------|
 | 资产负债表 | `GET /api/statement/balance-sheet` | `statement_subject_balance` | 仅**已过账**凭证影响余额 |
-| 利润表 | `GET /api/statement/income` | 凭证分录 SQL | `status='completed'`，**不过滤 senderId** |
+| 利润表 | `GET /api/statement/income` | 凭证分录 SQL | `status='completed'` 且 **已过账**（`sender_id` 非空） |
 | 现金流量表 | `GET /api/statement/cash-flow` | `voucher_item_cash_flow` | 仅**已过账**（`sender_id` 非空）且指定流量项的凭证 |
 
-> ⚠️ **已知口径差异**：已审核但未过账的凭证可能出现在利润表，但不会进入资产负债表和现金流量表。测试时需单独验证（见 TC-RPT-003）。
+> **三报表口径已统一**：仅已过账凭证计入报表。已审核但未过账的凭证不影响任何一张报表（见 TC-RPT-003）。
+
+**strict 校验（CI 默认开启）**：
+
+| 报表 | 配置项 | 错误码 | 行为 |
+|------|--------|--------|------|
+| 资产负债表 | `financial-cloud.statement.balance-sheet.strict-trial-balance` | 513013 | 试算不平则 API 抛错 |
+| 利润表 | `financial-cloud.statement.income.strict-formula-validation` | 513014 | 公式链 1→2→3→4 不平则 API 抛错 |
+
+本地默认关闭；`.github/workflows/ci.yml` 启动后端时两项均为 `true`。结账写入利润表快照前同样走 `generateIncomeStatement`，strict 开启时不平会阻断结账。
 
 ### 0.4 已知系统限制（不测为 BUG）
 
@@ -55,7 +64,7 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 |------|------|
 | 操作权限未分离 | 任何有菜单权限的用户均可审核/过账，无制单/审核角色隔离 |
 | 驳回流程未实现 | `rejected` 状态无完整业务 |
-| 无「报表含未过账凭证」开关 | 三张报表口径由代码固定，不可配置 |
+| 无「报表含未过账凭证」开关 | 三张报表口径固定为仅已过账，不可配置 |
 
 ### 0.5 主要 API 索引
 
@@ -202,11 +211,32 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 |--------|--------|----------|----------|----------|--------|
 | TC-RPT-001 | P0 | 资产合计 = 负债及权益合计 | 打开资产负债表 | 总计行差额 ≤ 0.01 | E2E ✅ `report.spec.ts` |
 | TC-RPT-002 | P0 | 期初无业务时报表 = 期初余额 | 账套 B，未录凭证 | 查看报表 | 货币资金 = 100,000；实收资本 = 100,000 | E2E ✅ |
-| TC-RPT-003 | P0 | **已审核未过账口径差异** | 审核但不过账 → 分别查三报表 | 利润表可能有数；资产负债表/现金流量表无变化 | E2E ✅ |
+| TC-RPT-003 | P0 | **已审核未过账不影响报表** | 审核但不过账 → 分别查三报表 | 三张报表均无变化 | E2E ✅ |
 | TC-RPT-004 | P0 | 过账后报表刷新 | 过账 TC-VCH-050 → 查报表 | 对应科目余额变化；恒等式仍成立 | E2E ✅ |
 | TC-RPT-005 | P1 | 多月份期末余额滚动 | 账套 C，查 1 月/2 月报表 | 2 月期初 = 1 月期末 | E2E ✅ |
 | TC-RPT-006 | P1 | 红字/负数余额科目 | 红字凭证过账后 | 报表正确显示负数，不丢符号 | E2E ✅ |
 | TC-RPT-007 | P2 | 报表导出 | 点击导出 | 文件可下载，数据与页面一致 | E2E ✅ |
+| BS-M01 | P0 | 货币资金 = 1001+1002 科目余额 | 00-opening 期初后 | 货币资金行 = 绑定科目余额之和 | E2E ✅ `02-balance-sheet-line-reconciliation` |
+| BS-D02 | P0 | 实收资本 = 配置 rules 科目余额 | 同上 | 实收资本行 = rules 绑定科目之和 | E2E ✅ |
+| BS-CFG | P1 | 报表行 = 配置页 closingBalance 累加 | 同上 | itemCode 1101 与 config API 一致 | E2E ✅ |
+| BS-B01 | P0 | 逐行勾稽后试算平衡仍成立 | 同上 | 资产总计 = 负债及权益总计 | E2E ✅ |
+| BS-B02 | P1 | 不平衡差额 > 0.01 可被检测 | Unit mock 不平衡 seed | computeGrandTotalDiff 返回差额 | Unit ✅ |
+| BS-B03 | P2 | 差额 0.01 内视为平衡 | Unit | withinTolerance=true | Unit ✅ |
+| BS-B04 | P1 | strict 模式不平则阻断出表 | Unit strictTrialBalance=true | 抛出 513013 错误 | Unit ✅ |
+| BS-M02 | P0 | 账套 B 业务后货币资金/应收账款勾稽 | book-b 三步凭证后 | 关键行 = config rules | E2E ✅ `book-b-verification` |
+| BS-R01 | P1 | 1122 贷方余额 → 预收款项 | 03-reclassification E2E | 应收=0，预收=15000 | E2E ✅ |
+| BS-R02 | P1 | 2202 借方余额 → 预付款项 | 同上 | 应付=0，预付=6000 | E2E ✅ |
+| BS-R03 | P2 | 同科目借贷混存（总账轧差） | 03-reclassification | 1122 借贷同科目时按 net 进应收 | E2E ✅ |
+| BS-R04 | P2 | 应收账款扣减坏账准备 1141 | 03-reclassification | 应收净值 = 1122 借方 − 1141 | E2E ✅ |
+| BS-R05 | P2 | 辅助核算明细级重分类 | 需启用 assist + 分行余额 | — | 待开发 |
+| BS-G01 | P1 | Golden Dataset 复杂期初写入 | 空白账套 | 340,000 平衡（含存货/固定资产） | E2E ✅ `04-balance-sheet-golden` |
+| BS-G02 | P1 | Golden 逐行 = 手工验算 + rules 勾稽 | BS-G01 后 | 8 关键行 + 试算平衡 | E2E ✅ |
+| BS-G03 | P1 | 存货多科目合并 + 固定资产净值扣备抵 | BS-G01 后 | 存货=1403+1405；固定资产=1601-1602 | E2E ✅（含于 BS-G02） |
+| BS-G04 | P1 | 过账采购存货后报表行更新 | BS-G02 后 | 存货+10k、货币资金−10k；指定 `6-jy-zfxj` 过账；试算平衡 | E2E ✅ |
+| BS-G05 | P1 | 过账计提折旧后固定资产净值更新 | BS-G04 后 | 固定资产−5k；strict 下 API 阻断 / 非 strict 静默调平 | E2E ✅ |
+| BS-B05 | P1 | strict 模式不平则阻断出表 | BS-G05 后（未结转） | 返回 513013；非 strict 跳过 | E2E ✅ |
+| BS-G06 | P1 | 结转费用后未分配利润勾稽试算平衡 | BS-G05 后 qm_jz_cbfy | 未分配利润−5k；资产=负债+权益 335k | E2E ✅ |
+| BS-T01~03 | P2 | 一年内到期重分类 | 需到期日标记 + 长期负债科目（小企业账套暂无 2501） | — | 待开发 |
 
 ### 3.2 利润表
 
@@ -214,10 +244,17 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 |--------|--------|----------|----------|----------|--------|
 | TC-RPT-010 | P0 | 收入凭证过账后利润表有数 | 步骤 3 确认收入 80,000 | 营业收入 +80,000 | E2E ✅ |
 | TC-RPT-011 | P0 | 费用凭证过账后费用项目有数 | 步骤 2 管理费 10,000 | 管理费用 +10,000 | E2E ✅ |
-| TC-RPT-012 | P0 | 净利润逐级计算正确 | 有收入+费用数据 | 营业利润 → 利润总额 → 净利润 逐级可加 | E2E ✅ |
+| TC-RPT-012 | P0 | 净利润逐级公式链 | 账套 B 收入 80k + 费用 10k | 营业利润=70k；公式链 1→2→3→4 成立 | E2E ✅ + Java UT ✅ |
 | TC-RPT-013 | P0 | 净利润与资产负债表勾稽 | 结转损益后 | 本年利润增量 ≈ 结转损益净额；损益科目归零 | E2E ✅ |
 | TC-RPT-014 | P1 | 本月数 vs 本年累计 | 账套 C，查 2 月报表 | 累计 = 1 月累计 + 2 月本期 | E2E ✅ |
 | TC-RPT-015 | P1 | 未结转损益时的利润表 | 有效凭证但未做结转 | 记录报表表现（与结转后对比） | E2E ✅ |
+| IS-UT01 | P1 | 利润表规则与公式单测 | `StatementIncomeRulesTest` | DEBIT/CREDIT/P&L 规则；账套 B / 复杂场景公式 | Java ✅ |
+| IS-G01 | P1 | Golden 公式链 + config 逐行勾稽 | 空白账套 + 多笔损益凭证 | 1→2→3→4 成立；1/101/104/105/301 rules 对齐 | E2E ✅ `05-income-golden` |
+| IS-G02 | P1 | 首月本期 = 累计 | IS-G01 后 | 有数行 cumulative ≈ current | E2E ✅ |
+| IS-R01 | P1 | 结转后 3103 ≈ 净利润 | qm_jz_sr + qm_jz_cbfy | 3103 增量 ≈ 净利润；损益科目归零 | E2E ✅ |
+| IS-R02 | P1 | 年末未分配利润勾稽 | 12 月 qm_jz_bnlr 过账 | Δ3104.02 ≈ 累计净利润；3103 归零 | E2E ✅ `test:e2e:year-end` |
+| IS-R03 | P1 | 月度未分配利润不变 | 非 12 月结转后 | 3104.02 不变；3103 ≈ 净利润；BS 未分配利润行一致 | E2E ✅ `carry-forward-flow` |
+| IS-B01 | P1 | strict 公式链校验 | Golden / 正常过账后 | 公式链成立时 API 返回 0；不平返回 513014 | Java ✅ + E2E ✅（CI strict 开启） |
 
 ### 3.3 现金流量表
 
@@ -225,10 +262,25 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 |--------|--------|----------|----------|----------|--------|
 | TC-RPT-020 | P0 | 现金净增加额三分项之和 | 有现金业务 | 经营 + 投资 + 筹资 = 净增加额 | E2E ✅ |
 | TC-RPT-021 | P0 | 期末现金 = 资产负债表货币资金 | 同上 | 两报表货币资金一致 | E2E ✅ |
-| TC-RPT-022 | P0 | 收款凭证指定流量项 | 银行存款收款 + 指定经营/销售商品 | 经营活动流入正确 | E2E ✅ |
+| TC-RPT-022 | P0 | 收款凭证指定流量项 | 银行存款收款 + 指定经营/销售商品 | `2-jy-sqxj` 增量 = 凭证金额 | E2E ✅ |
 | TC-RPT-023 | P1 | 非现金科目转账不产生流量 | 应收 ↔ 应付转账，无现金科目 | 现金流量表无新增 | E2E ✅ |
 | TC-RPT-024 | P1 | 未过账凭证不进现金流量表 | 审核但不过账的现金凭证 | 现金流量表无数据 | E2E ✅ |
 | TC-RPT-025 | P2 | 现金流量期初配置 | 修改 ConfigCashFlowBalance | 期初项影响报表 | E2E ✅ |
+| TC-RPT-026 | P0 | 主表经营净额 = 附表经营净额 | Golden 结转后（CF-G05） | `11-jy-lljh` = `57-xj-jyje` | E2E ✅ `04-balance-sheet-golden` |
+| TC-RPT-027 | P1 | 采购付现 + 存货增加 → 53 自动 | Golden 采购 10k（CF-G03） | `6-jy-zfxj`=10k；`53-xj-chjs`=-10k | E2E ✅ |
+| TC-RPT-028 | P1 | 折旧 → 43 自动、主表不变 | Golden 折旧 5k（CF-G04） | `43-xj-zczk`=5k；`11-jy-lljh` 仍 -10k | E2E ✅ |
+| TC-RPT-029 | P0 | 38 = 资产负债表货币资金 | Golden 每步 | 期末现金 = 货币资金 | E2E ✅ CF-G01/G03/G05 |
+| TC-RPT-030 | P1 | 41 = 利润表净利润 | Golden 结转后（CF-G05） | 附表净利润 = IS 行 4 | E2E ✅ |
+| CF-UT01 | P1 | 主表公式 + 附表倒挤单测 | `StatementCashFlowRulesTest` | 三分项=净增；56 倒挤后 11=57 | Java ✅ |
+| CF-UT02 | P1 | 间接法 53/54/55/43 单测 | `StatementCashFlowIndirectRulesTest` | 符号、BS 同源合并、折旧贷方 | Java ✅ |
+| CF-UT03 | P1 | 间接法 42/44/45/49/50/51/52/35 单测 | `StatementCashFlowIndirectRulesTest` | 减值/摊销/财务费用/投资损失/递延税/汇率 | Java ✅ |
+| CF-G01 | P1 | Golden 期初现金 = 货币资金 | BS-G01 后 | 37/38=100k；53/54/55=0 | E2E ✅ `04` |
+| CF-G03 | P1 | Golden 采购指定流量项 + 间接法存货 | BS-G04 后 | 见 TC-RPT-027/029 | E2E ✅ |
+| CF-G04 | P1 | Golden 折旧附表自动 | BS-G05 后 | 见 TC-RPT-028 | E2E ✅ |
+| CF-G05 | P0 | Golden 结转后主附表经营勾稽 | BS-G06 后 | 41=-5k；11=57=-10k；56=0 | E2E ✅ |
+| CF-B01 | P1 | strict 主附经营净额不平则阻断 | strict-reconciliation=true | 返回 513015 | Java ✅（公式层）+ 配置项 ✅ |
+| CF-M01 | P1 | 第 2 期 CF 期初 = 第 1 期 CF 期末 | 多期结账后、P2 录凭证前 | `37` 衔接 | E2E ✅ `multi-period-flow` |
+| CF-M02 | P1 | 第 2 期 53 取上月存货期末为期初 | P1/P2 各一笔采购 | `53` = −P2 采购额 | E2E ✅ `multi-period-flow` |
 
 ---
 
@@ -244,6 +296,7 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 | TC-SET-004 | P0 | 结账后查已结期间报表 | 查 closedTerm 资产负债表 | 恒等式成立；数据与结账前一致 | E2E ✅ |
 | TC-SET-005 | P1 | 重复结账同一期间 | 对已结账月再次 checkout | 已结账期间拒绝重复；不产生重复记录 | E2E ✅ + Unit ✅ |
 | TC-SET-006 | P1 | 结账列表 12 个月 | GET settlement/fetch | 返回 12 条记录 | E2E ✅ `settlement.spec.ts` |
+| TC-SET-007 | P1 | 结账后利润表公式链 | checkout 成功 → 查已结期间利润表 | 1→2→3→4 成立；strict 模式下不平则 checkout 失败 | E2E ✅ `settlement-checkout.spec.ts` |
 
 ### 4.2 结转损益
 
@@ -266,7 +319,7 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 | TC-E2E-002 | P0 | 反向修改闭环 | 反过账 → 反审核 → 改金额 → 再审 → 再过账 → 查报表 | 报表同步更新；恒等式仍成立 | ✅ `voucher-reverse-flow.spec.ts` |
 | TC-E2E-003 | P0 | 多期连续做账（2 个月） | 1 月全流程 + 结账 → 2 月全流程 | 2 月累计 = 1 月累计 + 2 月本期 | ✅ `multi-period-flow.spec.ts` |
 | TC-E2E-004 | P1 | 免审核账套全流程 | 账套 D：暂存 → 提交(直接completed) → 过账 | 跳过 reviewing 仍正常结账 | ✅ `no-review-flow.spec.ts` |
-| TC-E2E-005 | P1 | 报表口径差异专项 | 审核不过账 → 三报表对比 → 再过账 → 再对比 | 记录并确认口径差异 | ✅ `report-reconciliation.spec.ts` |
+| TC-E2E-005 | P1 | 三报表口径统一专项 | 审核不过账 → 无变化 → 过账 → 公式链 + 试算平衡 | 仅已过账计入报表 | ✅ `report-reconciliation.spec.ts` |
 
 ---
 
@@ -303,9 +356,12 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 
 - [ ] 资产负债表：资产总计 = 负债 + 所有者权益（差额 ≤ 0.01）
 - [ ] 利润表：净利润 = 利润总额 - 所得税费用
-- [ ] 利润表净利润 ≈ 资产负债表未分配利润本期增加额（结转后）
+- [ ] 利润表净利润 ≈ 资产负债表未分配利润本期增加额（IS-R02 年末结转 ✅；月度 IS-R03 未分配利润不变 + IS-R01/3103 ✅）
 - [ ] 现金流量表：经营 + 投资 + 筹资 = 现金净增加额
 - [ ] 现金流量表期末现金 = 资产负债表货币资金
+- [ ] 现金流量表：主表经营净额 = 附表经营净额（结转后，CF-G05 ✅）
+- [ ] 现金流量表附表：53/54/55 与 BS 存货/往来行同源（Golden ✅）
+- [ ] 利润表净利润 = 附表 41-xj-jlr（Golden CF-G05 ✅）
 - [ ] 损益类科目结转后余额 ≈ 0
 - [ ] 科目余额表：借方累计 = 贷方累计
 
@@ -329,7 +385,7 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 |------|------|------|
 | 1 | 账套 B 标准验算 | TC-E2E-001 + 第 7 节工作表 |
 | 2 | 反向闭环 | TC-E2E-002 |
-| 3 | 报表口径差异 | TC-RPT-003, TC-E2E-005 |
+| 3 | 三报表口径统一 | TC-RPT-003, TC-E2E-005 |
 | 4 | 多期 | TC-E2E-003 |
 | 5 | 结账 + 结转 | TC-SET-001 ~ 014 |
 
@@ -351,7 +407,7 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 |------------|------|----------|
 | E2E 凭证边界 | `e2e/voucher-edge-cases.spec.ts` | TC-EXC-004, TC-EXC-005, TC-RPT-006 ✅ |
 | E2E 批量过账 | `e2e/voucher-batch-ops.spec.ts` | TC-EXC-001, TC-EXC-006, TC-EXC-007（幂等）, TC-VCH-024, TC-VCH-036, TC-VCH-055 |
-| E2E 结账守卫 | `e2e/settlement-checkout.spec.ts` | TC-SET-005 ✅（含重复结账拒绝） |
+| E2E 结账守卫 | `e2e/settlement-checkout.spec.ts` | TC-SET-005/007 ✅（重复结账拒绝 + 结账后公式链） |
 | E2E 账套初始化 | `e2e/global-setup.ts` / `e2e/setup-book.spec.ts` | 清库 + API 建账（`E2E_RESET_BOOK=1` 时自动） |
 | E2E 凭证草稿/提交 | `e2e/voucher.spec.ts` | TC-VCH-001, 020, TC-VCH-002（纳入 `test:e2e:accounting`） |
 | E2E 凭证录入校验 | `e2e/voucher-input-validation.spec.ts` | TC-VCH-006, TC-VCH-007 |
@@ -360,22 +416,30 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 | E2E 全流程 | `e2e/zz-accounting-flow.spec.ts` | TC-VCH-020,030,050, TC-SET-001~004, TC-E2E-001 ✅ |
 | E2E 反向闭环 | `e2e/voucher-reverse-flow.spec.ts` | TC-E2E-002, TC-VCH-053 |
 | E2E 三报表勾稽 | `e2e/report-reconciliation.spec.ts` | TC-RPT-003, TC-E2E-005, TC-VCH-052 |
-| E2E 多期做账 | `e2e/multi-period-flow.spec.ts` | TC-E2E-003, TC-RPT-005, TC-RPT-014 ✅ |
-| E2E 结转损益 | `e2e/carry-forward-flow.spec.ts` | TC-SET-010~015, TC-RPT-013/015, TC-VCH-056, TC-EXC-003, TC-E2E-001 ✅ |
+| E2E 多期做账 | `e2e/multi-period-flow.spec.ts` | TC-E2E-003, TC-RPT-005/014, **CF-M01/M02** ✅ |
+| E2E 结转损益 | `e2e/carry-forward-flow.spec.ts` | TC-SET-010~015, TC-RPT-013/015, IS-R01/R03, TC-VCH-056, TC-EXC-003, TC-E2E-001 ✅ |
 | E2E 主管复核 | `e2e/voucher-manage-audit.spec.ts` | TC-VCH-037 ✅ |
 | E2E 现金流量表 | `e2e/01-cash-flow-reconciliation.spec.ts` | TC-RPT-020~025 ✅（opening 后优先执行，保证跨表勾稽） |
 | E2E 凭证状态拦截 | `e2e/voucher-state-guards.spec.ts` | TC-VCH-023, 031~035, 033, 040~041, 042~045, 051, 054, TC-EXC-002 |
 | E2E 期初余额报表 | `e2e/00-opening-balance-report.spec.ts` | TC-RPT-002 ✅ |
+| E2E 资产负债表逐行勾稽 | `e2e/02-balance-sheet-line-reconciliation.spec.ts` | BS-M01/D02/CFG/B01 ✅ |
+| E2E 往来重分类 | `e2e/03-balance-sheet-reclassification.spec.ts` | BS-R01~R04 ✅ |
+| E2E Golden Dataset | `e2e/04-balance-sheet-golden-dataset.spec.ts` | BS-G01~G06 + BS-B05 + **CF-G01/G03/G04/G05** ✅（`npm run test:e2e:balance-sheet-golden`） |
+| E2E 利润表 Golden | `e2e/05-income-statement-golden-dataset.spec.ts` | IS-G01/G02 + IS-R01 ✅（`npm run test:e2e:income-golden`） |
 | E2E 报表导出 | `e2e/report-export.spec.ts` | TC-RPT-007 ✅ |
 | E2E 账套B验算 | `e2e/book-b-verification.spec.ts` | TC-RPT-004/010~013、TC-VCH-057 ✅ |
-| E2E 年末结转 | `e2e/carry-forward-year-end.spec.ts` | TC-SET-013 正例 ✅（`npm run test:e2e:year-end`） |
+| E2E 年末结转 | `e2e/carry-forward-year-end.spec.ts` | TC-SET-013 + IS-R02 ✅（`npm run test:e2e:year-end`） |
 | E2E 免审核账套 | `e2e/no-review-flow.spec.ts` | TC-E2E-004, TC-VCH-021, TC-VCH-033（免审核→draft） |
 | E2E 报表 | `e2e/report.spec.ts` | TC-RPT-001 ✅（纳入 `test:e2e:accounting`） |
 | E2E 结账页 | `e2e/settlement.spec.ts` | TC-SET-006 ✅；UI 页需 `npm run test:e2e:ui-pages` |
 | E2E UI 页面冒烟 | `test:e2e:ui-pages` | 凭证/报表/结账页渲染（`E2E_ENABLE_UI=1`，需先 `test:e2e:install`） |
 | Unit 凭证校验 | `VoucherServiceTest.java` | TC-VCH-002~005, 020~022 |
 | Unit 结账 | `SettlementServiceTest.java` | TC-SET-005（重复结账拒绝） |
-| Unit 资产负债表 | `StatementBalanceSheetServiceTest.java` | 报表计算逻辑 |
+| Unit 资产负债表 | `StatementBalanceSheetServiceTest.java` | normalize/refreshItemsBalance/reconcile/试算差额 |
+| Unit 利润表规则 | `StatementIncomeRulesTest.java` | IS-UT01：取数规则 + 逐级公式链 |
+| Unit 利润表校验 | `StatementIncomeServiceTest.java` | IS-B01：strict 公式链拦截 |
+| Unit 现金流量表规则 | `StatementCashFlowRulesTest.java` | CF-UT01：主表公式 + 附表倒挤 |
+| Unit 现金流量表间接法 | `StatementCashFlowIndirectRulesTest.java` | CF-UT02~03：53/54/55/43 + 42/44/45/49/50/51/52/35 |
 | Unit 科目兼容 | `SubjectCodeCompatTest.java` | 小企业准则 4001→3001 等别名 |
 | Unit 科目祖先 | `SubjectBalanceAncestorsTest.java` | idPath 空段过滤，防 source_id='' 误匹配 |
 | Unit 配置更新 | `ConfigSysServiceTest.java` | update-by-key 按 bookId 过滤 |
@@ -391,6 +455,8 @@ jinbooks **不是**单一的 4 态模型，而是审核状态 + 过账状态两�
 7. ~~`TC-RPT-021` 现金流期末 vs 资产负债表货币资金~~ → ✅ `01-cash-flow-reconciliation`（置于期初之后，避免其它业务污染）
 8. ~~`ConfigSysService.update` 必须按 `bookId` 过滤~~ → ✅ 已修（`ConfigSysServiceTest` + `clear_books` 同步清理账套 config）
 9. ~~科目余额 `source_id` 空 + `idPath` 空段误匹配~~ → ✅ `BookInitBalanceService` 写入科目 id；`SubjectBalanceAncestors` 忽略 `/` 空段；现金流仅统计已过账凭证
+10. ~~现金流量表附表 53/54/55 自动计算 + Golden 三表勾稽~~ → ✅ `StatementCashFlowIndirectRules` + `04-balance-sheet-golden` CF-G01~G05
+11. ~~多期 CF 期初衔接 + 53 跨月期初~~ → ✅ `multi-period-flow` CF-M01/M02
 
 ---
 

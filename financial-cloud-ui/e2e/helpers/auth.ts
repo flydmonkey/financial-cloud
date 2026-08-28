@@ -103,6 +103,11 @@ export function formatVoucherWord(head: string, term: string, wordNum: number): 
     return `${head}${year}${month}第${String(wordNum).padStart(4, '0')}号`
 }
 
+/** 凭证列表页「凭证字号」列展示格式，与 voucher-index.vue 一致 */
+export function formatVoucherWordListLabel(head: string, wordNum: number | string): string {
+    return `${head}-${wordNum}`
+}
+
 export async function getCurrentTerm(
     request: APIRequestContext,
     headers: Record<string, string>,

@@ -38,6 +38,13 @@ spring:
 financial-cloud:
   auth:
     captcha-enabled: false
+  statement:
+    balance-sheet:
+      strict-trial-balance: false
+    cash-flow:
+      strict-reconciliation: false
+    income:
+      strict-formula-validation: false
   security:
     legacy-secret-suffix: l0JqT7NvIzP9oRaG4kFc1QmD_bWu3x8E5yS2h6
   session:

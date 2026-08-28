@@ -26,10 +26,14 @@ import com.financial.cloud.enums.statement.AssetOrLiabilityEnum;
 import com.financial.cloud.enums.statement.StatementPeriodTypeEnum;
 import com.financial.cloud.enums.statement.StatementSymbolEnum;
 import com.financial.cloud.enums.statement.StatementTypeEnum;
+import com.financial.cloud.enums.error.StatementErrorCode;
+import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
 import com.financial.cloud.enums.book.SubjectDirectionEnum;
 import com.financial.cloud.util.SubjectCodeCompat;
+import com.financial.cloud.util.StatementBalanceSheetRules;
+import com.financial.cloud.util.StatementCashFlowIndirectRules;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
@@ -39,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +70,9 @@ public class StatementBalanceSheetService{
     private final BookMapper bookMapper;
     private final StatementRulesMapper rulesMapper;
     private final StatementSubjectBalanceMapper subjectBalanceMapper;
+
+    @Value("${financial-cloud.statement.balance-sheet.strict-trial-balance:false}")
+    private boolean strictTrialBalance;
 
     /**
      * 报表-资产负债表
@@ -384,13 +392,18 @@ public class StatementBalanceSheetService{
             lqwSubject.eq(StatementSubjectBalance::getBookId, bookId);
             lqwSubject.eq(StatementSubjectBalance::getYearPeriod, yearPeriod);
             List<StatementSubjectBalance> subjectBalances = subjectBalanceMapper.selectList(lqwSubject);
-            Map<String, StatementSubjectBalance> subjectMap = subjectBalances.stream()
-                    .collect(Collectors.toMap(StatementSubjectBalance::getSubjectCode, item -> item));
+            Map<String, List<StatementSubjectBalance>> subjectMapByCode = subjectBalances.stream()
+                    .collect(Collectors.groupingBy(StatementSubjectBalance::getSubjectCode));
             // 更新对应规则的余额和报表余额
             for (StatementRules statementRules : rules) {
-                StatementSubjectBalance subjectBalance = SubjectCodeCompat.resolveFromMap(
-                        subjectMap, statementRules.getSubjectCode());
-                updateRuleBalance(subjectBalance, statementRules);
+                statementRules.setOpeningYearBalance(BigDecimal.ZERO);
+                statementRules.setClosingBalance(BigDecimal.ZERO);
+                for (String subjectCode : SubjectCodeCompat.lookupCandidates(statementRules.getSubjectCode())) {
+                    for (StatementSubjectBalance subjectBalance :
+                            subjectMapByCode.getOrDefault(subjectCode, List.of())) {
+                        updateRuleBalance(subjectBalance, statementRules);
+                    }
+                }
                 StatementBalanceSheetItem balanceSheet = mapSheet.get(statementRules.getItemCode());
                 if (StatementSymbolEnum.PLUS.getValue().equals(statementRules.getSymbol())) {
                     if (updateParams == 1 || updateParams == 3) {
@@ -567,75 +580,136 @@ public class StatementBalanceSheetService{
         }
 
         if (subjectBalance != null && statementRules != null) {
+            String rule = statementRules.getRule();
             statementRules.setOpeningYearBalance(
-                    statementRules.getOpeningYearBalance().add(normalizeOpeningBalance(subjectBalance))
+                    statementRules.getOpeningYearBalance().add(
+                            StatementBalanceSheetRules.normalizeOpeningBalance(subjectBalance, rule))
             );
             statementRules.setClosingBalance(
-                    statementRules.getClosingBalance().add(normalizeClosingBalance(subjectBalance))
+                    statementRules.getClosingBalance().add(
+                            StatementBalanceSheetRules.normalizeClosingBalance(subjectBalance, rule))
             );
         }
-    }
-
-    private static BigDecimal normalizeOpeningBalance(StatementSubjectBalance subjectBalance) {
-        BigDecimal debit = defaultZero(subjectBalance.getOpeningYearBalanceDebit());
-        BigDecimal credit = defaultZero(subjectBalance.getOpeningYearBalanceCredit());
-        return normalizeByDirection(subjectBalance.getDirection(), debit, credit, defaultZero(subjectBalance.getBalance()));
-    }
-
-    private static BigDecimal normalizeClosingBalance(StatementSubjectBalance subjectBalance) {
-        BigDecimal debit = defaultZero(subjectBalance.getClosingBalanceDebit());
-        BigDecimal credit = defaultZero(subjectBalance.getClosingBalanceCredit());
-        return normalizeByDirection(subjectBalance.getDirection(), debit, credit, defaultZero(subjectBalance.getBalance()));
     }
 
     static BigDecimal normalizeByDirection(String direction,
                                            BigDecimal debit,
                                            BigDecimal credit,
                                            BigDecimal fallbackBalance) {
-        if (SubjectDirectionEnum.CREDIT.getValue().equals(direction)) {
-            if (debit.signum() != 0 || credit.signum() != 0) {
-                BigDecimal normalized = credit.subtract(debit);
-                if (normalized.signum() < 0 && fallbackBalance.signum() > 0) {
-                    return fallbackBalance;
-                }
-                return normalized;
-            }
-            if (fallbackBalance.signum() < 0) {
-                return fallbackBalance.negate();
-            }
-            return fallbackBalance;
-        }
-        if (debit.signum() != 0 || credit.signum() != 0) {
-            return debit.subtract(credit);
-        }
-        return fallbackBalance;
+        return StatementBalanceSheetRules.normalizeByDirection(direction, debit, credit, fallbackBalance);
     }
 
     private static BigDecimal defaultZero(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
     }
 
-    private void reconcileGrandTotals(StatementBalanceSheetItemListVo itemListVo) {
-        if (itemListVo == null) {
+    /**
+     * 按资产负债表行名聚合余额（与报表展示同源，含往来重分类）。
+     */
+    public Map<String, StatementCashFlowIndirectRules.ReportLineBalance> computeReportLineBalances(
+            String bookId, String yearPeriod) {
+        LambdaQueryWrapper<StatementBalanceSheetItem> itemLqw = Wrappers.lambdaQuery();
+        itemLqw.eq(StatementBalanceSheetItem::getBookId, bookId);
+        itemLqw.eq(StatementBalanceSheetItem::getBalanceSheetId, ConstsSysConfig.SYS_CONFIG_TEMPLATE_ID);
+        List<StatementBalanceSheetItem> items = balanceSheetItemMapper.selectList(itemLqw);
+        if (CollectionUtils.isEmpty(items)) {
+            return Map.of();
+        }
+        List<StatementBalanceSheetItem> working = items.stream()
+                .map(this::copyBalanceSheetItemForCompute)
+                .toList();
+        refreshItemsBalance(working, bookId, yearPeriod, 3);
+        StatementBalanceSheetItemListVo vo = insertSubtotals(working);
+        Map<String, StatementCashFlowIndirectRules.ReportLineBalance> byName = new HashMap<>();
+        collectReportLineBalances(vo.getAssets(), byName);
+        collectReportLineBalances(vo.getLiability(), byName);
+        return byName;
+    }
+
+    private void collectReportLineBalances(
+            List<StatementBalanceSheetItem> items,
+            Map<String, StatementCashFlowIndirectRules.ReportLineBalance> byName) {
+        if (items == null) {
             return;
+        }
+        for (StatementBalanceSheetItem item : items) {
+            if (item.getItemName() == null || item.getItemName().isBlank()) {
+                continue;
+            }
+            StatementCashFlowIndirectRules.ReportLineBalance balance =
+                    new StatementCashFlowIndirectRules.ReportLineBalance(
+                            defaultZero(item.getInitialBalance()),
+                            defaultZero(item.getCurrentBalance()));
+            byName.merge(item.getItemName(), balance, (left, right) ->
+                    new StatementCashFlowIndirectRules.ReportLineBalance(
+                            left.initialBalance().add(right.initialBalance()),
+                            left.currentBalance().add(right.currentBalance())));
+        }
+    }
+
+    private StatementBalanceSheetItem copyBalanceSheetItemForCompute(StatementBalanceSheetItem source) {
+        StatementBalanceSheetItem item = new StatementBalanceSheetItem();
+        item.setBookId(source.getBookId());
+        item.setBalanceSheetId(source.getBalanceSheetId());
+        item.setItemCode(source.getItemCode());
+        item.setItemName(source.getItemName());
+        item.setParentItemCode(source.getParentItemCode());
+        item.setAssetOrLiability(source.getAssetOrLiability());
+        item.setLevel(source.getLevel());
+        item.setSymbol(source.getSymbol());
+        item.setInitialBalance(BigDecimal.ZERO);
+        item.setCurrentBalance(BigDecimal.ZERO);
+        return item;
+    }
+
+    void reconcileGrandTotals(StatementBalanceSheetItemListVo itemListVo) {
+        GrandTotalDiff totals = computeGrandTotalDiff(itemListVo);
+        if (totals == null || totals.withinTolerance()) {
+            return;
+        }
+        if (strictTrialBalance) {
+            throw new ServiceException(
+                    StatementErrorCode.BALANCE_SHEET_TRIAL_BALANCE_FAILED,
+                    totals.diff(),
+                    totals.assetTotal(),
+                    totals.liabilityTotal());
+        }
+        log.warn("Balance sheet out of balance by {}, adjusting liability grand total from {} to {}",
+                totals.diff(), totals.liabilityTotal(), totals.assetTotal());
+        totals.liabilityGrand().setCurrentBalance(totals.assetTotal());
+    }
+
+    /**
+     * 试算平衡差额（资产总计 − 负债及权益总计），供单测与诊断使用。
+     */
+    static GrandTotalDiff computeGrandTotalDiff(StatementBalanceSheetItemListVo itemListVo) {
+        if (itemListVo == null) {
+            return null;
         }
         StatementBalanceSheetItem assetGrand = findLevelOneGrandTotal(itemListVo.getAssets());
         StatementBalanceSheetItem liabilityGrand = findLevelOneGrandTotal(itemListVo.getLiability());
         if (assetGrand == null || liabilityGrand == null) {
-            return;
+            return null;
         }
         BigDecimal assetTotal = defaultZero(assetGrand.getCurrentBalance());
         BigDecimal liabilityTotal = defaultZero(liabilityGrand.getCurrentBalance());
-        BigDecimal diff = assetTotal.subtract(liabilityTotal);
-        if (diff.abs().compareTo(new BigDecimal("0.01")) <= 0) {
-            return;
-        }
-        log.warn("Balance sheet out of balance by {}, adjusting liability grand total from {} to {}",
-                diff, liabilityTotal, assetTotal);
-        liabilityGrand.setCurrentBalance(assetTotal);
+        return new GrandTotalDiff(assetGrand, liabilityGrand, assetTotal, liabilityTotal,
+                assetTotal.subtract(liabilityTotal));
     }
 
-    private static StatementBalanceSheetItem findLevelOneGrandTotal(List<StatementBalanceSheetItem> items) {
+    record GrandTotalDiff(
+            StatementBalanceSheetItem assetGrand,
+            StatementBalanceSheetItem liabilityGrand,
+            BigDecimal assetTotal,
+            BigDecimal liabilityTotal,
+            BigDecimal diff) {
+
+        boolean withinTolerance() {
+            return diff.abs().compareTo(new BigDecimal("0.01")) <= 0;
+        }
+    }
+
+    static StatementBalanceSheetItem findLevelOneGrandTotal(List<StatementBalanceSheetItem> items) {
         if (items == null || items.isEmpty()) {
             return null;
         }

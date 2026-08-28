@@ -136,7 +136,14 @@ test.describe.serial('cash flow reconciliation', () => {
         )
         expect(specifyResult.code, specifyResult.message || 'specify cash flow failed').toBe(0)
 
+        const beforeItems = await fetchCashFlowStatement(request, ctx.headers, ctx.term)
+        const beforeSales = num(findCashFlowItem(beforeItems, CashFlowItems.SALES_RECEIPT)?.monthlyAmount)
+
         await postVoucher(request, ctx.headers, ctx.cashVoucherId)
+
+        const afterItems = await fetchCashFlowStatement(request, ctx.headers, ctx.term)
+        const afterSales = num(findCashFlowItem(afterItems, CashFlowItems.SALES_RECEIPT)?.monthlyAmount)
+        expect(afterSales - beforeSales).toBeCloseTo(777, 0)
     })
 
     test('TC-RPT-020: operating + investing + financing = net increase', async ({request}) => {

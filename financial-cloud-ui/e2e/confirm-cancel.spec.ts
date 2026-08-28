@@ -1,7 +1,7 @@
 import {expect, test} from '@playwright/test'
 import {
     fetchBookSubjects,
-    formatVoucherWord,
+    formatVoucherWordListLabel,
     getCurrentTerm,
     getCurrentUser,
     loginViaApi,
@@ -52,7 +52,7 @@ async function createDraftVoucher(request: any, headers: Record<string, string>,
     }
     return {
         id: draftBody.data as string,
-        wordLabel: formatVoucherWord('记', term, wordNum),
+        wordLabel: formatVoucherWordListLabel('记', wordNum),
     }
 }
 
@@ -66,12 +66,14 @@ test.describe('confirm dialog cancel', () => {
         await loginViaUi(page)
         await page.goto('/voucher/voucher-index')
         await expect(page.locator('.app-container').first()).toBeVisible({timeout: 15_000})
+        await expect(page.locator('.el-table__body tr').first()).toBeVisible({timeout: 15_000})
 
         const targetRow = page.locator('.el-table__body tr').filter({hasText: voucher!.wordLabel}).first()
         await expect(targetRow).toBeVisible({timeout: 15_000})
         await targetRow.locator('.el-checkbox').click()
 
-        await page.getByRole('button', {name: '批量删除'}).click()
+        await page.getByRole('button', {name: '更多'}).click()
+        await page.getByRole('menuitem', {name: '删除'}).click()
         const dialog = page.locator('.el-message-box')
         await expect(dialog).toBeVisible({timeout: 5_000})
         await dialog.getByRole('button', {name: '取消'}).click()
@@ -93,7 +95,7 @@ test.describe('confirm dialog cancel', () => {
             {headers: auth.headers},
         )
         const wordNum = (await wordNumRes.json()).data ?? 1
-        const wordLabel = formatVoucherWord('记', term, wordNum)
+        const wordLabel = formatVoucherWordListLabel('记', wordNum)
         const bookRes = await request.get(`/api/book/get/${user.bookId}`, {headers: auth.headers})
         const book = (await bookRes.json()).data
 
@@ -147,6 +149,7 @@ test.describe('confirm dialog cancel', () => {
         await loginViaUi(page)
         await page.goto('/voucher/voucher-index')
         await expect(page.locator('.app-container').first()).toBeVisible({timeout: 15_000})
+        await expect(page.locator('.el-table__body tr').first()).toBeVisible({timeout: 15_000})
 
         const targetRow = page.locator('.el-table__body tr').filter({hasText: wordLabel}).first()
         await expect(targetRow).toBeVisible({timeout: 15_000})

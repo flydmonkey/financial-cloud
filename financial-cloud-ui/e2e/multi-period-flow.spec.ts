@@ -1,11 +1,23 @@
 import {expect, test} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
 import {
+    CashFlowItems,
+    createAndPostVoucherWithMainCashFlow,
+    ensureCashFlowConfigInitialized,
+    getCashFlowTotals,
+} from './helpers/cash-flow'
+import {
+    assertCashFlowReconciliation,
     assertReportsBalanced,
+    fetchBalanceSheet,
+    fetchCashFlowStatement,
     fetchSubjectBalances,
+    findBalanceSheetItemByName,
+    findCashFlowItem,
     getBalanceSheetTotals,
     getIncomeNetProfit,
     getSubjectBalance,
+    num,
 } from './helpers/reports'
 import {checkoutCurrentPeriod, verifySettlement} from './helpers/settlement'
 import {
@@ -13,12 +25,13 @@ import {
     ensureVoucherReviewEnabled,
     fixVoucherNumbering,
     pickReconciliationSubjects,
+    pickStandardBusinessSubjects,
 } from './helpers/voucher'
 
 /**
  * TC-E2E-003：多期连续做账
  * 第 1 期：录凭证 → 过账 → 结账
- * 第 2 期：录凭证 → 过账 → 验证利润表累计滚动 + 资产负债表平衡
+ * 第 2 期：录凭证 → 过账 → 验证利润表累计滚动 + 资产负债表平衡 + 现金流跨期衔接
  */
 test.describe.serial('multi-period accounting flow', () => {
     const ctx: {
@@ -31,6 +44,9 @@ test.describe.serial('multi-period accounting flow', () => {
         period1Income: {current: number; cumulative: number} | null
         period1Balance: {assetTotal: number | null; liabilityTotal: number | null} | null
         period1BankBalance: number | null
+        period1CashEnding: number | null
+        period1Inventory: number | null
+        period2InventoryPurchase: number
     } = {
         headers: {},
         bookId: '',
@@ -41,6 +57,9 @@ test.describe.serial('multi-period accounting flow', () => {
         period1Income: null,
         period1Balance: null,
         period1BankBalance: null,
+        period1CashEnding: null,
+        period1Inventory: null,
+        period2InventoryPurchase: 80,
     }
 
     test('login and prepare book', async ({request}) => {
@@ -51,6 +70,7 @@ test.describe.serial('multi-period accounting flow', () => {
         ctx.bookId = user.bookId
         ctx.period1Term = await getCurrentTerm(request, auth.headers, user.bookId)
         await ensureVoucherReviewEnabled(request, auth.headers, user.bookId)
+        await ensureCashFlowConfigInitialized(request, auth.headers, user.bookId)
     })
 
     test('period 1: create voucher, post and checkout', async ({request}) => {
@@ -68,6 +88,16 @@ test.describe.serial('multi-period accounting flow', () => {
             pair,
         )
 
+        const {bank, rawMaterial} = pickStandardBusinessSubjects(subjects)
+        if (bank && rawMaterial) {
+            await createAndPostVoucherWithMainCashFlow(
+                request, ctx.headers, ctx.bookId, ctx.period1Term,
+                'E2E多期-P1采购', 100,
+                {debit: rawMaterial, credit: bank},
+                CashFlowItems.PURCHASE_PAYMENT,
+            )
+        }
+
         await fixVoucherNumbering(request, ctx.headers)
         await verifySettlement(request, ctx.headers)
         await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
@@ -76,6 +106,13 @@ test.describe.serial('multi-period accounting flow', () => {
         ctx.period1Balance = await getBalanceSheetTotals(request, ctx.headers, ctx.period1Term)
         const p1Subjects = await fetchSubjectBalances(request, ctx.headers, ctx.period1Term)
         ctx.period1BankBalance = getSubjectBalance(p1Subjects, '1002')
+
+        const p1Cash = await getCashFlowTotals(request, ctx.headers, ctx.period1Term)
+        ctx.period1CashEnding = p1Cash.endingCash
+
+        const p1BalanceSheet = await fetchBalanceSheet(request, ctx.headers, ctx.period1Term)
+        const inventoryLine = findBalanceSheetItemByName(p1BalanceSheet?.items?.assets || [], '存货')
+        ctx.period1Inventory = inventoryLine ? num(inventoryLine.currentBalance) : null
 
         const checkout = await checkoutCurrentPeriod(request, ctx.headers, ctx.bookId)
         expect(checkout.closedTerm).toBe(ctx.period1Term)
@@ -100,6 +137,17 @@ test.describe.serial('multi-period accounting flow', () => {
         expect(p2BankBefore).toBeCloseTo(ctx.period1BankBalance!, 2)
     })
 
+    test('CF-M01: period 2 cash flow beginning rolls from period 1 ending', async ({request}) => {
+        test.skip(ctx.period1CashEnding == null || !ctx.period2Term, '缺少第 1 期现金流快照')
+
+        const p2CashBefore = await getCashFlowTotals(request, ctx.headers, ctx.period2Term)
+        test.info().annotations.push({
+            type: 'note',
+            description: `P1 CF期末=${ctx.period1CashEnding}, P2 CF期初=${p2CashBefore.beginningCash}`,
+        })
+        expect(p2CashBefore.beginningCash).toBeCloseTo(ctx.period1CashEnding!, 2)
+    })
+
     test('period 2: create voucher in new term', async ({request}) => {
         test.skip(!ctx.period2Term, '第 2 期账期未推进')
         const currentTerm = await getCurrentTerm(request, ctx.headers, ctx.bookId)
@@ -116,7 +164,38 @@ test.describe.serial('multi-period accounting flow', () => {
             ctx.period2Amount,
             pair,
         )
+
+        const {bank, rawMaterial} = pickStandardBusinessSubjects(subjects)
+        if (bank && rawMaterial && ctx.period1Inventory != null) {
+            await createAndPostVoucherWithMainCashFlow(
+                request, ctx.headers, ctx.bookId, ctx.period2Term,
+                'E2E多期-P2采购', ctx.period2InventoryPurchase,
+                {debit: rawMaterial, credit: bank},
+                CashFlowItems.PURCHASE_PAYMENT,
+            )
+        }
+
         await assertReportsBalanced(request, ctx.headers, ctx.period2Term)
+    })
+
+    test('CF-M02: period 2 inventory indirect uses prior month closing as opening', async ({request}) => {
+        test.skip(ctx.period1Inventory == null || !ctx.period2Term, '缺少存货基线或未进入第 2 期')
+
+        const items = await fetchCashFlowStatement(request, ctx.headers, ctx.period2Term)
+        const inventoryChange = num(findCashFlowItem(items, CashFlowItems.INVENTORY_CHANGE)?.monthlyAmount)
+        const purchaseOutflow = num(findCashFlowItem(items, CashFlowItems.PURCHASE_PAYMENT)?.monthlyAmount)
+
+        test.info().annotations.push({
+            type: 'note',
+            description: `P1存货=${ctx.period1Inventory}, P2 53=${inventoryChange}, P2 6=${purchaseOutflow}`,
+        })
+
+        if (purchaseOutflow > 0.01) {
+            expect(inventoryChange).toBeCloseTo(-ctx.period2InventoryPurchase, 0)
+            expect(purchaseOutflow).toBeGreaterThanOrEqual(ctx.period2InventoryPurchase - 0.01)
+        }
+
+        assertCashFlowReconciliation(items)
     })
 
     test('TC-RPT-014: period 2 income cumulative rolls from period 1', async ({request}) => {
@@ -130,7 +209,6 @@ test.describe.serial('multi-period accounting flow', () => {
             description: `P1累计=${ctx.period1Income.cumulative}, P2本期=${period2Income.current}, P2累计=${period2Income.cumulative}, 期望累计≈${expectedCumulative}`,
         })
 
-        // 利润表：第 2 期本年累计 ≈ 第 1 期累计 + 第 2 期本期（损益科目映射生效时）
         if (Math.abs(ctx.period1Income.cumulative) > 0.01 || Math.abs(period2Income.current) > 0.01) {
             expect(Math.abs(period2Income.cumulative - expectedCumulative)).toBeLessThanOrEqual(0.02)
         }
@@ -149,7 +227,6 @@ test.describe.serial('multi-period accounting flow', () => {
             description: `P1资产=${ctx.period1Balance.assetTotal}, P2资产=${period2Balance.assetTotal}`,
         })
 
-        // 两期报表均保持恒等式（在各自 assert 中已验证）
         await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
         await assertReportsBalanced(request, ctx.headers, ctx.period2Term)
 

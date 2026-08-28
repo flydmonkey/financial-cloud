@@ -11,6 +11,9 @@ from pymysql.constants import CLIENT
 ROOT = Path(__file__).resolve().parents[1]
 INIT_SQL = ROOT / "sql" / "jinbooks_init.sql"
 CASH_FLOW_SEED_SQL = ROOT / "sql" / "seed" / "config_cash_flow_balance.sql"
+BALANCE_SHEET_RECLASS_SQL = ROOT / "sql" / "seed" / "balance_sheet_reclassification_rules.sql"
+BALANCE_SHEET_INV_FA_SQL = ROOT / "sql" / "seed" / "balance_sheet_inventory_fixed_asset_rules.sql"
+BALANCE_SHEET_BAD_DEBT_SQL = ROOT / "sql" / "seed" / "balance_sheet_bad_debt_rules.sql"
 
 HOST = "127.0.0.1"
 PORT = 3307
@@ -55,6 +58,17 @@ def drain_results(cursor) -> None:
             break
 
 
+def strip_leading_sql_comments(chunk: str) -> str:
+    """Drop leading blank / ``--`` lines so commented seed scripts still execute."""
+    lines = chunk.splitlines()
+    while lines:
+        stripped = lines[0].strip()
+        if stripped and not stripped.startswith("--"):
+            break
+        lines.pop(0)
+    return "\n".join(lines).strip()
+
+
 def execute_sql_script(cursor, sql: str) -> None:
     """Execute SQL script statement-by-statement for clearer errors."""
     statement: list[str] = []
@@ -74,9 +88,9 @@ def execute_sql_script(cursor, sql: str) -> None:
             statement.append(char)
             continue
         if char == ";" and not in_string:
-            chunk = "".join(statement).strip()
+            chunk = strip_leading_sql_comments("".join(statement).strip())
             statement = []
-            if not chunk or chunk.startswith("--"):
+            if not chunk:
                 continue
             try:
                 cursor.execute(chunk)
@@ -127,6 +141,24 @@ def main() -> int:
                 print(f"Executing {CASH_FLOW_SEED_SQL} ...")
                 execute_sql_script(
                     cursor, CASH_FLOW_SEED_SQL.read_text(encoding="utf-8")
+                )
+
+            if BALANCE_SHEET_RECLASS_SQL.exists():
+                print(f"Executing {BALANCE_SHEET_RECLASS_SQL} ...")
+                execute_sql_script(
+                    cursor, BALANCE_SHEET_RECLASS_SQL.read_text(encoding="utf-8")
+                )
+
+            if BALANCE_SHEET_INV_FA_SQL.exists():
+                print(f"Executing {BALANCE_SHEET_INV_FA_SQL} ...")
+                execute_sql_script(
+                    cursor, BALANCE_SHEET_INV_FA_SQL.read_text(encoding="utf-8")
+                )
+
+            if BALANCE_SHEET_BAD_DEBT_SQL.exists():
+                print(f"Executing {BALANCE_SHEET_BAD_DEBT_SQL} ...")
+                execute_sql_script(
+                    cursor, BALANCE_SHEET_BAD_DEBT_SQL.read_text(encoding="utf-8")
                 )
 
             cursor.execute("SELECT COUNT(*) FROM standard_subject")

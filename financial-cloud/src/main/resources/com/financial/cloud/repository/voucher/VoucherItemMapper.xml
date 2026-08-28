@@ -14,6 +14,10 @@
 	        AND i.deleted = 'n'
 	        AND v.deleted = 'n'
 	        AND v.status = 'completed'
+	        <if test="params.postedOnly != null and params.postedOnly">
+	            AND v.sender_id IS NOT NULL
+	            AND v.sender_id &lt;&gt; ''
+	        </if>
 	        <if test="params.year != null">
 	            AND YEAR(i.voucher_date) = #{params.year}
 	        </if>

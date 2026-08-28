@@ -32,6 +32,8 @@ mysql -h127.0.0.1 -P3307 -ujinbooks -p jinbooks < sql/seed/standard_subjects.sql
 3. 更新 `standard` 表名称
 4. 插入 369 条新科目
 
+另：`balance_sheet_reclassification_rules.sql`、`balance_sheet_inventory_fixed_asset_rules.sql`、`balance_sheet_bad_debt_rules.sql` 在 `run_init_sql.py` 中于 init 之后执行，分别更新往来重分类、存货/固定资产、坏账准备模板 rules 并同步到已有账套。
+
 ## 已有账套
 
 导入标准科目 **不会** 自动更新 `book_subject`。已有账套需：

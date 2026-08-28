@@ -39,25 +39,18 @@ test.describe('report module', () => {
         const assets = body.data?.items?.assets || []
         const liability = body.data?.items?.liability || []
         if (assets.length === 0 || liability.length === 0) {
-            test.info().annotations.push({type: 'note', description: '账套暂无资产负债表模板数据，跳过平衡断言'})
-            return
+            test.skip(true, '账套暂无资产负债表模板数据')
         }
 
         const assetTotal = sheetGrandTotal(assets)
         const liabilityTotal = sheetGrandTotal(liability)
         if (assetTotal == null || liabilityTotal == null) {
-            test.info().annotations.push({type: 'note', description: '未找到「总计」行，跳过平衡断言'})
-            return
+            test.skip(true, '未找到「总计」行')
         }
-        if (assetTotal === 0 && liabilityTotal === 0) {
-            test.info().annotations.push({type: 'note', description: '报表金额均为 0，跳过平衡断言'})
-            return
-        }
-        test.skip(
-            Math.abs(assetTotal - liabilityTotal) > 0.01,
-            `账套资产负债表不平衡：资产 ${assetTotal}，负债及权益 ${liabilityTotal}`,
-        )
-        expect(Math.abs(assetTotal - liabilityTotal)).toBeLessThanOrEqual(0.01)
+        expect(
+            Math.abs(assetTotal! - liabilityTotal!),
+            `资产负债表不平衡：资产 ${assetTotal}，负债及权益 ${liabilityTotal}`,
+        ).toBeLessThanOrEqual(0.01)
     })
 
     test('statistics endpoints respond without server error', async ({request}) => {

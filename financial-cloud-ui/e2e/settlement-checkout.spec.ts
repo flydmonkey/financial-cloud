@@ -12,6 +12,7 @@ import {
     createAndPostVoucher,
     fixVoucherNumbering,
 } from './helpers/voucher'
+import {assertIncomeFormulaChain, fetchIncomeStatement} from './helpers/reports'
 
 /**
  * TC-SET-005：重复结账同一期间不产生重复结账记录
@@ -48,6 +49,9 @@ test.describe.serial('settlement checkout guards', () => {
 
         const records = await fetchSettlementRecords(request, ctx.headers, ctx.year)
         expect(countClosedSettlements(records, closedTerm)).toBe(1)
+
+        const income = await fetchIncomeStatement(request, ctx.headers, closedTerm)
+        assertIncomeFormulaChain(income?.items || [])
     })
 
     test('TC-SET-005: closed period rejects duplicate checkout', async ({request}) => {

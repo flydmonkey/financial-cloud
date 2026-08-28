@@ -1,6 +1,6 @@
 import {expect, test, type APIRequestContext} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-import {assertReportsBalanced, fetchSubjectBalances, getIncomeNetProfit, getSubjectBalance} from './helpers/reports'
+import {assertReportsBalanced, assertIncomeCarryReconciliation, assertIncomeMonthlyCarryReconciliation, assertThreeReportsConsistent, computeCarryNetFromSubjectBalances, fetchSubjectBalances, getIncomeNetProfit, getSubjectBalance, getSubjectBalanceByCodes, UNDISTRIBUTED_PROFIT_SUBJECT_CODES} from './helpers/reports'
 import {
     deleteCarryVoucher,
     fetchCarryTemplates,
@@ -33,6 +33,10 @@ test.describe.serial('carry-forward flow', () => {
         carryCbfyVoucherId: string
         revenueBeforePrepare: number
         expenseBeforePrepare: number
+        profit3103BeforeCarry: number
+        netProfitBeforeCarry: number
+        expectedCarryNet: number
+        undistributedBeforeCarry: number
     } = {
         headers: {},
         bookId: '',
@@ -42,6 +46,10 @@ test.describe.serial('carry-forward flow', () => {
         carryCbfyVoucherId: '',
         revenueBeforePrepare: 0,
         expenseBeforePrepare: 0,
+        profit3103BeforeCarry: 0,
+        netProfitBeforeCarry: 0,
+        expectedCarryNet: 0,
+        undistributedBeforeCarry: 0,
     }
 
     test('login and load carry templates', async ({request}) => {
@@ -219,8 +227,40 @@ test.describe.serial('carry-forward flow', () => {
         expect(Math.abs(beforeRevenue)).toBeGreaterThan(0)
         expect(Math.abs(beforeExpense)).toBeGreaterThan(0)
 
+        ctx.profit3103BeforeCarry = getSubjectBalance(beforeBalances, '3103')
+        ctx.undistributedBeforeCarry = getSubjectBalanceByCodes(beforeBalances, UNDISTRIBUTED_PROFIT_SUBJECT_CODES)
+        const incomeBefore = await getIncomeNetProfit(request, ctx.headers, ctx.term)
+        ctx.netProfitBeforeCarry = incomeBefore.current
+        const revenueCode = revenue?.code || '5001'
+        const expenseCode = expense?.code || '5602'
+        ctx.expectedCarryNet = computeCarryNetFromSubjectBalances(
+            beforeBalances,
+            [revenueCode],
+            [expenseCode, '5801'],
+        )
+
+        // TC-SET-012 仅生成所得税结转草稿，后续 cleanup 会删掉；过账前补齐 SDS，使 Δ3103 含税
+        const taxBalance = Math.abs(getSubjectBalance(beforeBalances, '5801'))
+        if (taxBalance > 0.01) {
+            const templates = await fetchCarryTemplates(request, ctx.headers)
+            const sds = findCarryTemplate(templates, 'qm_jz_sds')
+            test.skip(!sds, '有 5801 余额但无 qm_jz_sds 模板')
+            const sdsResult = await generateCarryVoucher(request, ctx.headers, sds)
+            expect(sdsResult.code, sdsResult.message || 'qm_jz_sds regenerate failed').toBe(0)
+            expect(sdsResult.data).toBeTruthy()
+            await postCarryVoucher(request, sdsResult.data)
+        }
+
         await postCarryVoucher(request, ctx.carrySrVoucherId)
         await postCarryVoucher(request, ctx.carryCbfyVoucherId)
+
+        await assertIncomeCarryReconciliation(request, ctx.headers, ctx.term, {
+            expectedCarryNet: ctx.expectedCarryNet,
+            netProfitBeforeCarry: ctx.netProfitBeforeCarry,
+            profit3103BeforeCarry: ctx.profit3103BeforeCarry,
+            pAndLSubjectCodes: ['5001', '5602', '5801'],
+            tolerance: 1,
+        })
 
         const afterBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
         if (revenue) {
@@ -229,14 +269,27 @@ test.describe.serial('carry-forward flow', () => {
         if (expense) {
             expect(Math.abs(getSubjectBalance(afterBalances, expense.code))).toBeLessThanOrEqual(0.01)
         }
-        const beforeProfit = getSubjectBalance(beforeBalances, '3103')
         const afterProfit = getSubjectBalance(afterBalances, '3103')
-        const expectedNet = Math.abs(beforeRevenue) - Math.abs(beforeExpense)
         test.info().annotations.push({
             type: 'note',
-            description: `TC-SET-010/011: 5001 ${beforeRevenue}→${revenue ? getSubjectBalance(afterBalances, revenue.code) : 'n/a'}, 5602 ${beforeExpense}→${expense ? getSubjectBalance(afterBalances, expense.code) : 'n/a'}, 3103 ${beforeProfit}→${afterProfit}`,
+            description: `TC-SET-010/011/IS-R01: 5001 ${beforeRevenue}→${revenue ? getSubjectBalance(afterBalances, revenue.code) : 'n/a'}, 5602 ${beforeExpense}→${expense ? getSubjectBalance(afterBalances, expense.code) : 'n/a'}, 3103 ${ctx.profit3103BeforeCarry}→${afterProfit}, expectedCarryNet=${ctx.expectedCarryNet}`,
         })
-        expect(Math.abs(afterProfit - beforeProfit)).toBeCloseTo(expectedNet, 0)
+    })
+
+    test('IS-R03: monthly carry leaves undistributed profit unchanged', async ({request}) => {
+        test.skip(!ctx.carrySrVoucherId, '未过账结转凭证')
+        const month = Number(ctx.term.slice(5, 7))
+        test.skip(month === 12, '12 月走 IS-R02 年末勾稽')
+
+        await assertIncomeMonthlyCarryReconciliation(request, ctx.headers, ctx.term, {
+            undistributedBeforeCarry: ctx.undistributedBeforeCarry,
+            expectedNetProfit: ctx.expectedCarryNet || ctx.netProfitBeforeCarry,
+            tolerance: 1,
+        })
+        test.info().annotations.push({
+            type: 'note',
+            description: `IS-R03: 未分配利润保持 ${ctx.undistributedBeforeCarry}，3103≈结转前净利 ${ctx.expectedCarryNet || ctx.netProfitBeforeCarry}`,
+        })
     })
 
     test('TC-RPT-013: year profit after carry matches P&L net', async ({request}) => {
@@ -276,7 +329,7 @@ test.describe.serial('carry-forward flow', () => {
     test('TC-E2E-001: verify, checkout after carry-forward period', async ({request}) => {
         await fixVoucherNumbering(request, ctx.headers)
         await verifySettlement(request, ctx.headers)
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertThreeReportsConsistent(request, ctx.headers, ctx.term)
         const income = await getIncomeNetProfit(request, ctx.headers, ctx.term)
         test.info().annotations.push({
             type: 'note',

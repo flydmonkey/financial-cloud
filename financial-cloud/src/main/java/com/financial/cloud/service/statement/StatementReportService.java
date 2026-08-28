@@ -35,12 +35,17 @@ import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.enums.common.YesNoEnum;
 import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.BusinessException;
+import com.financial.cloud.exception.ServiceException;
+import com.financial.cloud.util.StatementCashFlowIndirectRules;
+import com.financial.cloud.util.StatementCashFlowRules;
+import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
 import com.financial.cloud.util.excel.ExportTemplateFiles;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -70,6 +75,11 @@ public class StatementReportService{
     private final BookMapper bookMapper;
     private final VoucherMapper voucherMapper;
     private final VoucherItemMapper voucherItemMapper;
+    private final StatementBalanceSheetService balanceSheetService;
+    private final StatementIncomeService statementIncomeService;
+
+    @Value("${financial-cloud.statement.cash-flow.strict-reconciliation:false}")
+    private boolean strictCashFlowReconciliation;
     public BigDecimal getEndingBalance(StatementParamsDto dto) {
         dto.parse();
         List<StatementCashFlow> data = cashFlowStatement(dto).getData();
@@ -316,6 +326,13 @@ public class StatementReportService{
             }
         }
 
+        applyIndirectCashFlowAdjustments(
+                stringBigDecimalMap,
+                stringBigDecimalMapYear,
+                dto,
+                isSameMonth,
+                dto.getDateRangeStart().substring(0, 7));
+
         //生成报表
         List<StatementCashFlow> statementCashFlows = getStatementCashFlows(configCashFlowBalances, stringBigDecimalMapYear,
                 stringBigDecimalMap, isSameYear, isSameMonth, dto.getBookId(), dto.getDateRangeStart().substring(0, 7));
@@ -474,8 +491,10 @@ public class StatementReportService{
         }
 
         // 第二步：计算小计和净额
-        Map<String, BigDecimal> monthlyResults = calculateSubtotalsAndNetAmountsWithProcessor(statementCashFlows, true, amountTerm);
-        Map<String, BigDecimal> yearlyResults = calculateSubtotalsAndNetAmountsWithProcessor(statementCashFlows, false, amountYear);
+        Map<String, BigDecimal> monthlyResults = StatementCashFlowRules.calculateSubtotalsAndNetAmounts(
+                statementCashFlows, true, amountTerm);
+        Map<String, BigDecimal> yearlyResults = StatementCashFlowRules.calculateSubtotalsAndNetAmounts(
+                statementCashFlows, false, amountYear);
 
         // 第三步：更新小计和净额值
         for (StatementCashFlow flow : statementCashFlows) {
@@ -487,7 +506,138 @@ public class StatementReportService{
             }
         }
 
+        validateCashFlowReconciliation(monthlyResults);
+
         return statementCashFlows;
+    }
+
+    private void applyIndirectCashFlowAdjustments(
+            Map<String, BigDecimal> periodMap,
+            Map<String, BigDecimal> yearMap,
+            StatementParamsDto dto,
+            Boolean firstBookPeriod,
+            String reportYearPeriod) {
+        String priorPeriod = getPreviousMonth(reportYearPeriod);
+        Map<String, StatementCashFlowIndirectRules.ReportLineBalance> reportLines =
+                balanceSheetService.computeReportLineBalances(dto.getBookId(), reportYearPeriod);
+        Map<String, StatementCashFlowIndirectRules.ReportLineBalance> priorLines = Boolean.TRUE.equals(firstBookPeriod)
+                ? reportLines
+                : balanceSheetService.computeReportLineBalances(dto.getBookId(), priorPeriod);
+
+        StatementCashFlowIndirectRules.WorkingCapitalChanges workingCapital =
+                StatementCashFlowIndirectRules.computeWorkingCapitalChanges(
+                        reportLines, priorLines, Boolean.TRUE.equals(firstBookPeriod));
+
+        periodMap.put(CashFlowItemEnum.REDUCE_INVENTORY.getDbCode(), workingCapital.inventoryChangePeriod());
+        periodMap.put(CashFlowItemEnum.DECREASE_OPERATING_RECEIVABLES.getDbCode(), workingCapital.receivableChangePeriod());
+        periodMap.put(CashFlowItemEnum.INCREASE_OPERATING_PAYABLE.getDbCode(), workingCapital.payableChangePeriod());
+        yearMap.put(CashFlowItemEnum.REDUCE_INVENTORY.getDbCode(), workingCapital.inventoryChangeYear());
+        yearMap.put(CashFlowItemEnum.DECREASE_OPERATING_RECEIVABLES.getDbCode(), workingCapital.receivableChangeYear());
+        yearMap.put(CashFlowItemEnum.INCREASE_OPERATING_PAYABLE.getDbCode(), workingCapital.payableChangeYear());
+
+        List<StatementSubjectBalance> subjectBalances = loadIndirectSubjectBalances(dto);
+        BigDecimal financialExpensePeriod = resolveIncomeItemAmount(dto, ConstsSysConfig.SYS_DEFAULT_FINANCIAL_EXPENSES, false);
+        BigDecimal financialExpenseYear = resolveIncomeItemAmount(dto, ConstsSysConfig.SYS_DEFAULT_FINANCIAL_EXPENSES, true);
+        BigDecimal investmentIncomePeriod = resolveIncomeItemAmount(
+                dto, StatementCashFlowIndirectRules.INVESTMENT_INCOME_INCOME_ITEM_CODE, false);
+        BigDecimal investmentIncomeYear = resolveIncomeItemAmount(
+                dto, StatementCashFlowIndirectRules.INVESTMENT_INCOME_INCOME_ITEM_CODE, true);
+
+        StatementCashFlowIndirectRules.SupplementaryAdjustments supplementary =
+                StatementCashFlowIndirectRules.computeSupplementaryAdjustments(
+                        subjectBalances,
+                        reportLines,
+                        priorLines,
+                        Boolean.TRUE.equals(firstBookPeriod),
+                        financialExpensePeriod,
+                        financialExpenseYear,
+                        investmentIncomePeriod,
+                        investmentIncomeYear);
+
+        periodMap.put(CashFlowItemEnum.PROVISION_ASSET_IMPAIRMENT.getDbCode(), supplementary.assetImpairmentPeriod());
+        periodMap.put(CashFlowItemEnum.AMORTIZATION_INTANGIBLE_ASSETS.getDbCode(), supplementary.amortizationIntangiblePeriod());
+        periodMap.put(CashFlowItemEnum.AMORTIZATION_LONGTERM_DEFERRED_EXPENSES.getDbCode(),
+                supplementary.amortizationDeferredExpensePeriod());
+        periodMap.put(CashFlowItemEnum.FINANCIAL_EXPENSES.getDbCode(), supplementary.financialExpensePeriod());
+        periodMap.put(CashFlowItemEnum.INVESTMENT_LOSSES.getDbCode(), supplementary.investmentLossPeriod());
+        periodMap.put(CashFlowItemEnum.DECREASE_DEFERRED_TAX_ASSETS.getDbCode(), supplementary.deferredTaxAssetDecreasePeriod());
+        periodMap.put(CashFlowItemEnum.INCREASE_DEFERRED_TAX_LIABILITIES.getDbCode(),
+                supplementary.deferredTaxLiabilityIncreasePeriod());
+        periodMap.put(CashFlowItemEnum.EXCHANGE_RATE_EFFECT.getDbCode(), supplementary.exchangeRateEffectPeriod());
+        periodMap.put(CashFlowItemEnum.DEPRECIATION_FIXED_ASSETS.getDbCode(),
+                StatementCashFlowIndirectRules.sumDepreciationCredit(subjectBalances, false));
+
+        yearMap.put(CashFlowItemEnum.PROVISION_ASSET_IMPAIRMENT.getDbCode(), supplementary.assetImpairmentYear());
+        yearMap.put(CashFlowItemEnum.AMORTIZATION_INTANGIBLE_ASSETS.getDbCode(), supplementary.amortizationIntangibleYear());
+        yearMap.put(CashFlowItemEnum.AMORTIZATION_LONGTERM_DEFERRED_EXPENSES.getDbCode(),
+                supplementary.amortizationDeferredExpenseYear());
+        yearMap.put(CashFlowItemEnum.FINANCIAL_EXPENSES.getDbCode(), supplementary.financialExpenseYear());
+        yearMap.put(CashFlowItemEnum.INVESTMENT_LOSSES.getDbCode(), supplementary.investmentLossYear());
+        yearMap.put(CashFlowItemEnum.DECREASE_DEFERRED_TAX_ASSETS.getDbCode(), supplementary.deferredTaxAssetDecreaseYear());
+        yearMap.put(CashFlowItemEnum.INCREASE_DEFERRED_TAX_LIABILITIES.getDbCode(),
+                supplementary.deferredTaxLiabilityIncreaseYear());
+        yearMap.put(CashFlowItemEnum.EXCHANGE_RATE_EFFECT.getDbCode(), supplementary.exchangeRateEffectYear());
+        yearMap.put(CashFlowItemEnum.DEPRECIATION_FIXED_ASSETS.getDbCode(),
+                StatementCashFlowIndirectRules.sumDepreciationCredit(subjectBalances, true));
+    }
+
+    private BigDecimal resolveIncomeItemAmount(StatementParamsDto dto, String configOrItemCode, boolean cumulative) {
+        String itemCode = configOrItemCode;
+        if (itemCode.startsWith("sys.")) {
+            itemCode = configSysService.selectConfigByKey(dto.getBookId(), configOrItemCode);
+        }
+        if (itemCode == null || itemCode.isBlank()) {
+            return BigDecimal.ZERO;
+        }
+        StatementIncome income = statementIncomeService.getIncomeStatement(dto, true).getData();
+        if (income == null || income.getItems() == null) {
+            return BigDecimal.ZERO;
+        }
+        for (StatementIncomeItem item : income.getItems()) {
+            if (itemCode.equals(item.getItemCode())) {
+                return cumulative
+                        ? defaultZero(item.getCumulativeBalance())
+                        : defaultZero(item.getCurrentBalance());
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private List<StatementSubjectBalance> loadIndirectSubjectBalances(StatementParamsDto dto) {
+        String currentTerm = configSysService.selectConfigByKey(dto.getBookId(), ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT);
+        List<String> allMonths = dto.getAllMonths(currentTerm);
+        Set<String> codes = SubjectCodeCompat.expandLookupCodes(StatementCashFlowIndirectRules.INDIRECT_SUBJECT_ROOTS);
+        if (allMonths.size() > 1) {
+            return subjectBalanceMapper.groupCodeSubjectBalance(
+                    dto, allMonths, allMonths.get(0), allMonths.get(allMonths.size() - 1)).stream()
+                    .filter(row -> codes.contains(row.getSubjectCode()))
+                    .toList();
+        }
+        LambdaQueryWrapper<StatementSubjectBalance> lqw = Wrappers.lambdaQuery();
+        lqw.in(StatementSubjectBalance::getYearPeriod, allMonths);
+        lqw.eq(StatementSubjectBalance::getBookId, dto.getBookId());
+        lqw.in(StatementSubjectBalance::getSubjectCode, codes);
+        return subjectBalanceMapper.selectList(lqw);
+    }
+
+    private static BigDecimal defaultZero(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private void validateCashFlowReconciliation(Map<String, BigDecimal> monthlyResults) {
+        if (!strictCashFlowReconciliation) {
+            return;
+        }
+        BigDecimal directNet = monthlyResults.get(CashFlowItemEnum.OPERATING_CASH_NET.getDbCode());
+        BigDecimal indirectNet = monthlyResults.get(CashFlowItemEnum.OPERATING_CASH_NET_SECOND.getDbCode());
+        if (StatementCashFlowRules.isWithinReconciliationTolerance(directNet, indirectNet)) {
+            return;
+        }
+        throw new ServiceException(
+                StatementErrorCode.CASH_FLOW_RECONCILIATION_FAILED,
+                StatementCashFlowRules.reconciliationDiff(directNet, indirectNet).abs(),
+                directNet,
+                indirectNet);
     }
 
     private Map<String, BigDecimal> generateSpecifyCashFlowBalance(List<StatementCashFlow> statementCashFlows) {
@@ -514,122 +664,6 @@ public class StatementReportService{
         }
 
         return cashFlowMap;
-    }
-
-    private static Map<String, BigDecimal> calculateSubtotalsAndNetAmountsWithProcessor(List<StatementCashFlow> flows, boolean isMonthly, BigDecimal beginBalance) {
-        // 创建一个处理器对象来简化代码
-        CashFlowProcessor processor = new CashFlowProcessor(flows, isMonthly);
-        Map<String, BigDecimal> results = new HashMap<>();
-
-        //设立期初余额
-        results.put(CashFlowItemEnum.BEGINNING_CASH_BALANCE.getDbCode(), beginBalance);
-        results.put(CashFlowItemEnum.BEGINNING_BALANCE_CASH.getDbCode(), beginBalance);
-
-        // 一、经营活动产生的现金流量
-        BigDecimal operatingCashInflow = processor.sumAmounts(CashFlowItemEnum.getOperatingCashInflowDbCodes());
-        results.put(CashFlowItemEnum.OPERATING_CASH_INFLOW_SUBTOTAL.getDbCode(), operatingCashInflow);
-
-        BigDecimal operatingCashOutflow = processor.sumAmounts(CashFlowItemEnum.getOperatingCashOutflowDbCodes());
-        results.put(CashFlowItemEnum.OPERATING_CASH_OUTFLOW_SUBTOTAL.getDbCode(), operatingCashOutflow);
-
-        BigDecimal operatingCashNet = operatingCashInflow.subtract(operatingCashOutflow);
-        results.put(CashFlowItemEnum.OPERATING_CASH_NET.getDbCode(), operatingCashNet);
-
-        // 二、投资活动产生的现金流量
-        BigDecimal investingCashInflow = processor.sumAmounts(CashFlowItemEnum.getInvestingCashInflowDbCodes());
-        results.put(CashFlowItemEnum.INVESTING_CASH_INFLOW_SUBTOTAL.getDbCode(), investingCashInflow);
-
-        BigDecimal investingCashOutflow = processor.sumAmounts(CashFlowItemEnum.getInvestingCashOutflowDbCodes());
-        results.put(CashFlowItemEnum.INVESTING_CASH_OUTFLOW_SUBTOTAL.getDbCode(), investingCashOutflow);
-
-        BigDecimal investingCashNet = investingCashInflow.subtract(investingCashOutflow);
-        results.put(CashFlowItemEnum.INVESTING_CASH_NET.getDbCode(), investingCashNet);
-
-        // 三、筹资活动产生的现金流量
-        BigDecimal financingCashInflow = processor.sumAmounts(CashFlowItemEnum.getFinancingCashInflowDbCodes());
-        results.put(CashFlowItemEnum.FINANCING_CASH_INFLOW_SUBTOTAL.getDbCode(), financingCashInflow);
-
-        BigDecimal financingCashOutflow = processor.sumAmounts(CashFlowItemEnum.getFinancingCashOutflowDbCodes());
-        results.put(CashFlowItemEnum.FINANCING_CASH_OUTFLOW_SUBTOTAL.getDbCode(), financingCashOutflow);
-
-        BigDecimal financingCashNet = financingCashInflow.subtract(financingCashOutflow);
-        results.put(CashFlowItemEnum.FINANCING_CASH_NET.getDbCode(), financingCashNet);
-
-        // 四、汇率变动对现金的影响
-        BigDecimal exchangeRateEffect = processor.getAmount(CashFlowItemEnum.EXCHANGE_RATE_EFFECT.getDbCode());
-
-        // 五、现金及现金等价物净增加额
-        BigDecimal cashNetIncrease = operatingCashNet.add(investingCashNet).add(financingCashNet).add(exchangeRateEffect);
-        results.put(CashFlowItemEnum.CASH_NET_INCREASE.getDbCode(), cashNetIncrease);
-
-        // 六、期末现金及现金等价物余额
-//        BigDecimal beginningCashBalance = processor.getAmount(CashFlowItemEnum.BEGINNING_CASH_BALANCE.getDbCode());
-        BigDecimal endingCashBalance = beginBalance.add(cashNetIncrease);
-        results.put(CashFlowItemEnum.ENDING_CASH_BALANCE.getDbCode(), endingCashBalance);
-
-        //其他和经营活动产生的现金流量净额
-        //先计算除了"其他"项外的所有项的和
-        BigDecimal supplementaryInformation = processor.sumAmounts(CashFlowItemEnum.getSupplementaryInformationDbCodes());
-        BigDecimal otherValue = operatingCashNet.subtract(supplementaryInformation);
-        results.put(CashFlowItemEnum.OTHER_VALUE.getDbCode(), otherValue);
-        results.put(CashFlowItemEnum.OPERATING_CASH_NET_SECOND.getDbCode(), operatingCashNet);
-
-        //获取现金及现金等价物净增加情况
-        results.put(CashFlowItemEnum.ENDING_BALANCE_CASH.getDbCode(), endingCashBalance);
-//        BigDecimal beginningAmount = processor.getAmount(CashFlowItemEnum.BEGINNING_BALANCE_CASH.getDbCode());
-        BigDecimal endingAmountEqui = processor.getAmount(CashFlowItemEnum.ENDING_BALANCE_CASH_EQUIVALENTS.getDbCode());
-        BigDecimal beginningAmountEqui = processor.getAmount(CashFlowItemEnum.BEGINNING_BALANCE_CASH_EQUIVALENTS.getDbCode());
-        BigDecimal netIncreaseCash = endingCashBalance.subtract(beginBalance).add(endingAmountEqui).subtract(beginningAmountEqui);
-        results.put(CashFlowItemEnum.NET_INCREASE_CASH_EQUIVALENTS.getDbCode(), netIncreaseCash);
-
-        return results;
-    }
-
-    private static class CashFlowProcessor {
-        private final Map<String, StatementCashFlow> flowMap;
-        private final boolean isMonthly;
-
-        /**
-         * 构造函数
-         *
-         * @param flows     现金流量项目列表
-         * @param isMonthly 是否处理月度数据
-         */
-        public CashFlowProcessor(List<StatementCashFlow> flows, boolean isMonthly) {
-            this.isMonthly = isMonthly;
-            // 预处理：建立itemCode到StatementCashFlow的映射
-            this.flowMap = new HashMap<>(flows.size());
-            for (StatementCashFlow flow : flows) {
-                this.flowMap.put(flow.getItemCode(), flow);
-            }
-        }
-
-        /**
-         * 获取指定项目代码的金额
-         *
-         * @param itemCode 项目代码
-         * @return 项目金额，如果为null则返回0
-         */
-        public BigDecimal getAmount(String itemCode) {
-            StatementCashFlow flow = flowMap.get(itemCode);
-            if (flow == null) {
-                return BigDecimal.ZERO;
-            }
-            BigDecimal amount = isMonthly ? flow.getMonthlyAmount() : flow.getCurrentAmount();
-            return amount != null ? amount : BigDecimal.ZERO;
-        }
-
-        /**
-         * 计算指定项目代码列表的金额总和
-         *
-         * @param itemCodes 项目代码列表
-         * @return 金额总和
-         */
-        public BigDecimal sumAmounts(List<String> itemCodes) {
-            return itemCodes.stream()
-                    .map(this::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-        }
     }
 
     private String getPreviousMonth(String reportDate) {

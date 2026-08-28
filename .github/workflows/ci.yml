@@ -86,7 +86,7 @@ jobs:
         run: |
           JAR=$(ls target/*.jar | grep -v '\.original$' | head -n1)
           echo "Starting $JAR"
-          java -jar "$JAR" --server.port=2154 > ../backend-ci.log 2>&1 &
+          java -jar "$JAR" --server.port=2154 --financial-cloud.statement.balance-sheet.strict-trial-balance=true --financial-cloud.statement.income.strict-formula-validation=true --financial-cloud.statement.cash-flow.strict-reconciliation=true > ../backend-ci.log 2>&1 &
           if ! npx --yes wait-on http://localhost:2154/api/login/get --timeout 300000; then
             echo "==== backend log (tail) ===="
             tail -n 200 ../backend-ci.log || true
@@ -195,6 +195,20 @@ jobs:
       - name: Run E2E year-end suite
         working-directory: financial-cloud-ui
         run: npm run test:e2e:year-end
+        env:
+          E2E_BASE_URL: http://localhost:3154
+          E2E_API_URL: http://localhost:2154
+          E2E_RESET_BOOK: '1'
+      - name: Run E2E balance sheet golden suite
+        working-directory: financial-cloud-ui
+        run: npm run test:e2e:balance-sheet-golden
+        env:
+          E2E_BASE_URL: http://localhost:3154
+          E2E_API_URL: http://localhost:2154
+          E2E_RESET_BOOK: '1'
+      - name: Run E2E income statement golden suite
+        working-directory: financial-cloud-ui
+        run: npm run test:e2e:income-golden
         env:
           E2E_BASE_URL: http://localhost:3154
           E2E_API_URL: http://localhost:2154

@@ -34,6 +34,10 @@ import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
 import com.financial.cloud.util.excel.ExportTemplateFiles;
+import com.financial.cloud.util.StatementIncomeRules;
+import com.financial.cloud.util.SubjectCodeCompat;
+import com.financial.cloud.exception.ServiceException;
+import com.financial.cloud.enums.error.StatementErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
@@ -52,22 +57,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class StatementIncomeService{
-
-    class Rules {
-        /**
-         * 损益发生额
-         */
-        public static String PROFIT_AND_LOSS_AMOUNT = "PROFIT_AND_LOSS_AMOUNT";
-        /**
-         * 借方发生额
-         */
-        public static String DEBIT_AMOUNT = "DEBIT_AMOUNT";
-        /**
-         * 贷方发生额
-         */
-        public static String CREDIT_AMOUNT = "CREDIT_AMOUNT";
-
-    }
 
     private final ConfigSysService configSysService;
     private final BookMapper bookMapper;
@@ -78,6 +67,10 @@ public class StatementIncomeService{
     private final IdentifierGenerator identifierGenerator;
     private final StandardStatementIncomeMapper standardStatementIncomeMapper;
     private final StandardStatementRulesMapper standardStatementRulesMapper;
+
+    @Value("${financial-cloud.statement.income.strict-formula-validation:false}")
+    private boolean strictFormulaValidation;
+
     public Message<StatementIncome> getIncomeStatement(StatementParamsDto dto, boolean force) {
         dto.parse();
         String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
@@ -99,6 +92,7 @@ public class StatementIncomeService{
             statementIncome.setItems(statementIncomeItemMapper.selectList(itemlqw));
 
             msgIncome = Message.ok(statementIncome);
+            validateFormulaChain(msgIncome.getData().getItems());
         }
         if (msgIncome != null) {
             Map<String, StatementIncomeItem> itemMap = new HashMap<>();
@@ -164,58 +158,14 @@ public class StatementIncomeService{
         ruleslqw.eq(StatementRules::getType, StatementTypeEnum.income.name());
         List<StatementRules> rulesList = statementRulesMapper.selectList(ruleslqw);
 
-        //读取科目余额表
+        dto.setPostedOnly(true);
+        //读取科目发生额（仅已过账凭证）
         List<VoucherItemVo> voucherItemVos = voucherItemMapper.selectSubjectAmount(dto);
 
         for (StatementIncomeItem item : statementIncomeItems) {
             item.setId(null);
             item.setIncomeId(statementIncome.getId());
-            BigDecimal currentAmount = BigDecimal.ZERO;
-            log.debug("ItemCode {} , ItemName {}", item.getItemCode(), item.getItemName());
-            for (StatementRules rule : rulesList) {
-                if (item.getItemCode().equalsIgnoreCase(rule.getItemCode())) {
-                    for (VoucherItemVo voucherItemVo : voucherItemVos) {
-                        if (voucherItemVo.getDebitAmount() == null) {
-                            voucherItemVo.setDebitAmount(BigDecimal.ZERO);
-                        }
-                        if (voucherItemVo.getCreditAmount() == null) {
-                            voucherItemVo.setCreditAmount(BigDecimal.ZERO);
-                        }
-                        if (rule.getSubjectCode().equalsIgnoreCase(voucherItemVo.getSubjectCode())) {
-                            log.debug("\tSubjectCode {} , DEBIT_AMOUNT {} , CREDIT_AMOUNT {}", voucherItemVo.getSubjectCode(), voucherItemVo.getDebitAmount(), voucherItemVo.getCreditAmount());
-                            log.debug("\tSymbol {} , Rule {}", rule.getSymbol(), rule.getRule());
-                            if (rule.getSymbol().equals(StatementSymbolEnum.PLUS.getValue())) {
-                                if (rule.getRule().equalsIgnoreCase(Rules.PROFIT_AND_LOSS_AMOUNT)) {
-                                    //+ (借方-贷方)
-                                    currentAmount = currentAmount.add(
-                                            voucherItemVo.getDebitAmount().abs()
-                                                    .subtract(voucherItemVo.getCreditAmount().abs()));
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.DEBIT_AMOUNT)) {
-                                    //+ 借方
-                                    currentAmount = currentAmount.add(voucherItemVo.getDebitAmount());
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.CREDIT_AMOUNT)) {
-                                    //+ 贷方
-                                    currentAmount = currentAmount.add(voucherItemVo.getCreditAmount());
-                                }
-                            } else if (rule.getSymbol().equals(StatementSymbolEnum.MINUS.getValue())) {
-                                if (rule.getRule().equalsIgnoreCase(Rules.PROFIT_AND_LOSS_AMOUNT)) {
-                                    //- (借方-贷方)
-                                    currentAmount = currentAmount.subtract(
-                                            voucherItemVo.getDebitAmount().abs()
-                                                    .subtract(voucherItemVo.getCreditAmount().abs()));
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.DEBIT_AMOUNT)) {
-                                    //- 借方
-                                    currentAmount = currentAmount.subtract(voucherItemVo.getDebitAmount());
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.CREDIT_AMOUNT)) {
-                                    //- 贷方
-                                    currentAmount = currentAmount.subtract(voucherItemVo.getCreditAmount());
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
+            BigDecimal currentAmount = accumulateLineAmount(item.getItemCode(), rulesList, voucherItemVos);
             log.debug("ItemCode {} , ItemName {} , Amount {}", item.getItemCode(), item.getItemName(), currentAmount);
             item.setCurrentBalance(currentAmount);
 
@@ -223,7 +173,8 @@ public class StatementIncomeService{
         generateIncomeStatementYear(dto, statementIncomeItems, rulesList);
 
         if (!statementIncomeItems.isEmpty()) {
-            calculate(statementIncomeItems);
+            StatementIncomeRules.calculateDerivedLines(statementIncomeItems);
+            validateFormulaChain(statementIncomeItems);
         }
 
         statementIncome.setItems(statementIncomeItems);
@@ -239,74 +190,55 @@ public class StatementIncomeService{
         return Message.ok(statementIncome);
     }
 
-    private void calculate(List<StatementIncomeItem> items) {
-        Map<String, StatementIncomeItem> itemsMap = new HashMap<>();
-        for (StatementIncomeItem item : items) {
-            itemsMap.put(item.getItemCode(), item);
+    void validateFormulaChain(List<StatementIncomeItem> items) {
+        StatementIncomeRules.FormulaChainDiff diff = StatementIncomeRules.computeFormulaChainDiff(items);
+        if (diff == null || diff.withinTolerance()) {
+            return;
         }
+        if (strictFormulaValidation) {
+            throw new ServiceException(
+                    StatementErrorCode.INCOME_STATEMENT_FORMULA_FAILED,
+                    diff.maxAbsDiff());
+        }
+        log.warn("Income statement formula chain off by {}", diff.maxAbsDiff());
+    }
 
-        BigDecimal currentAmount = BigDecimal.ZERO;
-        BigDecimal yearAmount = BigDecimal.ZERO;
-        for (StatementIncomeItem item : items) {
-            //[一、] 相加减
-            if (item.getItemCode().length() == 3
-                    && item.getItemCode().startsWith("1")) {
-                if (StatementSymbolEnum.PLUS.getValue().equalsIgnoreCase(item.getSymbol())) {
-                    currentAmount = currentAmount.add(item.getCurrentBalance());
-                    yearAmount = yearAmount.add(item.getCumulativeBalance());
-                } else if (StatementSymbolEnum.MINUS.getValue().equalsIgnoreCase(item.getSymbol())) {
-                    currentAmount = currentAmount.subtract(item.getCurrentBalance());
-                    yearAmount = yearAmount.subtract(item.getCumulativeBalance());
+    private BigDecimal accumulateLineAmount(
+            String itemCode,
+            List<StatementRules> rulesList,
+            List<VoucherItemVo> voucherItemVos) {
+        BigDecimal total = BigDecimal.ZERO;
+        // selectSubjectAmount 按科目聚合无分录 id；多条企业子科目规则（660201…）
+        // 映射到同一小企业科目（5602）时，每个凭证科目只计一次。
+        Set<String> appliedSubjects = new HashSet<>();
+        for (StatementRules rule : rulesList) {
+            if (!itemCode.equalsIgnoreCase(rule.getItemCode())) {
+                continue;
+            }
+            for (VoucherItemVo voucherItemVo : voucherItemVos) {
+                if (!SubjectCodeCompat.incomeRuleMatchesVoucherSubject(
+                        rule.getSubjectCode(), voucherItemVo.getSubjectCode())) {
+                    continue;
                 }
+                String subjectKey = voucherItemVo.getSubjectCode();
+                if (!appliedSubjects.add(subjectKey)) {
+                    continue;
+                }
+                String effectiveRule = StatementIncomeRules.effectiveAmountRule(
+                        rule.getRule(),
+                        voucherItemVo.getDebitAmount(),
+                        voucherItemVo.getCreditAmount());
+                log.debug("\tSubjectCode {} , DEBIT_AMOUNT {} , CREDIT_AMOUNT {}",
+                        voucherItemVo.getSubjectCode(), voucherItemVo.getDebitAmount(), voucherItemVo.getCreditAmount());
+                log.debug("\tSymbol {} , Rule {} (effective {})", rule.getSymbol(), rule.getRule(), effectiveRule);
+                total = total.add(StatementIncomeRules.applyRuleContribution(
+                        voucherItemVo.getDebitAmount(),
+                        voucherItemVo.getCreditAmount(),
+                        effectiveRule,
+                        rule.getSymbol()));
             }
         }
-        //计算营业利润
-        StatementIncomeItem yysrItem = itemsMap.get("1");
-        StatementIncomeItem yylrItem = itemsMap.get("2");
-        yylrItem.setCurrentBalance(yysrItem.getCurrentBalance().subtract(currentAmount));
-        yylrItem.setCumulativeBalance(yysrItem.getCumulativeBalance().subtract(yearAmount));
-
-        //营业利润减除项
-        currentAmount = BigDecimal.ZERO;
-        yearAmount = BigDecimal.ZERO;
-        for (StatementIncomeItem item : items) {
-            //[二、] 相加减
-            if (item.getItemCode().length() == 3 && item.getItemCode().startsWith("2")) {
-                if (StatementSymbolEnum.PLUS.getValue().equalsIgnoreCase(item.getSymbol())) {
-                    currentAmount = currentAmount.add(item.getCurrentBalance());
-                    yearAmount = yearAmount.add(item.getCumulativeBalance());
-                } else if (StatementSymbolEnum.MINUS.getValue().equalsIgnoreCase(item.getSymbol())) {
-                    currentAmount = currentAmount.subtract(item.getCurrentBalance());
-                    yearAmount = yearAmount.subtract(item.getCumulativeBalance());
-                }
-            }
-        }
-
-        //利润总额 = 营业利润 -营业利润减除项
-        StatementIncomeItem lrzeItem = itemsMap.get("3");
-        lrzeItem.setCurrentBalance(yylrItem.getCurrentBalance().add(currentAmount));
-        lrzeItem.setCumulativeBalance(yylrItem.getCumulativeBalance().add(yearAmount));
-
-        //利润总额减除项
-        currentAmount = BigDecimal.ZERO;
-        yearAmount = BigDecimal.ZERO;
-        for (StatementIncomeItem item : items) {
-            //[三、] 相加减
-            if (item.getItemCode().startsWith("3") && !item.getItemCode().equalsIgnoreCase("3")) {
-                if (StatementSymbolEnum.PLUS.getValue().equalsIgnoreCase(item.getSymbol())) {
-                    currentAmount = currentAmount.add(item.getCurrentBalance());
-                    yearAmount = yearAmount.add(item.getCumulativeBalance());
-                } else if (StatementSymbolEnum.MINUS.getValue().equalsIgnoreCase(item.getSymbol())) {
-                    currentAmount = currentAmount.subtract(item.getCurrentBalance());
-                    yearAmount = yearAmount.subtract(item.getCumulativeBalance());
-                }
-            }
-        }
-
-        //净利润 = 利润总额 - 利润总额减除项
-        StatementIncomeItem jlrItem = itemsMap.get("4");
-        jlrItem.setCurrentBalance(lrzeItem.getCurrentBalance().subtract(currentAmount));
-        jlrItem.setCumulativeBalance(lrzeItem.getCumulativeBalance().subtract(yearAmount));
+        return total;
     }
 
     /**
@@ -322,56 +254,13 @@ public class StatementIncomeService{
         yearStatementParamsDto.setBookId(dto.getBookId());
         yearStatementParamsDto.setCountType("sum");
         yearStatementParamsDto.setDateRangeEnd(dto.getDateRangeEnd());
+        yearStatementParamsDto.setPostedOnly(true);
 
-        //读取科目余额表
+        //读取科目发生额（仅已过账凭证）
         List<VoucherItemVo> voucherItemVos = voucherItemMapper.selectSubjectAmount(yearStatementParamsDto);
 
         for (StatementIncomeItem item : statementIncomeItems) {
-            BigDecimal yearAmount = BigDecimal.ZERO;
-            for (StatementRules rule : rulesList) {
-                if (item.getItemCode().equalsIgnoreCase(rule.getItemCode())) {
-
-                    for (VoucherItemVo voucherItemVo : voucherItemVos) {
-                        if (voucherItemVo.getDebitAmount() == null) {
-                            voucherItemVo.setDebitAmount(BigDecimal.ZERO);
-                        }
-                        if (voucherItemVo.getCreditAmount() == null) {
-                            voucherItemVo.setCreditAmount(BigDecimal.ZERO);
-                        }
-                        if (rule.getSubjectCode().equalsIgnoreCase(voucherItemVo.getSubjectCode())) {
-                            if (rule.getSymbol().equals(StatementSymbolEnum.PLUS.getValue())) {
-                                if (rule.getRule().equalsIgnoreCase(Rules.PROFIT_AND_LOSS_AMOUNT)) {
-                                    //+ (借方-贷方)
-                                    yearAmount = yearAmount.add(
-                                            voucherItemVo.getDebitAmount().abs()
-                                                    .subtract(voucherItemVo.getCreditAmount().abs()));
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.DEBIT_AMOUNT)) {
-                                    //+ 借方
-                                    yearAmount = yearAmount.add(voucherItemVo.getDebitAmount());
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.CREDIT_AMOUNT)) {
-                                    //+ 贷方
-                                    yearAmount = yearAmount.add(voucherItemVo.getCreditAmount());
-                                }
-                            } else if (rule.getSymbol().equals(StatementSymbolEnum.MINUS.getValue())) {
-                                if (rule.getRule().equalsIgnoreCase(Rules.PROFIT_AND_LOSS_AMOUNT)) {
-                                    //- (借方-贷方)
-                                    yearAmount = yearAmount.subtract(
-                                            voucherItemVo.getDebitAmount().abs()
-                                                    .subtract(voucherItemVo.getCreditAmount().abs()));
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.DEBIT_AMOUNT)) {
-                                    //- 借方
-                                    yearAmount = yearAmount.subtract(voucherItemVo.getDebitAmount());
-                                } else if (rule.getRule().equalsIgnoreCase(Rules.CREDIT_AMOUNT)) {
-                                    //- 贷方
-                                    yearAmount = yearAmount.subtract(voucherItemVo.getCreditAmount());
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-            item.setCumulativeBalance(yearAmount);
+            item.setCumulativeBalance(accumulateLineAmount(item.getItemCode(), rulesList, voucherItemVos));
         }
     }
     public Message<StatementIncome> deleteIncomeStatement(StatementParamsDto dto) {
@@ -414,14 +303,21 @@ public class StatementIncomeService{
         List<StandardStatementRules> sRuleitems = standardStatementRulesMapper.selectList(sRulelqw);
 
         List<StatementRules> itemRuls = new ArrayList<>();
+        Set<String> seenRuleKeys = new HashSet<>();
         for (StandardStatementRules itemRule : sRuleitems) {
+            String mappedSubject = SubjectCodeCompat.mapIncomeRuleSubject(itemRule.getSubjectCode());
+            String ruleType = StatementIncomeRules.normalizeIncomeRuleType(
+                    itemRule.getRule(), mappedSubject);
+            String dedupeKey = itemRule.getItemCode() + "|" + mappedSubject + "|" + ruleType + "|" + itemRule.getSymbol();
+            if (!seenRuleKeys.add(dedupeKey)) {
+                continue;
+            }
             StatementRules rule = new StatementRules();
             rule.setBookId(dto.getId());
-            rule.setType(itemRule.getType());
             rule.setType("income");
             rule.setItemCode(itemRule.getItemCode());
-            rule.setSubjectCode(itemRule.getSubjectCode());
-            rule.setRule(itemRule.getRule());
+            rule.setSubjectCode(mappedSubject);
+            rule.setRule(ruleType);
             rule.setSymbol(itemRule.getSymbol());
             itemRuls.add(rule);
         }

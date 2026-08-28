@@ -37,7 +37,11 @@ public final class SubjectCodeCompat {
             Map.entry("4002", "3002"),
             Map.entry("4103", "3103"),
             Map.entry("4104", "3104"),
-            Map.entry("410406", "3104.02")
+            Map.entry("410406", "3104.02"),
+            Map.entry("1131", "1122"),
+            Map.entry("1151", "1123"),
+            Map.entry("2121", "2202"),
+            Map.entry("2131", "2203")
     );
 
     private SubjectCodeCompat() {
@@ -98,6 +102,73 @@ public final class SubjectCodeCompat {
 
     public static boolean mapContains(Map<String, ?> map, String code) {
         return resolveFromMap(map, code) != null;
+    }
+
+    /**
+     * 利润表模板科目 → 账套科目（660201→5602，6001→5001）。
+     */
+    public static String mapIncomeRuleSubject(String subjectCode) {
+        if (StringUtils.isBlank(subjectCode)) {
+            return subjectCode;
+        }
+        String alias = CARRY_FORWARD_ALIASES.get(subjectCode);
+        if (alias != null) {
+            return alias;
+        }
+        if (subjectCode.startsWith("6602")) {
+            return "5602";
+        }
+        if (subjectCode.startsWith("6601")) {
+            return "5601";
+        }
+        if (subjectCode.startsWith("6603")) {
+            return "5603";
+        }
+        if (subjectCode.startsWith("6801")) {
+            return "5801";
+        }
+        if (subjectCode.startsWith("6401")) {
+            return "5401";
+        }
+        if (subjectCode.startsWith("6402")) {
+            return "5402";
+        }
+        if (subjectCode.startsWith("6405")) {
+            return "5403";
+        }
+        if (subjectCode.startsWith("6051") || subjectCode.startsWith("6301")) {
+            return "5051";
+        }
+        return subjectCode;
+    }
+
+    /**
+     * 利润表规则科目是否与凭证分录科目匹配（含准则别名；子科目规则 660201 不重复匹配父科目 5602）。
+     */
+    public static boolean incomeRuleMatchesVoucherSubject(String ruleSubjectCode, String voucherSubjectCode) {
+        if (StringUtils.isBlank(ruleSubjectCode) || StringUtils.isBlank(voucherSubjectCode)) {
+            return false;
+        }
+        if (StringUtils.equalsIgnoreCase(ruleSubjectCode, voucherSubjectCode)) {
+            return true;
+        }
+        if (matchesViaLookupCandidates(ruleSubjectCode, voucherSubjectCode)) {
+            return true;
+        }
+        if (matchesViaLookupCandidates(voucherSubjectCode, ruleSubjectCode)) {
+            return true;
+        }
+        return StringUtils.equalsIgnoreCase(
+                mapIncomeRuleSubject(ruleSubjectCode), voucherSubjectCode);
+    }
+
+    private static boolean matchesViaLookupCandidates(String left, String right) {
+        for (String candidate : lookupCandidates(left)) {
+            if (StringUtils.equalsIgnoreCase(candidate, right)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

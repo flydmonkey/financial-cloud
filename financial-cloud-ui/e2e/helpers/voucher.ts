@@ -115,7 +115,24 @@ export function pickStandardBusinessSubjects(subjects: BookSubjectRef[]) {
     const receivable = subjects.find((s) => s.code === '1122')
     const prepaid = subjects.find((s) => s.code === '1123')
     const payable = subjects.find((s) => s.code === '2202')
-    return {bank, revenue, expense, salesExpense, receivable, prepaid, payable}
+    const rawMaterial = subjects.find((s) => s.code === '1403')
+    const finishedGoods = subjects.find((s) => s.code === '1405')
+    const fixedAsset = subjects.find((s) => s.code === '1601')
+    const accumulatedDepreciation = subjects.find((s) => s.code === '1602')
+    const badDebtAllowance = subjects.find((s) => s.code === '1141')
+    const badDebtExpense = subjects.find((s) => s.code === '5711.03')
+        ?? subjects.find((s) => s.code === '5711')
+    const cost = subjects.find((s) => s.code === '5401')
+    const investmentIncome = subjects.find((s) => s.code === '5111')
+    const nonOpIncome = subjects.find((s) => s.code === '5301')
+    const nonOpExpense = subjects.find((s) => s.code === '5711')
+    const incomeTax = subjects.find((s) => s.code === '5801')
+    return {
+        bank, revenue, expense, salesExpense, receivable, prepaid, payable,
+        rawMaterial, finishedGoods, fixedAsset, accumulatedDepreciation,
+        badDebtAllowance, badDebtExpense, cost, investmentIncome, nonOpIncome,
+        nonOpExpense, incomeTax,
+    }
 }
 
 export function findSubjectByCode(subjects: BookSubjectRef[], code: string) {

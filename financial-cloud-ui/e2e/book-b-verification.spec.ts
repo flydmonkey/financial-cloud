@@ -1,7 +1,11 @@
 import {expect, test} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
 import {
+    assertBookBKeyBalanceSheetLines,
+    assertIncomeFormulaChain,
+    assertIncomeLineMatchesConfig,
     assertReportsBalanced,
+    assertThreeReportsConsistent,
     exportStatementReport,
     fetchIncomeStatement,
     fetchSubjectBalances,
@@ -81,6 +85,7 @@ test.describe.serial('book B verification', () => {
             {debit: bank, credit: receivable},
         )
         await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertBookBKeyBalanceSheetLines(request, ctx.headers, ctx.term)
     })
 
     test('step2: pay expense 10000 (expense debit, bank credit)', async ({request}) => {
@@ -96,6 +101,7 @@ test.describe.serial('book B verification', () => {
 
     test('TC-RPT-011: expense voucher reflected in income statement', async ({request}) => {
         test.skip(!ctx.bookId, '无账套')
+        await assertIncomeLineMatchesConfig(request, ctx.headers, ctx.term, '105')
         const income = await fetchIncomeStatement(request, ctx.headers, ctx.term)
         const adminExpense = findIncomeItem(income?.items || [], '105')
             ?? findIncomeItemByName(income?.items || [], '管理费用')
@@ -106,9 +112,6 @@ test.describe.serial('book B verification', () => {
             description: `利润表105=${num(adminExpense?.currentBalance)}, 科目5602增量=${expenseDelta}`,
         })
         expect(expenseDelta).toBeCloseTo(10000, 0)
-        if (adminExpense && Math.abs(num(adminExpense.currentBalance)) >= 10000) {
-            expect(Math.abs(num(adminExpense.currentBalance))).toBeGreaterThanOrEqual(10000 - 0.5)
-        }
     })
 
     test('step3: confirm revenue 80000 (receivable debit, revenue credit)', async ({request}) => {
@@ -123,10 +126,12 @@ test.describe.serial('book B verification', () => {
         const subjectBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
         ctx.afterPostBank = getSubjectBalance(subjectBalances, '1002')
         await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertBookBKeyBalanceSheetLines(request, ctx.headers, ctx.term)
     })
 
     test('TC-RPT-010: revenue voucher reflected in income statement', async ({request}) => {
         test.skip(!ctx.step3Income, '未完成步骤3')
+        await assertIncomeLineMatchesConfig(request, ctx.headers, ctx.term, '1')
         const income = await fetchIncomeStatement(request, ctx.headers, ctx.term)
         const revenueLine = findIncomeItem(income?.items || [], '1')
         const subjectBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
@@ -136,9 +141,6 @@ test.describe.serial('book B verification', () => {
             description: `利润表1=${num(revenueLine?.currentBalance)}, 科目5001增量=${revenueDelta}`,
         })
         expect(revenueDelta).toBeCloseTo(80000, 0)
-        if (revenueLine && Math.abs(num(revenueLine.currentBalance)) >= 80000) {
-            expect(Math.abs(num(revenueLine.currentBalance))).toBeGreaterThanOrEqual(80000 - 0.5)
-        }
     })
 
     test('TC-RPT-004: balance sheet updates after posting vouchers', async ({request}) => {
@@ -149,29 +151,28 @@ test.describe.serial('book B verification', () => {
             description: `资产总计 ${ctx.step0.assetTotal} → ${balance.assetTotal}, 1002=${ctx.afterPostBank}`,
         })
         expect((balance.assetTotal ?? 0)).toBeGreaterThanOrEqual(ctx.step0.assetTotal ?? 0)
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertThreeReportsConsistent(request, ctx.headers, ctx.term)
+        await assertBookBKeyBalanceSheetLines(request, ctx.headers, ctx.term)
     })
 
     test('TC-RPT-012: income statement net profit calculation', async ({request}) => {
         test.skip(!ctx.step3Income, '未完成步骤3')
         const income = await fetchIncomeStatement(request, ctx.headers, ctx.term)
         const items = income?.items || []
-        const operatingProfit = findIncomeItem(items, '2')
-        const totalProfit = findIncomeItem(items, '3')
-        const netProfit = findIncomeItem(items, '4')
-        const netFromLine = num(netProfit?.currentBalance)
+        const formula = assertIncomeFormulaChain(items)
+        const netFromLine = formula.netProfit
         const subjectBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
         const expenseDelta = subjectPeriodAmount(subjectBalances, '5602') - ctx.baselinePeriod.expense
         const revenuePeriodDelta = subjectPeriodAmount(subjectBalances, '5001') - ctx.baselinePeriod.revenue
         const netDelta = revenuePeriodDelta - expenseDelta
         test.info().annotations.push({
             type: 'note',
-            description: `净利润行=${netFromLine}, API=${ctx.step3Income!.current}, 科目增量净利=${netDelta}`,
+            description: `公式链: 收入=${formula.revenue}, 营业利润=${formula.operatingProfit}, 利润总额=${formula.totalProfit}, 净利润=${netFromLine}; 科目增量净利=${netDelta}`,
         })
         expect(netDelta).toBeCloseTo(70000, 0)
-        if (operatingProfit && totalProfit && Math.abs(netFromLine) > 0) {
-            expect(num(netFromLine)).toBeLessThanOrEqual(num(totalProfit.currentBalance) + 0.01)
-        }
+        expect(netFromLine).toBeCloseTo(70000, 0)
+        expect(ctx.step3Income!.current).toBeCloseTo(70000, 0)
+        expect(formula.operatingProfit).toBeCloseTo(formula.totalProfit, 0)
     })
 
     test('TC-RPT-013: net profit matches revenue minus expense', async ({request}) => {

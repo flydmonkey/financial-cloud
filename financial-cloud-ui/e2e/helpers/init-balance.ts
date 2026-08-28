@@ -88,3 +88,87 @@ export async function saveStandardOpeningBalances(
     expect(body.code, body.message || 'save opening balances failed').toBe(0)
     return {bankCode: bank!.code!, capitalCode: capital!.code!}
 }
+
+/**
+ * TEST-BS-DEEP Golden Dataset 期初（借贷平衡 340,000 = 20,000 + 320,000）
+ *
+ * | 科目 | 借方 | 贷方 | 报表归属 |
+ * | 1001 | 10,000 | | 货币资金 |
+ * | 1002 | 90,000 | | 货币资金 |
+ * | 1122 | | 20,000 | 预收款项（重分类） |
+ * | 1123 | 25,000 | | 预付款项 |
+ * | 2202 | 15,000 | | 预付款项（重分类） |
+ * | 1403 | 30,000 | | 存货（合并） |
+ * | 1405 | 20,000 | | 存货（合并） |
+ * | 1601 | 200,000 | | 固定资产 |
+ * | 1602 | | 50,000 | 固定资产（净值扣备抵） |
+ * | 3001 | | 320,000 | 实收资本 |
+ */
+export async function saveGoldenBalanceSheetOpeningBalances(
+    request: APIRequestContext,
+    headers: Record<string, string>,
+    bookId: string,
+) {
+    const rows = await fetchInitBalanceList(request, headers)
+    const mustFind = (codes: string[], label: string) => {
+        for (const code of codes) {
+            const row = rows.find((item) => item.code === code)
+            if (row) {
+                return row
+            }
+        }
+        expect(undefined, `缺少科目 ${label}（${codes.join('/')}）`).toBeTruthy()
+        throw new Error(`missing ${label}`)
+    }
+
+    const touched = [
+        mustFind(['1001'], '1001 库存现金'),
+        mustFind(['1002'], '1002 银行存款'),
+        mustFind(['1122'], '1122 应收账款'),
+        mustFind(['1123', '1151'], '1123 预付账款'),
+        mustFind(['2202', '2121'], '2202 应付账款'),
+        mustFind(['1403'], '1403 原材料'),
+        mustFind(['1405'], '1405 库存商品'),
+        mustFind(['1601'], '1601 固定资产'),
+        mustFind(['1602'], '1602 累计折旧'),
+        mustFind([...CAPITAL_CODES], '实收资本'),
+    ]
+    for (const row of touched) {
+        expect(row.hasVoucher, `${row.code} 已有凭证，Golden Dataset 需空白账套`).toBeFalsy()
+    }
+
+    const [
+        cash, bank, receivable, prepaid, payable,
+        rawMaterial, finishedGoods, fixedAsset, accumulatedDepreciation, capital,
+    ] = touched
+    const payload = [
+        buildInitBalanceChange(cash, bookId, 10_000, 0),
+        buildInitBalanceChange(bank, bookId, 90_000, 0),
+        buildInitBalanceChange(receivable, bookId, 0, 20_000),
+        buildInitBalanceChange(prepaid, bookId, 25_000, 0),
+        buildInitBalanceChange(payable, bookId, 15_000, 0),
+        buildInitBalanceChange(rawMaterial, bookId, 30_000, 0),
+        buildInitBalanceChange(finishedGoods, bookId, 20_000, 0),
+        buildInitBalanceChange(fixedAsset, bookId, 200_000, 0),
+        buildInitBalanceChange(accumulatedDepreciation, bookId, 0, 50_000),
+        buildInitBalanceChange(capital, bookId, 0, 320_000),
+    ]
+
+    const res = await request.post('/api/base/init-balance/save', {headers, data: payload})
+    const body = await res.json()
+    expect(body.code, body.message || 'save golden opening balances failed').toBe(0)
+    return {
+        capitalCode: capital.code!,
+        expected: {
+            monetary: 100_000,
+            advanceReceipt: 20_000,
+            prepaid: 40_000,
+            receivable: 0,
+            payable: 0,
+            inventory: 50_000,
+            fixedAssetNet: 150_000,
+            capital: 320_000,
+            assetTotal: 340_000,
+        },
+    }
+}

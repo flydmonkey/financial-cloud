@@ -89,6 +89,11 @@ public class StatementParamsDto extends PageQuery {
      */
     private List<String> subjectCodes;
 
+    /**
+     * 是否仅统计已过账凭证（sender_id 非空）
+     */
+    private Boolean postedOnly;
+
     public void parse() {
         if (StringUtils.isEmpty(bookId)) {
             throw new BusinessException(StatementErrorCode.BOOK_ID_EMPTY);

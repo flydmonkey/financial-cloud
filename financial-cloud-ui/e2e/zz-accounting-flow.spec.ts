@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {assertBalanceSheetTrial} from './helpers/reports'
+import {assertBalanceSheetTrial, assertIncomeFormulaChain} from './helpers/reports'
 import {getCurrentTerm, getCurrentUser, loginViaApi, loginViaUi} from './helpers/auth'
 import {
     auditVoucher,
@@ -138,6 +138,7 @@ test.describe.serial('accounting lifecycle', () => {
         expect(body.code).toBe(0)
         const items = body.data?.items || []
         expect(items.length).toBeGreaterThan(0)
+        assertIncomeFormulaChain(items)
     })
 
     test('carry-forward list loads after checkout', async ({request}) => {

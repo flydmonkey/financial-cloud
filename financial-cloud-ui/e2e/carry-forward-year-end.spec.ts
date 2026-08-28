@@ -1,9 +1,16 @@
 import {expect, test} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, loginViaApi} from './helpers/auth'
 import {clearBooksViaScript, setupE2eBookViaApi} from './helpers/books'
-import {getSubjectBalance, fetchSubjectBalances} from './helpers/reports'
 import {
-    deleteCarryVoucher,
+    assertIncomeYearEndReconciliation,
+    fetchSubjectBalances,
+    getIncomeNetProfit,
+    getSubjectBalance,
+    getSubjectBalanceByCodes,
+    UNDISTRIBUTED_PROFIT_SUBJECT_CODES,
+    YEAR_PROFIT_SUBJECT_CODES,
+} from './helpers/reports'
+import {
     fetchCarryTemplates,
     findCarryTemplate,
     generateCarryVoucher,
@@ -17,8 +24,8 @@ import {
 } from './helpers/voucher'
 
 /**
- * TC-SET-013 正例：12 月账期年末结转 qm_jz_bnlr
- * 独立运行（会清库建 12 月账套）：E2E_RESET_BOOK=1 npm run test:e2e:year-end
+ * TC-SET-013 + IS-R02：12 月账期年末结转 qm_jz_bnlr
+ * 独立运行：E2E_RESET_BOOK=1 npm run test:e2e:year-end
  */
 test.describe.serial('year-end carry forward', () => {
     const ctx: {
@@ -26,11 +33,17 @@ test.describe.serial('year-end carry forward', () => {
         bookId: string
         term: string
         templates: Awaited<ReturnType<typeof fetchCarryTemplates>>
+        netProfitCumulative: number
+        undistributedBefore: number
+        profit3103Before: number
     } = {
         headers: {},
         bookId: '',
         term: '',
         templates: [],
+        netProfitCumulative: 0,
+        undistributedBefore: 0,
+        profit3103Before: 0,
     }
 
     test('setup December book and prepare year profit', async ({request}) => {
@@ -59,7 +72,6 @@ test.describe.serial('year-end carry forward', () => {
         )
 
         ctx.templates = await fetchCarryTemplates(request, ctx.headers)
-        // 使用结转模板将损益结转至 3103，形成年末利润余额
         const sr = findCarryTemplate(ctx.templates, 'qm_jz_sr')
         const cbfy = findCarryTemplate(ctx.templates, 'qm_jz_cbfy')
         test.skip(!sr || !cbfy, '缺少 qm_jz_sr/qm_jz_cbfy 模板')
@@ -80,7 +92,7 @@ test.describe.serial('year-end carry forward', () => {
                 voucherDate: detail.voucherDate,
                 voucherYear: detail.voucherYear,
                 voucherMonth: detail.voucherMonth,
-                items: detail.items.map((item: {subjectId?: string; subjectName?: string; summary?: string; debitAmount?: number; creditAmount?: number}) => ({
+                items: detail.items.map((item: {subjectId?: string; subjectName?: string; summary?: string; debitAmount?: number | string; creditAmount?: number | string}) => ({
                     subjectId: item.subjectId,
                     subjectName: item.subjectName,
                     summary: item.summary,
@@ -92,17 +104,19 @@ test.describe.serial('year-end carry forward', () => {
         }
 
         const balances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
-        const profitBalance = getSubjectBalance(balances, '3103')
-        expect(Math.abs(profitBalance)).toBeGreaterThan(0)
+        ctx.profit3103Before = getSubjectBalanceByCodes(balances, YEAR_PROFIT_SUBJECT_CODES)
+        ctx.undistributedBefore = getSubjectBalanceByCodes(balances, UNDISTRIBUTED_PROFIT_SUBJECT_CODES)
+        const income = await getIncomeNetProfit(request, ctx.headers, ctx.term)
+        ctx.netProfitCumulative = income.cumulative
+
+        expect(Math.abs(ctx.profit3103Before)).toBeGreaterThan(0)
+        expect(Math.abs(ctx.netProfitCumulative)).toBeCloseTo(700, 0)
     })
 
-    test('TC-SET-013: qm_jz_bnlr transfers year profit to undistributed profit', async ({request}) => {
+    test('TC-SET-013 / IS-R02: qm_jz_bnlr posts and reconciles undistributed profit', async ({request}) => {
         test.skip(!ctx.bookId || ctx.term !== '2025-12', '非 12 月账套')
         const bnlr = findCarryTemplate(ctx.templates, 'qm_jz_bnlr')
         test.skip(!bnlr, '无 qm_jz_bnlr 模板')
-
-        const beforeBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
-        const beforeProfit = getSubjectBalance(beforeBalances, '3103')
 
         const result = await generateCarryVoucher(request, ctx.headers, bnlr)
         expect(result.code, result.message || 'qm_jz_bnlr failed').toBe(0)
@@ -123,11 +137,37 @@ test.describe.serial('year-end carry forward', () => {
             Number(undistributedLine?.creditAmount ?? 0),
             2,
         )
-        test.info().annotations.push({
-            type: 'note',
-            description: `结转前 3103 余额=${beforeProfit}, 凭证金额=${profitLine?.debitAmount}`,
+
+        const payload = {
+            bookId: detail.bookId,
+            word: detail.word,
+            wordHead: detail.wordHead,
+            wordNum: detail.wordNum,
+            companyName: detail.companyName,
+            receiptNum: detail.receiptNum ?? 0,
+            voucherDate: detail.voucherDate,
+            voucherYear: detail.voucherYear,
+            voucherMonth: detail.voucherMonth,
+            items: detail.items.map((item: {subjectId?: string; subjectName?: string; summary?: string; debitAmount?: number | string; creditAmount?: number | string}) => ({
+                subjectId: item.subjectId,
+                subjectName: item.subjectName,
+                summary: item.summary,
+                debitAmount: Number(item.debitAmount ?? 0),
+                creditAmount: Number(item.creditAmount ?? 0),
+            })),
+        }
+        await runVoucherToPosted(request, ctx.headers, payload, result.data)
+
+        await assertIncomeYearEndReconciliation(request, ctx.headers, ctx.term, {
+            netProfitCumulative: ctx.netProfitCumulative,
+            undistributedBefore: ctx.undistributedBefore,
+            profit3103Before: ctx.profit3103Before,
         })
 
-        await deleteCarryVoucher(request, ctx.headers, result.data)
+        const afterBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
+        test.info().annotations.push({
+            type: 'note',
+            description: `IS-R02: 累计净利润=${ctx.netProfitCumulative}, 3103 ${ctx.profit3103Before}→${getSubjectBalance(afterBalances, '3103')}, 未分配利润 ${ctx.undistributedBefore}→${getSubjectBalanceByCodes(afterBalances, UNDISTRIBUTED_PROFIT_SUBJECT_CODES)}`,
+        })
     })
 })

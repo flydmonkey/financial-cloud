@@ -3,12 +3,20 @@ import {fetchCashFlowStatement, findCashFlowItem, num} from './reports'
 
 export const CashFlowItems = {
     SALES_RECEIPT: '2-jy-sqxj',
+    PURCHASE_PAYMENT: '6-jy-zfxj',
     OPERATING_NET: '11-jy-lljh',
     INVESTING_NET: '24-tz-llje',
     FINANCING_NET: '34-cz-hdje',
     NET_INCREASE: '36-xj-djje',
     BEGINNING_CASH: '37-xj-qcye',
     ENDING_CASH: '38-xj-qmye',
+    NET_PROFIT: '41-xj-jlr',
+    DEPRECIATION: '43-xj-zczk',
+    INVENTORY_CHANGE: '53-xj-chjs',
+    RECEIVABLE_CHANGE: '54-xj-jyjs',
+    PAYABLE_CHANGE: '55-xj-jyzj',
+    OTHER: '56-xj-qita',
+    OPERATING_NET_INDIRECT: '57-xj-jyje',
 } as const
 
 export async function ensureCashFlowConfigInitialized(
@@ -162,4 +170,49 @@ export async function saveCashFlowConfigItemBalance(
     })
     const body = await res.json()
     expect(body.code, body.message || 'save cash flow config failed').toBe(0)
+}
+
+/** 创建凭证、指定主表流量项并完成过账（非现金科目侧） */
+export async function createAndPostVoucherWithMainCashFlow(
+    request: APIRequestContext,
+    headers: Record<string, string>,
+    bookId: string,
+    term: string,
+    summary: string,
+    amount: number,
+    subjects: {debit: {code?: string; id: string; name: string}; credit: {code?: string; id: string; name: string}},
+    cashFlowItemCode: string,
+) {
+    const {
+        buildBalancedVoucherPayload,
+        createDraftVoucher,
+        submitVoucher,
+        auditVoucher,
+        postVoucher,
+    } = await import('./voucher')
+
+    const payload = await buildBalancedVoucherPayload(
+        request, headers, bookId, summary, amount, subjects,
+    )
+    const voucherId = await createDraftVoucher(request, headers, payload)
+    await submitVoucher(request, headers, payload, voucherId)
+    await auditVoucher(request, headers, voucherId)
+
+    const pending = await getPendingCashFlowItems(
+        request, headers, term, {voucherId, cashFlowItemType: 0},
+    )
+    const flowLine = pending.find(
+        (item) =>
+            item.voucherId === voucherId &&
+            !/^(1001|1002|1003)/.test(item.subjectCode || '') &&
+            (num(item.debitAmount) > 0 || num(item.creditAmount) > 0),
+    )
+    expect(flowLine?.voucherItemId, '未找到非现金科目现金流量待指定项').toBeTruthy()
+
+    const specifyResult = await specifyCashFlowForItem(
+        request, headers, bookId, term, flowLine!, cashFlowItemCode, 0,
+    )
+    expect(specifyResult.code, specifyResult.message || 'specify cash flow failed').toBe(0)
+    await postVoucher(request, headers, voucherId)
+    return {voucherId, payload}
 }

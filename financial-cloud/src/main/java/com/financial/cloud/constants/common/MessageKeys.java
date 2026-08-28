@@ -126,6 +126,9 @@ public final class MessageKeys {
         public static final String CASH_FLOW_INIT_REQUIRED = "statement.error.cash_flow_init_required";
         public static final String CASH_FLOW_SQL_REQUIRED = "statement.error.cash_flow_sql_required";
         public static final String UNKNOWN_CASH_FLOW_CODE = "statement.error.unknown_cash_flow_code";
+        public static final String BALANCE_SHEET_TRIAL_BALANCE_FAILED = "statement.error.balance_sheet_trial_balance_failed";
+        public static final String INCOME_STATEMENT_FORMULA_FAILED = "statement.error.income_statement_formula_failed";
+        public static final String CASH_FLOW_RECONCILIATION_FAILED = "statement.error.cash_flow_reconciliation_failed";
 
         private Statement() {
         }

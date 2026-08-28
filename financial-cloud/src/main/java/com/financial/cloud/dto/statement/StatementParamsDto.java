@@ -14,6 +14,8 @@ import java.io.Serial;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +95,26 @@ public class StatementParamsDto extends PageQuery {
      * 是否仅统计已过账凭证（sender_id 非空）
      */
     private Boolean postedOnly;
+
+    /**
+     * 科目展示层级上限，null/0 表示至末级
+     */
+    private Integer maxLevel;
+
+    /** 总账：起始科目编码（闭区间） */
+    private String subjectCodeFrom;
+
+    /** 总账：结束科目编码（闭区间） */
+    private String subjectCodeTo;
+
+    /** 总账：余额为0不显示 */
+    private Boolean hideZeroBalance;
+
+    /** 总账：无发生额且余额为0不显示（默认 true） */
+    private Boolean hideNoActivityAndZeroBalance;
+
+    /** 总账：无发生额不显示本期合计、本年累计 */
+    private Boolean hidePeriodRowsWhenNoActivity;
 
     public void parse() {
         if (StringUtils.isEmpty(bookId)) {
@@ -217,10 +239,33 @@ public class StatementParamsDto extends PageQuery {
                     //月份范围
                     this.dateRange = new String[]{this.year + "-07", this.year + "-12"};
                 }
-            } else {
-                if (!StatementPeriodTypeEnum.BETWEEN_MONTH.getValue().equals(this.periodType)) {
-                    throw new BusinessException(StatementErrorCode.INVALID_PERIOD_TYPE, periodType);
+            } else if (StatementPeriodTypeEnum.BETWEEN_MONTH.getValue().equals(this.periodType)) {
+                if (dateRange == null || dateRange.length != 2
+                        || StringUtils.isBlank(dateRange[0]) || StringUtils.isBlank(dateRange[1])) {
+                    throw new BusinessException(StatementErrorCode.DATE_RANGE_SIZE);
                 }
+                YearMonth start;
+                YearMonth end;
+                try {
+                    start = YearMonth.parse(dateRange[0]);
+                    end = YearMonth.parse(dateRange[1]);
+                } catch (DateTimeParseException e) {
+                    throw new BusinessException(StatementErrorCode.DATE_RANGE_SIZE);
+                }
+                if (start.isAfter(end)) {
+                    throw new BusinessException(StatementErrorCode.START_DATE_AFTER_END);
+                }
+                long months = ChronoUnit.MONTHS.between(start, end) + 1;
+                if (months > 24) {
+                    throw new BusinessException(StatementErrorCode.EXPENSE_DETAIL_PERIOD_TOO_LONG);
+                }
+                this.dateRangeStart = start.atDay(1).toString();
+                this.dateRangeEnd = end.atEndOfMonth().toString();
+                this.reportDate = dateRange[1];
+                this.year = end.getYear();
+                this.month = null;
+            } else {
+                throw new BusinessException(StatementErrorCode.INVALID_PERIOD_TYPE, periodType);
             }
         } catch (BusinessException e) {
             throw e;

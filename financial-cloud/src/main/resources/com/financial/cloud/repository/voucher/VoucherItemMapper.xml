@@ -38,6 +38,34 @@
         ORDER BY i.subject_code asc
     </select>
 
+    <select id="selectExpenseAmountByMonth" resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
+        SELECT
+            i.subject_code AS subjectCode,
+            DATE_FORMAT(i.voucher_date, '%Y-%m') AS yearPeriod,
+            SUM(i.debit_amount) AS debitAmount,
+            SUM(i.credit_amount) AS creditAmount
+        FROM voucher_item i
+        JOIN voucher v ON i.book_id = v.book_id AND i.voucher_id = v.id
+        WHERE v.book_id = #{params.bookId}
+          AND i.deleted = 'n'
+          AND v.deleted = 'n'
+          AND v.status = 'completed'
+          AND i.voucher_date &gt;= str_to_date(#{params.dateRangeStart}, '%Y-%m-%d')
+          AND str_to_date(#{params.dateRangeEnd}, '%Y-%m-%d') &gt;= i.voucher_date
+          <if test="params.postedOnly != null and params.postedOnly">
+              AND v.sender_id IS NOT NULL AND v.sender_id &lt;&gt; ''
+          </if>
+          <if test="prefixes != null and prefixes.size() &gt; 0">
+              AND (
+              <foreach collection="prefixes" item="p" separator=" OR ">
+                  i.subject_code LIKE CONCAT(#{p}, '%')
+              </foreach>
+              )
+          </if>
+        GROUP BY i.subject_code, DATE_FORMAT(i.voucher_date, '%Y-%m')
+        ORDER BY i.subject_code, yearPeriod
+    </select>
+
     <select id="subLedgerPage" parameterType="com.financial.cloud.dto.voucher.VoucherItemPageDto"
             resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
         SELECT i.*, v.word

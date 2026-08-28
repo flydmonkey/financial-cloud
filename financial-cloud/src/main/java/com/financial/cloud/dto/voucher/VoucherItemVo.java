@@ -51,4 +51,9 @@ public class VoucherItemVo extends VoucherItem {
     private Integer cashFlowItemType;
 
     private Integer entryNo;
+
+    /**
+     * 会计期间（yyyy-MM）
+     */
+    private String yearPeriod;
 }

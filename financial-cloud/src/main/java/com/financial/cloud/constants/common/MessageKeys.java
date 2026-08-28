@@ -129,6 +129,7 @@ public final class MessageKeys {
         public static final String BALANCE_SHEET_TRIAL_BALANCE_FAILED = "statement.error.balance_sheet_trial_balance_failed";
         public static final String INCOME_STATEMENT_FORMULA_FAILED = "statement.error.income_statement_formula_failed";
         public static final String CASH_FLOW_RECONCILIATION_FAILED = "statement.error.cash_flow_reconciliation_failed";
+        public static final String EXPENSE_DETAIL_PERIOD_TOO_LONG = "statement.error.expense_detail_period_too_long";
 
         private Statement() {
         }

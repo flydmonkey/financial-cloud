@@ -134,7 +134,9 @@
             :data="subjectList"
             :props="defaultProps"
             node-key="code"
-            :current-node-key="subjectList[0].code"
+            highlight-current
+            :current-node-key="currentSubjectKey"
+            :default-expanded-keys="expandedKeys"
             :filter-node-method="filterNodeMethod"
             :expand-on-click-node="false"
             @node-click="handleTreeNodeClick"
@@ -214,7 +216,7 @@
 import * as subjectApi from "@/api/standard/standard-subject"
 import * as apis from "@/api/voucher/voucher";
 import {parseTime, getCurrentQuarter, handleTree} from '@/utils/Jinbooks'
-import {h, ref, shallowRef, reactive, toRefs, watch} from 'vue'
+import {h, ref, shallowRef, reactive, toRefs, watch, nextTick, onMounted, onActivated} from 'vue'
 import {formatAmount} from "@/utils"
 import {useRouter, useRoute} from "vue-router";
 import booksSetStore from "@/store/modules/bookStore";
@@ -234,6 +236,10 @@ const filterSubject = ref<any>("");
 const subjectList = ref<any>([])
 const spanDataMap = ref<any>({})
 const treeRef = ref<TreeInstance>()
+/** 左侧树当前选中的科目编码（空字符串表示「所有科目」） */
+const currentSubjectKey = ref<string>('')
+const expandedKeys = ref<string[]>([])
+const treeReady = ref(false)
 
 const defaultProps = {
   children: 'children',
@@ -262,11 +268,95 @@ const data = reactive({
     date: currBookStore.termCurrent,
     reportQuarter: getCurrentQuarter(),
     reportDate: currBookStore.termCurrent,
-    subjectCode: route.query.subjectCode,
+    subjectCode: normalizeQuery(route.query.subjectCode),
   },
 });
 
 const {queryParams} = toRefs(data);
+
+function normalizeQuery(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value[0] != null ? String(value[0]) : ''
+  }
+  return value != null && value !== '' ? String(value) : ''
+}
+
+/** 在科目树中查找目标编码的祖先路径（含自身） */
+function findSubjectPath(nodes: any[], code: string, path: any[] = []): any[] | null {
+  for (const node of nodes || []) {
+    const next = [...path, node]
+    if (node.code === code) {
+      return next
+    }
+    if (node.children?.length) {
+      const found = findSubjectPath(node.children, code, next)
+      if (found) {
+        return found
+      }
+    }
+  }
+  return null
+}
+
+/** 根据路由/查询参数选中左侧科目并刷新列表 */
+function applySubjectFromRoute(triggerQuery = true) {
+  const code = normalizeQuery(route.query.subjectCode)
+  queryParams.value.subjectCode = code
+  currentSubjectKey.value = code || ''
+
+  const date = normalizeQuery(route.query.date)
+  if (date) {
+    if (date.length === 4) {
+      queryParams.value.periodType = 'year'
+      queryParams.value.date = date
+    } else if (date.length >= 7) {
+      queryParams.value.periodType = 'month'
+      queryParams.value.date = date.substring(0, 7)
+    }
+  }
+
+  if (!treeReady.value) {
+    return
+  }
+
+  nextTick(() => {
+    const tree = treeRef.value
+    if (!tree) {
+      return
+    }
+    if (code) {
+      const path = findSubjectPath(subjectList.value, code)
+      if (path?.length) {
+        // 展开祖先节点，保证目标科目可见
+        path.slice(0, -1).forEach((n: any) => {
+          if (n?.code == null || n.code === '') {
+            return
+          }
+          const node = tree.getNode(n.code)
+          if (node) {
+            node.expanded = true
+          }
+        })
+        expandedKeys.value = path
+            .slice(0, -1)
+            .map((n: any) => n.code)
+            .filter((c: string) => c != null && c !== '')
+        currentSubjectKey.value = code
+        tree.setCurrentKey(code)
+      } else {
+        tree.setCurrentKey(null as any)
+        currentSubjectKey.value = ''
+      }
+    } else {
+      expandedKeys.value = []
+      currentSubjectKey.value = ''
+      tree.setCurrentKey('')
+    }
+    if (triggerQuery) {
+      handleQuery()
+    }
+  })
+}
 
 const customPrefix = shallowRef({
   render() {
@@ -320,7 +410,10 @@ const filterNodeMethod = (value: string, data: Tree) => {
 }
 
 const handleTreeNodeClick = (data: Tree) => {
-  queryParams.value.subjectCode = data.code
+  // 「所有科目」无 code
+  const code = data?.code != null ? String(data.code) : ''
+  queryParams.value.subjectCode = code
+  currentSubjectKey.value = code
   handleQuery()
 }
 
@@ -395,17 +488,40 @@ watch(filterSubject, (val) => {
   treeRef.value!.filter(val)
 })
 
-subjectApi.getTree({
-  bookId: currBookStore.bookId
-}).then((res: any) => {
-  subjectList.value = [{
-    "id": "-1",
-    "parentId": null,
-    "name": "所有科目",
-    "displayName": "所有科目",
-  }, ...res.data]
-  queryParams.value.subjectCode = ""
-  getList();
+watch(
+  () => [route.query.subjectCode, route.query.date],
+  () => {
+    if (treeReady.value) {
+      applySubjectFromRoute(true)
+    }
+  }
+)
+
+function loadSubjectTree() {
+  return subjectApi.getTree({
+    bookId: currBookStore.bookId
+  }).then((res: any) => {
+    subjectList.value = [{
+      "id": "-1",
+      "parentId": null,
+      "code": "",
+      "name": "所有科目",
+      "displayName": "所有科目",
+    }, ...res.data]
+    treeReady.value = true
+    applySubjectFromRoute(true)
+  })
+}
+
+onMounted(() => {
+  loadSubjectTree()
+})
+
+onActivated(() => {
+  // keep-alive 场景：再次进入时按最新 query 选中科目
+  if (treeReady.value) {
+    applySubjectFromRoute(true)
+  }
 })
 </script>
 

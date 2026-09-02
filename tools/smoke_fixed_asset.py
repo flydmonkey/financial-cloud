@@ -97,7 +97,7 @@ def login() -> dict:
         "/api/login/signin?_allow_anonymous=true",
         {
             "username": "admin",
-            "password": "maxkey",
+            "password": "changeme",
             "captcha": "",
             "state": state,
             "authType": "normal",
@@ -143,13 +143,13 @@ def main() -> int:
     }
     found = {f.get("requestUrl") for f in functions if f.get("requestUrl") in fa_urls}
     log("FA-MENU-02", found == fa_urls, f"found={sorted(found)}")
-    parent = [f for f in functions if f.get("resName") == "固定资产" or f.get("id") == "2026082818000000001"]
+    parent = [f for f in functions if f.get("resName") == "åºå®èµäº§" or f.get("id") == "2026082818000000001"]
     style = parent[0].get("resStyle") if parent else None
     # func list may nest differently
     if not parent:
         for f in functions:
             if f.get("id") == "2026082818000000001" or (f.get("requestUrl") or "") == "":
-                if "固定资产" in str(f.get("resName") or ""):
+                if "åºå®èµäº§" in str(f.get("resName") or ""):
                     parent = [f]
                     style = f.get("resStyle")
                     break
@@ -170,7 +170,7 @@ def main() -> int:
         {
             "bookId": BOOK_ID,
             "code": "001",
-            "name": "重复编码测试",
+            "name": "éå¤ç¼ç æµè¯",
             "depreciationMethod": "STRAIGHT_LINE",
             "usefulLifeMonths": 60,
             "residualRate": 5,
@@ -212,7 +212,7 @@ def main() -> int:
         "/api/fixed-asset/card/save",
         card_payload(
             code=bad_code,
-            name="加速期数非法",
+            name="å éææ°éæ³?,
             categoryId=cat_id,
             startUseDate="2026-07-01",
             depreciationMethod="DOUBLE_DECLINING",
@@ -235,14 +235,14 @@ def main() -> int:
         "/api/fixed-asset/card/save",
         card_payload(
             code=new_code,
-            name="冒烟购入测试机",
+            name="åçè´­å¥æµè¯æ?,
             categoryId=cat_id,
             deptId="fa-demo-dept-admin",
             startUseDate="2026-07-20",
             usefulLifeMonths=36,
             originalValue=10000,
             taxAmount=1300,
-            location="测试区",
+            location="æµè¯å?,
         ),
         headers=auth,
     )
@@ -324,8 +324,8 @@ def main() -> int:
             {
                 "assetId": asset_id,
                 "yearPeriod": TERM,
-                "remark": "冒烟变动",
-                "items": [{"fieldCode": "location", "afterValue": "冒烟测试区-改"}],
+                "remark": "åçåå¨",
+                "items": [{"fieldCode": "location", "afterValue": "åçæµè¯å?æ?}],
             },
             headers=auth,
         )
@@ -335,7 +335,7 @@ def main() -> int:
             "/api/fixed-asset/change/save",
             {
                 "assetId": asset_id,
-                "items": [{"fieldCode": "location", "afterValue": "冒烟测试区-改"}],
+                "items": [{"fieldCode": "location", "afterValue": "åçæµè¯å?æ?}],
             },
             headers=auth,
         )
@@ -378,7 +378,7 @@ def main() -> int:
         _, acr = req(
             "POST",
             "/api/fixed-asset/depreciation/accrue",
-            {"yearPeriod": TERM, "voucherWord": "记", "summary": "冒烟计提折旧"},
+            {"yearPeriod": TERM, "voucherWord": "è®?, "summary": "åçè®¡æææ§"},
             headers=auth,
         )
         ok = acr.get("code") == 0
@@ -391,7 +391,7 @@ def main() -> int:
             _, acr2 = req(
                 "POST",
                 "/api/fixed-asset/depreciation/accrue",
-                {"yearPeriod": TERM, "voucherWord": "记", "summary": "冒烟重提"},
+                {"yearPeriod": TERM, "voucherWord": "è®?, "summary": "åçéæ"},
                 headers=auth,
             )
             log("FA-ACR-04", acr2.get("code") == 0, f"total={((acr2.get('data') or {}).get('totalAmount'))} msg={acr2.get('message')}")
@@ -405,9 +405,9 @@ def main() -> int:
     conn = pymysql.connect(
         host="127.0.0.1",
         port=3307,
-        user="jinbooks",
-        password="Jinbooks321!",
-        database="jinbooks",
+        user="financial_cloud",
+        password="FinancialCloud321!",
+        database="financial_cloud",
         charset="utf8mb4",
     )
     cur = conn.cursor()
@@ -454,8 +454,8 @@ def main() -> int:
                 "disposalSubjectId": SUBJ["1606"],
                 "gainSubjectId": SUBJ["5301.01"],
                 "lossSubjectId": SUBJ["5711.02"],
-                "voucherWord": "记",
-                "summary": "冒烟清理",
+                "voucherWord": "è®?,
+                "summary": "åçæ¸ç",
             },
             headers=auth,
         )
@@ -500,7 +500,7 @@ def main() -> int:
             ("deptName" in sample) or sample.get("deptName") is not None or True,
             f"keys_sample={list(sample.keys())[:12]}",
         )
-        has_change_col = any("change" in k.lower() or "变动" in str(k) for k in sample.keys()) or "changeInfo" in sample or "periodChangeInfo" in sample
+        has_change_col = any("change" in k.lower() or "åå¨" in str(k) for k in sample.keys()) or "changeInfo" in sample or "periodChangeInfo" in sample
         log("FA-RPT-03", "changeInfo" in sample or "periodChange" in sample or has_change_col or "includeChangeInfo", f"keys={list(sample.keys())}")
 
     _, summary = req("GET", f"/api/fixed-asset/report/depreciation-summary?{rq}", headers=auth)

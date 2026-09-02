@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-OUT_SQL = ROOT / "sql" / "seed" / "standard_subjects.sql"
+OUT_SQL = ROOT / "sql" / "seed" / "data" / "standard_subjects.sql"
 OUT_REPORT = ROOT / "docs" / "subject-import-compatibility.md"
 
 STANDARDS = [
@@ -305,7 +305,7 @@ def write_report(compare: dict) -> None:
             "",
             "```bash",
             "python tools/import_standard_subjects.py",
-            "mysql ... < sql/seed/standard_subjects.sql",
+            "mysql ... < sql/seed/data/standard_subjects.sql",
             "```",
             "",
         ]

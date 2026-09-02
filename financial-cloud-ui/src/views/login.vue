@@ -10,7 +10,7 @@
       </div>
       <div class="right">
         <!--
-        <el-tooltip content="语言选择" effect="dark" placement="bottom">
+        <el-tooltip content="选择语言" effect="dark" placement="bottom">
           <language class="right-menu-item hover-effect"></language>
         </el-tooltip>
         -->
@@ -110,7 +110,7 @@
           class="other"
           style="width: 100%;display: flex;"
         >
-          其他方式
+          其他登录
           <div
             v-for="other in others"
             class="item"
@@ -127,7 +127,7 @@
         </div>
       </el-form-item>
     </el-form>
-    <!--  底部  -->
+    <!-- tip -->
     <Footer />
   </div>
 </template>
@@ -135,7 +135,7 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, watch} from "vue";
 import {getCodeImg, loginPreGet, getThirdById} from "@/api/login";
-import {privateImage} from "@/utils/Jinbooks";
+import {privateImage} from "@/utils/financialCloud";
 import Cookies from "js-cookie";
 import useUserStore from '@/store/modules/user'
 import appStore from '@/store/modules/app'
@@ -174,13 +174,13 @@ const staticAppInfo: any = ref({
 });
 const codeUrl: any = ref("");
 const loading: any = ref(false);
-// 验证码开关
+// captcha
 const captchaEnabled: any = ref(false);
-// 注册开关
+// state
 const register: any = ref(false);
 const redirect: any = ref("");
 
-//其他登录方式
+// captcha?
 interface OtherItem {
   id: any;
   name: any;
@@ -202,7 +202,7 @@ function handleLogin(): any {
       loading.value = true;
       loginForm.value.state = state.value;
 
-      // 调用action的登录方法
+      // oauth action params
       userStore.login(loginForm.value).then((res: any) => {
         const query: any = route.query;
         const otherQueryParams: any = Object.keys(query).reduce((acc: any, cur: any) => {
@@ -221,7 +221,7 @@ function handleLogin(): any {
       }).catch((err: any) => {
         console.error(err)
         loading.value = false;
-        // 重新获取验证码
+        // captcha??
         if (captchaEnabled.value) {
           getCode();
         }
@@ -359,13 +359,13 @@ getState();
   margin: 70px auto;
   padding: 32px 20px 24px 20px;
   width: 380px;
-  background-color: rgba(255, 255, 255, 0.7); // 半透明背景色
-  border: 1px solid #eaeaea; // 边框
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid #eaeaea;
   border-radius: 10px;
-  transition: box-shadow 0.3s ease; // 平滑过渡效果
+  transition: box-shadow 0.3s ease;
 
   &:hover {
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); // 鼠标悬停时的阴影
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   }
 
 

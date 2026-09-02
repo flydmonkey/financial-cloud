@@ -1,6 +1,5 @@
 import request from '@/utils/Request'
-import { resolveMenuPath } from '@/utils/routePath'
-import {handleTree} from '@/utils/Jinbooks'
+import {handleTree} from '@/utils/financialCloud'
 import useUserStore from '@/store/modules/user'
 import i18n from '@/languages'
 
@@ -29,9 +28,7 @@ function setChildrenMenu(menus: any): any {
 function formatMenu(menu: any): any {
     const icon: any = (menu.resStyle || "list").replace("anticon-", '')
     let requestUrl: any = menu.requestUrl;
-    const hasVisibleChildren = !!mapParentIds[menu.id]
-        && mapChildren[menu.id].filter((t: any) => t.isVisible === 'y').length > 0
-    // 斜杠开头去掉（仅 component 字段使用）
+    // 斜杠开头去掉
     if (requestUrl && menu.requestUrl.startsWith('/')) {
         requestUrl = menu.requestUrl.substring(1);
     }
@@ -40,14 +37,14 @@ function formatMenu(menu: any): any {
         "id": menu.id,
         "parentId": menu.parentId,
         "name": menu.permission,
-        "path": resolveMenuPath(menu.requestUrl, menu.permission, hasVisibleChildren),
+        "path": menu.requestUrl || menu.permission,
         "query": menu.params || null,
         "hidden": menu.isVisible !== 'y',
         "redirect": "noRedirect",
-        "component": hasVisibleChildren
+        "component": mapParentIds[menu.id] && mapChildren[menu.id].filter((t: any) => t.isVisible === 'y').length > 0
             ? "ParentView"
             : requestUrl,
-        "alwaysShow": hasVisibleChildren,
+        "alwaysShow": !!mapParentIds[menu.id] && mapChildren[menu.id].filter((t: any) => t.isVisible === 'y').length > 0,
         "permissions": [menu.permission],
         "meta": {
             "title": menu.i18n && t(menu.i18n).indexOf('.') < 0
@@ -86,7 +83,7 @@ export const getRouters: any = () => {
                 mapChildren[item.parentId].push(item)
             })
             // 预处理空菜单,过滤出不需要显示在菜单中，但需要定义路由的菜单（附件的隐藏菜单）
-            for (const key in mapChildren) {
+            for (let key in mapChildren) {
                 const children: any = mapChildren[key]
                 children.filter((t: any) => t.isVisible !== 'y').forEach((t: any) => {
                     additionalMenu[t.id] = formatMenu(t)
@@ -105,7 +102,7 @@ export const getRouters: any = () => {
                 })
 
             tree = handleTree(tree || [])
-            for (const key in additionalMenu) {
+            for (let key in additionalMenu) {
                 tree.push(additionalMenu[key])
             }
             tree = tree.map((t: any) => {
@@ -135,6 +132,7 @@ export const getRouters: any = () => {
                 const index: any = tree[0].children[0]
                 tree[0].redirect = index.path
             }
+            console.log(tree)
             resolve({
                 code: 0,
                 data: tree

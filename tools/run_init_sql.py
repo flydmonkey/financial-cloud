@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Drop and reinitialize jinbooks database from sql/jinbooks_init.sql."""
+"""Drop and reinitialize financial_cloud database from sql/financial_cloud_init.sql."""
 from __future__ import annotations
 
 import sys
@@ -9,21 +9,21 @@ import pymysql
 from pymysql.constants import CLIENT
 
 ROOT = Path(__file__).resolve().parents[1]
-INIT_SQL = ROOT / "sql" / "jinbooks_init.sql"
-CASH_FLOW_SEED_SQL = ROOT / "sql" / "seed" / "config_cash_flow_balance.sql"
-BALANCE_SHEET_RECLASS_SQL = ROOT / "sql" / "seed" / "balance_sheet_reclassification_rules.sql"
-BALANCE_SHEET_INV_FA_SQL = ROOT / "sql" / "seed" / "balance_sheet_inventory_fixed_asset_rules.sql"
-BALANCE_SHEET_BAD_DEBT_SQL = ROOT / "sql" / "seed" / "balance_sheet_bad_debt_rules.sql"
+INIT_SQL = ROOT / "sql" / "financial_cloud_init.sql"
 
 HOST = "127.0.0.1"
 PORT = 3307
-DB = "jinbooks"
+DB = "financial_cloud"
+DB_USER = "financial_cloud"
+DB_PASSWORD = "FinancialCloud321!"
 
-# Prefer root for DROP DATABASE; fall back to app user.
 CREDENTIALS = [
     ("root", "root"),
-    ("jinbooks", "Jinbooks321!"),
+    (DB_USER, DB_PASSWORD),
 ]
+
+LEDGER_MENU_ID = "2026082817000000001"
+FIXED_ASSET_MENU_ID = "2026082818000000001"
 
 
 def connect(user: str, password: str, database: str | None = None):
@@ -59,7 +59,6 @@ def drain_results(cursor) -> None:
 
 
 def strip_leading_sql_comments(chunk: str) -> str:
-    """Drop leading blank / ``--`` lines so commented seed scripts still execute."""
     lines = chunk.splitlines()
     while lines:
         stripped = lines[0].strip()
@@ -70,7 +69,6 @@ def strip_leading_sql_comments(chunk: str) -> str:
 
 
 def execute_sql_script(cursor, sql: str) -> None:
-    """Execute SQL script statement-by-statement for clearer errors."""
     statement: list[str] = []
     in_string = False
     escape = False
@@ -97,12 +95,48 @@ def execute_sql_script(cursor, sql: str) -> None:
                 drain_results(cursor)
             except pymysql.Error as exc:
                 code = exc.args[0] if exc.args else None
-                # Ignore duplicate column/table when replaying patch section.
                 if code in (1060, 1061, 1050, 1051, 1091):
                     continue
                 raise RuntimeError(f"SQL failed ({code}): {exc}\n---\n{chunk[:500]}") from exc
             continue
         statement.append(char)
+
+
+def verify_init(cursor) -> None:
+    cursor.execute("SHOW TABLES LIKE 'fixed_asset'")
+    if cursor.fetchone() is None:
+        raise RuntimeError("fixed_asset table missing after init")
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM resources WHERE id IN (%s, %s) AND deleted = 'n'",
+        (LEDGER_MENU_ID, FIXED_ASSET_MENU_ID),
+    )
+    menu_count = cursor.fetchone()[0]
+    if menu_count < 2:
+        raise RuntimeError(
+            f"Expected ledger + fixed-asset menus, found {menu_count} "
+            f"(ids {LEDGER_MENU_ID}, {FIXED_ASSET_MENU_ID})"
+        )
+
+    cursor.execute("SELECT COUNT(*) FROM standard_subject")
+    subject_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM userinfo")
+    user_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM book")
+    book_count = cursor.fetchone()[0]
+    cursor.execute(
+        "SELECT COUNT(*) FROM config_cash_flow_balance WHERE book_id IS NULL"
+    )
+    cash_flow_templates = cursor.fetchone()[0]
+    print(
+        f"Done. standard_subject={subject_count}, userinfo={user_count}, "
+        f"book={book_count}, cash_flow_templates={cash_flow_templates}, "
+        f"menus={menu_count}"
+    )
+    if cash_flow_templates <= 0:
+        raise RuntimeError("config_cash_flow_balance templates missing after init")
+    if subject_count < 300:
+        raise RuntimeError(f"standard_subject count suspiciously low: {subject_count}")
 
 
 def main() -> int:
@@ -116,19 +150,22 @@ def main() -> int:
 
     try:
         with conn.cursor() as cursor:
-            print("Dropping database jinbooks ...")
+            print(f"Dropping database {DB} ...")
             cursor.execute(f"DROP DATABASE IF EXISTS `{DB}`")
             drain_results(cursor)
-            print("Creating database jinbooks ...")
+            print(f"Creating database {DB} ...")
             cursor.execute(
                 f"CREATE DATABASE `{DB}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             )
             drain_results(cursor)
 
-            if user != "jinbooks":
+            if user != DB_USER:
                 cursor.execute(
-                    f"GRANT ALL PRIVILEGES ON `{DB}`.* TO 'jinbooks'@'%'"
+                    f"CREATE USER IF NOT EXISTS '{DB_USER}'@'%' "
+                    f"IDENTIFIED BY '{DB_PASSWORD}'"
                 )
+                drain_results(cursor)
+                cursor.execute(f"GRANT ALL PRIVILEGES ON `{DB}`.* TO '{DB_USER}'@'%'")
                 drain_results(cursor)
                 cursor.execute("FLUSH PRIVILEGES")
                 drain_results(cursor)
@@ -136,50 +173,7 @@ def main() -> int:
             conn.select_db(DB)
             print(f"Executing {INIT_SQL} ...")
             execute_sql_script(cursor, sql)
-
-            if CASH_FLOW_SEED_SQL.exists():
-                print(f"Executing {CASH_FLOW_SEED_SQL} ...")
-                execute_sql_script(
-                    cursor, CASH_FLOW_SEED_SQL.read_text(encoding="utf-8")
-                )
-
-            if BALANCE_SHEET_RECLASS_SQL.exists():
-                print(f"Executing {BALANCE_SHEET_RECLASS_SQL} ...")
-                execute_sql_script(
-                    cursor, BALANCE_SHEET_RECLASS_SQL.read_text(encoding="utf-8")
-                )
-
-            if BALANCE_SHEET_INV_FA_SQL.exists():
-                print(f"Executing {BALANCE_SHEET_INV_FA_SQL} ...")
-                execute_sql_script(
-                    cursor, BALANCE_SHEET_INV_FA_SQL.read_text(encoding="utf-8")
-                )
-
-            if BALANCE_SHEET_BAD_DEBT_SQL.exists():
-                print(f"Executing {BALANCE_SHEET_BAD_DEBT_SQL} ...")
-                execute_sql_script(
-                    cursor, BALANCE_SHEET_BAD_DEBT_SQL.read_text(encoding="utf-8")
-                )
-
-            cursor.execute("SELECT COUNT(*) FROM standard_subject")
-            subject_count = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM userinfo")
-            user_count = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM book")
-            book_count = cursor.fetchone()[0]
-            cursor.execute(
-                "SELECT COUNT(*) FROM config_cash_flow_balance WHERE book_id IS NULL"
-            )
-            cash_flow_templates = cursor.fetchone()[0]
-            print(
-                f"Done. standard_subject={subject_count}, userinfo={user_count}, "
-                f"book={book_count}, cash_flow_templates={cash_flow_templates}"
-            )
-            if cash_flow_templates <= 0:
-                raise RuntimeError(
-                    "config_cash_flow_balance templates missing after init "
-                    f"(expected rows from {CASH_FLOW_SEED_SQL})"
-                )
+            verify_init(cursor)
     finally:
         conn.close()
     return 0

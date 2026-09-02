@@ -10,7 +10,7 @@ import pymysql
 from pymysql.constants import CLIENT
 
 HOST, PORT = "127.0.0.1", 3307
-USER, PASSWORD, DB = "jinbooks", "Jinbooks321!", "jinbooks"
+USER, PASSWORD, DB = "financial_cloud", "FinancialCloud321!", "financial_cloud"
 
 
 def connect():
@@ -132,17 +132,17 @@ def main() -> int:
     created = 0
     for month, (a_sell, a_admin, a_fin) in schedule.items():
         lines = [
-            ("销售费用", sell, a_sell),
-            ("管理费用", admin, a_admin),
+            ("éĺŽč´šç?, sell, a_sell),
+            ("çŽĄçč´šç¨", admin, a_admin),
         ]
         if fin is not None:
-            lines.append(("财务费用", fin, a_fin))
+            lines.append(("č´˘ĺĄč´šç¨", fin, a_fin))
         for label, subj, amt in lines:
             word_num += 1
             vid = nid()
             vdate = date(year, month, 15)
             # header
-            word = f"记-{word_num}"
+            word = f"čŽ?{word_num}"
             cur.execute(
                 """
                 INSERT INTO voucher (
@@ -151,7 +151,7 @@ def main() -> int:
                   status, sender_id, sender_name, sender_date, deleted,
                   created_by, created_date, modified_by, modified_date
                 ) VALUES (
-                  %s,%s,'记',%s,%s,'演示公司',0,
+                  %s,%s,'čŽ?,%s,%s,'ćźç¤şĺŹĺ¸',0,
                   %s,%s,%s,%s,%s,
                   'completed','seed-expense','seed',NOW(),'n',
                   '1', NOW(), '1', NOW()
@@ -189,7 +189,7 @@ def main() -> int:
                     subj["id"],
                     subj["code"],
                     subj["name"],
-                    f"演示-{label}-{year}年{month}期",
+                    f"ćźç¤ş-{label}-{year}ĺš´{month}ć?,
                     amt,
                     vdate,
                     amt,
@@ -215,7 +215,7 @@ def main() -> int:
                     bank["id"],
                     bank["code"],
                     bank["name"],
-                    f"演示-{label}-付款-{year}年{month}期",
+                    f"ćźç¤ş-{label}-äťćŹž-{year}ĺš´{month}ć?,
                     amt,
                     vdate,
                     amt,

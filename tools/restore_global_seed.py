@@ -8,7 +8,7 @@ from pathlib import Path
 import pymysql
 
 ROOT = Path(__file__).resolve().parents[1]
-INIT_SQL = ROOT / "sql" / "jinbooks_init.sql"
+INIT_SQL = ROOT / "sql" / "financial_cloud_init.sql"
 
 TABLES = (
     "userinfo",
@@ -20,9 +20,9 @@ TABLES = (
 
 HOST = "127.0.0.1"
 PORT = 3307
-DB = "jinbooks"
-USER = "jinbooks"
-PASSWORD = "Jinbooks321!"
+DB = "financial_cloud"
+USER = "financial_cloud"
+PASSWORD = "FinancialCloud321!"
 
 
 def extract_insert(sql_text: str, table: str) -> str | None:

@@ -2,7 +2,7 @@ import type {APIRequestContext, Page} from '@playwright/test'
 import {expect} from '@playwright/test'
 
 export const username = process.env.E2E_USERNAME || 'admin'
-export const password = process.env.E2E_PASSWORD || 'maxkey'
+export const password = process.env.E2E_PASSWORD || 'changeme'
 
 export interface AuthSession {
     token: string

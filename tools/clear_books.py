@@ -6,9 +6,9 @@ import pymysql
 
 HOST = "127.0.0.1"
 PORT = 3307
-DB = "jinbooks"
-USER = "jinbooks"
-PASSWORD = "Jinbooks321!"
+DB = "financial_cloud"
+USER = "financial_cloud"
+PASSWORD = "FinancialCloud321!"
 
 # Tables with book_id that hold global/template rows, not per-book business data.
 SKIP_TABLES = {

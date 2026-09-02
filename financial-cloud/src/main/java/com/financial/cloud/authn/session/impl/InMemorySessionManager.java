@@ -132,7 +132,7 @@ public class InMemorySessionManager implements SessionManager {
 
 	@Override
 	public void setLimit(int sessionLimit) {
-		log.debug("session limit {} ignored for in-memory store (use jinbooks.session.max-size)", sessionLimit);
+		log.debug("session limit {} ignored for in-memory store (use financial-cloud.session.max-size)", sessionLimit);
 	}
 
 	@Override

@@ -2,114 +2,67 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form
-          v-show="showSearch"
-          ref="queryRef"
-          :model="queryParams"
-          :inline="true"
-          label-width="68px"
-        >
-          <el-form-item
-            label=""
-            prop="periodType"
-          >
-            <el-radio-group
-              v-model="queryParams.periodType"
-              @change="handlePeriodType"
-            >
-              <el-radio-button
-                label="月度"
-                value="month"
-              />
-              <el-radio-button
-                label="季度"
-                value="quarter"
-              />
-              <!--              <el-radio-button label="年度" value="year"></el-radio-button>-->
+        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+          <el-form-item label="" prop="periodType">
+            <el-radio-group v-model="queryParams.periodType" @change="handlePeriodType">
+              <el-radio-button label="月度" value="month"></el-radio-button>
+              <el-radio-button label="季度" value="quarter"></el-radio-button>
+<!--              <el-radio-button label="年度" value="year"></el-radio-button>-->
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item
-            v-if="queryParams.periodType === 'month'"
-            label="选择月度"
-            prop="reportDate"
-          >
+          <el-form-item label="选择月度" prop="reportDate"
+                        v-if="queryParams.periodType === 'month'">
             <el-date-picker
-              v-model="queryParams.date"
-              style="width: 130px"
-              type="month"
-              :clearable="false"
-              format="YYYY年MM期"
-              value-format="YYYY-MM"
-              :disabled-date="disabledDate"
-              placeholder="选择月"
-              @change="handleQuery"
-            />
+                style="width: 130px"
+                v-model="queryParams.date"
+                type="month"
+                :clearable="false"
+                format="YYYY年MM期"
+                value-format="YYYY-MM"
+                :disabled-date="disabledDate"
+                @change="handleQuery"
+                placeholder="选择月">
+            </el-date-picker>
           </el-form-item>
 
-          <el-form-item
-            v-if="queryParams.periodType === 'quarter'"
-            label="选择季度"
-            prop="reportDate"
-          >
+          <el-form-item label="选择季度" prop="reportDate"
+                        v-if="queryParams.periodType === 'quarter'">
             <el-date-picker
-              v-model="queryParams.date"
-              style="width: 100px"
-              :clearable="false"
-              type="year"
-              value-format="YYYY"
-              :disabled-date="disabledDate"
-              :prefix-icon="customPrefix"
-              placeholder="选择年"
-              @change="handleQuery"
-            />
-            <el-radio-group
-              v-model="queryParams.reportQuarter"
-              style="margin-left: 10px"
-              @change="handleQuery"
-            >
-              <el-radio-button
-                label="第一季度"
-                value="Q1"
-              />
-              <el-radio-button
-                label="第二季度"
-                value="Q2"
-              />
-              <el-radio-button
-                label="第三季度"
-                value="Q3"
-              />
-              <el-radio-button
-                label="第四季度"
-                value="Q4"
-              />
+                style="width: 100px"
+                v-model="queryParams.date"
+                :clearable="false"
+                type="year"
+                value-format="YYYY"
+                :disabled-date="disabledDate"
+                :prefix-icon="customPrefix"
+                @change="handleQuery"
+                placeholder="选择年">
+            </el-date-picker>
+            <el-radio-group style="margin-left: 10px"
+                            v-model="queryParams.reportQuarter" @change="handleQuery">
+              <el-radio-button label="第一季度" value="Q1"></el-radio-button>
+              <el-radio-button label="第二季度" value="Q2"></el-radio-button>
+              <el-radio-button label="第三季度" value="Q3"></el-radio-button>
+              <el-radio-button label="第四季度" value="Q4"></el-radio-button>
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item
-            v-if="queryParams.periodType === 'year'"
-            label="选择年度"
-            prop="reportDate"
-          >
+          <el-form-item label="选择年度" prop="reportDate"
+                        v-if="queryParams.periodType === 'year'">
             <el-date-picker
-              v-model="queryParams.date"
-              type="year"
-              style="width: 100px"
-              :clearable="false"
-              :disabled-date="disabledDate"
-              value-format="YYYY"
-              placeholder="选择年"
-              @change="handleQuery"
-            />
+                @change="handleQuery"
+                v-model="queryParams.date"
+                type="year"
+                style="width: 100px"
+                :clearable="false"
+                :disabled-date="disabledDate"
+                value-format="YYYY"
+                placeholder="选择年">
+            </el-date-picker>
           </el-form-item>
           <el-form-item>
-            <el-button
-              type="primary"
-              @click="handleQuery"
-            >
-              刷新
-            </el-button>
+            <el-button @click="handleQuery" type="primary">刷新</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -117,121 +70,80 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-          type="primary"
-          @click="selectCashItem"
-        >
-          指定现金流量项
+            type="primary"
+            @click="selectCashItem"
+        >指定现金流量项
         </el-button>
         <div style="margin-left: 20px;line-height: 30px;display: inline-block">
-          <i
-            class="iconfont icon-tianping"
-            :class="isBalance ? 'iconfont-balance' : 'iconfont-unbalance'"
-          />
+          <i class="iconfont icon-tianping" :class="isBalance ? 'iconfont-balance' : 'iconfont-unbalance'"></i>
           <span class="hint">{{ isBalance ? '平衡' : '不平衡' }}</span>
         </div>
         <el-button
-          v-if="!isBalance"
-          style="margin-left: 5px;"
-          link
-          type="primary"
-          @click="checkDetails"
-        >
-          查看详情
+            v-if="!isBalance"
+            style="margin-left: 5px;"
+            link
+            type="primary"
+            @click="checkDetails"
+        >查看详情
         </el-button>
         <div class="btn-form-right">
           <!--          <el-button type="primary" @click="handlePrint">打印</el-button>-->
-          <el-button @click="handleExport">
-            导出
-          </el-button>
+          <el-button @click="handleExport">导出</el-button>
         </div>
       </div>
-      <el-table
-        v-loading="loading"
-        :data="cashFlowStatementList"
-        border
-        height="600"
-        stripe
-      >
-        <el-table-column
-          prop="itemName"
-          label="项目"
-          align="left"
-          min-width="160"
-          :show-overflow-tooltip="true"
-        >
+      <el-table v-loading="loading" :data="cashFlowStatementList" border height="600" stripe>
+        <el-table-column prop="itemName" label="项目" align="left" min-width="160"
+                         :show-overflow-tooltip="true">
           <template #default="scope">
             <span :class="{ 'indented-item': scope.row.isTitle !== 1 }">{{ scope.row.itemName }}</span>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="sortIndex"
-          label="行次"
-          align="center"
-          min-width="20"
-        />
-        <el-table-column
-          prop="monthlyAmount"
-          :label="monthlyAmountLabel"
-          align="right"
-          min-width="100"
-          :show-overflow-tooltip="true"
-        >
+        <el-table-column prop="sortIndex" label="行次" align="center" min-width="20">
+        </el-table-column>
+        <el-table-column prop="monthlyAmount" :label="monthlyAmountLabel" align="right" min-width="100"
+                         :show-overflow-tooltip="true">
           <template #default="{ row }">
-            <template
-              v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
-                     '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk'].includes(row.itemCode)"
-            >
-              <span />
+            <template v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
+        '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk'].includes(row.itemCode)">
+              <span></span>
             </template>
             <template
-              v-else-if="['59-xj-zwzb', '60-xj-gszq', '61-xj-rzzc'].includes(row.itemCode) && queryParams.periodType === 'month'"
-            >
+                v-else-if="['59-xj-zwzb', '60-xj-gszq', '61-xj-rzzc'].includes(row.itemCode) && queryParams.periodType === 'month'">
               <div style="display: flex;align-items: center;">
                 <el-input
-                  v-if="row.editing"
-                  ref="inputRef"
-                  v-model="row.inputBalance"
-                  type="text"
-                  style="text-align: right"
-                  @input="validateNumber(row)"
-                  @blur="handleBlur(row)"
-                  @focus="handleFocus(row)"
+                    v-if="row.editing"
+                    v-model="row.inputBalance"
+                    type="text"
+                    @input="validateNumber(row)"
+                    @blur="handleBlur(row)"
+                    @focus="handleFocus(row)"
+                    style="text-align: right"
+                    ref="inputRef"
                 />
-                <span
-                  v-else
-                  class="editable-cell"
-                  @click="handleClick(row)"
-                >
-                  {{ formatBalance(row.monthlyAmount) }}
+                <span v-else @click="handleClick(row)" class="editable-cell">
+                {{ formatBalance(row.monthlyAmount) }}
                 </span>
                 <el-icon size="15">
-                  <EditPen />
+                  <EditPen/>
                 </el-icon>
               </div>
             </template>
             <template v-else>
-              <span
-                :class="{ 'clickable-amount': row.isMain === 1 || row.isAdditional === 1 && row.itemCode != '56-xj-qita'}"
-                @click="row.isMain === 1 || row.isAdditional === 1 ? handleAmountClick(row) : undefined"
-              >
-                {{ formatBalance(row.monthlyAmount) }}
-              </span>
+        <span
+            :class="{ 'clickable-amount': row.isMain === 1 || row.isAdditional === 1 && row.itemCode != '56-xj-qita'}"
+            @click="row.isMain === 1 || row.isAdditional === 1 ? handleAmountClick(row) : undefined"
+        >
+          {{ formatBalance(row.monthlyAmount) }}
+        </span>
             </template>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="currentAmount"
-          label="本年累计金额"
-          align="right"
-          min-width="100"
-          :show-overflow-tooltip="true"
-        >
+        <el-table-column prop="currentAmount" label="本年累计金额" align="right" min-width="100"
+                         :show-overflow-tooltip="true">
           <template #default="scope">
-            <template
-              v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
-                     '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk'].includes(scope.row.itemCode)"
-            >
-              <span />
+            <template v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
+            '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk'].includes(scope.row.itemCode)">
+              <span></span>
             </template>
             <!--            <template v-else-if="scope.row.itemCode === '41-xj-jlr'">
                           {{ formatBalance(netProfitYear) }}
@@ -243,112 +155,47 @@
         </el-table-column>
       </el-table>
     </el-card>
-    <el-dialog
-      v-model="dialogOpen"
-      width="700px"
-      append-to-body
-      :title="dialogTitle"
-      :close-on-click-modal="false"
-      @close="cancel"
-    >
-      <el-alert
-        type="warning"
-        show-icon
-        :closable="false"
-      >
+    <el-dialog v-model="dialogOpen" width="700px" append-to-body :title="dialogTitle" :close-on-click-modal="false"
+               @close="cancel">
+      <el-alert type="warning" show-icon :closable="false">
         <template #default>
           <div class="custom-alert-content">
-            <div>{{ balanceTitle }}</div>
-            <div>
-              现金流量初始余额不平衡, 请<el-button
-                type="primary"
-                link
-                @click="goToCheck"
-              >
-                前往检查
-              </el-button>
-            </div>
+            <div>{{balanceTitle}}</div>
+            <div>现金流量初始余额不平衡, 请<el-button type="primary" link @click="goToCheck">前往检查</el-button></div>
           </div>
         </template>
       </el-alert>
       <div class="balance-check-content">
         <div class="balance-calculation">
           <div class="balance-item">
-            <p
-              v-if="endingYear !== 0.00"
-              class="balance-amount"
-            >
-              {{ formatBalance(endingYear) }}
-            </p>
-            <p
-              v-else
-              class="balance-amount"
-            >
-              0.00
-            </p>
-            <p class="balance-label">
-              期末现金及现金等价物余额(38行)
-            </p>
+            <p class="balance-amount" v-if="endingYear !== 0.00">{{formatBalance(endingYear)}}</p>
+            <p class="balance-amount" v-else>0.00</p>
+            <p class="balance-label">期末现金及现金等价物余额(38行)</p>
           </div>
-          <div class="operator">
-            −
-          </div>
+          <div class="operator">−</div>
           <div class="balance-item">
-            <p
-              v-if="endingTerm !== 0.00"
-              class="balance-amount"
-            >
-              {{ formatBalance(endingTerm) }}
-            </p>
-            <p
-              v-else
-              class="balance-amount"
-            >
-              0.00
-            </p>
-            <p class="balance-label">
-              现金及现金等价物科目余额
-            </p>
+            <p class="balance-amount" v-if="endingTerm !== 0.00">{{formatBalance(endingTerm)}}</p>
+            <p class="balance-amount" v-else>0.00</p>
+            <p class="balance-label">现金及现金等价物科目余额</p>
           </div>
-          <div class="operator">
-            =
-          </div>
+          <div class="operator">=</div>
 
           <div class="balance-item">
-            <p
-              v-if="diff !== 0.00"
-              class="balance-amount"
-            >
-              {{ formatBalance(diff) }}
-            </p>
-            <p
-              v-else
-              class="balance-amount"
-            >
-              0.00
-            </p>
-            <p class="balance-label">
-              差额
-            </p>
+            <p class="balance-amount" v-if="diff !== 0.00">{{formatBalance(diff)}}</p>
+            <p class="balance-amount" v-else>0.00</p>
+            <p class="balance-label">差额</p>
           </div>
         </div>
       </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="cancel">
-            {{ $t('systemCancel') }}
-          </el-button>
-        </div>
-      </template>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancel">{{ $t('systemCancel') }}</el-button>
+      </div>
     </el-dialog>
-    <edit-form
-      :title="title"
-      :open="open"
-      :selected-item-code="selectedCode"
-      :selected-type="selectedType"
-      :date-range="dateRange"
-      @dialog-of-closed-methods="dialogOfClosedMethods"
-    />
+    <edit-form :title="title" :open="open"
+               :selected-item-code="selectedCode"
+               :selected-type="selectedType"
+               :date-range="dateRange"
+               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
   </div>
 </template>
 
@@ -356,7 +203,7 @@
 import * as statementApis from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import {useRouter} from "vue-router";
-import {parseTime, getCurrentQuarter} from '@/utils/Jinbooks'
+import {parseTime, getCurrentQuarter} from '@/utils/financialCloud'
 import {getCurrentInstance, reactive, ref, toRefs, shallowRef, h, computed, nextTick} from "vue";
 import editForm from "./cash-flow/edit.vue"
 import {formatBalance, validateNumber} from "@/utils/BalanceFormat";
@@ -573,6 +420,8 @@ function checkBalance() {
   );
 
   if (targetItem) {
+    console.log(targetItem.currentAmount)
+    console.log(targetItem.monthlyAmount)
     endingYear.value = targetItem.currentAmount;
     endingTerm.value = targetItem.monthlyAmount;
     diff.value = endingYear.value - endingTerm.value;

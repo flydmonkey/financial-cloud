@@ -2,7 +2,7 @@
 from pathlib import Path
 import re
 
-text = Path("sql/jinbooks_v1.0.1.sql").read_text(encoding="utf-8", errors="replace")
+text = Path("sql/financial_cloud_v1.0.1.sql").read_text(encoding="utf-8", errors="replace")
 tables = re.findall(r"CREATE TABLE `([^`]+)`", text)
 print("tables", len(tables))
 for t in tables:

@@ -2,18 +2,9 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form
-          v-show="showSearch"
-          ref="queryFormRef"
-          :model="queryParams"
-          :inline="true"
-          label-width="68px"
-        >
-          <el-form-item
-            label="科目"
-            prop="category"
-            style="width: 220px;"
-          >
+        <el-form :model="queryParams" ref="queryFormRef" :inline="true"
+                 v-show="showSearch" label-width="68px">
+          <el-form-item label="科目" prop="category" style="width: 220px;">
             <!--
             <el-radio-group v-model="queryParams.category" @change="handleQuery">
               <el-radio-button v-for="(aux, index) in subjects_category"
@@ -21,275 +12,139 @@
                                :label="aux.label" :value="aux.value"/>
             </el-radio-group>
             -->
-            <el-select
-              v-model="queryParams.category"
-              clearable
-              @change="handleQuery"
-            >
+            <el-select v-model="queryParams.category" clearable @change="handleQuery">
               <el-option
-                v-for="dict in subjects_category"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
+                  v-for="dict in subjects_category"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
               />
             </el-select>
           </el-form-item>
-          <el-form-item
-            label="编码"
-            prop="code"
-          >
+          <el-form-item label="编码" prop="code">
             <el-input
-              v-model="queryParams.code"
-              placeholder="请输入编码"
-              clearable
-              @keyup.enter="handleQuery"
+                v-model="queryParams.code"
+                placeholder="请输入编码"
+                clearable
+                @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item
-            label="名称"
-            prop="name"
-          >
+          <el-form-item label="名称" prop="name">
             <el-input
-              v-model="queryParams.name"
-              placeholder="请输入名称"
-              clearable
-              @keyup.enter="handleQuery"
+                v-model="queryParams.name"
+                placeholder="请输入名称"
+                clearable
+                @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">
-              {{ t('org.button.query') }}
-            </el-button>
-            <el-button @click="resetQuery">
-              {{ t('org.button.reset') }}
-            </el-button>
+            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
+            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
     </el-card>
     <el-card class="common-card">
       <div class="btn-form">
-        <el-button
-          v-if="ableEdit"
-          v-loading="buttonLoading"
-          type="primary"
-          @click="submitForm"
-        >
+        <el-button v-if="ableEdit" v-loading="buttonLoading" type="primary" @click="submitForm">
           保存
         </el-button>
-        <el-button
-          type="primary"
-          @click="handleTrialBalance(true)"
-        >
+        <el-button type="primary" @click="handleTrialBalance(true)">
           试算平衡
         </el-button>
       </div>
 
-      <el-table
-        v-loading="loading"
-        :data="initBalanceList"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        row-key="originId"
-        default-expand-all
-        border
-        show-summary
-        :summary-method="handleSummaryMethod2"
-        height="560"
-        @cell-click="cellMouseEnter"
-      >
-        <el-table-column
-          type="index"
-          label="序号"
-          align="center"
-          width="60"
-        />
-        <el-table-column
-          prop="code"
-          label="编码"
-          align="left"
-          width="160"
-        />
-        <el-table-column
-          prop="name"
-          label="名称"
-          align="left"
-          width="300"
-        >
+      <el-table v-loading="loading" :data="initBalanceList"
+                :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+                row-key="originId" default-expand-all
+                @cell-click="cellMouseEnter"
+                border
+                show-summary
+                :summary-method="handleSummaryMethod2"
+                height="560">
+        <el-table-column type="index" label="序号" align="center" width="60"></el-table-column>
+        <el-table-column prop="code" label="编码" align="left" width="160"></el-table-column>
+        <el-table-column prop="name" label="名称" align="left" width="300">
           <template #default="scope">
             <div :style="{'text-indent': getIndent(scope.row) + 'em'}">
               {{ scope.row.name }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="direction"
-          label="方向"
-          align="center"
-        >
+        <el-table-column prop="direction" label="方向" align="center">
           <template #default="scope">
-            <el-tag
-              v-if="scope.row.direction == 0"
-              type="warning"
-            >
-              {{ t('subjectDirectionNone') }}
-            </el-tag>
-            <el-tag
-              v-if="scope.row.direction == 1"
-              type="warning"
-            >
-              {{ t('subjectDebit') }}
-            </el-tag>
-            <el-tag
-              v-if="scope.row.direction == 2"
-              type="success"
-            >
-              {{ t('subjectCredit') }}
-            </el-tag>
+            <el-tag type="warning" v-if="scope.row.direction == 0">{{ t('subjectDirectionNone') }}</el-tag>
+            <el-tag type="warning" v-if="scope.row.direction == 1">{{ t('subjectDebit') }}</el-tag>
+            <el-tag type="success" v-if="scope.row.direction == 2">{{ t('subjectCredit') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="balance"
-          label="余额"
-          align="right"
-          header-align="center"
-          width="200"
-        >
+        <el-table-column prop="balance" label="余额" align="right" header-align="center"
+                         width="200">
           <template #default="scope">
             <span>{{ formatAmount(scope.row.balance) }}</span>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="openingYearBalanceDebit"
-          label="年初余额（借方）"
-          align="right"
-          header-align="center"
-          width="200"
-        >
+        <el-table-column prop="openingYearBalanceDebit" label="年初余额（借方）" align="right" header-align="center"
+                         width="200">
           <template #default="scope">
             <span v-if="!scope.row.editing || (scope.row.children && scope.row.children.length > 0)">
-              {{ formatAmount(scope.row.openingYearBalanceDebit) }}
+                  {{ formatAmount(scope.row.openingYearBalanceDebit) }}
             </span>
-            <el-input
-              v-else
-              v-model="scope.row.openingYearBalanceDebit"
-              :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-              :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
-              @blur="calculateTotal(initBalanceList)"
-            />
+            <el-input v-else v-model="scope.row.openingYearBalanceDebit"
+                      @blur="calculateTotal(initBalanceList)"
+                      :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                      :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"></el-input>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="openingYearBalanceCredit"
-          label="年初余额（贷方）"
-          align="right"
-          header-align="center"
-          width="200"
-        >
+        <el-table-column prop="openingYearBalanceCredit" label="年初余额（贷方）" align="right" header-align="center"
+                         width="200">
           <template #default="scope">
             <span v-if="!scope.row.editing || (scope.row.children && scope.row.children.length > 0)">
-              {{ formatAmount(scope.row.openingYearBalanceCredit) }}
+                {{ formatAmount(scope.row.openingYearBalanceCredit) }}
             </span>
-            <el-input
-              v-else
-              v-model="scope.row.openingYearBalanceCredit"
-              :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-              :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
-              @blur="calculateTotal(initBalanceList)"
-            />
+            <el-input v-else v-model="scope.row.openingYearBalanceCredit"
+                      @blur="calculateTotal(initBalanceList)"
+                      :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                      :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"></el-input>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="debitAmount"
-          label="本年累计（借方）"
-          align="right"
-          header-align="center"
-          width="200"
-        >
+        <el-table-column prop="debitAmount" label="本年累计（借方）" align="right" header-align="center" width="200">
           <template #default="scope">
             <span v-if="!scope.row.editing || (scope.row.children && scope.row.children.length > 0)">
-              {{ formatAmount(scope.row.debitAmount) }}
+                  {{ formatAmount(scope.row.debitAmount) }}
             </span>
-            <el-input
-              v-else
-              v-model="scope.row.debitAmount"
-              :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-              :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
-              @blur="calculateTotal(initBalanceList)"
-            />
+            <el-input v-else v-model="scope.row.debitAmount"
+                      @blur="calculateTotal(initBalanceList)"
+                      :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                      :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"></el-input>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="creditAmount"
-          label="本年累计（贷方）"
-          align="right"
-          header-align="center"
-          width="200"
-        >
+        <el-table-column prop="creditAmount" label="本年累计（贷方）" align="right" header-align="center" width="200">
           <template #default="scope">
             <span v-if="!scope.row.editing || (scope.row.children && scope.row.children.length > 0)">
-              {{ formatAmount(scope.row.creditAmount) }}
+                 {{ formatAmount(scope.row.creditAmount) }}
             </span>
-            <el-input
-              v-else
-              v-model="scope.row.creditAmount"
-              :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-              :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
-              @blur="calculateTotal(initBalanceList)"
-            />
+            <el-input v-else v-model="scope.row.creditAmount"
+                      @blur="calculateTotal(initBalanceList)"
+                      :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                      :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"></el-input>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
     <!-- 试算平衡结果弹窗 -->
-    <el-dialog
-      v-model="dialog.visible"
-      title="试算平衡结果"
-      width="700px"
-    >
-      <el-alert
-        v-if="trialDifference"
-        title="恭喜您,您录入的财务初始余额平衡"
-        type="success"
-        :closable="false"
-        show-icon
-      />
-      <el-alert
-        v-else
-        title="您录入的财务初始余额不平衡"
-        type="warning"
-        :closable="false"
-        show-icon
-      />
-      <el-table
-        :data="trialBalanceResult"
-        style="width: 100%"
-      >
-        <el-table-column
-          prop="type"
-          label="类型"
-          align="center"
-        />
-        <el-table-column
-          prop="debitTotal"
-          label="借方总额"
-          align="right"
-        />
-        <el-table-column
-          prop="creditTotal"
-          label="贷方总额"
-          align="right"
-        />
-        <el-table-column
-          prop="difference"
-          label="差额"
-          align="right"
-        />
-        <el-table-column
-          prop="isBalanced"
-          label="是否平衡"
-          align="center"
-        >
+    <el-dialog title="试算平衡结果" v-model="dialog.visible" width="700px">
+      <el-alert v-if="trialDifference" title="恭喜您,您录入的财务初始余额平衡" type="success"
+                :closable="false" show-icon/>
+      <el-alert v-else title="您录入的财务初始余额不平衡" type="warning"
+                :closable="false" show-icon/>
+      <el-table :data="trialBalanceResult" style="width: 100%">
+        <el-table-column prop="type" label="类型" align="center"></el-table-column>
+        <el-table-column prop="debitTotal" label="借方总额" align="right"></el-table-column>
+        <el-table-column prop="creditTotal" label="贷方总额" align="right"></el-table-column>
+        <el-table-column prop="difference" label="差额" align="right"></el-table-column>
+        <el-table-column prop="isBalanced" label="是否平衡" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.isBalanced ? 'success' : 'danger'">
               {{ scope.row.isBalanced ? '是' : '否' }}
@@ -299,10 +154,7 @@
       </el-table>
       <template #footer>
         <span class="dialog-footer">
-          <el-button
-            type="primary"
-            @click="dialog.visible = false"
-          >确认</el-button>
+          <el-button type="primary" @click="dialog.visible = false">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -316,7 +168,7 @@ import bookStore from "@/store/modules/bookStore";
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
 import {ElForm, FormInstance} from "element-plus";
 import {formatAmount,} from "@/utils";
-import {handleTree, handleTreeToList} from "@/utils/Jinbooks";
+import {handleTree, handleTreeToList} from "@/utils/financialCloud";
 import Decimal from 'decimal.js'
 import {handleSummaryMethod, SummaryMethodProps} from "@/utils/Subjects";
 
@@ -428,6 +280,8 @@ const handleTrialBalance = (show?: boolean) => {
       isBalanced: new Decimal(totalDebitAmount).eq(new Decimal(totalCreditAmount))
     }
   ];
+  console.log("initialBalanceDiff " + initialBalanceDiff)
+  console.log("accumulatedAmountDiff " + accumulatedAmountDiff)
   trialDifference.value = new Decimal(initialBalanceDiff).eq(new Decimal(0)) && new Decimal(accumulatedAmountDiff).eq(new Decimal(0))
   if (!trialDifference.value || show) {
     dialog.title = '试算平衡结果';

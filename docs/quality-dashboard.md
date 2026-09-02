@@ -1,6 +1,6 @@
 # 质量仪表盘
 
-> 最后更新：2026-08-27  
+> 最后更新：2026-09-02  
 > 环境：后端 `localhost:2154`，前端 `localhost:3154`
 
 ## 总览
@@ -8,7 +8,7 @@
 | 维度 | 结果 |
 |------|------|
 | API 冒烟（`tools/smoke-api.mjs`） | 7 探针 |
-| Playwright E2E | 22/22 通过 |
+| Playwright E2E | 35 spec 文件 |
 | 后端单测 | 凭证 + 结账 + 报表 + book/journal/hr |
 | TypeScript | 251 error（原 728） |
 | ESLint | 114 error / 698 warning |

@@ -1,7 +1,7 @@
 import {expect, test} from '@playwright/test'
 
 const username = process.env.E2E_USERNAME || 'admin'
-const password = process.env.E2E_PASSWORD || 'maxkey'
+const password = process.env.E2E_PASSWORD || 'changeme'
 
 test.describe('smoke', () => {
     test('login api without captcha', async ({request}) => {

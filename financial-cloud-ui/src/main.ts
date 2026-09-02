@@ -21,7 +21,7 @@ import '@/assets/iconfont/iconfont.css'
 import './permission'
 
 import {useDict} from '@/utils/Dict'
-import {parseTime, resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels} from '@/utils/Jinbooks'
+import {parseTime, resetForm, addDateRange, handleTree, selectDictLabel, selectDictLabels} from '@/utils/financialCloud'
 
 import Pagination from '@/components/Pagination/index.vue'
 import RightToolbar from '@/components/RightToolbar/index.vue'

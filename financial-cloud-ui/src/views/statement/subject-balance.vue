@@ -2,265 +2,148 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form
-          v-show="showSearch"
-          ref="queryRef"
-          :model="queryParams"
-          :inline="true"
-          label-width="100px"
-        >
-          <el-form-item
-            label="显示辅助核算"
-            prop="showAux"
-          >
-            <el-switch
-              v-model="queryParams.showAux"
-              @change="handleQuery"
-            />
+        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="100px">
+          <el-form-item label="显示辅助核算" prop="showAux">
+            <el-switch v-model="queryParams.showAux" @change="handleQuery"/>
           </el-form-item>
 
           <!--          <el-form-item label="显示所有科目" prop="showAll">-->
           <!--            <el-switch v-model="queryParams.showAll" @change="handleQuery"/>-->
           <!--          </el-form-item>-->
 
-          <el-form-item
-            label=""
-            prop="defaultExpandAll"
-          >
-            <el-checkbox
-              :model-value="showTreeAll"
-              label="展开所有层级"
-              @change="defaultExpandAll"
-            />
+          <el-form-item label="" prop="defaultExpandAll">
+            <el-checkbox @change="defaultExpandAll" :model-value="showTreeAll" label="展开所有层级"/>
           </el-form-item>
 
-          <el-form-item
-            label=""
-            prop="periodType"
-          >
-            <el-radio-group
-              v-model="queryParams.periodType"
-              @change="handlePeriodType"
-            >
-              <el-radio-button
-                label="月度"
-                value="month"
-              />
+          <el-form-item label="" prop="periodType">
+            <el-radio-group v-model="queryParams.periodType" @change="handlePeriodType">
+              <el-radio-button label="月度" value="month"></el-radio-button>
               <!--              <el-radio-button label="季度报表" value="季"></el-radio-button>-->
-              <el-radio-button
-                label="年度"
-                value="year"
-              />
+              <el-radio-button label="年度" value="year"></el-radio-button>
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item
-            v-if="queryParams.periodType === 'month'"
-            label="选择月度"
-            prop="reportDate"
-          >
+          <el-form-item label="选择月度" prop="reportDate"
+                        v-if="queryParams.periodType === 'month'">
             <el-date-picker
-              v-model="queryParams.date"
-              style="width: 130px"
-              type="month"
-              :clearable="false"
-              format="YYYY年MM期"
-              value-format="YYYY-MM"
-              :disabled-date="disabledDate"
-              placeholder="选择月"
-              @change="handleQuery"
-            />
+                style="width: 130px"
+                v-model="queryParams.date"
+                type="month"
+                :clearable="false"
+                format="YYYY年MM期"
+                value-format="YYYY-MM"
+                :disabled-date="disabledDate"
+                @change="handleQuery"
+                placeholder="选择月">
+            </el-date-picker>
           </el-form-item>
 
-          <el-form-item
-            v-if="queryParams.periodType === 'quarter'"
-            label="选择季度"
-            prop="reportDate"
-          >
+          <el-form-item label="选择季度" prop="reportDate"
+                        v-if="queryParams.periodType === 'quarter'">
             <el-date-picker
-              v-model="queryParams.date"
-              style="width: 100px"
-              :clearable="false"
-              type="year"
-              value-format="YYYY"
-              :disabled-date="disabledDate"
-              :prefix-icon="customPrefix"
-              placeholder="选择季度"
-              @change="handleQuery"
-            />
-            <el-radio-group
-              v-model="queryParams.reportQuarter"
-              style="margin-left: 10px"
-              @change="handleQuery"
-            >
-              <el-radio-button
-                label="第一季度"
-                value="Q1"
-              />
-              <el-radio-button
-                label="第二季度"
-                value="Q2"
-              />
-              <el-radio-button
-                label="第三季度"
-                value="Q3"
-              />
-              <el-radio-button
-                label="第四季度"
-                value="Q4"
-              />
+                style="width: 100px"
+                v-model="queryParams.date"
+                :clearable="false"
+                type="year"
+                value-format="YYYY"
+                :disabled-date="disabledDate"
+                :prefix-icon="customPrefix"
+                @change="handleQuery"
+                placeholder="选择季度">
+            </el-date-picker>
+            <el-radio-group style="margin-left: 10px"
+                            v-model="queryParams.reportQuarter" @change="handleQuery">
+              <el-radio-button label="第一季度" value="Q1"></el-radio-button>
+              <el-radio-button label="第二季度" value="Q2"></el-radio-button>
+              <el-radio-button label="第三季度" value="Q3"></el-radio-button>
+              <el-radio-button label="第四季度" value="Q4"></el-radio-button>
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item
-            v-if="queryParams.periodType === 'year'"
-            label="选择年度"
-            prop="reportDate"
-          >
+          <el-form-item label="选择年度" prop="reportDate"
+                        v-if="queryParams.periodType === 'year'">
             <el-date-picker
-              v-model="queryParams.date"
-              type="year"
-              style="width: 100px"
-              :clearable="false"
-              :disabled-date="disabledDate"
-              value-format="YYYY"
-              placeholder="选择年"
-              @change="handleQuery"
-            />
+                @change="handleQuery"
+                v-model="queryParams.date"
+                type="year"
+                style="width: 100px"
+                :clearable="false"
+                :disabled-date="disabledDate"
+                value-format="YYYY"
+                placeholder="选择年">
+            </el-date-picker>
           </el-form-item>
+
         </el-form>
       </div>
     </el-card>
     <el-card class="common-card">
       <div class="btn-form">
         <div class="btn-form-right">
-          <el-button @click="handleExport">
-            导出
-          </el-button>
+          <el-button @click="handleExport">导出</el-button>
         </div>
       </div>
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="recordsList"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        :expand-row-keys="expandsIds"
-        show-summary
-        :summary-method="handleSummaryMethod2"
-        row-key="sourceId"
-        height="590"
-      >
-        <el-table-column
-          label="科目编码"
-          align="left"
-          prop="subjectCode"
-          width="250"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          label="科目名称"
-          align="left"
-          prop="subjectName"
-          width="300"
-          show-overflow-tooltip
-        >
+      <el-table ref="tableRef" v-loading="loading" :data="recordsList"
+                :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+                :expand-row-keys="expandsIds"
+                show-summary
+                :summary-method="handleSummaryMethod2"
+                row-key="sourceId" height="590">
+        <el-table-column label="科目编码" align="left" prop="subjectCode" width="250" show-overflow-tooltip/>
+        <el-table-column label="科目名称" align="left" prop="subjectName" width="300" show-overflow-tooltip>
           <template #default="scope">
             <div :style="{'text-indent': getSubjectIndent(scope.row.subjectCode) + 'em'}">
               {{ scope.row.subjectName }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="queryParams.periodType === 'year'? '年初余额' : '期初余额'"
-          align="center"
-        >
-          <el-table-column
-            prop="openingBalanceDebit"
-            align="center"
-            label="借方"
-          >
+        <el-table-column :label="queryParams.periodType === 'year'? '年初余额' : '期初余额'" align="center">
+          <el-table-column prop="openingBalanceDebit" align="center" label="借方">
             <template #default="scope">
               {{ formatAmount(scope.row.openingBalanceDebit, '') }}
             </template>
           </el-table-column>
-          <el-table-column
-            prop="openingBalanceCredit"
-            align="center"
-            label="贷方"
-          >
+          <el-table-column prop="openingBalanceCredit" align="center" label="贷方">
             <template #default="scope">
               {{ formatAmount(scope.row.openingBalanceCredit, '') }}
             </template>
           </el-table-column>
         </el-table-column>
-        <el-table-column
-          label="本期发生额"
-          align="center"
-        >
-          <el-table-column
-            prop="currentPeriodDebit"
-            align="center"
-            label="借方"
-          >
+        <el-table-column label="本期发生额" align="center">
+          <el-table-column prop="currentPeriodDebit" align="center" label="借方">
             <template #default="scope">
               {{ formatAmount(scope.row.currentPeriodDebit, '') }}
             </template>
           </el-table-column>
-          <el-table-column
-            prop="currentPeriodCredit"
-            align="center"
-            label="贷方"
-          >
+          <el-table-column prop="currentPeriodCredit" align="center" label="贷方">
             <template #default="scope">
               {{ formatAmount(scope.row.currentPeriodCredit, '') }}
             </template>
           </el-table-column>
         </el-table-column>
 
-        <el-table-column
-          label="本年累计发生额"
-          align="center"
-        >
-          <el-table-column
-            prop="yearToDateDebit"
-            align="center"
-            label="借方"
-          >
+        <el-table-column label="本年累计发生额" align="center">
+          <el-table-column prop="yearToDateDebit" align="center" label="借方">
             <template #default="scope">
               {{ formatAmount(scope.row.yearToDateDebit, '') }}
             </template>
           </el-table-column>
-          <el-table-column
-            prop="yearToDateCredit"
-            align="center"
-            label="贷方"
-          >
+          <el-table-column prop="yearToDateCredit" align="center" label="贷方">
             <template #default="scope">
               {{ formatAmount(scope.row.yearToDateCredit, '') }}
             </template>
           </el-table-column>
         </el-table-column>
 
-        <el-table-column
-          label="期末余额"
-          align="center"
-        >
-          <el-table-column
-            prop="closingBalanceDebit"
-            align="center"
-            label="借方"
-          >
+        <el-table-column label="期末余额" align="center">
+          <el-table-column prop="closingBalanceDebit" align="center" label="借方">
             <template #default="scope">
               <div :style="{backgroundColor: scope.row.closingBalanceDebit >= 0 ? '' : 'bisque'}">
                 {{ formatAmount(scope.row.closingBalanceDebit, '') }}
               </div>
             </template>
           </el-table-column>
-          <el-table-column
-            prop="closingBalanceCredit"
-            align="center"
-            label="贷方"
-          >
+          <el-table-column prop="closingBalanceCredit" align="center" label="贷方">
             <template #default="scope">
               <div :style="{backgroundColor: scope.row.closingBalanceCredit >= 0 ? '' : 'bisque'}">
                 {{ formatAmount(scope.row.closingBalanceCredit, '') }}
@@ -275,7 +158,7 @@
 
 <script setup name="ReportIncomeStatement" lang="ts">
 import * as reportApis from "@/api/statement/statement";
-import {getCurrentQuarter, handleTree, parseTime} from '@/utils/Jinbooks'
+import {getCurrentQuarter, handleTree, parseTime} from '@/utils/financialCloud'
 import {getSubjectIndent, getSubjectAllNodeIds, handleSummaryMethod, SummaryMethodProps} from '@/utils/Subjects'
 import {h, reactive, ref, shallowRef, toRefs, computed, VNode} from 'vue'
 import {downloadData, formatAmount} from "@/utils"

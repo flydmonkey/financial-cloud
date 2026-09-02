@@ -8,21 +8,58 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_SQL = ROOT / "sql" / "jinbooks_v1.0.1.sql"
-ADD_SQL = ROOT / "sql" / "jinbooks_v1.0.1-add.sql"
-MENU_CLEANUP_SQL = ROOT / "sql" / "jinbooks_v1.1.0-cleanup-dead-menus.sql"
-MENU_RESTRUCTURE_SQL = ROOT / "sql" / "jinbooks_v1.1.2-menu-restructure.sql"
-ASSIST_ACC_SQL = ROOT / "sql" / "jinbooks_v1.1.1-add-assist-acc-config.sql"
-SUBJECT_SEED_SQL = ROOT / "sql" / "seed" / "standard_subjects.sql"
-CASH_FLOW_SEED_SQL = ROOT / "sql" / "seed" / "config_cash_flow_balance.sql"
-OUT_SQL = ROOT / "sql" / "jinbooks_init.sql"
+SQL = ROOT / "sql"
+SOURCE_SQL = SQL / "financial_cloud_v1.0.1.sql"
+PATCHES = SQL / "patches"
+SEED = SQL / "seed"
+MENU_CLEANUP_SQL = PATCHES / "cleanup-dead-menus.sql"
+MENU_RESTRUCTURE_SQL = PATCHES / "menu-restructure.sql"
+ASSIST_ACC_SQL = PATCHES / "assist-acc-config.sql"
+SUBJECT_SEED_SQL = SEED / "data" / "standard_subjects.sql"
+CASH_FLOW_SEED_SQL = SEED / "data" / "config_cash_flow_balance.sql"
+OUT_SQL = SQL / "financial_cloud_init.sql"
+DB_NAME = "financial_cloud"
+DEFAULT_ADMIN_PASSWORD = "changeme"
+
+SCHEMA_EXTENSION_SQL = [
+    SEED / "schema" / "fixed_asset_tables.sql",
+    SEED / "schema" / "fixed_asset_change_tables.sql",
+    SEED / "schema" / "fixed_asset_dispose_alter.sql",
+    SEED / "schema" / "fixed_asset_purchase_alter.sql",
+    SEED / "schema" / "fixed_asset_suspend_alter.sql",
+]
+
+MENU_SEED_SQL = [
+    SEED / "menus" / "ledger_books_menu.sql",
+    SEED / "menus" / "general_ledger_menu.sql",
+    SEED / "menus" / "expense_detail_menu.sql",
+    SEED / "menus" / "fixed_asset_menu.sql",
+    SEED / "menus" / "menu_salary_tax_and_rename_config.sql",
+    SEED / "menus" / "menu_icons_align.sql",
+]
+
+BALANCE_SHEET_RULES_SQL = [
+    SEED / "rules" / "balance_sheet_reclassification_rules.sql",
+    SEED / "rules" / "balance_sheet_inventory_fixed_asset_rules.sql",
+    SEED / "rules" / "balance_sheet_bad_debt_rules.sql",
+]
+
+VOUCHER_SUMMARY_OLD = (
+    "('1891486309700673537','凭证汇总表','凭证汇总表','MENU',"
+    "'1891486309700673537','/statement/voucher-summary','GET',NULL,'r',NULL,NULL,"
+    "'menus-caiwu-pingzhenghuizongbiao','n','n','n','y','1886357455563137026','财务报表',5"
+)
+VOUCHER_SUMMARY_NEW = (
+    "('1891486309700673537','凭证汇总表','凭证汇总表','MENU',"
+    "'1891486309700673537','/statement/voucher-summary','GET',NULL,'r',NULL,NULL,"
+    "'menus-caiwu-pingzhenghuizongbiao','n','n','n','y','1869692874272862209','凭证',3"
+)
 
 DROP_TABLES = {
     "employee_salary_voucher_rule",
     "employee_salary_voucher_rule_template",
 }
 
-# Tables that keep seed rows (optionally filtered).
 SEED_TABLES: dict[str, dict] = {
     "institutions": {},
     "userinfo": {"row_filter": lambda row: ",'admin'," in row},
@@ -52,6 +89,25 @@ STANDARD_NAME_UPDATES = {
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def strip_seed_header(sql: str) -> list[str]:
+    return [
+        line
+        for line in sql.splitlines()
+        if line.strip()
+        and not line.startswith("-- Generated")
+        and not line.startswith("SET NAMES")
+        and not line.startswith("-- Template rows")
+    ]
+
+
+def append_sql_chunks(chunks: list[str], paths: list[Path]) -> None:
+    for path in paths:
+        if not path.exists():
+            print(f"Warning: missing {path}", file=sys.stderr)
+            continue
+        chunks.append(read_text(path).strip())
 
 
 def extract_create_blocks(text: str) -> list[tuple[str, str]]:
@@ -140,9 +196,20 @@ def patch_standard_rows(insert_sql: str) -> str:
     return insert_sql
 
 
+def patch_institutions(insert_sql: str) -> str:
+    insert_sql = (
+        insert_sql.replace("'jinbooks','jinbooks'", "'financial-cloud','financial-cloud'")
+        .replace(
+            "'sso.maxkey.top','financial-cloud','financial-cloud'",
+            "'localhost','financial-cloud','financial-cloud'",
+        )
+        .replace("sso.maxkey.top", "localhost")
+        .replace("mgt.maxkey.top", "localhost")
+    )
+    return insert_sql
+
+
 def patch_admin_user(insert_sql: str) -> str:
-    # Keep {plain} prefix; PlainPasswordMigrator converts to bcrypt on first startup.
-    # Clear last-visited book and personal contact noise on bootstrap admin.
     insert_sql = re.sub(
         r",NULL,NULL,'\d{10,}',1,'n'\);$",
         ",NULL,NULL,'',0,'n');",
@@ -150,6 +217,22 @@ def patch_admin_user(insert_sql: str) -> str:
     )
     insert_sql = insert_sql.replace("shimingxy@qq.com", "admin@localhost")
     insert_sql = insert_sql.replace("15618726256", "")
+    insert_sql = insert_sql.replace("{plain}maxkey", f"{{plain}}{DEFAULT_ADMIN_PASSWORD}")
+    insert_sql = insert_sql.replace("http://login.maxkey.org/", "")
+    return insert_sql
+
+
+def patch_resources(insert_sql: str) -> str:
+    insert_sql = patch_voucher_summary_menu(insert_sql)
+    insert_sql = insert_sql.replace("'JinBooks'", "'Financial Cloud'")
+    insert_sql = insert_sql.replace("MaxKey管理系统", "财务云")
+    insert_sql = insert_sql.replace("MaxKey", "Financial Cloud")
+    return insert_sql.replace("mxk.menu.", "fc.menu.")
+
+
+def patch_voucher_summary_menu(insert_sql: str) -> str:
+    if VOUCHER_SUMMARY_OLD in insert_sql:
+        return insert_sql.replace(VOUCHER_SUMMARY_OLD, VOUCHER_SUMMARY_NEW, 1)
     return insert_sql
 
 
@@ -223,13 +306,25 @@ def patch_voucher_template_insert(insert_sql: str) -> str:
 
 def load_post_schema_sql() -> list[str]:
     chunks: list[str] = []
-    if MENU_CLEANUP_SQL.exists():
-        chunks.append(read_text(MENU_CLEANUP_SQL).strip())
-    if MENU_RESTRUCTURE_SQL.exists():
-        chunks.append(read_text(MENU_RESTRUCTURE_SQL).strip())
-    # Only template row for assist-acc; book loop is harmless on empty book table.
-    if ASSIST_ACC_SQL.exists():
-        chunks.append(read_text(ASSIST_ACC_SQL).strip())
+    append_sql_chunks(chunks, [MENU_CLEANUP_SQL, MENU_RESTRUCTURE_SQL, ASSIST_ACC_SQL])
+    return chunks
+
+
+def load_schema_extension_sql() -> list[str]:
+    chunks: list[str] = []
+    append_sql_chunks(chunks, SCHEMA_EXTENSION_SQL)
+    return chunks
+
+
+def load_menu_seed_sql() -> list[str]:
+    chunks: list[str] = []
+    append_sql_chunks(chunks, MENU_SEED_SQL)
+    return chunks
+
+
+def load_balance_sheet_rules_sql() -> list[str]:
+    chunks: list[str] = []
+    append_sql_chunks(chunks, BALANCE_SHEET_RULES_SQL)
     return chunks
 
 
@@ -241,15 +336,15 @@ def main() -> int:
     source = read_text(SOURCE_SQL)
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     lines: list[str] = [
-        "-- Jinbooks full init SQL (schema + seed data, no business/test data)",
+        "-- Financial Cloud full init SQL (schema + seed data, no business/test data)",
         f"-- Generated at: {now}",
         "-- Generator: python tools/build_init_sql.py",
         "",
         "SET NAMES utf8mb4;",
         "SET FOREIGN_KEY_CHECKS = 0;",
         "",
-        "CREATE DATABASE IF NOT EXISTS `jinbooks` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
-        "USE `jinbooks`;",
+        f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+        f"USE `{DB_NAME}`;",
         "",
         "-- ------------------------------------------------------------------",
         "-- Schema",
@@ -277,6 +372,18 @@ def main() -> int:
     lines.extend(
         [
             "-- ------------------------------------------------------------------",
+            "-- Schema extensions (fixed asset, etc.)",
+            "-- ------------------------------------------------------------------",
+            "",
+        ]
+    )
+    for chunk in load_schema_extension_sql():
+        lines.append(chunk)
+        lines.append("")
+
+    lines.extend(
+        [
+            "-- ------------------------------------------------------------------",
             "-- Seed data",
             "-- ------------------------------------------------------------------",
             "",
@@ -289,8 +396,12 @@ def main() -> int:
             continue
         if table == "standard":
             insert_sql = patch_standard_rows(insert_sql)
+        if table == "institutions":
+            insert_sql = patch_institutions(insert_sql)
         if table == "userinfo":
             insert_sql = patch_admin_user(insert_sql)
+        if table == "resources":
+            insert_sql = patch_resources(insert_sql)
         if table == "voucher_template":
             insert_sql = patch_voucher_template_insert(insert_sql)
         lines.append(f"-- {table}")
@@ -298,39 +409,48 @@ def main() -> int:
         lines.append(f"/*!40000 ALTER TABLE `{table}` DISABLE KEYS */;")
         lines.append(insert_sql)
         lines.append(f"/*!40000 ALTER TABLE `{table}` ENABLE KEYS */;")
-        lines.append(f"UNLOCK TABLES;")
+        lines.append("UNLOCK TABLES;")
         lines.append("")
 
     if SUBJECT_SEED_SQL.exists():
         lines.append("-- standard_subject (from docs/*.xlsx)")
-        subject_seed = read_text(SUBJECT_SEED_SQL)
-        # Remove header comments and SET NAMES; keep destructive reseed + inserts.
-        subject_lines = [
-            line
-            for line in subject_seed.splitlines()
-            if line.strip()
-            and not line.startswith("-- Generated")
-            and not line.startswith("SET NAMES")
-        ]
-        lines.extend(subject_lines)
+        lines.extend(strip_seed_header(read_text(SUBJECT_SEED_SQL)))
         lines.append("")
 
     if CASH_FLOW_SEED_SQL.exists():
         lines.append("-- config_cash_flow_balance templates (book_id IS NULL)")
-        cash_flow_seed = read_text(CASH_FLOW_SEED_SQL)
-        cash_flow_lines = [
-            line
-            for line in cash_flow_seed.splitlines()
-            if line.strip() and not line.startswith("-- Template rows")
+        lines.extend(strip_seed_header(read_text(CASH_FLOW_SEED_SQL)))
+        lines.append("")
+
+    lines.extend(
+        [
+            "-- ------------------------------------------------------------------",
+            "-- Menu seeds",
+            "-- ------------------------------------------------------------------",
+            "",
         ]
-        lines.extend(cash_flow_lines)
+    )
+    for chunk in load_menu_seed_sql():
+        lines.append(chunk)
+        lines.append("")
+
+    lines.extend(
+        [
+            "-- ------------------------------------------------------------------",
+            "-- Balance sheet rules",
+            "-- ------------------------------------------------------------------",
+            "",
+        ]
+    )
+    for chunk in load_balance_sheet_rules_sql():
+        lines.append(chunk)
         lines.append("")
 
     lines.extend(
         [
             "SET FOREIGN_KEY_CHECKS = 1;",
             "",
-            "-- Default admin: username=admin password=maxkey (change after first login)",
+            f"-- Default admin: username=admin password={DEFAULT_ADMIN_PASSWORD} (change after first login)",
             "",
         ]
     )
@@ -338,7 +458,10 @@ def main() -> int:
     OUT_SQL.write_text("\n".join(lines), encoding="utf-8")
     print(f"Wrote {OUT_SQL} ({OUT_SQL.stat().st_size} bytes)")
     print(f"Tables in schema: {len(create_blocks)}")
-    print(f"Seed tables: {len(SEED_TABLES)} + standard_subject + config_cash_flow_balance")
+    print(
+        "Seed: core tables + standard_subject + cash_flow + "
+        f"{len(MENU_SEED_SQL)} menu scripts + {len(BALANCE_SHEET_RULES_SQL)} rule scripts"
+    )
     return 0
 
 

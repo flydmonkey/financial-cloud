@@ -1,106 +1,70 @@
 <template>
-  <el-card
-    shadow="hover"
-    header-class="el-card-header"
-  >
+  <el-card shadow="hover" header-class="el-card-header">
     <template #header>
       <div class="card-title">
         <span>资金余额</span>
-        <el-select
-          v-model="queryParams.accountPeriod"
-          style="width: 120px"
-          placeholder=""
-          @change="getList"
-        >
+        <el-select style="width: 120px" v-model="queryParams.accountPeriod" placeholder="" @change="getList">
           <template #label>
             <span>{{ accountPeriod }}</span>
           </template>
-          <template
-            v-for="(item, index) in statistics_period"
-            :key="index"
-          >
-            <el-option
-              :label="item.label"
-              :value="item.value"
-            />
+          <template v-for="(item, index) in statistics_period" :key="index">
+            <el-option :label="item.label" :value="item.value"></el-option>
           </template>
         </el-select>
       </div>
     </template>
 
-    <div
-      v-loading="loading"
-      class="card-content"
-    >
+    <div class="card-content" v-loading="loading">
       <div class="card-content-item bold">
         <div class="flex justify-items-center">
           <span>资金余额</span>
-          <el-tooltip
-            content=""
-            placement="top"
-          >
+          <el-tooltip content=""
+                      placement="top">
             <template #content>
               <span>
                 截止至所选期间期末，各资金账户的余额总计。
               </span>
             </template>
             <el-icon>
-              <Warning />
+              <Warning/>
             </el-icon>
           </el-tooltip>
         </div>
         <div>{{ formatAmount(resData.balance) }}</div>
       </div>
-      <template
-        v-for="(item, index) in resData.subjectBalance"
-        :key="index"
-      >
-        <div
-          v-if="index < 5"
-          class="card-content-item"
-        >
+      <template v-for="(item, index) in resData.subjectBalance" :key="index">
+        <div v-if="index < 5" class="card-content-item">
           <div>{{ item.name }}</div>
           <div>{{ formatAmount(item.value) }}</div>
         </div>
       </template>
-      <template
-        v-for="index in (5 - resData.subjectBalance.length)"
-        v-if="resData.subjectBalance.length < 5"
-        :key="'em' + index"
-      >
+      <template v-if="resData.subjectBalance.length < 5" v-for="index in (5 - resData.subjectBalance.length)"
+                :key="'em' + index">
         <div class="card-content-item">
           <div>--</div>
           <div>--</div>
         </div>
       </template>
 
-      <div
-        class="card-content-item bold"
-        style="margin-bottom: 10px"
-      >
+      <div class="card-content-item bold" style="margin-bottom: 10px">
         <div class="flex justify-items-center">
           <span>资金净收入</span>
-          <el-tooltip
-            content=""
-            placement="top"
-          >
+          <el-tooltip content=""
+                      placement="top">
             <template #content>
               <span>
                 所选期间内，资金收入减去支出的金额。
               </span>
             </template>
             <el-icon>
-              <Warning />
+              <Warning/>
             </el-icon>
           </el-tooltip>
         </div>
         <div>{{ formatAmount(resData.netIncomeFunds) }}</div>
       </div>
       <div class="card-content-item">
-        <SliderBar
-          :left-value="resData.incomeFunds"
-          :right-value="resData.payoutFunds"
-        />
+        <SliderBar :left-value="resData.incomeFunds" :right-value="resData.payoutFunds"></SliderBar>
       </div>
     </div>
   </el-card>
@@ -110,7 +74,7 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, computed, onMounted} from "vue";
 import bookStore from "@/store/modules/bookStore";
-import {getAccountPeriod} from "@/utils/Jinbooks";
+import {getAccountPeriod} from "@/utils/financialCloud";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
 import SliderBar from "./SliderBar.vue"

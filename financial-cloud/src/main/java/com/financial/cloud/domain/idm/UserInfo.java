@@ -27,7 +27,7 @@ public class UserInfo extends BaseEntity  implements Serializable {
 
     public static final String CLASS_TYPE = "UserInfo";
 
-    public  static final String DEFAULT_PASSWORD_SUFFIX = "JinBooks@888";
+    public  static final String DEFAULT_PASSWORD_SUFFIX = "FinancialCloud@888";
 
     @TableField(exist = false)
     String sessionId;

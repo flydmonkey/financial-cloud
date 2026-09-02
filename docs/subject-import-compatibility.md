@@ -75,5 +75,5 @@
 
 ```bash
 python tools/import_standard_subjects.py
-mysql ... < sql/seed/standard_subjects.sql
+mysql ... < sql/seed/data/standard_subjects.sql
 ```

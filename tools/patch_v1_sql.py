@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Strip embedded standard_subject seed data from jinbooks_v1.0.1.sql (use sql/seed/standard_subjects.sql instead)."""
+"""Strip embedded standard_subject seed data from financial_cloud_v1.0.1.sql (use sql/seed/data/standard_subjects.sql instead)."""
 from __future__ import annotations
 
 import re
@@ -7,13 +7,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SQL_FILE = ROOT / "sql" / "jinbooks_v1.0.1.sql"
+SQL_FILE = ROOT / "sql" / "financial_cloud_v1.0.1.sql"
 
 REPLACEMENT_SUBJECT = """\
 -- Dumping data for table `standard_subject`
 --
 -- Historical seed removed. Import from:
---   sql/seed/standard_subjects.sql
+--   sql/seed/data/standard_subjects.sql
 -- Regenerate with:
 --   python tools/import_standard_subjects.py
 

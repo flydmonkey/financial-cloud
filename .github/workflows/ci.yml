@@ -119,7 +119,7 @@ jobs:
                   f"{base}/api/login/signin?_allow_anonymous=true",
                   data=json.dumps({
                       "username": "admin",
-                      "password": "maxkey",
+                      "password": "changeme",
                       "captcha": "",
                       "state": state,
                       "authType": "normal",

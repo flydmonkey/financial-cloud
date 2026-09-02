@@ -2,8 +2,8 @@
 import pymysql
 
 conn = pymysql.connect(
-    host="127.0.0.1", port=3307, user="jinbooks",
-    password="Jinbooks321!", database="jinbooks", autocommit=True,
+    host="127.0.0.1", port=3307, user="financial_cloud",
+    password="FinancialCloud321!", database="financial_cloud", autocommit=True,
 )
 cur = conn.cursor()
 

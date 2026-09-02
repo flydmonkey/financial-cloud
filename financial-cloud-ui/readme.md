@@ -1,16 +1,14 @@
-# JinBooks Web UI
+# 财务云 Web UI
 
-这是 JinBooks 项目的前端部分，基于 Vue.js + Vite 构建。
-该项目旨在提供一个高性能、模块化、易扩展的现代前端架构。
+财务云（financial-cloud）前端，基于 Vue 3 + Vite + Pinia 构建。
 
 ## 快速开始
 
-### 克隆项目
+在仓库根目录下：
 
 ```bash
-git clone https://your.repo.url/financial-cloud-ui.git
 cd financial-cloud-ui
-````
+```
 
 ### 安装依赖
 
@@ -63,7 +61,7 @@ financial-cloud-ui/
 │   ├── assets/           # 资源文件
 │   ├── components/       # 公共组件
 │   ├── views/            # 页面组件
-│   ├── store/            # Vuex 状态管理
+│   ├── store/            # Pinia 状态管理
 │   ├── router/           # 路由配置
 │   ├── utils/            # 工具函数
 │   ├── styles/           # 样式文件
@@ -152,4 +150,4 @@ MAJOR.MINOR.PATCH
 npm cache clean --force
 ```
 
-感谢使用 JinBooks 前端项目，如有建议或问题，欢迎提交 Issue 或参与贡献！
+感谢使用财务云（financial-cloud）前端项目，如有建议或问题，欢迎提交 Issue 或参与贡献！

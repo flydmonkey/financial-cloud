@@ -2,42 +2,26 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form
-          v-show="showSearch"
-          ref="queryRef"
-          :model="queryParams"
-          :inline="true"
-          label-width="68px"
-        >
-          <el-form-item
-            label="姓名"
-            prop="displayName"
-          >
+        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+          <el-form-item label="姓名" prop="displayName">
             <el-input
-              v-model="queryParams.displayName"
-              placeholder="请输入姓名"
-              clearable
-              @keyup.enter="handleQuery"
+                v-model="queryParams.displayName"
+                placeholder="请输入姓名"
+                clearable
+                @keyup.enter="handleQuery"
             />
           </el-form-item>
-          <el-form-item
-            label="工号"
-            prop="employeeNumber"
-          >
+          <el-form-item label="工号" prop="employeeNumber">
             <el-input
-              v-model="queryParams.employeeNumber"
-              placeholder="请输入工号"
-              clearable
-              @keyup.enter="handleQuery"
+                v-model="queryParams.employeeNumber"
+                placeholder="请输入工号"
+                clearable
+                @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">
-              {{ t('org.button.query') }}
-            </el-button>
-            <el-button @click="resetQuery">
-              {{ t('org.button.reset') }}
-            </el-button>
+            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
+            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -45,198 +29,109 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-          type="primary"
-          @click="handleAdd"
-        >
-          {{ t('org.button.add') }}
+            type="primary"
+            @click="handleAdd"
+        >{{ t('org.button.add') }}
         </el-button>
         <el-button
-          type="danger"
-          :disabled="ids.length === 0"
-          @click="handleDelete"
-        >
-          {{ t('org.button.deleteBatch') }}
+            type="danger"
+            :disabled="ids.length === 0"
+            @click="handleDelete"
+        >{{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
       <el-row :gutter="20">
-        <el-col
-          :xs="8"
-          :sm="6"
-          :md="6"
-          :lg="4"
-          :xl="4"
-        >
+        <el-col :xs="8" :sm="6" :md="6" :lg="4" :xl="4">
           <el-tree
-            ref="tree"
-            style="width: 100%;margin-top: 10px"
-            v-slot="{ node, data }"
-            node-key="id"
-            :data="deptOptions"
-            :props="defaultProps"
-            :expand-on-click-node="false"
-            :filter-node-method="filterNode"
-            :default-expanded-keys="treeData"
-            highlight-current
-            @node-click="handleNodeClick"
+              style="width: 100%;margin-top: 10px"
+              node-key="id"
+              :data="deptOptions"
+              :props="defaultProps"
+              :expand-on-click-node="false"
+              :filter-node-method="filterNode"
+              ref="tree"
+              :default-expanded-keys="treeData"
+              @node-click="handleNodeClick"
+              highlight-current
+              v-slot="{ node, data }"
           >
             <span>
               <span v-if="node.label.length<=10">{{ node.label }}</span>
               <span v-else>
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  :content="node.label"
-                  placement="right"
-                >
-                  <span>{{ node.label.slice(0, 10) + '...' }}</span>
+                 <el-tooltip class="item" effect="dark" :content="node.label" placement="right">
+                   <span>{{ node.label.slice(0, 10) + '...' }}</span>
                 </el-tooltip>
               </span>
             </span>
           </el-tree>
         </el-col>
-        <el-col
-          :xs="16"
-          :sm="18"
-          :md="18"
-          :lg="20"
-          :xl="20"
-        >
-          <el-table
-            v-loading="loading"
-            :data="employeeList"
-            border
-            @selection-change="handleSelectionChange"
-          >
-            <el-table-column
-              type="selection"
-              width="55"
-              align="center"
-            />
-            <el-table-column
-              prop="employeeNumber"
-              label="工号"
-              align="center"
-              min-width="100"
-              :show-overflow-tooltip="true"
-            />
-            <el-table-column
-              prop="displayName"
-              label="姓名"
-              align="center"
-              min-width="60"
-              :show-overflow-tooltip="true"
-            />
-            <el-table-column
-              prop="departmentName"
-              label="所属部门"
-              align="center"
-              min-width="80"
-              :show-overflow-tooltip="true"
-            />
-            <el-table-column
-              prop="jobTitle"
-              label="职务"
-              align="center"
-              min-width="80"
-              :show-overflow-tooltip="true"
-            />
-            <el-table-column
-              label="性别"
-              align="center"
-              prop="gender"
-              min-width="45"
-            >
+        <el-col :xs="16" :sm="18" :md="18" :lg="20" :xl="20">
+          <el-table v-loading="loading" :data="employeeList" border @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55" align="center"/>
+            <el-table-column prop="employeeNumber" label="工号" align="center" min-width="100"
+                             :show-overflow-tooltip="true">
+            </el-table-column>
+            <el-table-column prop="displayName" label="姓名" align="center" min-width="60"
+                             :show-overflow-tooltip="true">
+            </el-table-column>
+            <el-table-column prop="departmentName" label="所属部门" align="center" min-width="80"
+                             :show-overflow-tooltip="true">
+            </el-table-column>
+            <el-table-column prop="jobTitle" label="职务" align="center" min-width="80"
+                             :show-overflow-tooltip="true">
+            </el-table-column>
+            <el-table-column label="性别" align="center" prop="gender" min-width="45">
               <template #default="scope">
-                <span>{{ GendersEnum.getGenderName(scope.row.gender) }}</span>
+                <span>{{GendersEnum.getGenderName(scope.row.gender)}}</span>
               </template>
             </el-table-column>
-            <el-table-column
-              label="员工类型"
-              align="center"
-              prop="employeeType"
-              min-width="80"
-              :show-overflow-tooltip="true"
-            >
+            <el-table-column label="员工类型" align="center" prop="employeeType" min-width="80"
+                             :show-overflow-tooltip="true">
               <template #default="scope">
-                <dict-tag-number
-                  :options="employee_types"
-                  :value="scope.row.employeeType"
-                />
+                <dict-tag-number :options="employee_types" :value="scope.row.employeeType"/>
               </template>
             </el-table-column>
-            <el-table-column
-              label="员工状态"
-              align="center"
-              prop="employeeStatus"
-              min-width="80"
-              :show-overflow-tooltip="true"
-            >
+            <el-table-column label="员工状态" align="center" prop="employeeStatus" min-width="80" :show-overflow-tooltip="true">
               <template #default="scope">
-                <dict-tag-number
-                  :options="users_state"
-                  :value="scope.row.employeeStatus"
-                />
+                <dict-tag-number :options="users_state" :value="scope.row.employeeStatus"/>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="status"
-              :label="t('org.status')"
-              align="center"
-              min-width="40"
-            >
+            <el-table-column prop="status" :label="t('org.status')" align="center" min-width="40">
               <template #default="scope">
                 <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                  class="success"
-                /></el-icon></span>
-                <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
+                    class="success"/></el-icon></span>
+                <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
               </template>
             </el-table-column>
-            <el-table-column
-              label="操作"
-              align="center"
-              fixed="right"
-              width="80"
-            >
+            <el-table-column label="操作" align="center" fixed="right" width="80">
               <template #default="scope">
                 <el-tooltip content="编辑">
-                  <el-button
-                    link
-                    icon="Edit"
-                    @click="handleUpdate(scope.row)"
-                  />
+                  <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
                 </el-tooltip>
                 <el-tooltip content="移除">
-                  <el-button
-                    link
-                    icon="Delete"
-                    type="danger"
-                    @click="handleDelete(scope.row)"
-                  />
+                  <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
                 </el-tooltip>
               </template>
             </el-table-column>
           </el-table>
           <pagination
-            v-show="total>0"
-            v-model:page="queryParams.pageNum"
-            v-model:limit="queryParams.pageSize"
-            :total="total"
-            @pagination="getList"
+              v-show="total>0"
+              :total="total"
+              v-model:page="queryParams.pageNum"
+              v-model:limit="queryParams.pageSize"
+              @pagination="getList"
           />
         </el-col>
       </el-row>
     </el-card>
-    <edit-form
-      :title="title"
-      :open="open"
-      :form-id="id"
-      :org-options="deptOptions"
-      :users-id-type="users_idType"
-      :default-standard-id="queryParams.standardId"
-      :employee_types="employee_types"
-      :employee_statuses="users_state"
-      @dialog-of-closed-methods="dialogOfClosedMethods"
-    />
+    <edit-form :title="title" :open="open"
+               :form-id="id"
+               :org-options="deptOptions"
+               :users-id-type="users_idType"
+               :defaultStandardId="queryParams.standardId"
+               :employee_types="employee_types"
+               :employee_statuses="users_state"
+               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
   </div>
 </template>
 
@@ -249,7 +144,7 @@ import * as EducationsEnum from "@/utils/enums/EducationsEnum";
 import * as SysStatusEnum from "@/utils/enums/SysStatusEnum";
 import * as IdTypeEnum from "@/utils/enums/IdTypeEnum";
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
-import {parseTime} from "@/utils/Jinbooks";
+import {parseTime} from "@/utils/financialCloud";
 import {getTree} from "@/api/idm/dept";
 import modal from "@/plugins/modal";
 import editForm from "./employee/edit.vue"

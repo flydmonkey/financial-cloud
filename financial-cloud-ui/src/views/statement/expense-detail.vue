@@ -174,7 +174,7 @@ import {expenseDetailExport, getExpenseDetail} from '@/api/statement/statement-e
 import * as subjectApi from '@/api/standard/standard-subject'
 import booksSetStore from '@/store/modules/bookStore'
 import {downloadData, formatAmount} from '@/utils'
-import {parseTime} from '@/utils/Jinbooks'
+import {parseTime} from '@/utils/financialCloud'
 import {getSubjectAllNodeIds} from '@/utils/Subjects'
 
 interface ExpenseDetailItem {

@@ -12,9 +12,9 @@ spring:
     allow-bean-definition-overriding: true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3307/jinbooks?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
-    username: jinbooks
-    password: Jinbooks321!
+    url: jdbc:mysql://127.0.0.1:3307/financial_cloud?allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: financial_cloud
+    password: FinancialCloud321!
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5

@@ -42,7 +42,7 @@
             >
               <template #content>
                 <span>
-                  所选期间内的净利润，数据来源为利润表。
+                  本期净利润，取自利润表最后一行。
                 </span>
               </template>
               <el-icon>
@@ -55,8 +55,8 @@
           </div>
         </div>
         <div class="small">
-          <div>较上期：{{ resData.balanceLast }}%</div>
-          <div>较同期：{{ resData.balanceLastYear }}%</div>
+          <div>同比上期：{{ resData.balanceLast }}%</div>
+          <div>同比去年：{{ resData.balanceLastYear }}%</div>
         </div>
       </div>
       <div class="card-content-item">
@@ -69,8 +69,8 @@
           </div>
         </div>
         <div class="small">
-          <div>较上期：{{ resData.balanceRatioLast }}%</div>
-          <div>较同期：{{ resData.balanceRatioLastYear }}%</div>
+          <div>同比上期：{{ resData.balanceRatioLast }}%</div>
+          <div>同比去年：{{ resData.balanceRatioLastYear }}%</div>
         </div>
       </div>
 
@@ -85,16 +85,14 @@
 
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, computed, onMounted, onBeforeUnmount} from "vue";
-import {useI18n} from 'vue-i18n'
 import bookStore from "@/store/modules/bookStore";
-import {getAccountPeriod} from "@/utils/Jinbooks";
+import {getAccountPeriod} from "@/utils/financialCloud";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
 import echarts from '@/utils/echarts'
 import {statisticsNetProfit} from "@/api/dashboard"
 import {BaseValue} from "@/types/FundBalance";
 
-const {t} = useI18n()
 const currBookStore = bookStore()
 const {proxy} = getCurrentInstance()!;
 const chartRef = ref(null)
@@ -143,28 +141,27 @@ const {queryParams, resData} = toRefs(data);
 const accountPeriod = computed(() => {
   return getAccountPeriod(queryParams, currBookStore)
 })
-// 初始化 chart（只执行一次）
+
 const initChart = (option: any) => {
   if (chartRef.value && !chartInstance) {
     chartInstance = echarts.init(chartRef.value)
     chartInstance.setOption(option)
     window.addEventListener('resize', handleResize)
   } else {
-    chartInstance.setOption(option, true); // true 表示不做合并，完全覆盖
+    chartInstance.setOption(option, true);
   }
 }
-// 窗口大小变化自动 resize
+
 const handleResize = () => {
   chartInstance.resize()
 }
 const getList = () => {
   loading.value = true
-  const period = accountPeriod.value
   statisticsNetProfit(queryParams.value).then((res: any) => {
     resData.value = res.data
     const option = {
       title: {
-        text: '近期变动趋势',
+        text: '近期净利润与利润率趋势',
         left: 'left',
         top: "6%",
         textStyle: {fontSize: 14}
@@ -199,7 +196,7 @@ const getList = () => {
         },
         {
           type: 'value',
-          name: '净利润率/%',
+          name: '净利润率(%)',
           position: 'right'
         }
       ],

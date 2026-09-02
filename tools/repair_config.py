@@ -5,9 +5,9 @@ import pymysql
 
 HOST = "127.0.0.1"
 PORT = 3307
-DB = "jinbooks"
-USER = "jinbooks"
-PASSWORD = "Jinbooks321!"
+DB = "financial_cloud"
+USER = "financial_cloud"
+PASSWORD = "FinancialCloud321!"
 
 
 def main() -> int:
@@ -48,7 +48,7 @@ def main() -> int:
                      WHERE config_key='sys.payment.term.start' AND book_id='template' LIMIT 1),
                     '2025-03'
                 ),
-                'y', '系统内置，不可删除', '1', NOW(), '1', NOW()
+                'y', '系统内置，不可删�?, '1', NOW(), '1', NOW()
             FROM DUAL
             """
         )

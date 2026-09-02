@@ -1,78 +1,45 @@
 <template>
   <el-row :gutter="10">
-    <el-col
-      :xs="24"
-      :sm="24"
-      :md="12"
-      :lg="12"
-      :xl="12"
-    >
-      <el-card
-        style="height: 100%"
-        shadow="hover"
-        header-class="el-card-header"
-      >
+    <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+      <el-card style="height: 100%" shadow="hover" header-class="el-card-header">
         <template #header>
           <div class="card-title">
             <span>应收</span>
-            <el-select
-              v-model="queryParams.accountPeriod"
-              style="width: 120px"
-              placeholder=""
-              @change="getList"
-            >
+            <el-select style="width: 120px" v-model="queryParams.accountPeriod" placeholder="" @change="getList">
               <template #label>
                 <span>{{ accountPeriod }}</span>
               </template>
-              <template
-                v-for="(item, index) in statistics_period"
-                :key="index"
-              >
-                <el-option
-                  :label="item.label"
-                  :value="item.value"
-                />
+              <template v-for="(item, index) in statistics_period" :key="index">
+                <el-option :label="item.label" :value="item.value"></el-option>
               </template>
             </el-select>
           </div>
         </template>
-        <div
-          v-loading="loading"
-          class="card-content"
-        >
+        <div class="card-content" v-loading="loading">
           <div class="card-content-item bold">
             <div class="flex justify-items-center">
               <span>应收账款</span>
-              <el-tooltip
-                content=""
-                placement="top"
-              >
+              <el-tooltip content="" placement="top">
                 <template #content>
                   <span>
-                    截止至所选期间的期末，”应收账款“科目余额。
+                    截止至所选期间的期末，“应收账款”科目余额。
                   </span>
                 </template>
                 <el-icon>
-                  <Warning />
+                  <Warning/>
                 </el-icon>
               </el-tooltip>
             </div>
             <div>{{ formatAmount(recvData.balance) }}</div>
           </div>
-          <template
-            v-for="(item, index) in recvData.subjectBalance"
-            :key="index"
-          >
+          <template v-for="(item, index) in recvData.subjectBalance" :key="index">
             <div class="card-content-item">
               <div>{{ item.name }}</div>
               <div>{{ formatAmount(item.value) }}</div>
             </div>
           </template>
-          <template
-            v-for="index in (5 - recvData.subjectBalance.length)"
-            v-if="recvData.subjectBalance.length < 5"
-            :key="'em' + index"
-          >
+          <template v-if="recvData.subjectBalance.length < 5" v-for="index in (5 - recvData.subjectBalance.length)"
+                    :key="'em' + index">
             <div class="card-content-item">
               <div>--</div>
               <div>--</div>
@@ -82,18 +49,15 @@
           <div class="card-content-item bold">
             <div class="flex justify-items-center">
               <span>平均周转天数</span>
-              <el-tooltip
-                content=""
-                placement="top"
-              >
+              <el-tooltip content="" placement="top">
                 <template #content>
                   <span>
                     年初截止上一期期间的应收账款周转天数，反映企业回款速度，天数越小则回款速度越快。
-                    <br>计算公式为：年初至所选期末总天数/(2*营业收入/(期初应收账款+期末应收账款))
+                    <br/>计算公式为：年初至所选期末总天数/(2*营业收入/(期初应收账款+期末应收账款))
                   </span>
                 </template>
                 <el-icon>
-                  <Warning />
+                  <Warning/>
                 </el-icon>
               </el-tooltip>
             </div>
@@ -102,79 +66,46 @@
         </div>
       </el-card>
     </el-col>
-    <el-col
-      :xs="24"
-      :sm="24"
-      :md="12"
-      :lg="12"
-      :xl="12"
-    >
-      <el-card
-        style="height: 100%"
-        shadow="hover"
-        header-class="el-card-header"
-      >
+    <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+      <el-card style="height: 100%" shadow="hover" header-class="el-card-header">
         <template #header>
           <div class="card-title">
             <span>应付</span>
-            <el-select
-              v-model="queryParams.accountPeriod"
-              style="width: 120px"
-              placeholder=""
-              @change="getList"
-            >
+            <el-select style="width: 120px" v-model="queryParams.accountPeriod" placeholder="" @change="getList">
               <template #label>
                 <span>{{ accountPeriod }}</span>
               </template>
-              <template
-                v-for="(item, index) in statistics_period"
-                :key="index"
-              >
-                <el-option
-                  :label="item.label"
-                  :value="item.value"
-                />
+              <template v-for="(item, index) in statistics_period" :key="index">
+                <el-option :label="item.label" :value="item.value"></el-option>
               </template>
             </el-select>
           </div>
         </template>
-        <div
-          v-loading="loading"
-          class="card-content"
-        >
+        <div class="card-content" v-loading="loading">
           <div class="card-content-item bold">
             <div class="flex justify-items-center">
               <span>应付账款</span>
-              <el-tooltip
-                content=""
-                placement="top"
-              >
+              <el-tooltip content="" placement="top">
                 <template #content>
                   <span>
-                    截止至所选期间的期末，”应付账款“科目余额。
+                    截止至所选期间的期末，“应付账款”科目余额。
                   </span>
                 </template>
                 <el-icon>
-                  <Warning />
+                  <Warning/>
                 </el-icon>
               </el-tooltip>
             </div>
             <div>{{ formatAmount(payData.balance) }}</div>
           </div>
-          <template
-            v-for="(item, index) in payData.subjectBalance"
-            :key="index"
-          >
+          <template v-for="(item, index) in payData.subjectBalance" :key="index">
             <div class="card-content-item">
               <div>{{ item.name }}</div>
               <div>{{ formatAmount(item.value) }}</div>
             </div>
           </template>
-          <template
-            v-for="index in (5 - payData.subjectBalance.length)"
-            v-if="payData.subjectBalance.length < 5"
-            :key="'em' + index"
-          >
+          <template v-if="payData.subjectBalance.length < 5" v-for="index in (5 - payData.subjectBalance.length)"
+                    :key="'em' + index">
             <div class="card-content-item">
               <div>--</div>
               <div>--</div>
@@ -190,7 +121,7 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, computed, onMounted} from "vue";
 import bookStore from "@/store/modules/bookStore";
-import {getAccountPeriod} from "@/utils/Jinbooks";
+import {getAccountPeriod} from "@/utils/financialCloud";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
 import {BaseValue} from "@/types/FundBalance";
@@ -243,7 +174,6 @@ const accountPeriod = computed(() => {
 })
 
 const getList = () => {
-  const period = accountPeriod.value
   loading.value = true
   statisticsAccountsReceivable(queryParams.value).then((res: any) => {
     recvData.value = res.data

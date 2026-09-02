@@ -158,7 +158,7 @@ public class UserInfoExcelService  extends ServiceImpl<UserInfoMapper,UserInfo>{
 			//创建sheet
 			Sheet sheet = workbook.createSheet("用户列表");
 			Row row = sheet.createRow(0);
-			row.createCell(0).setCellValue("Maxkey User Export "+ DateUtils.getCurrentDateTimeAsString());
+			row.createCell(0).setCellValue("User Export "+ DateUtils.getCurrentDateTimeAsString());
 			sheet.addMergedRegion(new CellRangeAddress(0,0,0,48));
 			//构建头
 			row = sheet.createRow(1);

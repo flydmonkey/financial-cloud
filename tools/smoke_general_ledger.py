@@ -28,7 +28,7 @@ def main() -> int:
         "/api/login/signin?_allow_anonymous=true",
         {
             "username": "admin",
-            "password": "maxkey",
+            "password": "changeme",
             "captcha": "",
             "state": state,
             "authType": "normal",

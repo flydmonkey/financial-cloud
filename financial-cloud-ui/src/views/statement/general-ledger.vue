@@ -251,7 +251,7 @@ import {generalLedgerExport, getGeneralLedger} from '@/api/statement/statement-g
 import * as subjectApi from '@/api/standard/standard-subject'
 import booksSetStore from '@/store/modules/bookStore'
 import {downloadData, formatAmount} from '@/utils'
-import {parseTime} from '@/utils/Jinbooks'
+import {parseTime} from '@/utils/financialCloud'
 
 interface LedgerItem {
   subjectCode: string

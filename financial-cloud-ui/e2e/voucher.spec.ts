@@ -115,7 +115,7 @@ test.describe('voucher module', () => {
     uiTest('voucher list and edit pages render', async ({page}) => {
         await page.goto('/login')
         await page.locator('input[type="text"]').first().fill(process.env.E2E_USERNAME || 'admin')
-        await page.locator('input[type="password"]').fill(process.env.E2E_PASSWORD || 'maxkey')
+        await page.locator('input[type="password"]').fill(process.env.E2E_PASSWORD || 'changeme')
         await page.locator('.login-btn').click()
         await expect(page).not.toHaveURL(/\/login/, {timeout: 30_000})
 

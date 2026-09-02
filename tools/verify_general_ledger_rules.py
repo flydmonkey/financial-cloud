@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""按「总账计算规则」对本地库+API 做勾稽/试算检查（不打印 token）。"""
+"""æãæ»è´¦è®¡ç®è§åãå¯¹æ¬å°åº?API åå¾ç¨?è¯ç®æ£æ¥ï¼ä¸æå?tokenï¼ã?""
 from __future__ import annotations
 
 import json
@@ -44,7 +44,7 @@ def main() -> int:
         "/api/login/signin?_allow_anonymous=true",
         {
             "username": "admin",
-            "password": "maxkey",
+            "password": "changeme",
             "captcha": "",
             "state": init["data"]["state"],
             "authType": "normal",
@@ -75,15 +75,15 @@ def main() -> int:
     conn = pymysql.connect(
         host="127.0.0.1",
         port=3307,
-        user="jinbooks",
-        password="Jinbooks321!",
-        database="jinbooks",
+        user="financial_cloud",
+        password="FinancialCloud321!",
+        database="financial_cloud",
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
     )
     cur = conn.cursor()
 
-    # 一级科目 code -> direction
+    # ä¸çº§ç§ç?code -> direction
     cur.execute(
         "SELECT code, name, direction, level FROM book_subject "
         "WHERE book_id=%s AND deleted='n' AND level=1",
@@ -91,7 +91,7 @@ def main() -> int:
     )
     l1 = {r["code"]: r for r in cur.fetchall()}
 
-    # 已过账凭证分录：sender_id 非空视为过账（与系统一致）
+    # å·²è¿è´¦å­è¯åå½ï¼sender_id éç©ºè§ä¸ºè¿è´¦ï¼ä¸ç³»ç»ä¸è´ï¼
     cur.execute(
         """
         SELECT vi.subject_code, vi.debit_amount, vi.credit_amount
@@ -105,7 +105,7 @@ def main() -> int:
     )
     voucher_rows = cur.fetchall()
 
-    # 按一级科目前缀汇总发生额
+    # æä¸çº§ç§ç®åç¼æ±æ»åçé¢
     voucher_l1 = defaultdict(lambda: {"debit": Decimal("0"), "credit": Decimal("0")})
     for row in voucher_rows:
         code = row["subject_code"] or ""
@@ -121,23 +121,22 @@ def main() -> int:
         voucher_l1[root]["debit"] += D(row["debit_amount"])
         voucher_l1[root]["credit"] += D(row["credit_amount"])
 
-    # GL 本期行
-    gl_period = {}
-    gl_closing_by_dir = {"借": Decimal("0"), "贷": Decimal("0"), "平": Decimal("0")}
+    # GL æ¬æè¡?    gl_period = {}
+    gl_closing_by_dir = {"å?: Decimal("0"), "è´?: Decimal("0"), "å¹?: Decimal("0")}
     period_debit_sum = Decimal("0")
     period_credit_sum = Decimal("0")
     for it in items:
-        if it.get("summary") == "本期合计":
+        if it.get("summary") == "æ¬æåè®¡":
             code = it["subjectCode"]
             gl_period[code] = {"debit": D(it.get("debit")), "credit": D(it.get("credit"))}
             period_debit_sum += D(it.get("debit"))
             period_credit_sum += D(it.get("credit"))
-            direction = it.get("direction") or "平"
+            direction = it.get("direction") or "å¹?
             gl_closing_by_dir[direction] = gl_closing_by_dir.get(direction, Decimal("0")) + D(
                 it.get("balance")
             )
 
-    # --- 规则二/三：总账本期发生额 vs 已过账凭证按一级汇总 ---
+    # --- è§åäº?ä¸ï¼æ»è´¦æ¬æåçé¢?vs å·²è¿è´¦å­è¯æä¸çº§æ±æ?---
     mismatch = []
     codes = sorted(set(gl_period) | set(voucher_l1))
     for code in codes:
@@ -146,29 +145,29 @@ def main() -> int:
         if abs(g["debit"] - v["debit"]) > TOL or abs(g["credit"] - v["credit"]) > TOL:
             mismatch.append((code, g, v))
     ok_voucher = len(mismatch) == 0
-    results.append(("账证核对:一级本期发生额=已过账凭证汇总", ok_voucher, f"mismatches={len(mismatch)}"))
+    results.append(("è´¦è¯æ ¸å¯¹:ä¸çº§æ¬æåçé¢=å·²è¿è´¦å­è¯æ±æ?, ok_voucher, f"mismatches={len(mismatch)}"))
     for code, g, v in mismatch[:8]:
         print(f"  MISMATCH {code} GL={g} VOUCHER={v}")
 
-    # --- 规则五：试算平衡 ---
+    # --- è§åäºï¼è¯ç®å¹³è¡¡ ---
     ok_period_tb = abs(period_debit_sum - period_credit_sum) <= TOL
     results.append(
         (
-            "试算:全部一级本期借方合计=贷方合计",
+            "è¯ç®:å¨é¨ä¸çº§æ¬æåæ¹åè®¡=è´·æ¹åè®¡",
             ok_period_tb,
-            f"借={period_debit_sum} 贷={period_credit_sum}",
+            f"å?{period_debit_sum} è´?{period_credit_sum}",
         )
     )
-    ok_bal_tb = abs(gl_closing_by_dir.get("借", 0) - gl_closing_by_dir.get("贷", 0)) <= TOL
+    ok_bal_tb = abs(gl_closing_by_dir.get("å?, 0) - gl_closing_by_dir.get("è´?, 0)) <= TOL
     results.append(
         (
-            "试算:本期后借方余额合计=贷方余额合计",
+            "è¯ç®:æ¬æååæ¹ä½é¢åè®¡=è´·æ¹ä½é¢åè®¡",
             ok_bal_tb,
-            f"借余={gl_closing_by_dir.get('借')} 贷余={gl_closing_by_dir.get('贷')}",
+            f"åä½={gl_closing_by_dir.get('å?)} è´·ä½={gl_closing_by_dir.get('è´?)}",
         )
     )
 
-    # --- 规则四：快照期末 = 期初+借-贷（借方科目）/ 期初+贷-借（贷方科目） ---
+    # --- è§ååï¼å¿«ç§ææ« = æå+å?è´·ï¼åæ¹ç§ç®ï¼? æå+è´?åï¼è´·æ¹ç§ç®ï¼?---
     cur.execute(
         """
         SELECT subject_code, direction,
@@ -198,18 +197,18 @@ def main() -> int:
         if abs(expected - actual) > TOL:
             formula_bad.append((code, expected, actual))
     ok_formula = len(formula_bad) == 0
-    results.append(("规则四:一级科目期末公式勾稽快照", ok_formula, f"bad={len(formula_bad)}"))
+    results.append(("è§åå?ä¸çº§ç§ç®ææ«å¬å¼å¾ç¨½å¿«ç?, ok_formula, f"bad={len(formula_bad)}"))
 
-    # --- 规则九：本期来自凭证实时汇总 ---
+    # --- è§åä¹ï¼æ¬ææ¥èªå­è¯å®æ¶æ±æ?---
     results.append(
         (
-            "规则九:本期/本年累计由已过账凭证实时汇总",
+            "è§åä¹?æ¬æ/æ¬å¹´ç´¯è®¡ç±å·²è¿è´¦å­è¯å®æ¶æ±æ?,
             True,
-            "实现已改为 voucher_item(+postedOnly)；期初仍取首月结转快照",
+            "å®ç°å·²æ¹ä¸?voucher_item(+postedOnly)ï¼æåä»åé¦æç»è½¬å¿«ç?,
         )
     )
 
-    # --- 默认是否仅一级 ---
+    # --- é»è®¤æ¯å¦ä»ä¸çº?---
     qs_default = urllib.parse.urlencode(
         [
             ("periodType", "between"),
@@ -224,7 +223,7 @@ def main() -> int:
     non_l1 = [c for c in default_codes if c not in l1]
     results.append(
         (
-            "规则一:默认仅一级科目开设",
+            "è§åä¸:é»è®¤ä»ä¸çº§ç§ç®å¼è®?,
             len(non_l1) == 0,
             f"default_codes={sorted(default_codes)} non_l1={non_l1}",
         )
@@ -233,7 +232,7 @@ def main() -> int:
     tb = gl.get("data") or {}
     results.append(
         (
-            "试算字段返回",
+            "è¯ç®å­æ®µè¿å",
             tb.get("trialBalanced") is not None and tb.get("periodDebitTotal") is not None,
             f"trialBalanced={tb.get('trialBalanced')}",
         )
@@ -241,7 +240,7 @@ def main() -> int:
 
     conn.close()
 
-    print("\n=== 规则测试结果 ===")
+    print("\n=== è§åæµè¯ç»æ ===")
     failed = 0
     for name, ok, detail in results:
         mark = "PASS" if ok else "FAIL"

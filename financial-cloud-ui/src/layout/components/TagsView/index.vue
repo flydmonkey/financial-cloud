@@ -69,7 +69,7 @@
 
 <script setup>
 import ScrollPane from './ScrollPane'
-import { getNormalPath } from '@/utils/Jinbooks'
+import { getNormalPath } from '@/utils/financialCloud'
 import useTagsViewStore from '@/store/modules/tagsView'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'

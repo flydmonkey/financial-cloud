@@ -8,7 +8,7 @@ import {
     setTokenInfo,
 } from '@/utils/Auth'
 import errorCode from '@/utils/ErrorCode'
-import {blobValidate, tansParams} from '@/utils/Jinbooks'
+import {blobValidate, tansParams} from '@/utils/financialCloud'
 import cache from '@/plugins/cache'
 import {saveAs} from "file-saver"
 import useUserStore from '@/store/modules/user'
@@ -16,24 +16,19 @@ import {getLang} from "@/languages";
 
 
 let downloadLoadingInstance: any;
-// 是否显示重新登录
 export const isRelogin: any = {show: false};
-let isRefreshing: any = false; // 标志是否正在刷新token
-let requests: any = []; // 存储待处理请求
+let isRefreshing: any = false;
+let requests: any = [];
 
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
-// 创建axios实例
+
 const service: any = axios.create({
-    // axios中请求配置有baseURL选项，表示请求URL公共部分
     baseURL: import.meta.env.VITE_APP_BASE_API,
-    // 超时
     timeout: 60000
 })
 
 const serviceRefresh: any = axios.create({
-    // axios中请求配置有baseURL选项，表示请求URL公共部分
     baseURL: import.meta.env.VITE_APP_BASE_API,
-    // 超时
     timeout: 15000
 })
 
@@ -42,9 +37,9 @@ function showReLoginToast(): any {
         isRefreshing = false;
         isRelogin.show = true;
         ElMessageBox.confirm(
-            '登录状态已过期，您可以继续留在该页面，或者重新登录',
-            '系统提示',
-            {confirmButtonText: '重新登录', cancelButtonText: '取消', type: 'warning'}
+            'Login expired. Please sign in again.',
+            'System Notice',
+            {confirmButtonText: 'Sign in', cancelButtonText: 'Cancel', type: 'warning'}
         )
             .then(() => {
                 isRelogin.show = false;
@@ -55,14 +50,11 @@ function showReLoginToast(): any {
             .catch(() => {
                 isRelogin.show = false;
             });
-    } else {
-        console.error('错误', isRelogin.show)
     }
 }
 
-// 刷新token
 function refreshToken(token: any): any {
-    return new Promise((resolve: any, reject: any) => {
+    return new Promise((resolve: any) => {
         serviceRefresh({
             url: '/auth/token/refresh?refresh_token=' + token,
             headers: {
@@ -75,26 +67,20 @@ function refreshToken(token: any): any {
             } else {
                 showReLoginToast()
             }
-        }).catch((err: any) => {
+        }).catch(() => {
             showReLoginToast()
         })
     })
-
 }
 
-// request拦截器
 service.interceptors.request.use((config: any) => {
-
     config.headers['Accept-Language'] = getLang();
 
-    // 是否需要设置 token
     const isToken: any = (config.headers || {}).isToken === false
-    // 是否需要防止数据重复提交
     const isRepeatSubmit: any = (config.headers || {}).repeatSubmit === false
     if (getToken() && !isToken) {
-        config.headers['Authorization'] = useUserStore().headerType + ' ' + getToken() // 让每个请求携带自定义token 请根据实际情况自行修改
+        config.headers['Authorization'] = useUserStore().headerType + ' ' + getToken()
     }
-    // get请求映射params参数
     if (config.method === 'get' && config.params) {
         let url: any = config.url + '?' + tansParams(config.params);
         url = url.slice(0, -1);
@@ -107,22 +93,22 @@ service.interceptors.request.use((config: any) => {
             data: typeof config.data === 'object' ? JSON.stringify(config.data) : config.data,
             time: new Date().getTime()
         }
-        const requestSize: any = Object.keys(JSON.stringify(requestObj)).length; // 请求数据大小
-        const limitSize: any = 5 * 1024 * 1024; // 限制存放数据5M
+        const requestSize: any = Object.keys(JSON.stringify(requestObj)).length;
+        const limitSize: any = 5 * 1024 * 1024;
         if (requestSize >= limitSize) {
-            console.warn(`[${config.url}]: ` + '请求数据大小超出允许的5M限制，无法进行防重复提交验证。')
+            console.warn(`[${config.url}]: request payload exceeds 5M repeat-submit guard`)
             return config;
         }
         const sessionObj: any = cache.session.getJSON('sessionObj')
         if (sessionObj === undefined || sessionObj === null || sessionObj === '') {
             cache.session.setJSON('sessionObj', requestObj)
         } else {
-            const s_url: any = sessionObj.url;                // 请求地址
-            const s_data: any = sessionObj.data;              // 请求数据
-            const s_time: any = sessionObj.time;              // 请求时间
-            const interval: any = 1000;                       // 间隔时间(ms)，小于此时间视为重复提交
+            const s_url: any = sessionObj.url;
+            const s_data: any = sessionObj.data;
+            const s_time: any = sessionObj.time;
+            const interval: any = 1000;
             if (s_data === requestObj.data && requestObj.time - s_time < interval && s_url === requestObj.url) {
-                const message: any = '数据正在处理，请勿重复提交';
+                const message: any = 'Request is being processed, please do not resubmit';
                 console.warn(`[${s_url}]: ` + message)
                 return Promise.reject(new Error(message))
             } else {
@@ -136,13 +122,9 @@ service.interceptors.request.use((config: any) => {
     Promise.reject(error)
 })
 
-// 响应拦截器
 service.interceptors.response.use((res: any) => {
-        // 未设置状态码则默认成功状态
         const code: any = res.data.code || 0;
-        // 获取错误信息
         const msg: any = errorCode[code] || res.data.message || errorCode['default']
-        // 二进制数据则直接返回
         if (res.request.responseType === 'blob' || res.request.responseType === 'arraybuffer') {
             return res.data
         }
@@ -171,16 +153,16 @@ service.interceptors.response.use((res: any) => {
     (error: any) => {
         let {message, response} = error;
         console.error(error)
-        if (response.status === 401) {
+        if (response?.status === 401) {
             return err401(response)
         }
 
         if (message === "Network Error") {
-            message = "后端接口连接异常";
+            message = "Backend connection failed";
         } else if (message.includes("timeout")) {
-            message = "系统接口请求超时";
+            message = "Request timed out";
         } else if (message.includes("Request failed with status code")) {
-            message = "系统接口异常：" + message.substring(message.length - 3);
+            message = "Request failed with status code " + message.substring(message.length - 3);
         }
 
         ElMessage({message: message, type: 'error', duration: 5 * 1000})
@@ -211,7 +193,7 @@ function err401(res: any): any {
             if (!isRelogin.show) {
                 showReLoginToast()
             } else {
-                return Promise.reject('登录失效，请重新登录')
+                return Promise.reject('Login expired')
             }
         }
     }
@@ -223,9 +205,8 @@ function err401(res: any): any {
     });
 }
 
-// 通用下载方法
 export function download(url: any, params: any, filename: any, config: any): any {
-    downloadLoadingInstance = ElLoading.service({text: "正在下载数据，请稍候", background: "rgba(0, 0, 0, 0.7)",})
+    downloadLoadingInstance = ElLoading.service({text: "Downloading...", background: "rgba(0, 0, 0, 0.7)",})
     return service.post(url, params, {
         transformRequest: [(params: any) => {
             return tansParams(params)
@@ -247,7 +228,7 @@ export function download(url: any, params: any, filename: any, config: any): any
         downloadLoadingInstance.close();
     }).catch((r: any) => {
         console.error(r)
-        ElMessage.error('下载文件出现错误，请联系管理员！')
+        ElMessage.error('Download failed')
         downloadLoadingInstance.close();
     })
 }

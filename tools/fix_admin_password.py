@@ -6,11 +6,11 @@ conn = pymysql.connect(
     port=3307,
     user="root",
     password="root",
-    database="jinbooks",
+    database="financial_cloud",
     charset="utf8mb4",
 )
 with conn.cursor() as cur:
-    cur.execute("UPDATE userinfo SET password=%s WHERE username='admin'", ("{plain}maxkey",))
+    cur.execute("UPDATE userinfo SET password=%s WHERE username='admin'", ("{plain}changeme",))
 conn.commit()
 with conn.cursor() as cur:
     cur.execute("SELECT username, password FROM userinfo WHERE username='admin'")

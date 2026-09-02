@@ -1,97 +1,69 @@
 <template>
-  <el-card
-    shadow="hover"
-    header-class="el-card-header"
-  >
+  <el-card shadow="hover" header-class="el-card-header">
     <template #header>
       <div class="card-title">
         <span>收入成本</span>
-        <el-select
-          v-model="queryParams.accountPeriod"
-          style="width: 120px"
-          placeholder=""
-          @change="getList"
-        >
+        <el-select style="width: 120px" v-model="queryParams.accountPeriod" placeholder="" @change="getList">
           <template #label>
             <span>{{ accountPeriod }}</span>
           </template>
-          <template
-            v-for="(item, index) in statistics_period"
-            :key="index"
-          >
-            <el-option
-              :label="item.label"
-              :value="item.value"
-            />
+          <template v-for="(item, index) in statistics_period" :key="index">
+            <el-option :label="item.label" :value="item.value"></el-option>
           </template>
         </el-select>
       </div>
     </template>
 
-    <div
-      v-loading="loading"
-      class="card-content"
-    >
+    <div class="card-content" v-loading="loading">
       <div class="card-content-item">
         <div>
           <div class="flex justify-items-center">
             <span>收入</span>
-            <el-tooltip
-              content=""
-              placement="top"
-            >
+            <el-tooltip content=""
+                        placement="top">
               <template #content>
-                <span>
-                  所选期间内的营业收入，数据来源为利润表
-                </span>
+              <span>
+                所选期间内的营业收入，数据来源为利润表
+              </span>
               </template>
               <el-icon>
-                <Warning />
+                <Warning/>
               </el-icon>
             </el-tooltip>
           </div>
-          <div class="bold">
-            {{ formatAmount(resData.balance) }}
-          </div>
+          <div class="bold">{{ formatAmount(resData.balance) }}</div>
         </div>
         <div class="small">
-          <div>较上期：{{ resData.balanceLast }}%</div>
-          <div>较同期：{{ resData.balanceLastYear }}%</div>
+          <div>较上期：{{resData.balanceLast}}%</div>
+          <div>较同期：{{resData.balanceLastYear}}%</div>
         </div>
       </div>
       <div class="card-content-item">
         <div>
           <div class="flex justify-items-center">
             <span>成本</span>
-            <el-tooltip
-              content=""
-              placement="top"
-            >
+            <el-tooltip content=""
+                        placement="top">
               <template #content>
-                <span>
-                  所选期间内的营业成本，数据来源为利润表
-                </span>
+              <span>
+                所选期间内的营业成本，数据来源为利润表
+              </span>
               </template>
               <el-icon>
-                <Warning />
+                <Warning/>
               </el-icon>
             </el-tooltip>
           </div>
-          <div class="bold">
-            {{ formatAmount(resData.balanceOperatingCosts) }}
-          </div>
-          <div>毛利率：{{ resData.balanceRatio }}%</div>
+          <div class="bold">{{ formatAmount(resData.balanceOperatingCosts) }}</div>
+          <div>毛利率：{{resData.balanceRatio}}%</div>
         </div>
         <div class="small">
-          <div>较上期：{{ resData.balanceRatioLast }}%</div>
-          <div>较同期：{{ resData.balanceRatioLastYear }}%</div>
+          <div>较上期：{{resData.balanceRatioLast}}%</div>
+          <div>较同期：{{resData.balanceRatioLastYear}}%</div>
         </div>
       </div>
 
-      <div
-        ref="chartRef"
-        style="width: 100%; height: 300px"
-      />
+      <div ref="chartRef" style="width: 100%; height: 300px"></div>
     </div>
   </el-card>
 </template>
@@ -101,10 +73,10 @@
 import {ref, getCurrentInstance, reactive, toRefs, computed, onMounted, onBeforeUnmount} from "vue";
 import {useI18n} from 'vue-i18n'
 import bookStore from "@/store/modules/bookStore";
-import {getAccountPeriod} from "@/utils/Jinbooks";
+import {getAccountPeriod} from "@/utils/financialCloud";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
-import echarts from '@/utils/echarts'
+import * as echarts from 'echarts'
 import {statisticsRevenueCost} from "@/api/dashboard"
 import {BaseValue} from "@/types/FundBalance";
 

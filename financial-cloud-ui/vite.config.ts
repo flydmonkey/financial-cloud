@@ -31,7 +31,6 @@ export default defineConfig(({mode, command}) => {
             open: false,
             proxy: {
                 '/api': {
-                    // target: 'http://passport.maxkey.top:2154',
                     target: 'http://localhost:2154',
                     changeOrigin: true,
                     rewrite: (p) => p

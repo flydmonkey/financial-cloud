@@ -71,7 +71,7 @@ def login():
         "/api/login/signin?_allow_anonymous=true",
         {
             "username": "admin",
-            "password": "maxkey",
+            "password": "changeme",
             "captcha": "",
             "state": init["data"]["state"],
             "authType": "normal",
@@ -101,9 +101,9 @@ def set_term(auth, term: str):
     conn = pymysql.connect(
         host="127.0.0.1",
         port=3307,
-        user="jinbooks",
-        password="Jinbooks321!",
-        database="jinbooks",
+        user="financial_cloud",
+        password="FinancialCloud321!",
+        database="financial_cloud",
         charset="utf8mb4",
         autocommit=True,
     )
@@ -156,44 +156,44 @@ def test_import(auth):
     headers = [c.value for c in ws[1]]
     log("FA-IO-template-headers", bool(headers), f"cols={len(headers)} first={headers[:5]}")
 
-    def row_vals(code, name, method="平均年限法", life=36):
+    def row_vals(code, name, method="å¹³åå¹´éæ³?, life=36):
         # minimal mapping by known positions from FixedAssetService export
         vals = [""] * len(headers)
         # assume standard order from CARD_EXPORT_HEADERS
         mapping = {
-            "资产编码": code,
-            "资产名称": name,
-            "类别编码": "002",
-            "类别名称": "电子设备",
-            "使用部门": "行政部",
-            "开始使用日期": "2026-07-01",
-            "数量": 1,
-            "规格型号": "IMP",
-            "存放地点": "导入仓",
-            "折旧方法": method,
-            "预计使用期数(月)": life,
-            "预计总工作量": "",
-            "净残值率%": 5,
-            "原值": 5000,
-            "税额": 0,
-            "减值准备": 0,
-            "期初累计折旧": 0,
-            "已折旧期数": 0,
-            "固定资产科目编码": "1601",
-            "累计折旧科目编码": "1602",
-            "折旧费用科目编码": "5602.02",
+            "èµäº§ç¼ç ": code,
+            "èµäº§åç§°": name,
+            "ç±»å«ç¼ç ": "002",
+            "ç±»å«åç§°": "çµå­è®¾å¤",
+            "ä½¿ç¨é¨é¨": "è¡æ¿é?,
+            "å¼å§ä½¿ç¨æ¥æ?: "2026-07-01",
+            "æ°é": 1,
+            "è§æ ¼åå·": "IMP",
+            "å­æ¾å°ç¹": "å¯¼å¥ä»?,
+            "ææ§æ¹æ³": method,
+            "é¢è®¡ä½¿ç¨ææ°(æ?": life,
+            "é¢è®¡æ»å·¥ä½é": "",
+            "åæ®å¼ç%": 5,
+            "åå?: 5000,
+            "ç¨é¢": 0,
+            "åå¼åå¤?: 0,
+            "æåç´¯è®¡ææ§": 0,
+            "å·²ææ§ææ?: 0,
+            "åºå®èµäº§ç§ç®ç¼ç ": "1601",
+            "ç´¯è®¡ææ§ç§ç®ç¼ç ": "1602",
+            "ææ§è´¹ç¨ç§ç®ç¼ç ": "5602.02",
         }
         # also try English-less short names
         alt = {
             0: code,
             1: name,
             2: "002",
-            3: "电子设备",
-            4: "行政部",
+            3: "çµå­è®¾å¤",
+            4: "è¡æ¿é?,
             5: "2026-07-01",
             6: 1,
             7: "IMP",
-            8: "导入仓",
+            8: "å¯¼å¥ä»?,
             9: method,
             10: life,
             11: "",
@@ -215,10 +215,10 @@ def test_import(auth):
         return vals
 
     # 1 success new + 2 conflict existing FA-2026-001 + 1 invalid accelerated
-    ws.append(row_vals(new_code, "导入成功样例"))
-    ws.append(row_vals("FA-2026-001", "冲突应跳过"))
-    ws.append(row_vals(f"FA-IMP-BAD-{ts}", "加速非法", method="双倍余额递减法", life=30))
-    ws.append(row_vals("FA-2026-002", "冲突2"))
+    ws.append(row_vals(new_code, "å¯¼å¥æåæ ·ä¾"))
+    ws.append(row_vals("FA-2026-001", "å²çªåºè·³è¿?))
+    ws.append(row_vals(f"FA-IMP-BAD-{ts}", "å ééæ³?, method="ååä½é¢éåæ³?, life=30))
+    ws.append(row_vals("FA-2026-002", "å²çª2"))
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -234,13 +234,13 @@ def test_import(auth):
     )
     log(
         "FA-IO-07",
-        any("FA-2026-001" in str(e.get("code") or "") or "冲突" in str(e.get("message") or "") or "已存在" in str(e.get("message") or "") for e in errors)
+        any("FA-2026-001" in str(e.get("code") or "") or "å²çª" in str(e.get("message") or "") or "å·²å­å? in str(e.get("message") or "") for e in errors)
         or (data.get("failed") or 0) >= 2,
         f"errors={errors}",
     )
     log(
         "FA-IO-08",
-        any("加速" in str(e.get("message") or "") or "24" in str(e.get("message") or "") for e in errors)
+        any("å é? in str(e.get("message") or "") or "24" in str(e.get("message") or "") for e in errors)
         or (data.get("failed") or 0) >= 1,
         f"errors={errors}",
     )
@@ -261,7 +261,7 @@ def test_audit_reaccrue(auth):
         _, acr = req(
             "POST",
             "/api/fixed-asset/depreciation/accrue",
-            {"yearPeriod": TERM, "voucherWord": "记", "summary": "审计前计提"},
+            {"yearPeriod": TERM, "voucherWord": "è®?, "summary": "å®¡è®¡åè®¡æ?},
             headers=auth,
         )
         vid = (acr.get("data") or {}).get("voucherId")
@@ -274,7 +274,7 @@ def test_audit_reaccrue(auth):
     _, sub = req("POST", f"/api/voucher/submit/{vid}", headers=auth)
     log("FA-ACR-submit", sub.get("code") == 0, f"msg={sub.get('message')}")
     _, aud = req("PUT", f"/api/voucher/audit/{vid}", headers=auth)
-    log("FA-ACR-audit", aud.get("code") == 0 and "成功：1" in str(aud.get("message") or ""), f"msg={aud.get('message')}")
+    log("FA-ACR-audit", aud.get("code") == 0 and "æåï¼?" in str(aud.get("message") or ""), f"msg={aud.get('message')}")
 
     _, st2 = req("GET", f"/api/fixed-asset/depreciation/status?yearPeriod={TERM}", headers=auth)
     s2 = st2.get("data") or {}
@@ -283,7 +283,7 @@ def test_audit_reaccrue(auth):
     _, acr2 = req(
         "POST",
         "/api/fixed-asset/depreciation/accrue",
-        {"yearPeriod": TERM, "voucherWord": "记", "summary": "应被拒绝的重提"},
+        {"yearPeriod": TERM, "voucherWord": "è®?, "summary": "åºè¢«æç»çéæ?},
         headers=auth,
     )
     log(
@@ -310,7 +310,7 @@ def test_dispose_period(auth):
         {
             "bookId": BOOK_ID,
             "code": code,
-            "name": "清理次月停提样例",
+            "name": "æ¸çæ¬¡æåææ ·ä¾",
             "categoryId": cat_id,
             "deptId": "fa-demo-dept-admin",
             "startUseDate": "2026-07-01",
@@ -337,7 +337,7 @@ def test_dispose_period(auth):
         _, acr = req(
             "POST",
             "/api/fixed-asset/depreciation/accrue",
-            {"yearPeriod": TERM, "voucherWord": "记", "summary": "清理前计提"},
+            {"yearPeriod": TERM, "voucherWord": "è®?, "summary": "æ¸çåè®¡æ?},
             headers=auth,
         )
         log("FA-DIS-02-accrue-aug", acr.get("code") == 0, acr.get("message") or str(acr.get("data")))
@@ -349,9 +349,9 @@ def test_dispose_period(auth):
     conn = pymysql.connect(
         host="127.0.0.1",
         port=3307,
-        user="jinbooks",
-        password="Jinbooks321!",
-        database="jinbooks",
+        user="financial_cloud",
+        password="FinancialCloud321!",
+        database="financial_cloud",
         charset="utf8mb4",
         autocommit=True,
     )
@@ -375,8 +375,8 @@ def test_dispose_period(auth):
             "disposalSubjectId": SUBJ["1606"],
             "gainSubjectId": SUBJ["5301.01"],
             "lossSubjectId": SUBJ["5711.02"],
-            "voucherWord": "记",
-            "summary": "期间规则清理",
+            "voucherWord": "è®?,
+            "summary": "æé´è§åæ¸ç",
         },
         headers=auth,
     )
@@ -401,7 +401,7 @@ def test_dispose_period(auth):
     _, acr_sep = req(
         "POST",
         "/api/fixed-asset/depreciation/accrue",
-        {"yearPeriod": NEXT, "voucherWord": "记", "summary": "次月计提"},
+        {"yearPeriod": NEXT, "voucherWord": "è®?, "summary": "æ¬¡æè®¡æ"},
         headers=auth,
     )
     log("FA-DIS-03-accrue-sep", acr_sep.get("code") == 0, f"msg={acr_sep.get('message')} data={acr_sep.get('data')}")

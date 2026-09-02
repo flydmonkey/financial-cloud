@@ -28,9 +28,9 @@ def connect():
     return pymysql.connect(
         host="127.0.0.1",
         port=3307,
-        user="jinbooks",
-        password="Jinbooks321!",
-        database="jinbooks",
+        user="financial_cloud",
+        password="FinancialCloud321!",
+        database="financial_cloud",
         charset="utf8mb4",
         autocommit=True,
     )
@@ -137,16 +137,16 @@ def main() -> int:
     cur = conn.cursor()
 
     # departments
-    upsert_org(cur, "fa-demo-dept-admin", "FA-ADMIN", "行政部")
-    upsert_org(cur, "fa-demo-dept-prod", "FA-PROD", "生产部")
+    upsert_org(cur, "fa-demo-dept-admin", "FA-ADMIN", "行政�?)
+    upsert_org(cur, "fa-demo-dept-prod", "FA-PROD", "生产�?)
     upsert_org(cur, "fa-demo-dept-sales", "FA-SALES", "销售部")
 
     # categories
     upsert_category(cur, "fa-demo-cat-002", "002", "电子设备", "STRAIGHT_LINE", 36, "5.0000")
     upsert_category(cur, "fa-demo-cat-003", "003", "运输工具", "DOUBLE_DECLINING", 48, "5.0000")
     upsert_category(cur, "fa-demo-cat-004", "004", "办公家具", "STRAIGHT_LINE", 60, "5.0000")
-    upsert_category(cur, "fa-demo-cat-005", "005", "生产设备(加速)", "SUM_OF_YEARS", 60, "5.0000")
-    upsert_category(cur, "fa-demo-cat-006", "006", "计量设备(工作量)", "UNITS_OF_PRODUCTION", 0, "5.0000")
+    upsert_category(cur, "fa-demo-cat-005", "005", "生产设备(加�?", "SUM_OF_YEARS", 60, "5.0000")
+    upsert_category(cur, "fa-demo-cat-006", "006", "计量设备(工作�?", "UNITS_OF_PRODUCTION", 0, "5.0000")
 
     common = dict(
         book_id=BOOK_ID,
@@ -167,14 +167,14 @@ def main() -> int:
             **common,
             "id": "fa-demo-asset-001",
             "code": "FA-2026-001",
-            "name": "联想ThinkPad笔记本",
+            "name": "联想ThinkPad笔记�?,
             "category_id": "fa-demo-cat-002",
             "dept_id": "fa-demo-dept-admin",
             "start_use_date": "2026-07-15",
             "entry_period": "2026-07",
             "quantity": 1,
             "spec": "X1 Carbon",
-            "location": "行政办公室",
+            "location": "行政办公�?,
             "status": "IN_USE",
             "depreciation_method": "STRAIGHT_LINE",
             "useful_life_months": 36,
@@ -184,7 +184,7 @@ def main() -> int:
             "depreciated_periods": 0,
             "opening_accum_depr": Decimal("0.00"),
             "accum_depr": Decimal("0.00"),
-            "remark": "演示-平均年限法",
+            "remark": "演示-平均年限�?,
         },
         {
             **common,
@@ -232,20 +232,20 @@ def main() -> int:
             "opening_accum_depr": Decimal("15833.33"),
             "accum_depr": Decimal("15833.33"),
             "year_depr": Decimal("15833.33"),
-            "remark": "演示-年数总和法",
+            "remark": "演示-年数总和�?,
         },
         {
             **common,
             "id": "fa-demo-asset-004",
             "code": "FA-2026-004",
-            "name": "冲压机(按产量)",
+            "name": "冲压�?按产�?",
             "category_id": "fa-demo-cat-006",
             "dept_id": "fa-demo-dept-prod",
             "start_use_date": "2026-07-01",
             "entry_period": "2026-07",
             "quantity": 1,
             "spec": "JH21-80",
-            "location": "二车间",
+            "location": "二车�?,
             "status": "IN_USE",
             "depreciation_method": "UNITS_OF_PRODUCTION",
             "useful_life_months": None,
@@ -256,7 +256,7 @@ def main() -> int:
             "depreciated_periods": 0,
             "opening_accum_depr": Decimal("0.00"),
             "accum_depr": Decimal("0.00"),
-            "remark": "演示-工作量法（计提前需录本期工作量）",
+            "remark": "演示-工作量法（计提前需录本期工作量�?,
         },
         {
             **common,
@@ -269,7 +269,7 @@ def main() -> int:
             "entry_period": "2026-08",
             "quantity": 10,
             "spec": "板式",
-            "location": "行政楼3F",
+            "location": "行政�?F",
             "status": "IN_USE",
             "depreciation_method": "STRAIGHT_LINE",
             "useful_life_months": 60,
@@ -285,14 +285,14 @@ def main() -> int:
             **common,
             "id": "fa-demo-asset-006",
             "code": "FA-2026-006",
-            "name": "备用发电机(暂停)",
+            "name": "备用发电�?暂停)",
             "category_id": EXISTING_CAT,
             "dept_id": "fa-demo-dept-prod",
             "start_use_date": "2026-04-01",
             "entry_period": "2026-04",
             "quantity": 1,
             "spec": "50kW",
-            "location": "动力房",
+            "location": "动力�?,
             "status": "SUSPENDED",
             "suspended_period": "2026-08",
             "depreciation_method": "STRAIGHT_LINE",
@@ -310,7 +310,7 @@ def main() -> int:
             **common,
             "id": "fa-demo-asset-007",
             "code": "FA-2026-007",
-            "name": "土地使用权(不提折旧)",
+            "name": "土地使用�?不提折旧)",
             "category_id": "fa-demo-cat-004",
             "dept_id": "fa-demo-dept-admin",
             "start_use_date": "2026-01-01",
@@ -328,7 +328,7 @@ def main() -> int:
             "opening_accum_depr": Decimal("0.00"),
             "accum_depr": Decimal("0.00"),
             "exp_subj": None,
-            "remark": "演示-不计提折旧",
+            "remark": "演示-不计提折�?,
         },
     ]
 

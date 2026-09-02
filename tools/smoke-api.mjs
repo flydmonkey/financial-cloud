@@ -6,7 +6,7 @@
 const base = (process.argv.find((a, i) => process.argv[i - 1] === '--base') || 'http://localhost:2154').replace(/\/$/, '')
 
 const username = process.env.E2E_USERNAME || 'admin'
-const password = process.env.E2E_PASSWORD || 'maxkey'
+const password = process.env.E2E_PASSWORD || 'changeme'
 
 async function login() {
     const initRes = await fetch(`${base}/api/login/get?_allow_anonymous=true`)

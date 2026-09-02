@@ -174,7 +174,7 @@ public class OrganizationsExcelService extends ServiceImpl<OrganizationsMapper,O
             //创建sheet
             Sheet sheet = workbook.createSheet("组织机构");
             Row row = sheet.createRow(0);
-            row.createCell(0).setCellValue("Maxkey Org Export " + DateUtils.getCurrentDateTimeAsString());
+            row.createCell(0).setCellValue("Org Export " + DateUtils.getCurrentDateTimeAsString());
             sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 22));
             //构建头
             row = sheet.createRow(1);

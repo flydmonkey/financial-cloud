@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENUM_FILE = ROOT / "financial-cloud/src/main/java/com/financial/cloud/enums/statement/CashFlowItemEnum.java"
-OUT_FILE = ROOT / "sql/seed/config_cash_flow_balance.sql"
+OUT_FILE = ROOT / "sql/seed/data/config_cash_flow_balance.sql"
 
 ENTRY_RE = re.compile(r'\s+[A-Z_]+\("([^"]+)",\s*"([^"]+)"\),')
 

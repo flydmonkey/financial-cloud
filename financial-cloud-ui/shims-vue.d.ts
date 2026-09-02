@@ -12,7 +12,7 @@ import {
     resetForm,
     selectDictLabel,
     selectDictLabels,
-} from '@/utils/Jinbooks'
+} from '@/utils/financialCloud'
 import {download} from '@/utils/Request'
 
 declare module '@vue/runtime-core' {

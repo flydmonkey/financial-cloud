@@ -63,7 +63,7 @@
 import {ref} from "vue"
 import {isExternal} from '@/utils/Validate'
 import AppLink from './Link'
-import {getNormalPath} from '@/utils/Jinbooks'
+import {getNormalPath} from '@/utils/financialCloud'
 
 const props = defineProps({
   // route object

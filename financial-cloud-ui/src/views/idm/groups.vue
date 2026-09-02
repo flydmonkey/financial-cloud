@@ -2,27 +2,19 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form
-          ref="queryRef"
-          :model="queryParams"
-          :inline="true"
-          @submit.native.prevent
-        >
+        <el-form :model="queryParams" ref="queryRef" :inline="true"
+                 @submit.native.prevent>
           <el-form-item :label="t('jbx.roles.name')">
             <el-input
-              v-model="queryParams.roleName"
-              clearable
-              style="width: 200px"
-              @keyup.enter="handleQuery"
+                v-model="queryParams.roleName"
+                clearable
+                style="width: 200px"
+                @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">
-              {{ t('org.button.query') }}
-            </el-button>
-            <el-button @click="resetQuery">
-              {{ t('org.button.reset') }}
-            </el-button>
+            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
+            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -30,113 +22,65 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-          type="primary"
-          @click="handleAdd"
-        >
-          {{ t('org.button.add') }}
+            type="primary"
+            @click="handleAdd"
+        >{{ t('org.button.add') }}
         </el-button>
         <el-button
-          type="danger"
-          :disabled="ids.length === 0"
-          @click="onBatchDelete"
-        >
-          {{ t('org.button.deleteBatch') }}
+            type="danger"
+            :disabled="ids.length === 0"
+            @click="onBatchDelete"
+        >{{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
       <el-table
-        v-loading="loading"
-        border
-        :data="groupList"
-        @selection-change="handleSelectionChange"
+          border
+          v-loading="loading"
+          :data="groupList"
+          @selection-change="handleSelectionChange"
       >
-        <el-table-column
-          type="selection"
-          width="55"
-          align="center"
-        />
-        <el-table-column
-          prop="roleCode"
-          :label="t('jbx.text.id')"
-          align="center"
-          min-width="100"
-          :show-overflow-tooltip="true"
-        />
-        <el-table-column
-          prop="roleName"
-          :label="t('jbx.roles.name')"
-          align="center"
-          min-width="100"
-          :show-overflow-tooltip="true"
-        />
-        <el-table-column
-          prop="category"
-          :label="t('jbx.organizations.type')"
-          align="center"
-          min-width="80"
-        >
+        <el-table-column type="selection" width="55" align="center"/>
+        <el-table-column prop="roleCode" :label="t('jbx.text.id')" align="center" min-width="100"
+                         :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column prop="roleName" :label="t('jbx.roles.name')" align="center" min-width="100"
+                         :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column prop="category" :label="t('jbx.organizations.type')" align="center" min-width="80">
           <template #default="scope">
-            <dict-tag
-              :options="group_category_options"
-              :value="scope.row.category"
-            />
+            <dict-tag :options="group_category_options" :value="scope.row.category"/>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="description"
-          :label="t('jbx.text.description')"
-          align="center"
-          min-width="250"
-          :show-overflow-tooltip="true"
-        />
-        <el-table-column
-          :label="$t('jbx.text.action')"
-          align="center"
-          width="80"
-        >
+        <el-table-column prop="description" :label="t('jbx.text.description')" align="center" min-width="250"
+                         :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column :label="$t('jbx.text.action')" align="center" width="80">
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button
-                link
-                icon="Edit"
-                @click="handleUpdate(scope.row)"
-              />
+              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip content="成员管理">
-              <el-button
-                link
-                icon="User"
-                @click="handleMember(scope.row)"
-              />
+              <el-button link icon="User" @click="handleMember(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
       <pagination
-        v-show="total > 0"
-        v-model:page="queryParams.pageNumber"
-        v-model:limit="queryParams.pageSize"
-        :total="total"
-        :page-sizes="queryParams.pageSizeOptions"
-        @pagination="getList"
+          v-show="total > 0"
+          :total="total"
+          v-model:page="queryParams.pageNumber"
+          v-model:limit="queryParams.pageSize"
+          :page-sizes="queryParams.pageSizeOptions"
+          @pagination="getList"
       />
     </el-card>
-    <edit-form
-      :title="title"
-      :open="open"
-      :form-id="id"
-      :dept-options="deptOptions"
-      :group_category_options="group_category_options"
-      @dialog-of-closed-methods="dialogOfClosedMethods"
-    />
-    <member-component
-      :open="memberFlag"
-      :title="title"
-      :form-id="id"
-      :form-name="currentName"
-      :role_members_type="role_members_type"
-      :use_gender="user_gender_type"
-      @member-drawer-close="memberDrawerClose"
-    />
+    <edit-form :title="title" :open="open"
+               :form-id="id"
+               :deptOptions="deptOptions"
+               :group_category_options="group_category_options"
+               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
+    <member-component :open="memberFlag" :title="title" :form-id="id"
+                      :form-name="currentName"
+                      :role_members_type="role_members_type"
+                      :use_gender="user_gender_type"
+                      @memberDrawerClose="memberDrawerClose"></member-component>
   </div>
 </template>
 
@@ -144,10 +88,10 @@
 import {ref, getCurrentInstance, reactive, toRefs} from "vue";
 import modal from "@/plugins/modal";
 import {useI18n} from "vue-i18n";
-import {deleteBatch, listGroup} from "@/api/idm/group.js";
+import {deleteBatch, listGroup} from "@/api/idm/group";
 import editForm from "./group/edit.vue";
 import {getTree} from "@/api/idm/dept";
-import {handleTree} from "@/utils/Jinbooks";
+import {handleTree} from "@/utils/financialCloud";
 import {set2String} from "@/utils"
 import memberComponent from './group/members.vue'
 import {useRouter} from "vue-router";

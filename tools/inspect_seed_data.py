@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Inspect seed-worthy rows in jinbooks_v1.0.1.sql."""
+"""Inspect seed-worthy rows in financial_cloud_v1.0.1.sql."""
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-text = (ROOT / "sql/jinbooks_v1.0.1.sql").read_text(encoding="utf-8", errors="replace")
+text = (ROOT / "sql/financial_cloud_v1.0.1.sql").read_text(encoding="utf-8", errors="replace")
 
 
 def extract_insert_block(table: str) -> str | None:

@@ -1,51 +1,32 @@
 <template>
-  <el-card
-    shadow="hover"
-    header-class="el-card-header"
-  >
+  <el-card shadow="hover" header-class="el-card-header">
     <template #header>
       <div class="card-title">
         <span>预计可用资金</span>
-        <el-select
-          v-model="queryParams.accountPeriod"
-          disabled
-          style="width: 120px"
-          placeholder=""
-        >
+        <el-select disabled style="width: 120px" v-model="queryParams.accountPeriod" placeholder="">
           <template #label>
             <span>{{ accountPeriod }}</span>
           </template>
-          <template
-            v-for="(item, index) in statistics_period"
-            :key="index"
-          >
-            <el-option
-              :label="item.label"
-              :value="item.value"
-            />
+          <template v-for="(item, index) in statistics_period" :key="index">
+            <el-option :label="item.label" :value="item.value"></el-option>
           </template>
         </el-select>
       </div>
     </template>
 
-    <div
-      v-loading="loading"
-      class="card-content"
-    >
+    <div class="card-content" v-loading="loading">
       <div class="card-content-item bold">
         <div class="flex justify-items-center">
           <span>预计可用资金</span>
-          <el-tooltip
-            content=""
-            placement="top"
-          >
+          <el-tooltip content=""
+                      placement="top">
             <template #content>
               <span>
                 根据所选期间期末，企业的资金及往来款项情况估算出的预计可用资金。
               </span>
             </template>
             <el-icon>
-              <Warning />
+              <Warning/>
             </el-icon>
           </el-tooltip>
         </div>
@@ -61,17 +42,15 @@
         <div class="text-center">
           <div>
             <span>短期应收款</span>
-            <el-tooltip
-              content=""
-              placement="top"
-            >
+            <el-tooltip content=""
+                        placement="top">
               <template #content>
-                <span>
-                  企业短期的应收款，包括应收账款、其他应收款、应收票据、应收利息、应收股利
-                </span>
+              <span>
+                企业短期的应收款，包括应收账款、其他应收款、应收票据、应收利息、应收股利
+              </span>
               </template>
               <el-icon>
-                <Warning />
+                <Warning/>
               </el-icon>
             </el-tooltip>
           </div>
@@ -81,17 +60,15 @@
         <div class="text-center">
           <div>
             <span>短期应付款</span>
-            <el-tooltip
-              content=""
-              placement="top"
-            >
+            <el-tooltip content=""
+                        placement="top">
               <template #content>
-                <span>
-                  企业短期的应付款项，包括应付账款、其他应付款、应付职工薪酬、应交税金、应付利息、应付股利
-                </span>
+              <span>
+                企业短期的应付款项，包括应付账款、其他应付款、应付职工薪酬、应交税金、应付利息、应付股利
+              </span>
               </template>
               <el-icon>
-                <Warning />
+                <Warning/>
               </el-icon>
             </el-tooltip>
           </div>
@@ -103,55 +80,44 @@
         <div class="text-center">
           <div>
             <span>现金比率</span>
-            <el-tooltip
-              content=""
-              placement="top"
-            >
+            <el-tooltip content=""
+                        placement="top">
               <template #content>
-                <span>
-                  年初至最近已结账期间的现金比率，反映企业现金及现金等价物对流动负债的保障程度。
-                  <br>计算公式为：现金比率=(货币资金+交易性金融资产+应收票据)／流动负债
-                </span>
+              <span>
+                年初至最近已结账期间的现金比率，反映企业现金及现金等价物对流动负债的保障程度。
+                <br/>计算公式为：现金比率=(货币资金+交易性金融资产+应收票据)／流动负债
+              </span>
               </template>
               <el-icon>
-                <Warning />
+                <Warning/>
               </el-icon>
             </el-tooltip>
           </div>
-          <div class="bold">
-            {{ resData.cashRatio }}%
-          </div>
+          <div class="bold">{{resData.cashRatio}}%</div>
           <div>
-            较同期：{{ resData.cashRatioLastYear }}%
+            较同期：{{resData.cashRatioLastYear}}%
           </div>
         </div>
-        <el-divider
-          direction="vertical"
-          style="height: 100%"
-        />
+        <el-divider direction="vertical" style="height: 100%"></el-divider>
         <div class="text-center">
           <div>
             <span>速动比率</span>
-            <el-tooltip
-              content=""
-              placement="top"
-            >
+            <el-tooltip content=""
+                        placement="top">
               <template #content>
-                <span>
-                  年初至最近已结账期间的速动比率，反映企业速动资产（流动资产中扣除存货部分）对流动负债的保障程度。
-                  <br>计算公式为：速动比率=(流动资产-存货)/流动负债
-                </span>
+              <span>
+                年初至最近已结账期间的速动比率，反映企业速动资产（流动资产中扣除存货部分）对流动负债的保障程度。
+                <br/>计算公式为：速动比率=(流动资产-存货)/流动负债
+              </span>
               </template>
               <el-icon>
-                <Warning />
+                <Warning/>
               </el-icon>
             </el-tooltip>
           </div>
-          <div class="bold">
-            {{ resData.quickRatio }}%
-          </div>
+          <div class="bold">{{resData.quickRatio}}%</div>
           <div>
-            较同期：{{ resData.quickRatioLastYear }}%
+            较同期：{{ resData.quickRatioLastYear}}%
           </div>
         </div>
       </div>
@@ -163,7 +129,7 @@
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, computed, onMounted} from "vue";
 import bookStore from "@/store/modules/bookStore";
-import {getAccountPeriod} from "@/utils/Jinbooks";
+import {getAccountPeriod} from "@/utils/financialCloud";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
 import {statisticsAbleCash} from "@/api/dashboard"

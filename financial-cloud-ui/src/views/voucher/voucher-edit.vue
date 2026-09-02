@@ -31,7 +31,7 @@
         打印
       </el-button>
     </div>
-    <div ref="printMe" class="printable-content" id="printable-content"
+    <div v-if="!isPrintMode" ref="printMe" class="printable-content" id="printable-content"
          @click="closeEditAll"
          :style="{margin: !isPrintMode ? '65px 0 0 0' : '0 auto', width: isPrintMode ? '980px' : '100%'}">
       <!--   标题头   -->
@@ -256,6 +256,76 @@
         </div>
       </div>
     </div>
+    <div
+        v-else
+        ref="printMe"
+        id="printable-content"
+        class="voucher-print-root"
+    >
+      <div
+          v-for="page in printPages"
+          :key="page.pageIndex"
+          class="voucher-print-sheet"
+      >
+        <div class="vp-title">{{ page.isContinuation ? '记账凭证（续）' : '记账凭证' }}</div>
+        <div class="vp-date">{{ formatPrintDate(formData.voucherDate) }}</div>
+        <div class="vp-meta">
+          <div>核算单位：{{ formData.companyName }}</div>
+          <div class="vp-meta-right">
+            <span v-if="page.pageCount > 1">第 {{ page.pageIndex }} / 共 {{ page.pageCount }} 页</span>
+            <span>{{ formatVoucherWordNum() }}</span>
+            <span>附件 {{ formData.receiptNum || 0 }} 张</span>
+          </div>
+        </div>
+
+        <table class="vp-table">
+          <thead>
+          <tr>
+            <th class="col-summary">摘要</th>
+            <th class="col-subject">会计科目</th>
+            <th class="col-debit">借方金额</th>
+            <th class="col-credit">贷方金额</th>
+            <th class="col-no">行次</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="(row, idx) in page.rows" :key="idx">
+            <td class="summary">{{ row.summary }}</td>
+            <td class="subject">
+              {{ row.subjectLabel }}
+              <span v-if="row.auxLabel" class="aux">{{ row.auxLabel }}</span>
+            </td>
+            <td class="col-debit">{{ row.isEmpty ? '' : formatAmount(row.debitAmount) }}</td>
+            <td class="col-credit">{{ row.isEmpty ? '' : formatAmount(row.creditAmount) }}</td>
+            <td class="col-no">{{ row.lineNo == null ? '' : row.lineNo }}</td>
+          </tr>
+          </tbody>
+          <tfoot v-if="page.isLast">
+          <tr>
+            <td class="label">合　计</td>
+            <td class="label-cn">
+              <span class="cn-tag">人民币（大写）</span>
+              <span class="cn-amount">{{ convertToChinese(Number(printDebitTotal) || 0) }}</span>
+            </td>
+            <td class="col-debit">{{ formatAmount(printDebitTotal) }}</td>
+            <td class="col-credit">{{ formatAmount(printCreditTotal) }}</td>
+            <td></td>
+          </tr>
+          <tr class="remark-row">
+            <td class="label">备　注</td>
+            <td colspan="4" class="remark-value">{{ formData.remark }}</td>
+          </tr>
+          </tfoot>
+        </table>
+
+        <div v-if="page.isLast" class="vp-signs">
+          <span>会计主管：<em>{{ formData.managerName }}</em></span>
+          <span>过账：<em>{{ formData.senderName }}</em></span>
+          <span>复核：<em>{{ formData.auditMemberName }}</em></span>
+          <span>制单：<em>{{ formData.createdName }}</em></span>
+        </div>
+      </div>
+    </div>
     <!-- 右键功能区域 -->
     <div v-if="visibleContextmenu && !isPrintMode" class="contextmenu"
          :style="{ left: leftMenu + 'px', top: topMenu + 'px' }">
@@ -281,6 +351,11 @@ import {validateForm} from "@/utils"
 import {useRoute} from "vue-router";
 import bookStore from "@/store/modules/bookStore";
 import Decimal from 'decimal.js'
+import {
+  chunkVoucherPrintPages,
+  VOUCHER_PRINT_PAGE_SIZE,
+  type VoucherPrintPage,
+} from '@/utils/voucherPrint'
 
 interface RecordingVoucher {
   id: any,
@@ -479,6 +554,30 @@ const formData = ref<any>({...props.modelValue})
 const isPrintMode = computed(() => {
   return route.query.mode === 'print' || !props.edit
 })
+const printPages = computed<VoucherPrintPage[]>(() => {
+  if (!isPrintMode.value) return []
+  return chunkVoucherPrintPages(formData.value.items || [], VOUCHER_PRINT_PAGE_SIZE)
+})
+const printDebitTotal = computed(() =>
+    (formData.value.items || []).reduce(
+        (sum: number, item: any) => sum + (Number(item.debitAmount) || 0),
+        0,
+    ),
+)
+const printCreditTotal = computed(() =>
+    (formData.value.items || []).reduce(
+        (sum: number, item: any) => sum + (Number(item.creditAmount) || 0),
+        0,
+    ),
+)
+
+function formatPrintDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return ''
+  const [y, m, d] = String(dateStr).split('-')
+  if (!y || !m || !d) return String(dateStr)
+  return `${y} 年 ${m} 月 ${d} 日`
+}
+
 const cascaderSubjectProps = {
   expandTrigger: 'click',
   label: 'name',
@@ -835,12 +934,12 @@ function isCurrentOrFutureMonth(date: Date) {
   return parseTime(date, "{y}-{m}-{d}") < parseTime(now, "{y}-{m}-{d}")
 }
 
-// 打印
+// 打印（路由 /temporary/voucher-print，勿写死旧前缀 /jinbooks）
 const onPrint = () => {
-  const url = "/jinbooks/temporary/voucher-print?mode=print";
+  const base = String(import.meta.env.VITE_APP_CONTEXT_PATH || '/').replace(/\/$/, '')
+  const url = `${base}/temporary/voucher-print?mode=print`
   window.localStorage.setItem("voucher-print-data", JSON.stringify(formData.value))
   window.open(url, "_blank")
-
 }
 
 function printSpecificDiv(printcontent: any) {

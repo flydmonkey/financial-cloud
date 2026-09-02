@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   VOUCHER_PRINT_PAGE_SIZE,
+  buildAuxLabel,
   filterPrintableItems,
   chunkVoucherPrintPages,
 } from './voucherPrint.ts'
@@ -19,6 +20,32 @@ describe('filterPrintableItems', () => {
   it('keeps only rows with subjectCode', () => {
     const items = [line(1), { ...line(2), subjectCode: '' }, line(3)]
     assert.equal(filterPrintableItems(items).length, 2)
+  })
+})
+
+describe('buildAuxLabel', () => {
+  it('matches the grouped auxiliary labels shown in voucher edit mode', () => {
+    assert.equal(
+      buildAuxLabel({
+        auxiliary: [
+          { id: 'customer', label: '客户', value: [{ label: '华东贸易', value: '1' }] },
+          { id: 'department', label: '部门', value: [{ label: '销售部', value: '2' }] },
+        ],
+      }),
+      '辅助：客户:华东贸易；部门:销售部',
+    )
+  })
+
+  it('omits empty auxiliary groups', () => {
+    assert.equal(
+      buildAuxLabel({
+        auxiliary: [
+          { id: 'customer', label: '客户', value: [] },
+          { id: 'department', label: '部门', value: [{ label: '', value: '' }] },
+        ],
+      }),
+      '',
+    )
   })
 })
 

@@ -1,12 +1,25 @@
 export const VOUCHER_PRINT_PAGE_SIZE = 6
 
+type VoucherPrintAuxiliaryValue = {
+  label?: string
+  value?: string
+}
+
+type VoucherPrintAuxiliary = {
+  id?: string
+  itemName?: string
+  name?: string
+  label?: string
+  value?: string | Array<VoucherPrintAuxiliaryValue | string>
+}
+
 export type VoucherPrintSourceItem = {
   summary?: string
   subjectCode?: string
   detailedAccounts?: string
   debitAmount?: number | string | null
   creditAmount?: number | string | null
-  auxiliary?: Array<{ name?: string; value?: string; label?: string } | string>
+  auxiliary?: Array<VoucherPrintAuxiliary | string>
 }
 
 export type VoucherPrintLine = {
@@ -43,10 +56,18 @@ export function buildAuxLabel(item: VoucherPrintSourceItem): string {
   const parts = aux
     .map((a) => {
       if (typeof a === 'string') return a
-      return a.label || a.name || a.value || ''
+      if (Array.isArray(a.value)) {
+        const values = a.value
+          .map((value) => (typeof value === 'string' ? value : value.label || value.value || ''))
+          .filter(Boolean)
+        if (values.length === 0) return ''
+        const groupLabel = a.label || a.itemName || a.name || ''
+        return groupLabel ? `${groupLabel}:${values.join(',')}` : values.join(',')
+      }
+      return a.itemName || a.name || a.label || a.value || ''
     })
     .filter(Boolean)
-  return parts.length ? `辅助：${parts.join('、')}` : ''
+  return parts.length ? `辅助：${parts.join('；')}` : ''
 }
 
 function emptyRow(): VoucherPrintLine {

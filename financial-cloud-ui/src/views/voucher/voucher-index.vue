@@ -302,27 +302,6 @@
       />
     </el-card>
 
-    <!-- 添加或修改凭证记录对话框 -->
-    <el-drawer
-      v-model="open"
-      :title="title"
-      :close-on-click-modal="false"
-      size="1200px"
-      @close="getList"
-    >
-      <template #header>
-        <h4>{{ title }}</h4>
-      </template>
-      <voucher-edit
-        v-if="open"
-        v-model="form"
-        :edit="!previewMode"
-        :dialog="true"
-        :auto="false"
-        @submit="submitForm"
-      />
-    </el-drawer>
-
     <!-- 检查结果 -->
     <el-dialog
       v-model="dialogVoucherSuccessive.visible"
@@ -407,7 +386,6 @@
 <script setup name="BooksVoucher">
 import * as voucherApis from "@/api/voucher/voucher";
 import {useI18n} from "vue-i18n";
-import voucherEdit from "./voucher-edit.vue";
 import {useRouter} from "vue-router";
 import {getVoucherStatusDesc} from "@/utils/enums/VoucherStatusEnum"
 import {parseTime} from "@/utils/financialCloud";
@@ -426,14 +404,11 @@ const showSubtotal = ref(false);
 const periodRange = ref([]);
 const MERGE_COLUMN_INDEXES = [0, 1, 2, 7, 8, 9, 10, 11];
 const voucherSuccessiveList = ref([]);
-const open = ref(false);
-const previewMode = ref(false);
 const loading = ref(true);
 const ids = ref([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
-const title = ref("");
 const dialogVoucherSuccessive = reactive({
   visible: false,
   loading: false,
@@ -446,7 +421,6 @@ const dialogVoucherSuccessive = reactive({
   startWordNumber: 1
 });
 const data = reactive({
-  form: {},
   queryParams: {
     pageNumber: 1,
     pageSize: 10,
@@ -464,7 +438,7 @@ const data = reactive({
   },
 });
 
-const {queryParams, form} = toRefs(data);
+const {queryParams} = toRefs(data);
 
 function initPeriodRange() {
   const term = currBookStore.termCurrent || parseTime(new Date(), "{y}-{m}")
@@ -631,38 +605,6 @@ function getList() {
   });
 }
 
-// 取消按钮
-function cancel() {
-  open.value = false;
-  reset();
-}
-
-// 表单重置
-function reset() {
-  form.value = {
-    id: null,
-    word: null,
-    bookId: null,
-    wordHead: '收',
-    wordNum: null,
-    companyId: null,
-    companyName: null,
-    remark: null,
-    receiptNum: 0,
-    debitAmount: null,
-    creditAmount: null,
-    voucherYear: null,
-    voucherMonth: null,
-    voucherDate: parseTime(new Date(), "{y}-{m}-{d}"),
-    carryForward: null,
-    auditMemberId: null,
-    auditMemberName: null,
-    auditDate: null,
-    status: null,
-    items: []
-  };
-}
-
 /** 搜索按钮操作 */
 function handleQuery() {
   queryParams.value.pageNumber = 1;
@@ -678,7 +620,6 @@ function handleSelectionChange(selection) {
 
 /** 新增按钮操作 */
 function handleAdd() {
-  previewMode.value = false;
   router.push({
     path: "/voucher/voucher-edit"
   })
@@ -686,34 +627,26 @@ function handleAdd() {
 
 /** 修改按钮操作 */
 function handleUpdate(row) {
-  reset();
   const _id = row?.voucherId || row?.voucher?.id || ids.value
-  voucherApis.getOneVoucher(_id).then(response => {
-    response.data.items.forEach(t => {
-      t.subjectCode = t.subjectName.split("-")[0]
-      t.detailedSubjectCode = t.detailedAccounts?.split("-")[0]
-    })
-    form.value = response.data
-    open.value = true;
-    previewMode.value = false;
-    title.value = "修改凭证记录";
-  });
+  if (!_id) {
+    return
+  }
+  router.push({
+    path: "/voucher/voucher-edit",
+    query: { id: String(_id) },
+  })
 }
 
 /** 查看操作 */
 function handlePreview(row) {
-  reset();
   const _id = row?.voucherId || row?.voucher?.id || ids.value
-  voucherApis.getOneVoucher(_id).then(response => {
-    response.data.items.forEach(t => {
-      t.subjectCode = t.subjectName.split("-")[0]
-      t.detailedSubjectCode = t.detailedAccounts?.split("-")[0]
-    })
-    form.value = response.data
-    open.value = true;
-    previewMode.value = true;
-    title.value = "查看凭证记录";
-  });
+  if (!_id) {
+    return
+  }
+  router.push({
+    path: "/voucher/voucher-edit",
+    query: { id: String(_id), readonly: '1' },
+  })
 }
 
 /** 修改按钮操作 */
@@ -795,14 +728,6 @@ function showActionError(err, fallback = "操作失败") {
     return
   }
   proxy.$modal.msgError(err?.message || fallback)
-}
-
-/** 提交按钮 */
-function submitForm(res) {
-  if (res.code === 0) {
-    open.value = false
-    getList();
-  }
 }
 
 function handleSubmit(row) {

@@ -34,6 +34,24 @@ export async function checkoutCurrentPeriod(
     return {closedTerm, nextTerm}
 }
 
+export async function uncheckoutPeriod(
+    request: APIRequestContext,
+    headers: Record<string, string>,
+    yearPeriod?: string,
+) {
+    const res = await request.post('/api/settlement/uncheckout', {
+        headers,
+        params: yearPeriod ? {yearPeriod} : undefined,
+        data: yearPeriod ? {yearPeriod} : {},
+    })
+    const body = await res.json()
+    return {
+        code: body.code as number,
+        message: body.message as string | undefined,
+        ok: res.ok(),
+    }
+}
+
 export async function tryCheckoutCurrentPeriod(
     request: APIRequestContext,
     headers: Record<string, string>,

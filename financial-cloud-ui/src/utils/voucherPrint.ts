@@ -109,7 +109,11 @@ export function chunkVoucherPrintPages(
     const rows: VoucherPrintLine[] = slice.map((item, i) =>
       toLine(item, p * pageSize + i + 1),
     )
-    while (rows.length < pageSize) rows.push(emptyRow())
+    while (rows.length < pageSize) {
+      const pad = emptyRow()
+      pad.lineNo = p * pageSize + rows.length + 1
+      rows.push(pad)
+    }
     const pageIndex = p + 1
     pages.push({
       pageIndex,

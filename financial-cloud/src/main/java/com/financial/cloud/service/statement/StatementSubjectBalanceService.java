@@ -444,6 +444,17 @@ public class StatementSubjectBalanceService{
 
         return true;
     }
+
+    /**
+     * 删除指定账期、期间类型的科目余额行（反结账时清除下期结账种下的期初）。
+     */
+    public int deleteByBookAndPeriod(String bookId, String yearPeriod, String periodType) {
+        LambdaQueryWrapper<StatementSubjectBalance> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(StatementSubjectBalance::getBookId, bookId);
+        wrapper.eq(StatementSubjectBalance::getYearPeriod, yearPeriod);
+        wrapper.eq(StatementSubjectBalance::getPeriodType, periodType);
+        return subjectBalanceMapper.delete(wrapper);
+    }
 	public List<StatementSubjectBalance> selectSubjectBalance(String bookId, List<String> subjectCodes) {
 		String currentTerm = configSysService.getCurrentTerm(bookId);
 		 LambdaQueryWrapper<StatementSubjectBalance> queryWrapper = new LambdaQueryWrapper<>();

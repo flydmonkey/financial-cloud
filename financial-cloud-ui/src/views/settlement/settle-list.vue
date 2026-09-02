@@ -99,17 +99,23 @@
                 ><Clock /></el-icon></span>
               </template>
             </el-table-column>
-            <!--
-            <el-table-column :label="$t('jbx.text.action')" width="150"  align="center"
-                             class-name="small-padding fixed-width">
-             <template #default="scope">
+            <el-table-column
+              label="操作"
+              width="120"
+              align="center"
+              class-name="small-padding fixed-width"
+            >
+              <template #default="scope">
                 <el-button
-                  @click="handleUpdate(scope.row)">
-                  {{ $t('jbx.text.edit') }}
+                  v-if="canUncheckout(scope.row)"
+                  link
+                  type="danger"
+                  @click="handleUncheckout(scope.row)"
+                >
+                  反结账
                 </el-button>
               </template>
             </el-table-column>
-            -->
           </el-table>
           <pagination
             v-show="total > 0"
@@ -127,6 +133,7 @@
 <script lang="ts" setup>
 import {getCurrentInstance, ref, toRefs, reactive} from 'vue'
 import type {TabsPaneContext} from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
 import {useRoute, useRouter} from "vue-router";
 import * as settlementApi from "@/api/book/settlement";
 import bookStore from "@/store/modules/bookStore";
@@ -145,6 +152,7 @@ const single: any = ref(true);
 const multiple: any = ref(true);
 const total: any = ref(0);
 const title: any = ref("");
+const uncheckoutLoading = ref(false)
 
 const activeName = ref('settle-list')
 const router: any = useRouter();
@@ -169,6 +177,74 @@ const data = reactive({
 
 const {queryParams, form, rules} = toRefs(data);
 
+/** 当前账期的上一月 YYYY-MM */
+function prevYearPeriod(term: string): string {
+  const parts = String(term || '').split('-')
+  const y = Number(parts[0])
+  const m = Number(parts[1])
+  if (!y || !m) return ''
+  if (m === 1) return `${y - 1}-12`
+  return `${y}-${String(m - 1).padStart(2, '0')}`
+}
+
+function rowYearPeriod(row: any): string {
+  if (row?.yearPeriod) return String(row.yearPeriod)
+  const y = row?.year
+  const p = row?.period
+  if (y == null || p == null) return ''
+  return `${y}-${String(p).padStart(2, '0')}`
+}
+
+/** 仅「当前账期上一月」且已结（status=6）可反结账 */
+function canUncheckout(row: any): boolean {
+  const term = currBookStore.termCurrent || currentTerm.value
+  if (!term || Number(row?.status) !== 6) return false
+  return rowYearPeriod(row) === prevYearPeriod(String(term))
+}
+
+async function handleUncheckout(row: any) {
+  const target = rowYearPeriod(row)
+  if (!target || !canUncheckout(row)) {
+    ElMessage.warning('只能反结账最近已结期间')
+    return
+  }
+  try {
+    const {value} = await ElMessageBox.prompt(
+      `将重新打开账期 ${target}。下期若已有凭证或日记账会被拒绝。\n请输入账期 ${target} 以确认：`,
+      '反结账确认',
+      {
+        confirmButtonText: '反结账',
+        cancelButtonText: '取消',
+        inputPattern: new RegExp(`^${target.replace('-', '\\-')}$`),
+        inputErrorMessage: `请精确输入 ${target}`,
+        type: 'warning',
+      }
+    )
+    if (value !== target) {
+      ElMessage.warning(`请精确输入 ${target}`)
+      return
+    }
+  } catch {
+    return
+  }
+
+  uncheckoutLoading.value = true
+  try {
+    const res: any = await settlementApi.uncheckout(target)
+    if (res.code === 0) {
+      ElMessage.success(res.message || '反结账完成')
+      await currBookStore.refreshData()
+      currentTerm.value = currBookStore.termCurrent || currentTerm.value
+      getList()
+    } else {
+      ElMessage.error(res.message || '反结账失败')
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '反结账失败')
+  } finally {
+    uncheckoutLoading.value = false
+  }
+}
 
 /** 分页列表 */
 function getList(): any {

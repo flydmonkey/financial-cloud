@@ -3,63 +3,86 @@
     class="app-container"
     @keydown="handleKeydown"
   >
-    <!--  功能区左侧  -->
+    <!-- 工作台顶栏：中间(导航+主操作) | 右侧状态 -->
     <div
       v-if="!isPrintMode"
-      class="top-funs top-funs-left"
-      :class="{topFunsUpdate: !!formData.id && props.dialog}"
+      class="workspace-toolbar"
     >
-      <span
-        class="bottom-counts-item"
-        :class="{isNotPh: !loanBalance()}"
-      >
-        借贷平衡：{{ loanBalance() ? "是" : "否" }}</span>
-    </div>
-    <!--  功能区  -->
-    <div
-      v-if="!isPrintMode"
-      class="top-funs"
-      :style="{top: auto? '204px' : '80px'}"
-    >
-      <el-button
-        v-if="props.edit"
-        @click="onAddItem"
-      >
-        添加一项
-      </el-button>
-      <el-tooltip
-        v-if="props.edit"
-        content="确保总账科目对应的金额已正确录入！"
-      >
-        <el-button
-          v-loading="submitButtonLoading"
-          @click="onSubmitDraft"
+      <div class="workspace-toolbar-spacer" aria-hidden="true" />
+      <div class="workspace-toolbar-main">
+        <div class="workspace-toolbar-nav">
+          <el-button @click="onBackToList">
+            返回列表
+          </el-button>
+          <el-button-group>
+            <el-button
+              :disabled="!neighborIds.prevId || navLoading"
+              @click="onGoNeighbor('prev')"
+            >
+              上一张
+            </el-button>
+            <el-button
+              :disabled="!neighborIds.nextId || navLoading"
+              @click="onGoNeighbor('next')"
+            >
+              下一张
+            </el-button>
+          </el-button-group>
+          <el-button
+            v-if="canEditWorkspace"
+            @click="onNewVoucher"
+          >
+            新建凭证
+          </el-button>
+        </div>
+        <div class="workspace-toolbar-actions">
+          <el-tooltip
+            v-if="canEditWorkspace"
+            :content="draftButtonTip"
+          >
+            <span class="workspace-action-wrap">
+              <el-button
+                v-loading="submitButtonLoading"
+                :disabled="!canClickDraft || submitButtonLoading"
+                @click="onSubmitDraft"
+              >
+                暂存
+              </el-button>
+            </span>
+          </el-tooltip>
+          <el-tooltip
+            v-if="canEditWorkspace"
+            :content="saveButtonTip"
+          >
+            <span class="workspace-action-wrap">
+              <el-button
+                v-loading="submitButtonLoading"
+                type="primary"
+                :disabled="!canClickSave || submitButtonLoading"
+                @click="onSubmit"
+              >
+                保存
+              </el-button>
+            </span>
+          </el-tooltip>
+          <el-button @click="onPrint">
+            打印
+          </el-button>
+        </div>
+      </div>
+      <div class="workspace-toolbar-status">
+        <span
+          class="workspace-balance"
+          :class="{ 'is-unbalanced': !loanBalance() }"
         >
-          暂存
-        </el-button>
-      </el-tooltip>
-      <el-tooltip
-        v-if="props.edit && formData.voucherDate && formData.voucherDate.startsWith(currBookStore.termCurrent)"
-        content="确保总账科目对应的金额已正确录入！"
-      >
-        <el-button
-          v-loading="submitButtonLoading"
-          @click="onSubmit"
-        >
-          保存
-        </el-button>
-      </el-tooltip>
-      <el-tooltip
-        v-if="props.edit && !props.dialog"
-        content="清空当前数据，建立新的凭证信息！"
-      >
-        <el-button @click="onReset">
-          新增凭证
-        </el-button>
-      </el-tooltip>
-      <el-button @click="onPrint">
-        打印
-      </el-button>
+          <em>借贷平衡</em>
+          <strong>{{ loanBalance() ? '是' : '否' }}</strong>
+        </span>
+        <span class="workspace-status-pill">
+          <em>凭证状态</em>
+          <strong>{{ voucherStatusLabel }}</strong>
+        </span>
+      </div>
     </div>
     <div
       id="printable-content"
@@ -113,30 +136,7 @@
                 class="no-border-input input-number voucher-word-num"
               >
                 <span>凭证编号：</span>
-                <el-select
-                  v-model="formData.wordHead"
-                  placeholder="字头"
-                  style="width: 50px"
-                  size="small"
-                  @change="handleWordHead"
-                >
-                  <el-option
-                    label="记"
-                    value="记"
-                  />
-                  <el-option
-                    label="收"
-                    value="收"
-                  />
-                  <el-option
-                    label="付"
-                    value="付"
-                  />
-                  <el-option
-                    label="转"
-                    value="转"
-                  />
-                </el-select>
+                <span class="voucher-word-head-fixed">记</span>
                 <el-input-number
                   v-model="formData.wordNum"
                   style="width: 90px"
@@ -719,7 +719,17 @@ import SelectAuxiliary from "./SelectAuxiliary/index.vue"
 import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'element-plus'
 import {parseTime} from "@/utils/financialCloud";
 import * as subjectApi from "@/api/standard/standard-subject"
-import {draftVoucher, getOneVoucher, getVoucherAbleWordNum, submitVoucher} from "@/api/voucher/voucher";
+import {draftVoucher, getOneVoucher, getVoucherAbleWordNum, listVouchers, submitVoucher} from "@/api/voucher/voucher";
+import {
+  canClickVoucherDraft,
+  canClickVoucherSave,
+  hasVoucherAmountContent,
+  findNeighborVoucherIds,
+  formatShortVoucherWord,
+  formatVoucherStatusLabel,
+  snapshotVoucherEditable,
+  type VoucherNavItem,
+} from "@/utils/voucherWorkspace";
 import {validateForm} from "@/utils"
 import {useRoute, useRouter} from "vue-router";
 import bookStore from "@/store/modules/bookStore";
@@ -959,16 +969,72 @@ const formData = ref<any>({...props.modelValue})
 const isPrintMode = computed(() => {
   return route.query.mode === 'print' || printing.value
 })
+const isWorkspaceReadonly = computed(() => route.query.readonly === '1' || route.query.readonly === 'true')
+const canEditWorkspace = computed(() => props.edit && !isWorkspaceReadonly.value && !isPrintMode.value)
 const isReadonlyDisplay = computed(() => {
-  return !props.edit || isPrintMode.value
+  return !canEditWorkspace.value
 })
+const shortWordLabel = computed(() => formatShortVoucherWord(formData.value.wordHead, formData.value.wordNum))
+const voucherStatusLabel = computed(() =>
+  formatVoucherStatusLabel(formData.value.status, formData.value.senderId),
+)
+const canClickDraft = computed(() =>
+  canEditWorkspace.value
+  && canClickVoucherDraft(
+    formData.value.status,
+    formData.value.senderId,
+    formData.value.items,
+  ),
+)
+const canClickSave = computed(() =>
+  canEditWorkspace.value
+  && canClickVoucherSave(
+    formData.value.status,
+    formData.value.senderId,
+    formData.value.voucherDate,
+    currBookStore.termCurrent,
+    formData.value.items,
+  ),
+)
+const draftButtonTip = computed(() => {
+  if (canClickDraft.value) {
+    return '确保总账科目对应的金额已正确录入！'
+  }
+  if (!canClickVoucherDraft(formData.value.status, formData.value.senderId)) {
+    return '仅新建或草稿状态可暂存'
+  }
+  return '请先录入分录后再暂存'
+})
+const saveButtonTip = computed(() => {
+  if (canClickSave.value) {
+    return '确保总账科目对应的金额已正确录入！'
+  }
+  if (!canClickVoucherDraft(formData.value.status, formData.value.senderId)) {
+    return '仅新建或草稿状态可保存'
+  }
+  if (!formData.value.voucherDate
+    || !String(formData.value.voucherDate).startsWith(String(currBookStore.termCurrent || ''))) {
+    return '仅当前会计期凭证可保存'
+  }
+  if (!canClickVoucherDraft(formData.value.status, formData.value.senderId, formData.value.items)) {
+    return '请先录入分录后再保存'
+  }
+  if (!hasVoucherAmountContent(formData.value.items)) {
+    return '请先录入金额后再保存'
+  }
+  return '借贷不平衡，不能保存'
+})
+const cleanSnapshot = ref('')
+const neighborIds = ref<{ prevId: string | number | null; nextId: string | number | null }>({ prevId: null, nextId: null })
+const navCache = ref<VoucherNavItem[]>([])
+const navLoading = ref(false)
 const SUMMARY_COL_PRINT_WIDTH = 180
 const SUBJECT_COL_PRINT_WIDTH = 360
 const SUBJECT_WITH_AUX_COL_PRINT_WIDTH = 260
 const AUX_COL_PRINT_WIDTH = 140
 const AMOUNT_COL_PRINT_WIDTH = 120
 const printContentStyle = computed(() => ({
-  margin: !isPrintMode.value ? '65px 0 0 0' : '0',
+  margin: !isPrintMode.value ? '12px 0 0 0' : '0',
   width: '100%',
 }))
 const cascaderSubjectProps = {
@@ -1740,16 +1806,24 @@ function printSpecificDiv(printcontent: any) {
 function resetList() {
   formData.value = {...props.modelValue}
   formData.value.id = null
+  formData.value.status = null
+  formData.value.senderId = null
   formData.value.bookId = currBookStore.bookId
   formData.value.companyName = currBookStore.getBookItem().companyName
+  formData.value.wordHead = '记'
+  formData.value.voucherDate = formData.value.voucherDate || voucherDate
   formData.value.items = []
   // 获取可用凭证子号
-  const now = new Date(voucherDate)
+  const now = new Date(formData.value.voucherDate || voucherDate)
   getVoucherAbleWordNum(formData.value.wordHead, parseTime(now, "{y}"), parseTime(now, "{m}")
   ).then((res: any) => {
     formData.value.wordNum = res.data
+    markClean()
+    resolveNeighborsFromCache()
   })
   createTableData()
+  // 先拉邻证列表；字号未定时会按序列末尾处理，避免排到最前
+  refreshNeighbors()
 }
 
 const normalizeSubjectLeafName = (item: any) => {
@@ -1796,11 +1870,11 @@ const updateSubjectKeys = (items: any) => {
 }
 
 const onSubmitDraft = () => {
-  if (submitButtonLoading.value) {
+  if (submitButtonLoading.value || !canClickDraft.value) {
     return
   }
   closeOverlayOnly()
-  const preparedItems = prepareVoucherItemsForSave(formData.value.items)
+  const preparedItems = prepareVoucherItemsForSave(formData.value.items, { requireBalance: false })
   if (!preparedItems) {
     return
   }
@@ -1813,6 +1887,12 @@ const onSubmitDraft = () => {
     ElMessage.info(res.message || `暂存成功`)
     getOneVoucher(res.data).then((voucherRes: any) => {
       applyLoadedVoucherData(voucherRes.data)
+      if (!props.dialog && res.data) {
+        router.replace({
+          path: route.path,
+          query: { ...route.query, id: String(res.data) },
+        })
+      }
     })
   }).finally(() => {
     submitButtonLoading.value = false
@@ -1820,26 +1900,7 @@ const onSubmitDraft = () => {
 }
 
 const onReset = () => {
-  let bl = false
-  formData.value.items.forEach((item: any, index: number) => {
-    if (item.subjectId && !formData.value.id) {
-      bl = true
-    }
-  })
-  if (bl) {
-    ElMessageBox.confirm(
-        '尚未保存当前已录入凭证，确认要清空吗？',
-        '系统提示',
-        {confirmButtonText: '清空并重新录入', cancelButtonText: '继续录入', type: 'warning'}
-    )
-        .then(() => {
-          resetList()
-        })
-        .catch(() => {
-        });
-  } else {
-    resetList()
-  }
+  onNewVoucher()
 }
 
 function ensureVoucherPeriodFields() {
@@ -1858,7 +1919,7 @@ function shouldUseSubmitFlow() {
 
 // 保存数据（新建可直接保存，无需先暂存）
 const onSubmit = () => {
-  if (submitButtonLoading.value) {
+  if (submitButtonLoading.value || !canClickSave.value) {
     return false
   }
 
@@ -1902,16 +1963,22 @@ const onSubmit = () => {
       if (voucherId) {
         getOneVoucher(voucherId).then((voucherRes: any) => {
           applyLoadedVoucherData(voucherRes.data)
+          if (!props.dialog) {
+            router.replace({
+              path: route.path,
+              query: { ...route.query, id: String(voucherId) },
+            })
+          }
         })
       }
       if (props.dialog) {
         emit("submit", res)
-      } else {
-        router.push({path: "/voucher/voucher-index"})
       }
     }).catch((err: any) => {
       ElMessage.error(err?.message || '保存失败')
-      emit("submit", err)
+      if (props.dialog) {
+        emit("submit", err)
+      }
     }).finally(() => {
       submitButtonLoading.value = false
     })
@@ -1928,7 +1995,7 @@ const hasAnySummary = (items: any[]) => {
   return items.some((item) => !!String(item.summary || '').trim())
 }
 
-const prepareVoucherItemsForSave = (items: any[] = [], options?: { checkAuxiliary?: boolean }) => {
+const prepareVoucherItemsForSave = (items: any[] = [], options?: { checkAuxiliary?: boolean; requireBalance?: boolean }) => {
   const workingItems = items
       .filter((item: any) => !isOrphanSubjectItem(item))
       .filter((item: any) => {
@@ -1973,15 +2040,18 @@ const prepareVoucherItemsForSave = (items: any[] = [], options?: { checkAuxiliar
     }
   }
 
-  const debitTotal = workingItems.reduce((total: Decimal, item: any) => {
-    return total.plus(parseAmountValue(item.debitAmount))
-  }, new Decimal(0))
-  const creditTotal = workingItems.reduce((total: Decimal, item: any) => {
-    return total.plus(parseAmountValue(item.creditAmount))
-  }, new Decimal(0))
-  if (!debitTotal.eq(creditTotal) || debitTotal.isZero()) {
-    ElMessage.error('借贷不平衡，请检查分录金额')
-    return null
+  const requireBalance = options?.requireBalance !== false
+  if (requireBalance) {
+    const debitTotal = workingItems.reduce((total: Decimal, item: any) => {
+      return total.plus(parseAmountValue(item.debitAmount))
+    }, new Decimal(0))
+    const creditTotal = workingItems.reduce((total: Decimal, item: any) => {
+      return total.plus(parseAmountValue(item.creditAmount))
+    }, new Decimal(0))
+    if (!debitTotal.eq(creditTotal) || debitTotal.isZero()) {
+      ElMessage.error('借贷不平衡，请检查分录金额')
+      return null
+    }
   }
 
   return workingItems
@@ -2004,8 +2074,122 @@ const pruneOrphanVoucherItems = (items: any[] = []) => {
 
 const applyLoadedVoucherData = (data: any) => {
   formData.value = data
+  formData.value.wordHead = '记'
   normalizeVoucherItemsSubject(formData.value.items)
   createTableData()
+  markClean()
+  refreshNeighbors()
+}
+
+const markClean = () => {
+  cleanSnapshot.value = snapshotVoucherEditable(formData.value)
+}
+
+const isDirty = () => cleanSnapshot.value !== snapshotVoucherEditable(formData.value)
+
+const confirmDiscardIfDirty = async (): Promise<boolean> => {
+  if (!isDirty()) {
+    return true
+  }
+  try {
+    await ElMessageBox.confirm(
+      '当前凭证有未保存的修改，离开将丢弃这些修改。',
+      '未保存的修改',
+      {
+        confirmButtonText: '不保存离开',
+        cancelButtonText: '取消',
+        type: 'warning',
+        distinguishCancelAndClose: true,
+      },
+    )
+    return true
+  } catch {
+    return false
+  }
+}
+
+const resolveNeighborsFromCache = () => {
+  neighborIds.value = findNeighborVoucherIds(
+    navCache.value,
+    formData.value.id,
+    {
+      voucherDate: formData.value.voucherDate,
+      wordHead: formData.value.wordHead,
+      wordNum: formData.value.wordNum,
+    },
+  )
+}
+
+const refreshNeighbors = async () => {
+  if (!currBookStore.bookId) {
+    neighborIds.value = { prevId: null, nextId: null }
+    return
+  }
+  try {
+    const res: any = await listVouchers({
+      pageNumber: 1,
+      pageSize: 500,
+      bookId: currBookStore.bookId,
+      includeItems: false,
+      orderByColumn: 'voucherDate,wordHead,wordNum',
+      isAsc: 'asc,asc,asc',
+    })
+    const records = (res.data?.records || res.data || []) as any[]
+    navCache.value = records.map((row) => ({
+      id: row.id,
+      voucherDate: row.voucherDate,
+      wordHead: row.wordHead,
+      wordNum: row.wordNum,
+    }))
+    resolveNeighborsFromCache()
+  } catch {
+    neighborIds.value = { prevId: null, nextId: null }
+  }
+}
+
+const loadVoucherById = async (id: string | number) => {
+  navLoading.value = true
+  try {
+    const voucherRes: any = await getOneVoucher(id)
+    applyLoadedVoucherData(voucherRes.data)
+    await router.replace({
+      path: route.path,
+      query: {
+        ...route.query,
+        id: String(id),
+        mode: undefined,
+      },
+    })
+  } finally {
+    navLoading.value = false
+  }
+}
+
+const onBackToList = async () => {
+  if (!(await confirmDiscardIfDirty())) {
+    return
+  }
+  router.push({ path: '/voucher/voucher-index' })
+}
+
+const onNewVoucher = async () => {
+  if (!(await confirmDiscardIfDirty())) {
+    return
+  }
+  await router.replace({ path: route.path, query: {} })
+  resetList()
+  markClean()
+}
+
+const onGoNeighbor = async (dir: 'prev' | 'next') => {
+  const targetId = dir === 'prev' ? neighborIds.value.prevId : neighborIds.value.nextId
+  if (targetId == null) {
+    return
+  }
+  if (!(await confirmDiscardIfDirty())) {
+    return
+  }
+  await loadVoucherById(targetId)
 }
 
 const normalizeVoucherItemsSubject = (items: any[] = []) => {
@@ -2334,26 +2518,13 @@ onMounted(() => {
   if (!formData.value.voucherDate) {
     formData.value.voucherDate = voucherDate
   }
-  if (!props.dialog && route.query.mode !== 'print') {
-    resetList()
-  }
   if (!formData.value.companyName) {
     formData.value.companyName = currBookStore.getBookItem().companyName
   }
   if (!formData.value.bookId) {
     formData.value.bookId = currBookStore.bookId
   }
-  if (!formData.value.wordHead) {
-    formData.value.wordHead = '收'
-  }
-  if (!formData.value.wordNum) {
-    const now = new Date(voucherDate)
-    // 获取可用凭证子号
-    getVoucherAbleWordNum(formData.value.wordHead, parseTime(now, "{y}"), parseTime(now, "{m}"))
-        .then((res: any) => {
-          formData.value.wordNum = res.data
-        })
-  }
+  formData.value.wordHead = '记'
 
   if (route.query.mode === 'print') {
     const tempFormData = JSON.parse(window.localStorage.getItem("voucher-print-data") || 'null')
@@ -2365,7 +2536,7 @@ onMounted(() => {
   //传入当前账套ID
   subjectApi.getTree({
     bookId: currBookStore.bookId
-  }).then((res: any) => {
+  }).then(async (res: any) => {
     subjectList.value = res.data
     updateSubjectKeys(subjectList.value)
     if (route.query.mode === 'print') {
@@ -2380,16 +2551,49 @@ onMounted(() => {
       })
       return
     }
-    if (formData.value.id) {
-      normalizeVoucherItemsSubject(formData.value.items)
+
+    const routeId = route.query.id
+    if (routeId) {
+      try {
+        const voucherRes: any = await getOneVoucher(routeId)
+        applyLoadedVoucherData(voucherRes.data)
+      } catch (e: any) {
+        ElMessage.error(e?.message || '加载凭证失败')
+        resetList()
+        markClean()
+      }
+      return
     }
-    createTableData()
+
+    if (!props.dialog) {
+      resetList()
+      markClean()
+    } else if (formData.value.id) {
+      normalizeVoucherItemsSubject(formData.value.items)
+      createTableData()
+      markClean()
+    } else {
+      createTableData()
+      markClean()
+    }
   })
 })
 
 watch(bookAuxiliaryEnabled, () => {
   createTableData()
 })
+
+watch(
+  () => [
+    formData.value.id,
+    formData.value.voucherDate,
+    formData.value.wordHead,
+    formData.value.wordNum,
+  ],
+  () => {
+    resolveNeighborsFromCache()
+  },
+)
 
 // 清空 refs 对象以防止重复引用
 onBeforeUpdate(() => {
@@ -2424,6 +2628,113 @@ onBeforeUpdate(() => {
 .app-container {
   background-color: #FFFFFF !important;
   padding: 30px 20px;
+
+  .workspace-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    flex-wrap: wrap;
+    padding: 8px 0 12px;
+    background: #fff;
+  }
+
+  .workspace-toolbar-spacer,
+  .workspace-toolbar-status {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .workspace-toolbar-main,
+  .workspace-toolbar-nav,
+  .workspace-toolbar-actions,
+  .workspace-toolbar-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .workspace-toolbar-main {
+    flex: 0 1 auto;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .workspace-toolbar-status {
+    justify-content: flex-end;
+  }
+
+  .workspace-action-wrap {
+    display: inline-flex;
+  }
+
+  .workspace-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    line-height: 1.3;
+    color: $primary-color;
+    padding: 4px 12px;
+    border: 1px solid #d0d0d0;
+    background: #fff;
+    border-radius: 4px;
+
+    em {
+      font-style: normal;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    strong {
+      font-size: 18px;
+      font-weight: 700;
+    }
+  }
+
+  .voucher-word-head-fixed {
+    display: inline-block;
+    min-width: 28px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: $primary-color;
+    line-height: 24px;
+  }
+
+  .workspace-balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.3;
+    border: 1px solid #8fd19e;
+    background: #e8f8ee;
+    color: #0f7a2d;
+
+    em {
+      font-style: normal;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    strong {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    &.is-unbalanced {
+      border-color: #f0a8a0;
+      background: #fdeceb;
+      color: #c62828;
+    }
+  }
 
   .top-funs {
     position: fixed;
@@ -3242,6 +3553,35 @@ onBeforeUpdate(() => {
   --el-fill-color-blank: transparent;
 }
 
+/* 鼠标指针 + 插入符：白底上强制深色可见 */
+.rv-table .voucher-cell-input,
+.rv-table .voucher-cell-cascader,
+.rv-table .voucher-cell-input .el-input__wrapper,
+.rv-table .voucher-cell-cascader .el-input__wrapper,
+.rv-table .voucher-cell-input .el-input__inner,
+.rv-table .voucher-cell-cascader .el-input__inner,
+.rv-table .voucher-cell-input .el-textarea__inner {
+  caret-color: #983400 !important;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='24' viewBox='0 0 16 24'%3E%3Cpath d='M4 1h8M8 1v22M4 23h8' stroke='%23fff' stroke-width='3' stroke-linecap='square' fill='none'/%3E%3Cpath d='M4 1h8M8 1v22M4 23h8' stroke='%23983400' stroke-width='1.6' stroke-linecap='square' fill='none'/%3E%3C/svg%3E") 8 12, text !important;
+  color: #983400 !important;
+}
+
+.rv-table .voucher-cell-input .el-input__wrapper:hover,
+.rv-table .voucher-cell-input .el-input__wrapper.is-focus,
+.rv-table .voucher-cell-cascader .el-input__wrapper:hover,
+.rv-table .voucher-cell-cascader .el-input__wrapper.is-focus,
+.rv-table .voucher-cell-input .el-input__wrapper:hover .el-input__inner,
+.rv-table .voucher-cell-input .el-input__wrapper.is-focus .el-input__inner,
+.rv-table .voucher-cell-cascader .el-input__wrapper:hover .el-input__inner,
+.rv-table .voucher-cell-cascader .el-input__wrapper.is-focus .el-input__inner,
+.rv-table .voucher-cell-input .el-textarea__inner:hover,
+.rv-table .voucher-cell-input .el-textarea__inner:focus {
+  caret-color: #983400 !important;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='24' viewBox='0 0 16 24'%3E%3Cpath d='M4 1h8M8 1v22M4 23h8' stroke='%23fff' stroke-width='3' stroke-linecap='square' fill='none'/%3E%3Cpath d='M4 1h8M8 1v22M4 23h8' stroke='%23983400' stroke-width='1.6' stroke-linecap='square' fill='none'/%3E%3C/svg%3E") 8 12, text !important;
+  color: #983400 !important;
+  -webkit-text-fill-color: #983400 !important;
+}
+
 .rv-table-entry-row .voucher-cell-input .el-input__wrapper,
 .rv-table-entry-row .voucher-cell-cascader .el-input__wrapper {
   height: 48px !important;
@@ -3277,6 +3617,17 @@ onBeforeUpdate(() => {
   background: transparent !important;
 }
 
+.rv-table .voucher-cell-input .el-input__wrapper:hover .el-input__inner,
+.rv-table .voucher-cell-input .el-input__wrapper.is-focus .el-input__inner,
+.rv-table .voucher-cell-cascader .el-input__wrapper:hover .el-input__inner,
+.rv-table .voucher-cell-cascader .el-input__wrapper.is-focus .el-input__inner,
+.rv-table .voucher-cell-input .el-textarea__inner:hover,
+.rv-table .voucher-cell-input .el-textarea__inner:focus {
+  color: $primary-color !important;
+  -webkit-text-fill-color: $primary-color !important;
+  opacity: 1 !important;
+}
+
 .rv-table-entry-row .voucher-cell-input .el-input__inner,
 .rv-table-entry-row .voucher-cell-cascader .el-input__inner {
   height: 48px !important;
@@ -3303,7 +3654,9 @@ onBeforeUpdate(() => {
   box-shadow: none !important;
   border: none !important;
   background: transparent !important;
-  color: inherit;
+  color: $primary-color !important;
+  -webkit-text-fill-color: $primary-color !important;
+  opacity: 1 !important;
 }
 
 .rv-table-entry-row .voucher-cell-input .el-textarea__inner {
@@ -3324,7 +3677,9 @@ onBeforeUpdate(() => {
   resize: none !important;
   overflow: hidden;
   line-height: 1.4;
-  color: inherit;
+  color: $primary-color !important;
+  -webkit-text-fill-color: $primary-color !important;
+  opacity: 1 !important;
 }
 
 .rv-table .voucher-cell-amount .el-input__inner {
@@ -3361,7 +3716,17 @@ onBeforeUpdate(() => {
 }
 
 .rv-table .voucher-cell-cascader .el-input__inner::placeholder {
-  color: transparent;
+  color: #9a8f86;
+  opacity: 1;
+}
+
+/* 行悬停时保持单元格文字可见 */
+.rv-table.el-table .el-table__body tr:hover > td.el-table__cell {
+  color: $primary-color !important;
+}
+
+.rv-table.el-table {
+  --el-table-row-hover-bg-color: #f7f3ef;
 }
 
 .rv-table-entry-row:first-child {

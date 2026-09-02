@@ -38,6 +38,20 @@ public class SettlementController {
     	dto.setBookId(userInfo.getBookId());
     	return settlementService.checkout(dto);
     }
+
+    /**
+     * 反结账：仅最近已结月；body/query 可选 yearPeriod（须等于 currentTerm 上一月）。
+     */
+    @PostMapping(value = { "/uncheckout" })
+    public Message<String> uncheckout(@RequestBody(required = false) Settlement dto,
+                                      @RequestParam(value = "yearPeriod", required = false) String yearPeriod,
+                                      @CurrentUser UserInfo userInfo) {
+        String period = yearPeriod;
+        if (dto != null && org.apache.commons.lang3.StringUtils.isNotBlank(dto.getYearPeriod())) {
+            period = dto.getYearPeriod();
+        }
+        return settlementService.uncheckout(userInfo.getBookId(), period, userInfo.getId());
+    }
     
     @GetMapping(value = { "/verify" })
     public Message<List<SettlementVerifyVo>> verify(@CurrentUser UserInfo userInfo) {

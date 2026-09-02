@@ -54,6 +54,10 @@ public class JournalAccount  extends BaseEntity implements Serializable {
 	 */
 	BigDecimal openingBalance;
 	/**
+	 * 结账前的期初余额快照（供反结账写回；迁移前结账的账户为 null）
+	 */
+	BigDecimal prevOpeningBalance;
+	/**
 	 * 可用余额
 	 */
 	BigDecimal balance;

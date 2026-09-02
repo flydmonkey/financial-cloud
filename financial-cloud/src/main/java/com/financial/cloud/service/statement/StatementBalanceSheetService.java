@@ -326,6 +326,29 @@ public class StatementBalanceSheetService{
     }
 
     /**
+     * 删除结账写入的资产负债表快照（按账期；可选 periodType）。
+     */
+    public void deletePeriodSnapshot(String bookId, String yearPeriod, String periodType) {
+        LambdaQueryWrapper<StatementBalanceSheet> lqw = Wrappers.lambdaQuery();
+        lqw.eq(StatementBalanceSheet::getBookId, bookId);
+        lqw.eq(StatementBalanceSheet::getYearPeriod, yearPeriod);
+        if (periodType != null) {
+            lqw.eq(StatementBalanceSheet::getPeriodType, periodType);
+        }
+        List<StatementBalanceSheet> sheets = balanceSheetMapper.selectList(lqw);
+        if (CollectionUtils.isEmpty(sheets)) {
+            return;
+        }
+        for (StatementBalanceSheet sheet : sheets) {
+            LambdaQueryWrapper<StatementBalanceSheetItem> itemLqw = Wrappers.lambdaQuery();
+            itemLqw.eq(StatementBalanceSheetItem::getBookId, bookId);
+            itemLqw.eq(StatementBalanceSheetItem::getBalanceSheetId, sheet.getId());
+            balanceSheetItemMapper.delete(itemLqw);
+            balanceSheetMapper.deleteById(sheet.getId());
+        }
+    }
+
+    /**
      * 指定期结账入库
      *
      * @param dto 结账参数

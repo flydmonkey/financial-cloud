@@ -838,6 +838,7 @@ CREATE TABLE `journal_account` (
   `bank_no` varchar(30) DEFAULT NULL COMMENT '银行账户',
   `bank` varchar(100) DEFAULT NULL COMMENT '银行名称/机构',
   `opening_balance` decimal(10,2) DEFAULT '0.00' COMMENT 'DECIMAL(10,2)',
+  `prev_opening_balance` decimal(10,2) DEFAULT NULL COMMENT '结账前的期初余额快照',
   `balance` decimal(10,2) DEFAULT '0.00' COMMENT '可用余额',
   `sort_index` int DEFAULT NULL,
   `description` varchar(200) DEFAULT NULL COMMENT '备注',

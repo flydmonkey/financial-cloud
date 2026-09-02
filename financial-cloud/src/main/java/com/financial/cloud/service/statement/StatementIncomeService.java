@@ -396,6 +396,25 @@ public class StatementIncomeService{
     }
 
     /**
+     * 删除结账写入的利润表快照（反结账后允许重新生成）。
+     */
+    public void deletePeriodSnapshot(String bookId, String yearPeriod, String periodType) {
+        LambdaQueryWrapper<StatementIncome> lqw = Wrappers.lambdaQuery();
+        lqw.eq(StatementIncome::getBookId, bookId);
+        lqw.eq(StatementIncome::getYearPeriod, yearPeriod);
+        lqw.eq(StatementIncome::getPeriodType, periodType);
+        StatementIncome statementIncome = statementIncomeMapper.selectOne(lqw);
+        if (statementIncome == null) {
+            return;
+        }
+        LambdaQueryWrapper<StatementIncomeItem> itemlqw = Wrappers.lambdaQuery();
+        itemlqw.eq(StatementIncomeItem::getBookId, bookId);
+        itemlqw.eq(StatementIncomeItem::getIncomeId, statementIncome.getId());
+        statementIncomeItemMapper.delete(itemlqw);
+        statementIncomeMapper.deleteById(statementIncome.getId());
+    }
+
+    /**
      * 结账检查入库
      *
      * @param dto 结账参数

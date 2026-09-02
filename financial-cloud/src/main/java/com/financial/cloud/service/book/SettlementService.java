@@ -15,6 +15,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Settlement;
+import com.financial.cloud.domain.journal.JournalEntry;
+import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.dto.book.SettlementPageDto;
 import com.financial.cloud.dto.book.SettlementVerifyVo;
 import com.financial.cloud.dto.statement.StatementParamsDto;
@@ -23,6 +25,7 @@ import com.financial.cloud.dto.voucher.VoucherItemVo;
 import com.financial.cloud.enums.statement.StatementPeriodTypeEnum;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.book.SettlementMapper;
+import com.financial.cloud.repository.journal.JournalEntryMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.book.SettlementService;
@@ -33,6 +36,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,6 +68,8 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
     private final StatementSubjectBalanceService statementSubjectBalanceService;
     
     private final JournalAccountService journalAccountService;
+
+	private final JournalEntryMapper journalEntryMapper;
 
 	@Lazy
 	private final StatementReportService statementReportService;
@@ -168,6 +174,89 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
         }
 		return new Message<>(Message.SUCCESS, "结账完成");
 	}
+
+	/**
+	 * 反结账：仅允许打开「当前账期的上一月」。
+	 * 不级联反过账/删除凭证；迁移前结账（日记账无 prev_opening_balance）拒绝。
+	 *
+	 * @param bookId     账套
+	 * @param yearPeriod 可选，必须等于 currentTerm 上一月
+	 * @param userId     操作人（日志）
+	 */
+	@Transactional
+	public Message<String> uncheckout(String bookId, String yearPeriod, String userId) {
+		String currentTerm = configSysService.getCurrentTerm(bookId);
+		YearMonth currentYm = YearMonth.parse(currentTerm);
+		String targetTerm = currentYm.minusMonths(1).toString();
+
+		if (StringUtils.isNotBlank(yearPeriod) && !targetTerm.equals(yearPeriod.trim())) {
+			return rejectUncheckout(bookId, userId, yearPeriod, currentTerm,
+					"只能反结账最近已结期间[" + targetTerm + "]，不能反[" + yearPeriod + "]");
+		}
+
+		LambdaQueryWrapper<Settlement> wrapper = new LambdaQueryWrapper<>();
+		wrapper.eq(Settlement::getBookId, bookId);
+		wrapper.eq(Settlement::getYearPeriod, targetTerm);
+		Settlement stored = settlementMapper.selectOne(wrapper);
+		if (stored == null) {
+			return rejectUncheckout(bookId, userId, targetTerm, currentTerm,
+					"账期[" + targetTerm + "]未结账或不存在结账记录，无法反结账");
+		}
+
+		long voucherCount = voucherService.count(new LambdaQueryWrapper<Voucher>()
+				.eq(Voucher::getBookId, bookId)
+				.apply("DATE_FORMAT(voucher_date, '%Y-%m') = {0}", currentTerm));
+		if (voucherCount > 0) {
+			return rejectUncheckout(bookId, userId, targetTerm, currentTerm,
+					"当前账期[" + currentTerm + "]已有凭证，请先清理后再反结账");
+		}
+
+		long journalCount = journalEntryMapper.selectCount(new LambdaQueryWrapper<JournalEntry>()
+				.eq(JournalEntry::getBookId, bookId)
+				.apply("DATE_FORMAT(trade_date, '%Y-%m') = {0}", currentTerm));
+		if (journalCount > 0) {
+			return rejectUncheckout(bookId, userId, targetTerm, currentTerm,
+					"当前账期[" + currentTerm + "]已有日记账流水，请先清理后再反结账");
+		}
+
+		if (journalAccountService.hasAccountsMissingPrevOpening(bookId)) {
+			return rejectUncheckout(bookId, userId, targetTerm, currentTerm,
+					"该期结账未保存日记账期初快照，无法安全反结账（请使用升级后结账的账期）");
+		}
+
+		String month = StatementPeriodTypeEnum.MONTH.getValue();
+		statementSubjectBalanceService.deleteByBookAndPeriod(bookId, currentTerm, month);
+		journalAccountService.restoreOpeningFromPrev(bookId);
+
+		StatementParamsDto periodProbe = new StatementParamsDto();
+		statementIncomeService.deletePeriodSnapshot(bookId, targetTerm, month);
+		statementBalanceSheetService.deletePeriodSnapshot(bookId, targetTerm, month);
+		if (periodProbe.isQuarterReportMonth(targetTerm)) {
+			String quarter = StatementPeriodTypeEnum.QUARTER.getValue();
+			statementIncomeService.deletePeriodSnapshot(bookId, targetTerm, quarter);
+			statementBalanceSheetService.deletePeriodSnapshot(bookId, targetTerm, quarter);
+		}
+		if (periodProbe.isYearReportMonth(targetTerm)) {
+			String year = StatementPeriodTypeEnum.YEAR.getValue();
+			statementIncomeService.deletePeriodSnapshot(bookId, targetTerm, year);
+			statementBalanceSheetService.deletePeriodSnapshot(bookId, targetTerm, year);
+		}
+
+		settlementMapper.deleteById(stored.getId());
+		configSysService.updateCurrentTerm(bookId, targetTerm);
+
+		log.info("uncheckout success bookId={} userId={} reopened={} wasCurrent={}",
+				bookId, userId, targetTerm, currentTerm);
+		return new Message<>(Message.SUCCESS, "反结账完成，当前账期已回到[" + targetTerm + "]");
+	}
+
+	private Message<String> rejectUncheckout(String bookId, String userId, String targetTerm,
+			String currentTerm, String reason) {
+		log.warn("uncheckout rejected bookId={} userId={} target={} current={} reason={}",
+				bookId, userId, targetTerm, currentTerm, reason);
+		return Message.failed(reason);
+	}
+
 	public Message<String> check(String bookId,String period) {
 		String currentTerm = configSysService.getCurrentTerm(bookId);
         String termStart = configSysService.getTermStart(bookId);

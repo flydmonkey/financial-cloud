@@ -79,7 +79,8 @@ describe('chunkVoucherPrintPages', () => {
     assert.equal(pages[0].rows[0].lineNo, 1)
     assert.equal(pages[0].rows[1].lineNo, 2)
     assert.equal(pages[0].rows[2].isEmpty, true)
-    assert.equal(pages[0].rows[2].lineNo, null)
+    assert.equal(pages[0].rows[2].lineNo, 3)
+    assert.equal(pages[0].rows[5].lineNo, 6)
   })
 
   it('splits 7 lines into 2 pages; totals only marked on last', () => {

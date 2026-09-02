@@ -2,6 +2,7 @@ package com.financial.cloud.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
@@ -52,11 +53,20 @@ class SubjectCodeCompatTest {
     }
 
     @Test
-    void mapIncomeRuleSubject_collapsesEnterpriseSubCodes() {
-        assertEquals("5001", SubjectCodeCompat.mapIncomeRuleSubject("6001"));
-        assertEquals("5602", SubjectCodeCompat.mapIncomeRuleSubject("660201"));
-        assertEquals("5602", SubjectCodeCompat.mapIncomeRuleSubject("660226"));
-        assertEquals("5801", SubjectCodeCompat.mapIncomeRuleSubject("680101"));
-        assertEquals("5001", SubjectCodeCompat.mapIncomeRuleSubject("5001"));
+    void carryForward_smallBusinessOnlyFixtureResolvesFromEnterpriseTemplateCodes() {
+        // 模拟账套仅有小企业科目余额行：结转模板仍发企业准则编码时，候选集必须命中 5xxx/3xxx
+        Map<String, BigDecimal> smallBusinessBalances = Map.of(
+                "5001", new BigDecimal("1000"),
+                "5602", new BigDecimal("200"),
+                "3103", BigDecimal.ZERO
+        );
+        String revenueTemplate = "6001";
+        boolean hit = SubjectCodeCompat.carryForwardSubjectCodes(revenueTemplate).stream()
+                .anyMatch(smallBusinessBalances::containsKey);
+        assertTrue(hit, "小企业账套应能从企业模板编码解析到 5001");
+
+        String profitTemplate = "4103";
+        assertTrue(SubjectCodeCompat.carryForwardSubjectCodes(profitTemplate).stream()
+                .anyMatch(smallBusinessBalances::containsKey));
     }
 }

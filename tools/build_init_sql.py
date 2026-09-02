@@ -27,6 +27,7 @@ SCHEMA_EXTENSION_SQL = [
     SEED / "schema" / "fixed_asset_dispose_alter.sql",
     SEED / "schema" / "fixed_asset_purchase_alter.sql",
     SEED / "schema" / "fixed_asset_suspend_alter.sql",
+    SEED / "schema" / "journal_account_prev_opening.sql",
 ]
 
 MENU_SEED_SQL = [

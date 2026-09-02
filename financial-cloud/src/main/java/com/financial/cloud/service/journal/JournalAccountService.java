@@ -67,9 +67,29 @@ public class JournalAccountService extends ServiceImpl<JournalAccountMapper, Jou
 	}
 
 	/**
-	 * 结账：本期期初余额=余额
+	 * 结账：备份 opening 后 opening = balance
 	 */
 	public int checkout(String bookId) {
 		return this.getBaseMapper().checkout(bookId);
+	}
+
+	/**
+	 * 反结账：opening := prev_opening_balance
+	 */
+	public int restoreOpeningFromPrev(String bookId) {
+		return this.getBaseMapper().restoreOpeningFromPrev(bookId);
+	}
+
+	/**
+	 * 账套是否存在日记账账户，且任一账户缺少结账快照（迁移前已结账无法安全反结）。
+	 */
+	public boolean hasAccountsMissingPrevOpening(String bookId) {
+		LambdaQueryWrapper<JournalAccount> wrapper = new LambdaQueryWrapper<>();
+		wrapper.eq(JournalAccount::getBookId, bookId);
+		List<JournalAccount> accounts = this.getBaseMapper().selectList(wrapper);
+		if (accounts == null || accounts.isEmpty()) {
+			return false;
+		}
+		return accounts.stream().anyMatch(a -> a.getPrevOpeningBalance() == null);
 	}
 }

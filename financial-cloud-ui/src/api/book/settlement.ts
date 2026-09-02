@@ -17,6 +17,16 @@ export function checkout(query : any): any {
     })
 }
 
+/** 反结账：仅最近已结月；yearPeriod 须等于当前账期上一月 */
+export function uncheckout(yearPeriod?: string): any {
+    return request({
+        url: '/settlement/uncheckout',
+        method: 'post',
+        params: yearPeriod ? { yearPeriod } : undefined,
+        data: yearPeriod ? { yearPeriod } : {}
+    })
+}
+
 export function verify(): any {
     return request({
         url: '/settlement/verify',

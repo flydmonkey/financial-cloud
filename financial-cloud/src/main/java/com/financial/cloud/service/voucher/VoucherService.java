@@ -119,8 +119,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         for (Voucher voucher : vouchers) {
             VoucherSuccessiveDto voucherSuccessiveDto = VoucherSuccessiveDto.builder().build();
             BeanUtils.copyProperties(voucher, voucherSuccessiveDto);
-            String sourceWord = VoucherUtils.createWord(voucher.getWordHead(), voucher.getVoucherYear(),
-                    voucher.getVoucherMonth(), voucher.getWordNum());
+            String sourceWord = VoucherUtils.createWord(voucher.getWordHead(), voucher.getWordNum());
             voucherSuccessiveDto.setSourceWord(sourceWord);
 
             // 两种方式 1.顺序补齐 2.按日期补齐
@@ -137,8 +136,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                 voucherSuccessiveDto.setWordNum(currentNum);
                 resList.add(voucherSuccessiveDto);
             }
-            String targetWord = VoucherUtils.createWord(voucher.getWordHead(), voucher.getVoucherYear(),
-                    voucher.getVoucherMonth(), voucherSuccessiveDto.getWordNum());
+            String targetWord = VoucherUtils.createWord(voucher.getWordHead(), voucherSuccessiveDto.getWordNum());
             voucherSuccessiveDto.setTargetWord(targetWord);
             currentNum++;
         }
@@ -260,6 +258,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return new Message<>(Message.FAIL, "查询对象不存在");
         }
         VoucherVo booksVoucherVo = BeanUtil.copyProperties(voucher, VoucherVo.class);
+        normalizeDisplayWord(booksVoucherVo);
         UserInfo userInfo = userInfoMapper.selectById(booksVoucherVo.getCreatedBy());
         if (userInfo != null) {
             booksVoucherVo.setCreatedName(userInfo.getDisplayName());
@@ -322,6 +321,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         Map<String, VoucherVo> result = new LinkedHashMap<>();
         for (VoucherVo voucher : vouchers) {
+            normalizeDisplayWord(voucher);
             voucher.setCreatedName(userMap.get(voucher.getCreatedBy()));
             List<VoucherItemVo> itemVos = new ArrayList<>(
                     itemsByVoucher.getOrDefault(voucher.getId(), List.of()));
@@ -348,6 +348,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         Page<VoucherVo> result = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
         if (CollUtil.isNotEmpty(page.getRecords())) {
             result.setRecords(BeanUtil.copyToList(page.getRecords(), VoucherVo.class));
+            result.getRecords().forEach(this::normalizeDisplayWord);
         }
         // 更新制单人名称，可选加载分录明细
         if (!result.getRecords().isEmpty()) {
@@ -359,6 +360,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                     if (full != null) {
                         v.setItems(full.getItems());
                         v.setCreatedName(full.getCreatedName());
+                        v.setWord(full.getWord());
                     } else {
                         v.setItems(List.of());
                     }
@@ -519,15 +521,14 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         for (VoucherAuxiliary voucherAuxiliary : insertAuxiliary) {
             voucherAuxiliary.setBookId(dto.getBookId());
         }
-        // 凭证字校验与建立
-        // [字头]字第[年份月份]第[号码]号
-        String word = VoucherUtils.createWord(voucher.getWordHead(), voucher.getVoucherYear(), voucher.getVoucherMonth(), voucher.getWordNum());
+        // 凭证字校验与建立：记-9
+        String word = VoucherUtils.createWord(voucher.getWordHead(), voucher.getWordNum());
         Integer latestWordNum = getLatestWordNum(dto.getBookId(), voucher.getWordHead(), voucher.getVoucherYear(), voucher.getVoucherMonth());
         boolean isRepeat = latestWordNum != null && voucher.getWordNum() <= latestWordNum;
         if (isRepeat) {
             // 凭证字号码重复，重新生成
             voucher.setWordNum(latestWordNum + 1);
-            word = VoucherUtils.createWord(voucher.getWordHead(), voucher.getVoucherYear(), voucher.getVoucherMonth(), voucher.getWordNum());
+            word = VoucherUtils.createWord(voucher.getWordHead(), voucher.getWordNum());
         }
         voucher.setWord(word);
 
@@ -596,15 +597,18 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         for (VoucherAuxiliary voucherAuxiliary : insertAuxiliary) {
             voucherAuxiliary.setBookId(dto.getBookId());
         }
-        // 凭证字校验与建立
-        // [字头]字第[年份月份]第[号码]号
-        String word = VoucherUtils.createWord(booksVoucher.getWordHead(), booksVoucher.getVoucherYear(), booksVoucher.getVoucherMonth(), booksVoucher.getWordNum());
+        // 凭证字校验与建立：记-9（不按历史 word 字符串比较，避免旧格式误判重复）
+        String word = VoucherUtils.createWord(booksVoucher.getWordHead(), booksVoucher.getWordNum());
         Integer latestWordNum = getLatestWordNum(dto.getBookId(), booksVoucher.getWordHead(), booksVoucher.getVoucherYear(), booksVoucher.getVoucherMonth());
-        boolean isRepeat = latestWordNum != null && booksVoucher.getWordNum() <= latestWordNum && !currentVoucher.getWord().equals(word);
+        boolean sameWordSlot = Objects.equals(currentVoucher.getWordHead(), booksVoucher.getWordHead())
+                && Objects.equals(currentVoucher.getWordNum(), booksVoucher.getWordNum())
+                && Objects.equals(currentVoucher.getVoucherYear(), booksVoucher.getVoucherYear())
+                && Objects.equals(currentVoucher.getVoucherMonth(), booksVoucher.getVoucherMonth());
+        boolean isRepeat = latestWordNum != null && booksVoucher.getWordNum() <= latestWordNum && !sameWordSlot;
         if (isRepeat) {
             // 凭证字号码重复，重新生成
             booksVoucher.setWordNum(latestWordNum + 1);
-            word = VoucherUtils.createWord(booksVoucher.getWordHead(), booksVoucher.getVoucherYear(), booksVoucher.getVoucherMonth(), booksVoucher.getWordNum());
+            word = VoucherUtils.createWord(booksVoucher.getWordHead(), booksVoucher.getWordNum());
             // 更新最新的凭证字以便后续使用
             VoucherWord nextWord = VoucherWord.builder()
                     .bookId(dto.getBookId())
@@ -1221,6 +1225,13 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                         || !isBlankAmount(item.getCreditAmount())
                         || (item.getAuxiliary() != null && !item.getAuxiliary().isEmpty()))
                 .toList();
+    }
+
+    private void normalizeDisplayWord(Voucher voucher) {
+        String display = VoucherUtils.displayWord(voucher);
+        if (display != null) {
+            voucher.setWord(display);
+        }
     }
 
     /**

@@ -24,7 +24,7 @@
             parameterType="com.financial.cloud.dto.voucher.VoucherItemPageDto"
             resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
         SELECT
-        v.word,
+        CONCAT(IFNULL(NULLIF(TRIM(v.word_head), ''), '记'), '-', v.word_num) AS word,
         jvicf.*,
         i.id as voucherItemId,
         v.voucher_date as voucherDate,
@@ -58,7 +58,7 @@
             parameterType="com.financial.cloud.dto.voucher.VoucherItemPageDto"
             resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
         SELECT
-        v.word,
+        CONCAT(IFNULL(NULLIF(TRIM(v.word_head), ''), '记'), '-', v.word_num) AS word,
         jvicf.*,
         i.id as voucherItemId,
         v.voucher_date as voucherDate,

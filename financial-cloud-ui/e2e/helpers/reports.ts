@@ -172,7 +172,10 @@ export function assertIncomeFormulaChain(items: ReportLineItem[], tolerance = 0.
         })
         .reduce((sum, item) => {
             const val = num(item.currentBalance)
-            return (item.symbol === '-' ? sum - val : sum + val)
+            // 与 StatementIncomeRules：section1 加项（名称「加」）按 symbol='-' 计入
+            const name = String(item.itemName || '')
+            const symbol = name.startsWith('加') ? '-' : item.symbol
+            return symbol === '-' ? sum - val : sum + val
         }, 0)
 
     const section2 = items
@@ -197,7 +200,8 @@ export function assertIncomeFormulaChain(items: ReportLineItem[], tolerance = 0.
 
     expect(Math.abs(operatingProfit - (revenue - section1))).toBeLessThanOrEqual(tolerance)
     expect(Math.abs(totalProfit - (operatingProfit + section2))).toBeLessThanOrEqual(tolerance)
-    expect(Math.abs(netProfit - (totalProfit - section3))).toBeLessThanOrEqual(tolerance)
+    // section3 已含 symbol 符号（所得税为负），与利润总额相加得净利润
+    expect(Math.abs(netProfit - (totalProfit + section3))).toBeLessThanOrEqual(tolerance)
 
     return {revenue, operatingProfit, totalProfit, netProfit, section1, section2, section3}
 }

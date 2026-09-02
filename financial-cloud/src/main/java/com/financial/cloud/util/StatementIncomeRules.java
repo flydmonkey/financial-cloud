@@ -137,6 +137,11 @@ public final class StatementIncomeRules {
      * 逐级计算营业利润(2)、利润总额(3)、净利润(4)。
      */
     public static void calculateDerivedLines(List<StatementIncomeItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        normalizeSection1AdditionSymbols(items);
+
         Map<String, StatementIncomeItem> itemsMap = new HashMap<>();
         for (StatementIncomeItem item : items) {
             itemsMap.put(item.getItemCode(), item);
@@ -147,6 +152,7 @@ public final class StatementIncomeRules {
         StatementIncomeItem revenueItem = itemsMap.get("1");
         StatementIncomeItem operatingProfitItem = itemsMap.get("2");
         if (revenueItem != null && operatingProfitItem != null) {
+            // section1 约定：symbol='+' 为减项，symbol='-' 为加项（如投资收益）
             operatingProfitItem.setCurrentBalance(
                     defaultZero(revenueItem.getCurrentBalance()).subtract(section1Current));
             operatingProfitItem.setCumulativeBalance(
@@ -157,6 +163,7 @@ public final class StatementIncomeRules {
         BigDecimal section2Year = sumSection(items, "2", 3, true);
         StatementIncomeItem totalProfitItem = itemsMap.get("3");
         if (operatingProfitItem != null && totalProfitItem != null) {
+            // section2 约定：带符号加总（加项 + / 减项 -）
             totalProfitItem.setCurrentBalance(
                     defaultZero(operatingProfitItem.getCurrentBalance()).add(section2Current));
             totalProfitItem.setCumulativeBalance(
@@ -167,10 +174,31 @@ public final class StatementIncomeRules {
         BigDecimal section3Year = sumSectionExcluding(items, "3", true);
         StatementIncomeItem netProfitItem = itemsMap.get("4");
         if (totalProfitItem != null && netProfitItem != null) {
+            // section3 与 section2 同口径：带符号加总（所得税 symbol='-' → 负数）
             netProfitItem.setCurrentBalance(
-                    defaultZero(totalProfitItem.getCurrentBalance()).subtract(section3Current));
+                    defaultZero(totalProfitItem.getCurrentBalance()).add(section3Current));
             netProfitItem.setCumulativeBalance(
-                    defaultZero(totalProfitItem.getCumulativeBalance()).subtract(section3Year));
+                    defaultZero(totalProfitItem.getCumulativeBalance()).add(section3Year));
+        }
+    }
+
+    /**
+     * section1 用「收入 − 带符号合计」：加项（投资收益等）必须为 '-'，否则会被当成减项。
+     */
+    static void normalizeSection1AdditionSymbols(List<StatementIncomeItem> items) {
+        for (StatementIncomeItem item : items) {
+            if (item == null || item.getItemCode() == null) {
+                continue;
+            }
+            String code = item.getItemCode();
+            if (code.length() != 3 || !code.startsWith("1")) {
+                continue;
+            }
+            String name = StringUtils.defaultString(item.getItemName());
+            if (name.startsWith("加")
+                    && StatementSymbolEnum.PLUS.getValue().equalsIgnoreCase(item.getSymbol())) {
+                item.setSymbol(StatementSymbolEnum.MINUS.getValue());
+            }
         }
     }
 
@@ -181,6 +209,7 @@ public final class StatementIncomeRules {
         if (items == null || items.isEmpty()) {
             return null;
         }
+        normalizeSection1AdditionSymbols(items);
         Map<String, StatementIncomeItem> itemsMap = new HashMap<>();
         for (StatementIncomeItem item : items) {
             itemsMap.put(item.getItemCode(), item);
@@ -234,7 +263,7 @@ public final class StatementIncomeRules {
             boolean cumulative) {
         BigDecimal total = lineAmount(itemsMap.get("3"), cumulative);
         BigDecimal section3 = sumSectionExcluding(items, "3", cumulative);
-        BigDecimal expected = total.subtract(section3);
+        BigDecimal expected = total.add(section3);
         BigDecimal actual = lineAmount(itemsMap.get("4"), cumulative);
         return actual.subtract(expected);
     }

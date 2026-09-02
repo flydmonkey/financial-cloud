@@ -10,7 +10,7 @@
       </div>
       <div class="right">
         <!--
-        <el-tooltip content="选择语言" effect="dark" placement="bottom">
+        <el-tooltip content="语言选择" effect="dark" placement="bottom">
           <language class="right-menu-item hover-effect"></language>
         </el-tooltip>
         -->
@@ -110,7 +110,7 @@
           class="other"
           style="width: 100%;display: flex;"
         >
-          其他登录
+          其他方式
           <div
             v-for="other in others"
             class="item"
@@ -127,7 +127,7 @@
         </div>
       </el-form-item>
     </el-form>
-    <!-- tip -->
+    <!--  底部  -->
     <Footer />
   </div>
 </template>
@@ -152,7 +152,7 @@ import type {FormInstance, FormRules} from 'element-plus';
 const userStore: any = useUserStore();
 const route: any = useRoute();
 const router: any = useRouter();
-const proxy: any = getCurrentInstance()!.proxy;
+const {proxy} = getCurrentInstance()!;
 const loginForm: any = ref({
   username: "",
   password: "",
@@ -174,13 +174,13 @@ const staticAppInfo: any = ref({
 });
 const codeUrl: any = ref("");
 const loading: any = ref(false);
-// captcha
+// 验证码开关
 const captchaEnabled: any = ref(false);
-// state
+// 注册开关
 const register: any = ref(false);
 const redirect: any = ref("");
 
-// captcha?
+//其他登录方式
 interface OtherItem {
   id: any;
   name: any;
@@ -202,7 +202,7 @@ function handleLogin(): any {
       loading.value = true;
       loginForm.value.state = state.value;
 
-      // oauth action params
+      // 调用action的登录方法
       userStore.login(loginForm.value).then((res: any) => {
         const query: any = route.query;
         const otherQueryParams: any = Object.keys(query).reduce((acc: any, cur: any) => {
@@ -221,7 +221,7 @@ function handleLogin(): any {
       }).catch((err: any) => {
         console.error(err)
         loading.value = false;
-        // captcha??
+        // 重新获取验证码
         if (captchaEnabled.value) {
           getCode();
         }
@@ -359,13 +359,13 @@ getState();
   margin: 70px auto;
   padding: 32px 20px 24px 20px;
   width: 380px;
-  background-color: rgba(255, 255, 255, 0.7);
-  border: 1px solid #eaeaea;
+  background-color: rgba(255, 255, 255, 0.7); // 半透明背景色
+  border: 1px solid #eaeaea; // 边框
   border-radius: 10px;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease; // 平滑过渡效果
 
   &:hover {
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); // 鼠标悬停时的阴影
   }
 
 

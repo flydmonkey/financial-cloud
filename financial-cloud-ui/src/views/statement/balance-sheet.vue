@@ -2,76 +2,133 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="" prop="periodType">
-            <el-radio-group v-model="queryParams.periodType" @change="handlePeriodType">
-              <template v-for="(item, index) in period_type" :key="index">
-                <el-radio-button :label="item.label" :value="item.value"></el-radio-button>
+        <el-form
+          v-show="showSearch"
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          label-width="68px"
+        >
+          <el-form-item
+            label=""
+            prop="periodType"
+          >
+            <el-radio-group
+              v-model="queryParams.periodType"
+              @change="handlePeriodType"
+            >
+              <template
+                v-for="(item, index) in period_type"
+                :key="index"
+              >
+                <el-radio-button
+                  :label="item.label"
+                  :value="item.value"
+                />
               </template>
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item label="选择月度" prop="reportDate"
-                        v-if="queryParams.periodType === 'month'">
+          <el-form-item
+            v-if="queryParams.periodType === 'month'"
+            label="选择月度"
+            prop="reportDate"
+          >
             <el-date-picker
-                style="width: 130px"
-                v-model="queryParams.date"
-                type="month"
-                :clearable="false"
-                value-format="YYYY-MM"
-                format="YYYY年MM期"
-                :disabled-date="disabledDate"
-                @change="handleQuery"
-                placeholder="选择月">
-            </el-date-picker>
+              v-model="queryParams.date"
+              style="width: 130px"
+              type="month"
+              :clearable="false"
+              value-format="YYYY-MM"
+              format="YYYY年MM期"
+              :disabled-date="disabledDate"
+              placeholder="选择月"
+              @change="handleQuery"
+            />
           </el-form-item>
 
-          <el-form-item label="选择" prop="reportDate"
-                        v-if="queryParams.periodType === 'quarter' || queryParams.periodType === 'halfYear'">
+          <el-form-item
+            v-if="queryParams.periodType === 'quarter' || queryParams.periodType === 'halfYear'"
+            label="选择"
+            prop="reportDate"
+          >
             <el-date-picker
-                style="width: 100px"
-                v-model="queryParams.date"
-                :clearable="false"
-                type="year"
-                value-format="YYYY"
-                :disabled-date="disabledDate"
-                :prefix-icon="customPrefix"
-                @change="handleQuery"
-                placeholder="选择年">
-            </el-date-picker>
-            <el-radio-group v-if="queryParams.periodType === 'quarter'" style="margin-left: 10px"
-                            v-model="queryParams.reportQuarter" @change="handleQuery">
-              <el-radio-button label="第一季度" value="Q1"></el-radio-button>
-              <el-radio-button v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-04')"
-                               label="第二季度"
-                               value="Q2"></el-radio-button>
-              <el-radio-button v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-07')"
-                               label="第三季度" value="Q3"></el-radio-button>
-              <el-radio-button v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-10')"
-                               label="第四季度" value="Q4"></el-radio-button>
+              v-model="queryParams.date"
+              style="width: 100px"
+              :clearable="false"
+              type="year"
+              value-format="YYYY"
+              :disabled-date="disabledDate"
+              :prefix-icon="customPrefix"
+              placeholder="选择年"
+              @change="handleQuery"
+            />
+            <el-radio-group
+              v-if="queryParams.periodType === 'quarter'"
+              v-model="queryParams.reportQuarter"
+              style="margin-left: 10px"
+              @change="handleQuery"
+            >
+              <el-radio-button
+                label="第一季度"
+                value="Q1"
+              />
+              <el-radio-button
+                v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-04')"
+                label="第二季度"
+                value="Q2"
+              />
+              <el-radio-button
+                v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-07')"
+                label="第三季度"
+                value="Q3"
+              />
+              <el-radio-button
+                v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-10')"
+                label="第四季度"
+                value="Q4"
+              />
             </el-radio-group>
-            <el-radio-group v-if="queryParams.periodType === 'halfYear'" style="margin-left: 10px"
-                            v-model="queryParams.reportQuarter" @change="handleQuery">
-              <el-radio-button label="上半年" value="H1"></el-radio-button>
-              <el-radio-button label="下半年" value="H2"></el-radio-button>
+            <el-radio-group
+              v-if="queryParams.periodType === 'halfYear'"
+              v-model="queryParams.reportQuarter"
+              style="margin-left: 10px"
+              @change="handleQuery"
+            >
+              <el-radio-button
+                label="上半年"
+                value="H1"
+              />
+              <el-radio-button
+                label="下半年"
+                value="H2"
+              />
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item label="选择年度" prop="reportDate"
-                        v-if="queryParams.periodType === 'year'">
+          <el-form-item
+            v-if="queryParams.periodType === 'year'"
+            label="选择年度"
+            prop="reportDate"
+          >
             <el-date-picker
-                @change="handleQuery"
-                v-model="queryParams.date"
-                type="year"
-                style="width: 100px"
-                :clearable="false"
-                :disabled-date="disabledDate"
-                value-format="YYYY"
-                placeholder="选择年">
-            </el-date-picker>
+              v-model="queryParams.date"
+              type="year"
+              style="width: 100px"
+              :clearable="false"
+              :disabled-date="disabledDate"
+              value-format="YYYY"
+              placeholder="选择年"
+              @change="handleQuery"
+            />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleQuery">刷新</el-button>
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
+              刷新
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -79,95 +136,188 @@
     <el-card class="common-card">
       <div class="btn-form">
         <!--        <el-button type="primary" @click="handleExport">导出</el-button>-->
-        <el-button :type="ableEdit ? 'warning' : 'primary'" @click="doConfig">
+        <el-button
+          :type="ableEdit ? 'warning' : 'primary'"
+          @click="doConfig"
+        >
           {{ ableEdit ? '停止编辑' : '启用编辑' }}
         </el-button>
 
         <div class="btn-form-right">
           <!--          <el-button type="primary" @click="handlePrint">打印</el-button>-->
-          <el-button @click="handleExport">导出</el-button>
+          <el-button @click="handleExport">
+            导出
+          </el-button>
         </div>
       </div>
 
       <div ref="printArea">
-        <el-table id="export-table" v-loading="loading" :data="balanceSheetList" border
-                  :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-                  row-key="id" default-expand-all
-                  height="610">
-          <el-table-column label="资产" align="left" header-align="left" prop="itemName">
+        <el-table
+          id="export-table"
+          v-loading="loading"
+          :data="balanceSheetList"
+          border
+          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          row-key="id"
+          default-expand-all
+          height="610"
+        >
+          <el-table-column
+            label="资产"
+            align="left"
+            header-align="left"
+            prop="itemName"
+          >
             <template #default="scope">
-              <span :style="{'text-indent': scope.row.level + 'em',
-               display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.level === 1 ? 'bold' : ''}">
+              <span
+                :style="{'text-indent': scope.row.level + 'em',
+                         display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.level === 1 ? 'bold' : ''}"
+              >
                 {{ scope.row.symbol === '-' ? '减：' : '' }}{{ scope.row.itemName }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="行次" align="center" prop="sortIndex" width="100"/>
-          <el-table-column label="期末余额" align="right" header-align="center" width="140" prop="currentBalance">
+          <el-table-column
+            label="行次"
+            align="center"
+            prop="sortIndex"
+            width="100"
+          />
+          <el-table-column
+            label="期末余额"
+            align="right"
+            header-align="center"
+            width="140"
+            prop="currentBalance"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.currentBalance, '') }}
             </template>
           </el-table-column>
-          <el-table-column label="年初余额" align="right" header-align="center" width="140" prop="initialBalance">
+          <el-table-column
+            label="年初余额"
+            align="right"
+            header-align="center"
+            width="140"
+            prop="initialBalance"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.initialBalance, '') }}
             </template>
           </el-table-column>
-          <el-table-column v-if="ableEdit" label="操作" align="center" width="100">
+          <el-table-column
+            v-if="ableEdit"
+            label="操作"
+            align="center"
+            width="100"
+          >
             <template #default="scope">
               <div v-if="scope.row.itemName !='' ">
-                <el-tooltip v-if="scope.row.level > 1" content="编辑">
-                  <el-button type="primary"
-                             link @click="handleEdit(scope.row, 'asset')" icon="Edit"></el-button>
+                <el-tooltip
+                  v-if="scope.row.level > 1"
+                  content="编辑"
+                >
+                  <el-button
+                    type="primary"
+                    link
+                    icon="Edit"
+                    @click="handleEdit(scope.row, 'asset')"
+                  />
                 </el-tooltip>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="负债和所有者权益" header-align="left" align="left" prop="liabilityItemName">
+          <el-table-column
+            label="负债和所有者权益"
+            header-align="left"
+            align="left"
+            prop="liabilityItemName"
+          >
             <template #default="scope">
-              <span :style="{'text-indent': scope.row.liabilityLevel + 'em',
-               display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.liabilityLevel === 1 ? 'bold' : ''}">
+              <span
+                :style="{'text-indent': scope.row.liabilityLevel + 'em',
+                         display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.liabilityLevel === 1 ? 'bold' : ''}"
+              >
                 {{ scope.row.liabilitySymbol === '-' ? '减：' : '' }}{{ scope.row.liabilityItemName }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="行次" align="center" width="100" prop="liabilitySortIndex"/>
-          <el-table-column label="期末余额" align="right" header-align="center" width="140"
-                           prop="liabilityCurrentBalance">
+          <el-table-column
+            label="行次"
+            align="center"
+            width="100"
+            prop="liabilitySortIndex"
+          />
+          <el-table-column
+            label="期末余额"
+            align="right"
+            header-align="center"
+            width="140"
+            prop="liabilityCurrentBalance"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.liabilityCurrentBalance, '') }}
             </template>
           </el-table-column>
-          <el-table-column label="年初余额" align="right" header-align="center" width="140"
-                           prop="liabilityInitialBalance">
+          <el-table-column
+            label="年初余额"
+            align="right"
+            header-align="center"
+            width="140"
+            prop="liabilityInitialBalance"
+          >
             <template #default="scope">
               {{ formatAmount(scope.row.liabilityInitialBalance, '') }}
             </template>
           </el-table-column>
 
-          <el-table-column v-if="ableEdit" label="操作" align="center" width="100">
+          <el-table-column
+            v-if="ableEdit"
+            label="操作"
+            align="center"
+            width="100"
+          >
             <template #default="scope">
               <div v-if="scope.row.liabilityItemName !='' ">
-                <el-tooltip v-if="scope.row.liabilityLevel > 1" content="编辑">
-                  <el-button type="primary"
-                             link @click="handleEdit(scope.row, 'liability')" icon="Edit"></el-button>
+                <el-tooltip
+                  v-if="scope.row.liabilityLevel > 1"
+                  content="编辑"
+                >
+                  <el-button
+                    type="primary"
+                    link
+                    icon="Edit"
+                    @click="handleEdit(scope.row, 'liability')"
+                  />
                 </el-tooltip>
               </div>
             </template>
           </el-table-column>
 
           <template #empty>
-            <div class="empty-text">暂无数据</div>
+            <div class="empty-text">
+              暂无数据
+            </div>
             <!--            <el-button @click="handleAdd(null, 'liability')">立即添加</el-button>-->
           </template>
         </el-table>
       </div>
     </el-card>
 
-    <el-dialog v-model="dialog.visible" :close-on-click-modal="false" width="800" style="margin-top: 30vh !important;">
+    <el-dialog
+      v-model="dialog.visible"
+      :close-on-click-modal="false"
+      width="800"
+      style="margin-top: 30vh !important;"
+    >
       <template #default>
-        <el-form :model="form" :rules="rules" ref="balanceSheetRef" label-width="68px"
-                 inline-message>
+        <el-form
+          ref="balanceSheetRef"
+          :model="form"
+          :rules="rules"
+          label-width="68px"
+          inline-message
+        >
           <!--          <el-form-item v-if="!form.id" label="级别" prop="level">-->
           <!--            <el-radio-group :disabled="!form.parentId" v-model="form.level">-->
           <!--              <el-radio-button label="本级" :value="level"/>-->
@@ -183,96 +333,208 @@
           <!--          <el-form-item label="编码" prop="itemCode">-->
           <!--            <el-input disabled style="width: 300px" v-model="form.itemCode" placeholder="请输入编码"/>-->
           <!--          </el-form-item>-->
-          <el-form-item label="编码" prop="itemCode">
-            <el-input style="width: 300px" v-model="form.itemCode" placeholder="请输入编码" disabled/>
+          <el-form-item
+            label="编码"
+            prop="itemCode"
+          >
+            <el-input
+              v-model="form.itemCode"
+              style="width: 300px"
+              placeholder="请输入编码"
+              disabled
+            />
           </el-form-item>
-          <el-form-item label="名称" prop="itemName">
-            <el-input style="width: 300px" v-model="form.itemName" placeholder="请输入名称"/>
+          <el-form-item
+            label="名称"
+            prop="itemName"
+          >
+            <el-input
+              v-model="form.itemName"
+              style="width: 300px"
+              placeholder="请输入名称"
+            />
           </el-form-item>
           <!--          <el-form-item label="行号" prop="sortIndex">-->
           <!--            <el-input-number disabled :min="1" v-model="form.sortIndex" placeholder="请输入行号"/>-->
           <!--          </el-form-item>-->
-          <el-form-item v-if="form.level === 2" label="计算" prop="symbol">
+          <el-form-item
+            v-if="form.level === 2"
+            label="计算"
+            prop="symbol"
+          >
             <el-radio-group v-model="form.symbol">
-              <el-radio-button label="加" value="+"/>
-              <el-radio-button label="减" value="-"/>
-              <el-radio-button label="函数" value="f"/>
+              <el-radio-button
+                label="加"
+                value="+"
+              />
+              <el-radio-button
+                label="减"
+                value="-"
+              />
+              <el-radio-button
+                label="函数"
+                value="f"
+              />
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="行号" prop="sortIndex">
-            <el-input-number :min="1" v-model="form.sortIndex" placeholder="请输入行号"/>
+          <el-form-item
+            label="行号"
+            prop="sortIndex"
+          >
+            <el-input-number
+              v-model="form.sortIndex"
+              :min="1"
+              placeholder="请输入行号"
+            />
           </el-form-item>
-          <el-table v-if="form.level !== 1" v-loading="loading" :data="form.rules" border size="small"
-                    :cell-class-name="tableCellClassName"
-                    @cell-click="cellMouseEnter"
-                    :row-style="{height: '46px'}">
-            <el-table-column label="科目" align="left" header-align="center" prop="subjectCode" width="200">
+          <el-table
+            v-if="form.level !== 1"
+            v-loading="loading"
+            :data="form.rules"
+            border
+            size="small"
+            :cell-class-name="tableCellClassName"
+            :row-style="{height: '46px'}"
+            @cell-click="cellMouseEnter"
+          >
+            <el-table-column
+              label="科目"
+              align="left"
+              header-align="center"
+              prop="subjectCode"
+              width="200"
+            >
               <template #default="scope">
                 <span v-if="!scope.row.editing || scope.row.columnIndex !== 0">
                   {{ subjectKeyIdItem[scope.row.subjectCode]?.name }}
                 </span>
-                <el-cascader v-else style="width: 100%" filterable
-                             v-model="scope.row.subjectCode"
-                             :options="subjectList"
-                             :props="cascaderSubjectPropsCopy"
-                             @change="handleSubjectChange(scope, $event)"
-                             :filter-method="cascaderSubjectProps.filterMethod"
-                             @visible-change="handleSubjectVisibleChange"/>
+                <el-cascader
+                  v-else
+                  v-model="scope.row.subjectCode"
+                  style="width: 100%"
+                  filterable
+                  :options="subjectList"
+                  :props="cascaderSubjectPropsCopy"
+                  :filter-method="cascaderSubjectProps.filterMethod"
+                  @change="handleSubjectChange(scope, $event)"
+                  @visible-change="handleSubjectVisibleChange"
+                />
               </template>
             </el-table-column>
-            <el-table-column label="计算" align="center" prop="symbol" width="100">
+            <el-table-column
+              label="计算"
+              align="center"
+              prop="symbol"
+              width="100"
+            >
               <template #default="scope">
                 <span v-if="!scope.row.editing || scope.row.columnIndex !== 1">
-                 {{ scope.row.symbol }}
+                  {{ scope.row.symbol }}
                 </span>
-                <el-select v-else v-model="scope.row.symbol" placeholder="选择" @blur="closeEditAll">
-                  <el-option label="+" value="+"></el-option>
-                  <el-option label="-" value="-"></el-option>
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="取数规则" align="center" prop="rule">
-              <template #default="scope">
-                 <span v-if="!scope.row.editing || scope.row.columnIndex !== 2">
-                   <dict-tag :options="account_balance_type" :value="scope.row.rule"></dict-tag>
-                </span>
-                <el-select v-else v-model="scope.row.rule" placeholder="选择" @blur="closeEditAll">
+                <el-select
+                  v-else
+                  v-model="scope.row.symbol"
+                  placeholder="选择"
+                  @blur="closeEditAll"
+                >
                   <el-option
-                      v-for="dict in account_balance_type"
-                      :key="dict.value"
-                      :label="dict.label"
-                      :value="dict.value"
+                    label="+"
+                    value="+"
+                  />
+                  <el-option
+                    label="-"
+                    value="-"
                   />
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="期末余额" align="right" header-align="center" prop="closingBalance">
+            <el-table-column
+              label="取数规则"
+              align="center"
+              prop="rule"
+            >
+              <template #default="scope">
+                <span v-if="!scope.row.editing || scope.row.columnIndex !== 2">
+                  <dict-tag
+                    :options="account_balance_type"
+                    :value="scope.row.rule"
+                  />
+                </span>
+                <el-select
+                  v-else
+                  v-model="scope.row.rule"
+                  placeholder="选择"
+                  @blur="closeEditAll"
+                >
+                  <el-option
+                    v-for="dict in account_balance_type"
+                    :key="dict.value"
+                    :label="dict.label"
+                    :value="dict.value"
+                  />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="期末余额"
+              align="right"
+              header-align="center"
+              prop="closingBalance"
+            >
               <template #default="scope">
                 <span>{{ formatAmount(scope.row.closingBalance, '') }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="年初余额" align="right" header-align="center" prop="openingYearBalance">
+            <el-table-column
+              label="年初余额"
+              align="right"
+              header-align="center"
+              prop="openingYearBalance"
+            >
               <template #default="scope">
                 <span>{{ formatAmount(scope.row.openingYearBalance, '') }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" align="center" width="110">
+            <el-table-column
+              label="操作"
+              align="center"
+              width="110"
+            >
               <template #default="scope">
-                <el-popconfirm title="确认删除吗？" @confirm="form.rules.splice(scope.$index, 1)">
+                <el-popconfirm
+                  title="确认删除吗？"
+                  @confirm="form.rules.splice(scope.$index, 1)"
+                >
                   <template #reference>
-                    <el-button size="small" icon="Delete"></el-button>
+                    <el-button
+                      size="small"
+                      icon="Delete"
+                    />
                   </template>
                 </el-popconfirm>
               </template>
             </el-table-column>
           </el-table>
-          <el-button v-if="form.level !== 1" icon="Plus" style="width: 100%" @click="form.rules.push({})"></el-button>
+          <el-button
+            v-if="form.level !== 1"
+            icon="Plus"
+            style="width: 100%"
+            @click="form.rules.push({})"
+          />
         </el-form>
       </template>
       <template #footer>
         <div style="flex: auto">
-          <el-button @click="dialog.visible = false">{{ t('org.cancel') }}</el-button>
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">{{ t('org.confirm') }}</el-button>
+          <el-button @click="dialog.visible = false">
+            {{ t('org.cancel') }}
+          </el-button>
+          <el-button
+            :loading="buttonLoading"
+            type="primary"
+            @click="submitForm"
+          >
+            {{ t('org.confirm') }}
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -300,7 +562,7 @@ import * as subjectApi from "@/api/standard/standard-subject";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
 
 const {t} = useI18n()
-const proxy: any = getCurrentInstance()!.proxy;
+const {proxy} = getCurrentInstance();
 const {account_balance_type, period_type} = proxy?.useDict("account_balance_type", "period_type");
 const currBookStore = booksSetStore()
 const ableEdit = ref(false);

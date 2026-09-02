@@ -1,37 +1,58 @@
 <template>
-  <el-card shadow="hover" header-class="el-card-header">
+  <el-card
+    shadow="hover"
+    header-class="el-card-header"
+  >
     <template #header>
       <div class="card-title">
         <span>费用</span>
-        <el-select style="width: 120px" v-model="queryParams.accountPeriod" placeholder="" @change="getList">
+        <el-select
+          v-model="queryParams.accountPeriod"
+          style="width: 120px"
+          placeholder=""
+          @change="getList"
+        >
           <template #label>
             <span>{{ accountPeriod }}</span>
           </template>
-          <template v-for="(item, index) in statistics_period" :key="index">
-            <el-option :label="item.label" :value="item.value"></el-option>
+          <template
+            v-for="(item, index) in statistics_period"
+            :key="index"
+          >
+            <el-option
+              :label="item.label"
+              :value="item.value"
+            />
           </template>
         </el-select>
       </div>
     </template>
 
-    <div class="card-content" v-loading="loading">
+    <div
+      v-loading="loading"
+      class="card-content"
+    >
       <div class="card-content-item">
         <div>
           <div class="flex justify-items-center">
             <span>费用</span>
-            <el-tooltip content=""
-                        placement="top">
+            <el-tooltip
+              content=""
+              placement="top"
+            >
               <template #content>
-              <span>
-               所选期间内的费用，数据来源为利润表。
-              </span>
+                <span>
+                  所选期间内的费用，数据来源为利润表。
+                </span>
               </template>
               <el-icon>
-                <Warning/>
+                <Warning />
               </el-icon>
             </el-tooltip>
           </div>
-          <div class="bold">{{ formatAmount(resData.balance) }}</div>
+          <div class="bold">
+            {{ formatAmount(resData.balance) }}
+          </div>
         </div>
         <div class="small">
           <div>较上期：{{ resData.balanceLast }}%</div>
@@ -39,21 +60,31 @@
         </div>
       </div>
 
-      <div ref="chartRef" style="width: 100%; height: 250px"></div>
+      <div
+        ref="chartRef"
+        style="width: 100%; height: 250px"
+      />
 
       <div class="card-content-item ratio">
         <div class="text-center">
           <div>
             <span>费用占收入比</span>
           </div>
-          <div class="bold">{{ resData.balanceIncomeRatio }}%</div>
+          <div class="bold">
+            {{ resData.balanceIncomeRatio }}%
+          </div>
         </div>
-        <el-divider direction="vertical" style="height: 100%"></el-divider>
+        <el-divider
+          direction="vertical"
+          style="height: 100%"
+        />
         <div class="text-center">
           <div>
             <span>费用占成本比</span>
           </div>
-          <div class="bold">{{ resData.balanceCostRatio }}%</div>
+          <div class="bold">
+            {{ resData.balanceCostRatio }}%
+          </div>
         </div>
       </div>
     </div>
@@ -68,13 +99,13 @@ import bookStore from "@/store/modules/bookStore";
 import {getAccountPeriod} from "@/utils/financialCloud";
 import {Warning} from "@element-plus/icons-vue"
 import {formatAmount} from "@/utils";
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 import {statisticsExpense} from "@/api/dashboard"
 import {BaseValue} from "@/types/FundBalance";
 
 const {t} = useI18n()
 const currBookStore = bookStore()
-const proxy: any = getCurrentInstance()!.proxy;
+const {proxy} = getCurrentInstance()!;
 const chartRef = ref(null)
 let chartInstance: any = null
 const {statistics_period} = proxy!.useDict("statistics_period");

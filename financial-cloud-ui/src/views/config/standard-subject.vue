@@ -2,47 +2,63 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true"
-                 @submit.native.prevent>
+        <el-form
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          @submit.native.prevent
+        >
           <el-form-item label="会计准则">
-            <el-select v-model="queryParams.standardId" @change="handleQuery" style="width: 200px">
+            <el-select
+              v-model="queryParams.standardId"
+              style="width: 200px"
+              @change="handleQuery"
+            >
               <el-option
-                  v-for="item in standardList"
-                  :key="item.id"
-                  :label="item.name"
-                  :value="item.id">
-              </el-option>
+                v-for="item in standardList"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
             </el-select>
           </el-form-item>
           <el-form-item :label="t('subjectCategory')">
-            <el-select v-model="queryParams.category" @change="handleQuery" style="width: 150px">
+            <el-select
+              v-model="queryParams.category"
+              style="width: 150px"
+              @change="handleQuery"
+            >
               <el-option
-                  v-for="item in subjects_category"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
+                v-for="item in subjects_category"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item :label="t('subjectCode')">
             <el-input
-                v-model="queryParams.code"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.code"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item :label="t('subjectName')">
             <el-input
-                v-model="queryParams.name"
-                clearable
-                style="width: 200px"
-                @keyup.enter="handleQuery"
+              v-model="queryParams.name"
+              clearable
+              style="width: 200px"
+              @keyup.enter="handleQuery"
             />
           </el-form-item>
           <el-form-item>
-            <el-button @click="handleQuery">{{ t('org.button.query') }}</el-button>
-            <el-button @click="resetQuery">{{ t('org.button.reset') }}</el-button>
+            <el-button @click="handleQuery">
+              {{ t('org.button.query') }}
+            </el-button>
+            <el-button @click="resetQuery">
+              {{ t('org.button.reset') }}
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -50,55 +66,116 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-            type="primary"
-            @click="handleAdd"
-        >{{ t('org.button.add') }}
+          type="primary"
+          @click="handleAdd"
+        >
+          {{ t('org.button.add') }}
         </el-button>
         <el-button
-            type="primary"
-            @click="handleReorgDisplayName"
-        >重组全称
+          type="primary"
+          @click="handleReorgDisplayName"
+        >
+          重组全称
         </el-button>
         <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="onBatchDelete"
-        >{{ t('org.button.deleteBatch') }}
+          type="danger"
+          :disabled="ids.length === 0"
+          @click="onBatchDelete"
+        >
+          {{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
       <el-table 
-          v-loading="loading"
-          :data="subjectList"
-          @selection-change="handleSelectionChange"
-          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-          row-key="id" 
-          default-expand-all
-          border
-          max-height="600"
+        v-loading="loading"
+        :data="subjectList"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        row-key="id"
+        default-expand-all 
+        border
+        max-height="600"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column type="index" label="序号" align="center" width="60"></el-table-column>
-        <el-table-column prop="code" :label="t('subjectCode')" align="left" width="200" :show-overflow-tooltip="true">
-        </el-table-column>
-        <el-table-column prop="name" :label="t('subjectName')" align="left" min-width="100"
-                         :show-overflow-tooltip="true">
-            <template #default="scope">
-            <el-tooltip :content="scope.row.displayName" placement="top" effect="light">{{scope.row.name}}</el-tooltip>
-          </template>
-        </el-table-column>
-        <el-table-column prop="category" :label="t('subjectCategory')" align="left" min-width="70">
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+        />
+        <el-table-column
+          type="index"
+          label="序号"
+          align="center"
+          width="60"
+        />
+        <el-table-column
+          prop="code"
+          :label="t('subjectCode')"
+          align="left"
+          width="200"
+          :show-overflow-tooltip="true"
+        />
+        <el-table-column
+          prop="name"
+          :label="t('subjectName')"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        >
           <template #default="scope">
-            <dict-tag-number :options="subjects_category" :value="scope.row.category"/>
+            <el-tooltip
+              :content="scope.row.displayName"
+              placement="top"
+              effect="light"
+            >
+              {{ scope.row.name }}
+            </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column prop="direction" :label="t('subjectBalanceDirection')" align="center" min-width="60">
+        <el-table-column
+          prop="category"
+          :label="t('subjectCategory')"
+          align="left"
+          min-width="70"
+        >
           <template #default="scope">
-            <el-tag type="warning" v-if="scope.row.direction == 0">{{ t('subjectDirectionNone') }}</el-tag>
-            <el-tag type="warning" v-if="scope.row.direction == 1">{{ t('subjectDebit') }}</el-tag>
-            <el-tag type="success" v-if="scope.row.direction == 2">{{ t('subjectCredit') }}</el-tag>
+            <dict-tag-number
+              :options="subjects_category"
+              :value="scope.row.category"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="level" :label="t('subjectLevel')" align="center" min-width="60">
+        <el-table-column
+          prop="direction"
+          :label="t('subjectBalanceDirection')"
+          align="center"
+          min-width="60"
+        >
+          <template #default="scope">
+            <el-tag
+              v-if="scope.row.direction == 0"
+              type="warning"
+            >
+              {{ t('subjectDirectionNone') }}
+            </el-tag>
+            <el-tag
+              v-if="scope.row.direction == 1"
+              type="warning"
+            >
+              {{ t('subjectDebit') }}
+            </el-tag>
+            <el-tag
+              v-if="scope.row.direction == 2"
+              type="success"
+            >
+              {{ t('subjectCredit') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="level"
+          :label="t('subjectLevel')"
+          align="center"
+          min-width="60"
+        >
           <template #default="scope">
             <span v-if="scope.row.level == 1">1</span>
             <span v-else-if="scope.row.level == 2">2</span>
@@ -106,45 +183,87 @@
             <span v-else>{{ t('textOther') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="auxiliary" :label="t('subjectAuxiliary')" align="center" min-width="70">
+        <el-table-column
+          prop="auxiliary"
+          :label="t('subjectAuxiliary')"
+          align="center"
+          min-width="70"
+        >
           <template #default="scope">
-            <dict-tag :options="subjects_auxiliary"
-                      :value="scope.row.auxiliary ? JSON.parse(scope.row.auxiliary).map((t:any) => {return t.value}): ''"/>
+            <dict-tag
+              :options="subjects_auxiliary"
+              :value="scope.row.auxiliary ? JSON.parse(scope.row.auxiliary).map((t:any) => {return t.value}): ''"
+            />
           </template>
         </el-table-column>
-        <el-table-column prop="classify" :label="t('subjectClassify')" align="left" min-width="100"  :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column
+          prop="classify"
+          :label="t('subjectClassify')"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
 
-        <el-table-column prop="scope" :label="t('subjectScope')" align="left" min-width="100"  :show-overflow-tooltip="true"></el-table-column>
+        <el-table-column
+          prop="scope"
+          :label="t('subjectScope')"
+          align="left"
+          min-width="100"
+          :show-overflow-tooltip="true"
+        />
         <!--
         <el-table-column prop="parentName" :label="t('subjectParent')" align="center" min-width="100"
                          :show-overflow-tooltip="true"></el-table-column>
                          -->
-        <el-table-column prop="status" :label="t('org.status')" align="center" min-width="40">
+        <el-table-column
+          prop="status"
+          :label="t('org.status')"
+          align="center"
+          min-width="40"
+        >
           <template #default="scope">
-                <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
-                    class="success"/></el-icon></span>
-            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled/></el-icon></span>
+            <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled
+              class="success"
+            /></el-icon></span>
+            <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('jbx.text.action')" align="center" width="80">
+        <el-table-column
+          :label="$t('jbx.text.action')"
+          align="center"
+          width="80"
+        >
           <template #default="scope">
             <el-tooltip content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Edit"
+                @click="handleUpdate(scope.row)"
+              />
             </el-tooltip>
             <el-tooltip content="移除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
+              <el-button
+                link
+                icon="Delete"
+                type="danger"
+                @click="handleDelete(scope.row)"
+              />
             </el-tooltip>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
-    <edit-form v-if="open" :title="title" :open="open"
-               :form-id="id"
-               :subOptions="deptOptions"
-               :currentTreeParentId="idParent"
-               :standard-list="standardList"
-               :defaultStandardId="queryParams.standardId"
-               @dialogOfClosedMethods="dialogOfClosedMethods"></edit-form>
+    <edit-form
+      v-if="open"
+      :title="title"
+      :open="open"
+      :form-id="id"
+      :sub-options="deptOptions"
+      :current-tree-parent-id="idParent"
+      :standard-list="standardList"
+      :default-standard-id="queryParams.standardId"
+      @dialog-of-closed-methods="dialogOfClosedMethods"
+    />
   </div>
 </template>
 
@@ -160,7 +279,7 @@ import {deleteBatch} from "@/api/standard/standard-subject";
 import {handleTree, handleTreeToList} from "@/utils/financialCloud";
 
 const {t} = useI18n()
-const proxy: any = getCurrentInstance()!.proxy;
+const {proxy} = getCurrentInstance()!;
 const {subjects_category, subjects_auxiliary} = proxy?.useDict("subjects_category", "subjects_auxiliary");
 
 const data: any = reactive({
@@ -245,7 +364,6 @@ function getList(): any {
     if (res.code === 0) {
       loading.value = false;
       subjectList.value = handleTree(res.data.records, "id", "parentId", "children");
-      console.log(subjectList.value);
       total.value = res.data.total;
     }
   })

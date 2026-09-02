@@ -2,70 +2,117 @@
   <div class="app-container">
     <el-card class="common-card query-box">
       <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="" prop="periodType">
-            <el-radio-group v-model="queryParams.periodType" @change="handlePeriodType">
-              <el-radio-button label="月度" value="month"></el-radio-button>
-              <el-radio-button label="季度" value="quarter"></el-radio-button>
-              <el-radio-button label="年度" value="year"></el-radio-button>
+        <el-form
+          v-show="showSearch"
+          ref="queryRef"
+          :model="queryParams"
+          :inline="true"
+          label-width="68px"
+        >
+          <el-form-item
+            label=""
+            prop="periodType"
+          >
+            <el-radio-group
+              v-model="queryParams.periodType"
+              @change="handlePeriodType"
+            >
+              <el-radio-button
+                label="月度"
+                value="month"
+              />
+              <el-radio-button
+                label="季度"
+                value="quarter"
+              />
+              <el-radio-button
+                label="年度"
+                value="year"
+              />
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item label="选择月度" prop="reportDate"
-                        v-if="queryParams.periodType === 'month'">
+          <el-form-item
+            v-if="queryParams.periodType === 'month'"
+            label="选择月度"
+            prop="reportDate"
+          >
             <el-date-picker
-                style="width: 130px"
-                v-model="queryParams.date"
-                type="month"
-                :clearable="false"
-                value-format="YYYY-MM"
-                format="YYYY年MM期"
-                :disabled-date="disabledDate"
-                @change="handleQuery"
-                placeholder="选择月">
-            </el-date-picker>
+              v-model="queryParams.date"
+              style="width: 130px"
+              type="month"
+              :clearable="false"
+              value-format="YYYY-MM"
+              format="YYYY年MM期"
+              :disabled-date="disabledDate"
+              placeholder="选择月"
+              @change="handleQuery"
+            />
           </el-form-item>
 
-          <el-form-item label="选择季度" prop="reportDate"
-                        v-if="queryParams.periodType === 'quarter'">
+          <el-form-item
+            v-if="queryParams.periodType === 'quarter'"
+            label="选择季度"
+            prop="reportDate"
+          >
             <el-date-picker
-                style="width: 100px"
-                v-model="queryParams.date"
-                :clearable="false"
-                type="year"
-                value-format="YYYY"
-                :disabled-date="disabledDate"
-                :prefix-icon="customPrefix"
-                @change="handleQuery"
-                placeholder="选择年">
-            </el-date-picker>
-            <el-radio-group style="margin-left: 10px"
-                            v-model="queryParams.reportQuarter" @change="handleQuery">
-              <el-radio-button label="第一季度" value="Q1"></el-radio-button>
-              <el-radio-button label="第二季度" value="Q2"></el-radio-button>
-              <el-radio-button label="第三季度" value="Q3"></el-radio-button>
-              <el-radio-button label="第四季度" value="Q4"></el-radio-button>
+              v-model="queryParams.date"
+              style="width: 100px"
+              :clearable="false"
+              type="year"
+              value-format="YYYY"
+              :disabled-date="disabledDate"
+              :prefix-icon="customPrefix"
+              placeholder="选择年"
+              @change="handleQuery"
+            />
+            <el-radio-group
+              v-model="queryParams.reportQuarter"
+              style="margin-left: 10px"
+              @change="handleQuery"
+            >
+              <el-radio-button
+                label="第一季度"
+                value="Q1"
+              />
+              <el-radio-button
+                label="第二季度"
+                value="Q2"
+              />
+              <el-radio-button
+                label="第三季度"
+                value="Q3"
+              />
+              <el-radio-button
+                label="第四季度"
+                value="Q4"
+              />
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item label="选择年度" prop="reportDate"
-                        v-if="queryParams.periodType === 'year'">
+          <el-form-item
+            v-if="queryParams.periodType === 'year'"
+            label="选择年度"
+            prop="reportDate"
+          >
             <el-date-picker
-                @change="handleQuery"
-                v-model="queryParams.date"
-                type="year"
-                style="width: 100px"
-                :clearable="false"
-                :disabled-date="disabledDate"
-                value-format="YYYY"
-                placeholder="选择年">
-            </el-date-picker>
+              v-model="queryParams.date"
+              type="year"
+              style="width: 100px"
+              :clearable="false"
+              :disabled-date="disabledDate"
+              value-format="YYYY"
+              placeholder="选择年"
+              @change="handleQuery"
+            />
           </el-form-item>
-<!--          <el-form-item>-->
-<!--            <el-checkbox @change="defaultExpandAll" :model-value="showTreeAll" label="展开所有层级"/>-->
-<!--          </el-form-item>-->
+          <!--          <el-form-item>-->
+          <!--            <el-checkbox @change="defaultExpandAll" :model-value="showTreeAll" label="展开所有层级"/>-->
+          <!--          </el-form-item>-->
           <el-form-item>
-            <el-button @click="handleQuery">刷新</el-button>
+            <el-button @click="handleQuery">
+              刷新
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -73,42 +120,75 @@
     <el-card class="common-card">
       <div class="btn-form">
         <div class="btn-form-right">
-          <el-button @click="handleExport">导出</el-button>
+          <el-button @click="handleExport">
+            导出
+          </el-button>
         </div>
       </div>
 
-      <el-table v-loading="loading" :data="balanceSheetList"
-                default-expand-all
-                row-key="id"
-                border
-                show-summary
-                :summary-method="handleSummaryMethod2"
-                :expand-row-keys="expandsIds"
-                :tree-props="{ children: 'children', hasChildren: 'hasChildren' }">
-        <el-table-column label="科目编码" align="left" header-align="center" prop="subjectCode">
-        </el-table-column>
-        <el-table-column label="科目名称" align="left" header-align="center"  prop="subjectName">
+      <el-table
+        v-loading="loading"
+        :data="balanceSheetList"
+        default-expand-all
+        row-key="id"
+        border
+        show-summary
+        :summary-method="handleSummaryMethod2"
+        :expand-row-keys="expandsIds"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+      >
+        <el-table-column
+          label="科目编码"
+          align="left"
+          header-align="center"
+          prop="subjectCode"
+        />
+        <el-table-column
+          label="科目名称"
+          align="left"
+          header-align="center"
+          prop="subjectName"
+        >
           <template #default="scope">
             <div :style="{'text-indent': getSubjectIndent(scope.row.subjectCode) + 'em'}">
               {{ scope.row.subjectName }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="借方金额" align="right" header-align="center"  prop="currentPeriodDebit">
+        <el-table-column
+          label="借方金额"
+          align="right"
+          header-align="center"
+          prop="currentPeriodDebit"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.currentPeriodDebit, '') }}
           </template>
         </el-table-column>
-        <el-table-column label="贷方金额" align="right" header-align="center"  prop="currentPeriodCredit">
+        <el-table-column
+          label="贷方金额"
+          align="right"
+          header-align="center"
+          prop="currentPeriodCredit"
+        >
           <template #default="scope">
             {{ formatAmount(scope.row.currentPeriodCredit, '') }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center"  fixed="right" width="100">
+        <el-table-column
+          label="操作"
+          align="center"
+          fixed="right"
+          width="100"
+        >
           <template #default="scope">
             <el-tooltip content="查看明细账">
               <router-link :to="`/voucher/sub-ledger?subjectCode=${scope.row.subjectCode}`">
-                <el-button type="primary" link icon="View" ></el-button>
+                <el-button
+                  type="primary"
+                  link
+                  icon="View"
+                />
               </router-link>
             </el-tooltip>
           </template>

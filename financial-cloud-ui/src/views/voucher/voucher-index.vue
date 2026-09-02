@@ -1,208 +1,342 @@
 <template>
-  <div class="app-container">
-    <el-card class="common-card query-box">
-      <div class="queryForm">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="凭证字" prop="word">
-            <el-input
-                v-model="queryParams.word"
-                placeholder="请输入凭证字"
-                clearable
-                @keyup.enter="handleQuery"
-            />
-          </el-form-item>
-          <el-form-item label="年份" prop="voucherYear">
-            <el-date-picker
-                style="width: 110px"
-                v-model="queryParams.voucherYear"
-                type="year"
-                placeholder="请选择"
-                format="YYYY年"
-                value-format="YYYY"
-                @change="handleQuery"
-            />
-          </el-form-item>
-          <el-form-item label="月份" prop="voucherMonth">
-            <el-date-picker
-                style="width: 110px"
-                v-model="queryParams.voucherMonth"
-                type="month"
-                placeholder="请选择"
-                format="MM月"
-                value-format="MM"
-                @change="handleQuery"
-            />
-          </el-form-item>
-          <el-form-item label="日期" prop="voucherDate">
-            <el-date-picker
-                style="width: 140px"
-                clearable
-                v-model="queryParams.voucherDate"
-                type="date"
-                value-format="YYYY-MM-DD"
-                placeholder="请选择"
-                @change="handleQuery">
-            </el-date-picker>
-          </el-form-item>
-          <el-form-item>
-            <el-button @click="handleQuery">搜索</el-button>
-            <el-button @click="resetQuery">重置</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-    </el-card>
+  <div class="app-container voucher-list-page">
     <el-card class="common-card">
-      <div class="btn-form">
-        <el-button
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span class="toolbar-label">凭证期间</span>
+          <el-date-picker
+            v-model="periodRange"
+            type="monthrange"
+            range-separator="~"
+            start-placeholder="开始期间"
+            end-placeholder="结束期间"
+            format="YYYY年MM期"
+            value-format="YYYY-MM"
+            style="width: 260px"
+            @change="handlePeriodChange"
+          />
+          <el-checkbox v-model="showSubtotal">
+            显示凭证金额小计
+          </el-checkbox>
+          <el-button
+            icon="Refresh"
+            @click="getList"
+          >
+            刷新
+          </el-button>
+        </div>
+        <div class="toolbar-right">
+          <el-button
             type="primary"
             @click="handleAdd"
-        >{{ t('org.button.add') }}
-        </el-button>
-        <el-button
-            type="success"
+          >
+            新增
+          </el-button>
+          <el-dropdown
+            split-button
+            class="toolbar-split-btn"
             :disabled="ids.length === 0"
-            @click="handleSubmit"
-        >提交
-        </el-button>
-        <el-button
-            type="success"
+            @click="handleAudit()"
+          >
+            审核
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleUnaudit()">
+                  反审核
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-dropdown
+            split-button
+            class="toolbar-split-btn"
             :disabled="ids.length === 0"
-            @click="handleAudit"
-        >审核
-        </el-button>
-        <el-button
-            type="success"
-            :disabled="ids.length === 0"
-            @click="handleManager"
-        >主管复核
-        </el-button>
-        <el-button
-            type="success"
-            :disabled="ids.length === 0"
-            @click="handleSender"
-        >过账
-        </el-button>
-
-        <el-button
-            type="danger"
-            :disabled="ids.length === 0"
-            @click="handleDelete"
-        >{{ t('org.button.deleteBatch') }}
-        </el-button>
-        <div class="btn-form-right">
-          <el-button @click="handleExport">导出</el-button>
-          <el-button @click="handleShowVoucherSuccessive">凭证整理</el-button>
+            @click="handleSender()"
+          >
+            过账
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleUnsender()">
+                  反过账
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-dropdown trigger="click">
+            <el-button>
+              更多
+              <el-icon class="el-icon--right">
+                <ArrowDown />
+              </el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleExport">
+                  导出
+                </el-dropdown-item>
+                <el-dropdown-item @click="handleManager">
+                  主管复核
+                </el-dropdown-item>
+                <el-dropdown-item @click="handleShowVoucherSuccessive">
+                  凭证整理
+                </el-dropdown-item>
+                <el-dropdown-item
+                  divided
+                  :disabled="ids.length === 0"
+                  @click="handleDelete()"
+                >
+                  删除
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
 
-      <el-table max-height="540" v-loading="loading" :data="booksVoucherList"
-                border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column label="凭证字" align="left" header-align="center" prop="word" width="150" fixed="left"/>
-        <!--        <el-table-column label="公司名称" align="center" prop="companyName" width="150"/>-->
-        <el-table-column label="备注" align="left" header-align="center" prop="remark" width="280"
-                         :show-overflow-tooltip="true"/>
-        <el-table-column label="借方总额" align="right" header-align="center" prop="debitAmount" width="120">
+      <el-table
+        v-loading="loading"
+        max-height="620"
+        :data="tableRows"
+        border
+        row-key="rowKey"
+        :span-method="spanMethod"
+        :row-class-name="tableRowClassName"
+        show-summary
+        :summary-method="getSummaries"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="42"
+          align="center"
+          fixed="left"
+        />
+        <el-table-column
+          label="日期"
+          align="center"
+          width="100"
+          fixed="left"
+        >
           <template #default="scope">
-            {{ formatAmount(scope.row.debitAmount) }}
+            <span v-if="scope.row.rowType === 'entry' && scope.row.itemIndex === 0">
+              {{ parseTime(scope.row.voucher.voucherDate, '{y}-{m}-{d}') }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column label="贷方总额" align="right" header-align="center" prop="creditAmount" width="120">
+        <el-table-column
+          label="凭证字号"
+          align="center"
+          width="88"
+          fixed="left"
+        >
           <template #default="scope">
-            {{ formatAmount(scope.row.creditAmount) }}
+            <el-link
+              v-if="scope.row.rowType === 'entry' && scope.row.itemIndex === 0"
+              type="primary"
+              :underline="false"
+              @click="handlePreview(scope.row)"
+            >
+              {{ formatVoucherWord(scope.row.voucher) }}
+            </el-link>
           </template>
         </el-table-column>
-        <el-table-column label="日期" align="center" prop="voucherDate" width="100">
+        <el-table-column
+          label="摘要"
+          align="left"
+          header-align="center"
+          min-width="160"
+          prop="summary"
+          show-overflow-tooltip
+        >
           <template #default="scope">
-            <span>{{ parseTime(scope.row.voucherDate, '{y}-{m}-{d}') }}</span>
+            <span :class="{ 'subtotal-label': scope.row.rowType === 'subtotal' }">
+              {{ scope.row.rowType === 'subtotal' ? '小计' : scope.row.summary }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column label="附单据" align="center" prop="receiptNum"/>
-        <el-table-column label="结转" align="center" prop="carryForward">
+        <el-table-column
+          label="科目"
+          align="left"
+          header-align="center"
+          min-width="240"
+          show-overflow-tooltip
+        >
           <template #default="scope">
-            <span v-if="scope.row.carryForward === 'y'">是</span>
-            <span v-if="scope.row.carryForward === 'n'">否</span>
+            <span v-if="scope.row.rowType === 'entry'">{{ formatSubject(scope.row) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="制单人" align="center" prop="createdName" :show-overflow-tooltip="true"/>
-        <el-table-column label="创建时间" align="center" prop="createdDate" width="160">
+        <el-table-column
+          label="借方金额"
+          align="right"
+          header-align="center"
+          prop="debitAmount"
+          width="120"
+        >
           <template #default="scope">
-            <span>{{ parseTime(scope.row.createdDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+            {{ formatAmountCell(scope.row.debitAmount) }}
           </template>
         </el-table-column>
-        <el-table-column label="审核人" align="center" prop="auditMemberName" :show-overflow-tooltip="true"/>
-        <el-table-column label="审核时间" align="center" prop="auditDate" width="160">
+        <el-table-column
+          label="贷方金额"
+          align="right"
+          header-align="center"
+          prop="creditAmount"
+          width="120"
+        >
           <template #default="scope">
-            <span>{{ parseTime(scope.row.auditDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+            {{ formatAmountCell(scope.row.creditAmount) }}
           </template>
         </el-table-column>
-        <el-table-column label="过账人" align="center" prop="senderName" :show-overflow-tooltip="true"/>
-        <el-table-column label="过账操作时间" align="center" prop="senderDate" width="160">
+        <el-table-column
+          label="附件"
+          align="center"
+          width="56"
+        >
           <template #default="scope">
-            <span>{{ parseTime(scope.row.senderDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+            <span
+              v-if="scope.row.rowType === 'entry' && scope.row.itemIndex === 0 && scope.row.voucher.receiptNum > 0"
+              class="attachment-tag"
+            >
+              {{ scope.row.voucher.receiptNum }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column label="主管" align="center" prop="managerName" :show-overflow-tooltip="true"/>
-        <el-table-column label="主管操作时间" align="center" prop="managerDate" width="160">
+        <el-table-column
+          label="制单人"
+          align="center"
+          prop="createdName"
+          width="80"
+          show-overflow-tooltip
+        >
           <template #default="scope">
-            <span>{{ parseTime(scope.row.managerDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+            <span v-if="scope.row.rowType === 'entry' && scope.row.itemIndex === 0">
+              {{ scope.row.voucher.createdName }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" align="center" prop="status" fixed="right" width="80">
+        <el-table-column
+          label="审核人"
+          align="center"
+          width="80"
+          show-overflow-tooltip
+        >
           <template #default="scope">
-            <div v-html="getVoucherStatusDesc(scope.row.status)"></div>
+            <span v-if="scope.row.rowType === 'entry' && scope.row.itemIndex === 0">
+              {{ scope.row.voucher.auditMemberName || '-' }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="120" fixed="right">
+        <el-table-column
+          label="状态"
+          align="center"
+          width="100"
+        >
           <template #default="scope">
-            <!--      暂存才可以修改      -->
-            <el-tooltip
-                v-if="'draft' === scope.row.status && isEditable(scope.row.voucherDate)"
-                content="编辑">
-              <el-button link icon="Edit" @click="handleUpdate(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip
-                v-if="'draft' !== scope.row.status || !isEditable(scope.row.voucherDate)"
-                content="查看">
-              <el-button link icon="View" @click="handlePreview(scope.row)"></el-button>
-            </el-tooltip>
-            <!--      审批中才可以取消      -->
-            <el-tooltip
-                v-if="'reviewing' === scope.row.status"
-                content="取消">
-              <el-button link icon="RemoveFilled" type="danger"
-                         @click="handleCancel(scope.row)"></el-button>
-            </el-tooltip>
-            <el-tooltip v-if="currBookStore.termCurrent <= scope.row.voucherDate.substring(0, 7)" content="移除">
-              <el-button link icon="Delete" type="danger" @click="handleDelete(scope.row)"></el-button>
-            </el-tooltip>
+            <div
+              v-if="scope.row.rowType === 'entry' && scope.row.itemIndex === 0"
+              v-html="getVoucherStatusDesc(scope.row.voucher.status, scope.row.voucher.senderId)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="操作"
+          align="center"
+          width="88"
+          fixed="right"
+        >
+          <template #default="scope">
+            <template v-if="scope.row.rowType === 'entry'">
+              <el-tooltip
+                v-if="canEditVoucher(scope.row.voucher)"
+                content="编辑"
+              >
+                <el-button
+                  link
+                  icon="Edit"
+                  @click="handleUpdate(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-else
+                content="查看"
+              >
+                <el-button
+                  link
+                  icon="View"
+                  @click="handlePreview(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="'reviewing' === scope.row.voucher.status"
+                content="撤回"
+              >
+                <el-button
+                  link
+                  icon="RemoveFilled"
+                  type="danger"
+                  @click="handleCancel(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="isDeletable(scope.row.voucher)"
+                content="删除"
+              >
+                <el-button
+                  link
+                  icon="Delete"
+                  type="danger"
+                  @click="handleDelete(scope.row)"
+                />
+              </el-tooltip>
+            </template>
           </template>
         </el-table-column>
       </el-table>
 
       <pagination
-          v-show="total>0"
-          :total="total"
-          v-model:page="queryParams.pageNumber"
-          v-model:limit="queryParams.pageSize"
-          @pagination="getList"
+        v-show="total>0"
+        v-model:page="queryParams.pageNumber"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        @pagination="getList"
       />
     </el-card>
 
     <!-- 添加或修改凭证记录对话框 -->
-    <el-drawer :title="title" v-model="open" :close-on-click-modal="false" @close="getList" size="1200px">
+    <el-drawer
+      v-model="open"
+      :title="title"
+      :close-on-click-modal="false"
+      size="1200px"
+      @close="getList"
+    >
       <template #header>
         <h4>{{ title }}</h4>
       </template>
-      <voucher-edit v-if="open" v-model="form" :edit="!previewMode" :dialog="true" :auto="false"
-                    @submit="submitForm"></voucher-edit>
+      <voucher-edit
+        v-if="open"
+        v-model="form"
+        :edit="!previewMode"
+        :dialog="true"
+        :auto="false"
+        @submit="submitForm"
+      />
     </el-drawer>
 
     <!-- 检查结果 -->
-    <el-dialog title="检查结果" v-model="dialogVoucherSuccessive.visible" width="1200px"
-               style="margin-top: 20vh !important;">
-      <el-alert v-if="dialogVoucherSuccessive.isNumber" title="恭喜您,所有凭证已连号，无需整理" type="success"
-                :closable="false" show-icon/>
+    <el-dialog
+      v-model="dialogVoucherSuccessive.visible"
+      title="检查结果"
+      width="1200px"
+      style="margin-top: 20vh !important;"
+    >
+      <el-alert
+        v-if="dialogVoucherSuccessive.isNumber"
+        title="恭喜您,所有凭证已连号，无需整理"
+        type="success"
+        :closable="false"
+        show-icon
+      />
 
       <!--      <el-form v-model="dialogVoucherSuccessive" inline style="margin-top: 20px">-->
       <!--        <el-form-item label="凭证字">-->
@@ -231,18 +365,38 @@
       <!--        </el-form-item>-->
       <!--      </el-form>-->
 
-      <el-table v-loading="dialogVoucherSuccessive.loading" border :data="voucherSuccessiveList">
-        <el-table-column label="原始凭证号" prop="sourceWord" align="center"></el-table-column>
-        <el-table-column label="新凭证号" prop="targetWord" align="center"></el-table-column>
+      <el-table
+        v-loading="dialogVoucherSuccessive.loading"
+        border
+        :data="voucherSuccessiveList"
+      >
+        <el-table-column
+          label="原始凭证号"
+          prop="sourceWord"
+          align="center"
+        />
+        <el-table-column
+          label="新凭证号"
+          prop="targetWord"
+          align="center"
+        />
         <template #empty>
-          <div style="text-align: center">暂无记录</div>
+          <div style="text-align: center">
+            暂无记录
+          </div>
         </template>
       </el-table>
 
       <template #footer>
-        <el-button @click="dialogVoucherSuccessive.visible = false">取消</el-button>
-        <el-button v-if="voucherSuccessiveList.length > 0" v-loading="dialogVoucherSuccessive.btnLoading" type="primary"
-                   @click="handleVoucherSuccessiveUpdate">
+        <el-button @click="dialogVoucherSuccessive.visible = false">
+          取消
+        </el-button>
+        <el-button
+          v-if="voucherSuccessiveList.length > 0"
+          v-loading="dialogVoucherSuccessive.btnLoading"
+          type="primary"
+          @click="handleVoucherSuccessiveUpdate"
+        >
           确认整理
         </el-button>
       </template>
@@ -258,20 +412,23 @@ import {useRouter} from "vue-router";
 import {getVoucherStatusDesc} from "@/utils/enums/VoucherStatusEnum"
 import {parseTime} from "@/utils/financialCloud";
 import {formatAmount} from "@/utils";
-import {reactive} from "vue";
+import {reactive, computed, ref} from "vue";
+import {ArrowDown} from "@element-plus/icons-vue";
 import bookStore from "@/store/modules/bookStore";
 import {downloadData} from "@/utils/index"
 
 const currBookStore = bookStore()
 const router = useRouter();
-const proxy = getCurrentInstance()?.proxy
+const {proxy} = getCurrentInstance();
 const {t} = useI18n()
 const booksVoucherList = ref([]);
+const showSubtotal = ref(false);
+const periodRange = ref([]);
+const MERGE_COLUMN_INDEXES = [0, 1, 2, 7, 8, 9, 10, 11];
 const voucherSuccessiveList = ref([]);
 const open = ref(false);
 const previewMode = ref(false);
 const loading = ref(true);
-const showSearch = ref(true);
 const ids = ref([]);
 const single = ref(true);
 const multiple = ref(true);
@@ -298,13 +455,171 @@ const data = reactive({
     word: null,
     bookId: null,
     companyName: null,
-    voucherYear: currBookStore.termCurrent ? currBookStore.termCurrent.substring(0, 4) : parseTime(new Date(), "{y}"),
-    voucherMonth: currBookStore.termCurrent ? currBookStore.termCurrent.substring(5, 7) : parseTime(new Date(), "{m}"),
+    voucherYear: null,
+    voucherMonth: null,
+    voucherDateStart: null,
+    voucherDateEnd: null,
     voucherDate: null,
+    includeItems: true,
   },
 });
 
 const {queryParams, form} = toRefs(data);
+
+function initPeriodRange() {
+  const term = currBookStore.termCurrent || parseTime(new Date(), "{y}-{m}")
+  periodRange.value = [term, term]
+  applyPeriodRange(periodRange.value)
+}
+
+function buildTableRows(vouchers) {
+  const rows = []
+  vouchers.forEach((voucher, voucherGroupIndex) => {
+    const items = voucher.items?.length
+        ? voucher.items
+        : [{
+          id: `${voucher.id}-placeholder`,
+          summary: voucher.remark || '-',
+          subjectName: '-',
+          debitAmount: voucher.debitAmount,
+          creditAmount: voucher.creditAmount,
+        }]
+    const groupSize = items.length + (showSubtotal.value && items.length > 1 ? 1 : 0)
+    items.forEach((item, itemIndex) => {
+      rows.push({
+        rowKey: `${voucher.id}-${item.id || itemIndex}`,
+        rowType: 'entry',
+        voucherId: voucher.id,
+        voucher,
+        voucherGroupIndex,
+        itemIndex,
+        groupSize,
+        summary: item.summary,
+        subjectName: item.subjectName,
+        subjectCode: item.subjectCode,
+        debitAmount: item.debitAmount,
+        creditAmount: item.creditAmount,
+      })
+    })
+    if (showSubtotal.value && items.length > 1) {
+      rows.push({
+        rowKey: `${voucher.id}-subtotal`,
+        rowType: 'subtotal',
+        voucherId: voucher.id,
+        voucher,
+        voucherGroupIndex,
+        itemIndex: items.length,
+        groupSize,
+        debitAmount: voucher.debitAmount,
+        creditAmount: voucher.creditAmount,
+      })
+    }
+  })
+  return rows
+}
+
+const tableRows = computed(() => buildTableRows(booksVoucherList.value))
+
+function spanMethod({row, columnIndex}) {
+  if (row.rowType === 'subtotal') {
+    if (MERGE_COLUMN_INDEXES.includes(columnIndex)) {
+      return [0, 0]
+    }
+    if (columnIndex === 3) {
+      return [1, 2]
+    }
+    return [1, 1]
+  }
+  if (MERGE_COLUMN_INDEXES.includes(columnIndex)) {
+    if (row.itemIndex === 0) {
+      return [row.groupSize, 1]
+    }
+    return [0, 0]
+  }
+  return [1, 1]
+}
+
+function tableRowClassName({row}) {
+  if (row.rowType === 'subtotal') {
+    return 'voucher-subtotal-row'
+  }
+  return row.voucherGroupIndex % 2 === 0 ? 'voucher-group-even' : 'voucher-group-odd'
+}
+
+function formatVoucherWord(voucher) {
+  if (!voucher) {
+    return ''
+  }
+  const head = voucher.wordHead || '记'
+  const num = voucher.wordNum ?? ''
+  return num !== '' ? `${head}-${num}` : head
+}
+
+function formatSubject(row) {
+  if (!row.subjectName) {
+    return '-'
+  }
+  const code = row.subjectCode || row.subjectName.split('-')[0]
+  if (row.subjectName.includes(code)) {
+    return row.subjectName.replace('-', ' ')
+  }
+  return `${code} ${row.subjectName}`
+}
+
+function formatAmountCell(value) {
+  if (value === null || value === undefined || Number(value) === 0) {
+    return ''
+  }
+  return formatAmount(value)
+}
+
+function getSummaries(param) {
+  const {columns, data} = param
+  const sums = []
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = '合计'
+      return
+    }
+    if (column.property === 'debitAmount' || column.property === 'creditAmount') {
+      const total = data
+          .filter(row => row.rowType === 'entry')
+          .reduce((sum, row) => sum + Number(row[column.property] || 0), 0)
+      sums[index] = formatAmount(total)
+      return
+    }
+    sums[index] = ''
+  })
+  return sums
+}
+
+function lastDayOfMonth(yearMonth) {
+  const [year, month] = yearMonth.split('-').map(Number)
+  const day = new Date(year, month, 0).getDate()
+  return `${yearMonth}-${String(day).padStart(2, '0')}`
+}
+
+function applyPeriodRange(range) {
+  if (!range || range.length !== 2) {
+    queryParams.value.voucherDateStart = null
+    queryParams.value.voucherDateEnd = null
+    queryParams.value.voucherYear = null
+    queryParams.value.voucherMonth = null
+    return
+  }
+  const [start, end] = range
+  queryParams.value.voucherYear = null
+  queryParams.value.voucherMonth = null
+  queryParams.value.voucherDateStart = `${start}-01`
+  queryParams.value.voucherDateEnd = lastDayOfMonth(end)
+}
+
+function handlePeriodChange(range) {
+  applyPeriodRange(range)
+  handleQuery()
+}
+
+initPeriodRange()
 
 /** 查询凭证记录列表 */
 function getList() {
@@ -350,21 +665,15 @@ function reset() {
 
 /** 搜索按钮操作 */
 function handleQuery() {
-  queryParams.value.pageNum = 1;
+  queryParams.value.pageNumber = 1;
   getList();
 }
 
-/** 重置按钮操作 */
-function resetQuery() {
-  proxy.resetForm("queryRef");
-  handleQuery();
-}
-
-// 多选框选中数据
+// 多选框选中数据（按凭证去重）
 function handleSelectionChange(selection) {
-  ids.value = selection.map(item => item.id);
-  single.value = selection.length !== 1;
-  multiple.value = !selection.length;
+  ids.value = [...new Set(selection.map(item => item.voucherId))];
+  single.value = ids.value.length !== 1;
+  multiple.value = !ids.value.length;
 }
 
 /** 新增按钮操作 */
@@ -378,7 +687,7 @@ function handleAdd() {
 /** 修改按钮操作 */
 function handleUpdate(row) {
   reset();
-  const _id = row.id || ids.value
+  const _id = row?.voucherId || row?.voucher?.id || ids.value
   voucherApis.getOneVoucher(_id).then(response => {
     response.data.items.forEach(t => {
       t.subjectCode = t.subjectName.split("-")[0]
@@ -394,7 +703,7 @@ function handleUpdate(row) {
 /** 查看操作 */
 function handlePreview(row) {
   reset();
-  const _id = row.id || ids.value
+  const _id = row?.voucherId || row?.voucher?.id || ids.value
   voucherApis.getOneVoucher(_id).then(response => {
     response.data.items.forEach(t => {
       t.subjectCode = t.subjectName.split("-")[0]
@@ -409,11 +718,83 @@ function handlePreview(row) {
 
 /** 修改按钮操作 */
 function handleCancel(row) {
-  const _id = row?.id || ids.value.join(",");
-  voucherApis.cancelVoucherByIds(_id).then(_res => {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认撤回该凭证的审核申请？').then(() => {
+    return voucherApis.cancelVoucherByIds(voucherId);
+  }).then(() => {
     proxy.$modal.msgSuccess("已取消");
     getList()
+  }).catch(() => {
   });
+}
+
+function getSelectedVouchers(row) {
+  if (row?.voucherId) {
+    return booksVoucherList.value.filter(item => item.id === row.voucherId)
+  }
+  if (row?.voucher?.id) {
+    return booksVoucherList.value.filter(item => item.id === row.voucher.id)
+  }
+  if (row?.id) {
+    return booksVoucherList.value.filter(item => item.id === row.id)
+  }
+  const selected = new Set(ids.value)
+  return booksVoucherList.value.filter(item => selected.has(item.id))
+}
+
+function filterVoucherIdsByStatus(status, row) {
+  return getSelectedVouchers(row)
+      .filter(item => item.status === status)
+      .map(item => item.id)
+}
+
+function filterPostableVoucherIds(row) {
+  return getSelectedVouchers(row)
+      .filter(item => item.status === 'completed' && !item.senderId)
+      .map(item => item.id)
+}
+
+function filterUnauditVoucherIds(row) {
+  return getSelectedVouchers(row)
+      .filter(item => item.status === 'completed' && !item.senderId && isEditable(item.voucherDate))
+      .map(item => item.id)
+}
+
+function filterUnsenderVoucherIds(row) {
+  return getSelectedVouchers(row)
+      .filter(item => !!item.senderId && isEditable(item.voucherDate))
+      .map(item => item.id)
+}
+
+function canEditVoucher(voucher) {
+  if (!voucher?.voucherDate || voucher.status === 'cancelled') {
+    return false
+  }
+  if (voucher.senderId) {
+    return false
+  }
+  return isEditable(voucher.voucherDate)
+}
+
+function isDeletable(voucher) {
+  if (!voucher?.voucherDate || voucher.status !== 'draft' || voucher.senderId) {
+    return false
+  }
+  return currBookStore.termCurrent <= voucher.voucherDate.substring(0, 7)
+}
+
+function showActionResult(res, fallback = "操作成功") {
+  proxy.$modal.msgSuccess(res?.message || fallback)
+}
+
+function showActionError(err, fallback = "操作失败") {
+  if (proxy.$modal.isCancel(err)) {
+    return
+  }
+  proxy.$modal.msgError(err?.message || fallback)
 }
 
 /** 提交按钮 */
@@ -425,61 +806,121 @@ function submitForm(res) {
 }
 
 function handleSubmit(row) {
-  const _ids = row.id || ids.value.join(",");
-  const idList = _ids.split(",")
-  const submitIds = booksVoucherList.value.filter(item => {
-    return idList.indexOf(item.id) > -1 && 'draft' === item.status
-  }).map(item => item.id)
+  const submitIds = filterVoucherIdsByStatus('draft', row)
   if (!submitIds.length) {
     proxy.$modal.msgError("没有可以提交的凭证项。");
     return
   }
-  voucherApis.submitBatch(submitIds).then(res => {
+  voucherApis.submitBatch(submitIds.join(",")).then(res => {
     getList();
-    proxy.$modal.msgSuccess("操作成功")
+    showActionResult(res)
+  }).catch((err) => {
+    showActionError(err)
   })
 }
 
 function handleAudit(row) {
-  const _ids = row.id || ids.value.join(",");
-  proxy.$modal.confirm('确认审核"' + _ids + '"等凭证？').then(function () {
-    return voucherApis.auditBatch(_ids);
+  const auditIds = filterVoucherIdsByStatus('reviewing', row)
+  if (!auditIds.length) {
+    proxy.$modal.msgError("没有可以审核的凭证项。");
+    return
+  }
+  proxy.$modal.confirm(`确认审核 ${auditIds.length} 条凭证？`).then(function () {
+    return voucherApis.auditBatch(auditIds.join(","));
   }).then((res) => {
     getList();
-    proxy.$modal.msgSuccess(res.msg);
-  }).catch(() => {
+    showActionResult(res)
+  }).catch((err) => {
+    showActionError(err)
+  });
+}
+
+function handleUnaudit(row) {
+  const unauditIds = filterUnauditVoucherIds(row)
+  if (!unauditIds.length) {
+    proxy.$modal.msgError("没有可以反审核的凭证项（需为已审核且未过账）。");
+    return
+  }
+  proxy.$modal.confirm(`确认反审核 ${unauditIds.length} 条凭证？`).then(function () {
+    return voucherApis.unauditBatch(unauditIds.join(","));
+  }).then((res) => {
+    getList();
+    showActionResult(res)
+  }).catch((err) => {
+    showActionError(err)
   });
 }
 
 function handleSender(row) {
-  const _ids = row.id || ids.value.join(",");
-  voucherApis.senderBatch(_ids).then(res => {
+  const senderIds = filterPostableVoucherIds(row)
+  if (!senderIds.length) {
+    proxy.$modal.msgError("没有可以过账的凭证项（需为已审核且未过账）。");
+    return
+  }
+  proxy.$modal.confirm(`确认过账 ${senderIds.length} 条凭证？`).then(function () {
+    return voucherApis.senderBatch(senderIds.join(","));
+  }).then((res) => {
     getList();
-    proxy.$modal.msgSuccess("操作成功")
+    showActionResult(res)
   }).catch((err) => {
-    proxy.$modal.msgError(err.msg || "操作失败");
+    showActionError(err)
+  });
+}
+
+function handleUnsender(row) {
+  const unsenderIds = filterUnsenderVoucherIds(row)
+  if (!unsenderIds.length) {
+    proxy.$modal.msgError("没有可以反过账的凭证项（需为已过账且所在期间未结账）。");
+    return
+  }
+  proxy.$modal.confirm(`确认反过账 ${unsenderIds.length} 条凭证？`).then(function () {
+    return voucherApis.unsenderBatch(unsenderIds.join(","));
+  }).then((res) => {
+    getList();
+    showActionResult(res)
+  }).catch((err) => {
+    showActionError(err)
   });
 }
 
 function handleManager(row) {
-  const _ids = row.id || ids.value.join(",");
-  voucherApis.manageBatch(_ids).then(res => {
-    proxy.$modal.msgSuccess("操作成功")
+  const managerIds = filterVoucherIdsByStatus('completed', row)
+  if (!managerIds.length) {
+    proxy.$modal.msgError("没有可以主管复核的凭证项（需为已完成状态）。");
+    return
+  }
+  proxy.$modal.confirm(`确认主管复核 ${managerIds.length} 条凭证？`).then(function () {
+    return voucherApis.manageBatch(managerIds.join(","));
+  }).then((res) => {
     getList();
+    showActionResult(res)
   }).catch((err) => {
-    proxy.$modal.msgError(err.msg || "操作失败");
+    showActionError(err)
   });
 }
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const _ids = row.id || ids.value.join(",");
-  proxy.$modal.confirm('删除凭证可能为导致不连号，确认删除凭证记录编号为"' + _ids + '"的数据项？').then(function () {
-    return voucherApis.deleteBatch(_ids);
+  let deleteIds = []
+  if (row?.voucherId || row?.voucher?.id) {
+    const voucher = row.voucher || booksVoucherList.value.find(item => item.id === (row.voucherId || row.voucher?.id))
+    if (voucher && isDeletable(voucher)) {
+      deleteIds = [voucher.id]
+    }
+  } else {
+    deleteIds = getSelectedVouchers().filter(isDeletable).map(item => item.id)
+  }
+  if (!deleteIds.length) {
+    proxy.$modal.msgError("没有可以删除的凭证项（仅暂存且当期及以后凭证可删）。");
+    return
+  }
+  proxy.$modal.confirm(`删除凭证可能导致不连号，确认删除 ${deleteIds.length} 条凭证？`).then(function () {
+    return voucherApis.deleteBatch(deleteIds.join(","));
   }).then(() => {
-    getList();
+    getList();image.png
     proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {
+  }).catch((err) => {
+    showActionError(err)
   });
 }
 
@@ -544,12 +985,81 @@ getList();
   background-color: #f5f7fa;
 }
 
-.btn-form {
-  margin-bottom: 10px;
+.voucher-list-page {
+  :deep(.el-table) {
+    .voucher-group-even td {
+      background-color: #fff;
+    }
 
-  .btn-form-right {
-    float: right;
+    .voucher-group-odd td {
+      background-color: #f0f7ff;
+    }
+
+    .voucher-subtotal-row td {
+      background-color: #fafafa !important;
+      font-weight: 600;
+    }
   }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .toolbar-left,
+  .toolbar-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toolbar-label {
+    color: #606266;
+    font-size: 14px;
+  }
+
+  .toolbar-split-btn {
+    width: auto;
+
+    :deep(.el-button-group) {
+      display: inline-flex;
+      width: auto;
+    }
+
+    :deep(.el-button) {
+      min-width: unset;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    :deep(.el-dropdown__caret-button) {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+  }
+}
+
+.subtotal-label {
+  font-weight: 600;
+  color: #606266;
+}
+
+.attachment-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: #ecf5ff;
+  color: #409eff;
+  font-size: 12px;
 }
 
 .common-card {

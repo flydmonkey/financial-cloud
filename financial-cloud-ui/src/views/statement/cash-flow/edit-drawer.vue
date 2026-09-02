@@ -228,7 +228,7 @@ import {Action, ElMessage, ElMessageBox} from 'element-plus'
 
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const inputRef = ref<any>(null);
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 const dialogStatus: any = ref(false);

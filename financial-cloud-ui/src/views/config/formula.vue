@@ -134,7 +134,7 @@ import {deleteBatch, fetchPage} from "@/api/config/formula";
 import editForm from "./formula/edit.vue"
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const data: any = reactive({
   queryParams: {
     pageNumber: 1,

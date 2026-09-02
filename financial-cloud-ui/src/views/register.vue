@@ -118,7 +118,7 @@ import {getCodeImg, register} from '@/api/login';
 import {useRouter} from 'vue-router';
 
 const router: any = useRouter();
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 interface RegisterForm {
   username: string;

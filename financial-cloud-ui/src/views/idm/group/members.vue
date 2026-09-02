@@ -205,7 +205,7 @@ import selectRolemembers from './selectRolemembers.vue'
 import selectPosts from './selectPosts.vue'
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const emit: any = defineEmits(['memberDrawerClose'])
 const props: any = defineProps({
       title: {

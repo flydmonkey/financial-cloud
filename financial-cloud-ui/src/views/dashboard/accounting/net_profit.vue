@@ -94,7 +94,7 @@ import {statisticsNetProfit} from "@/api/dashboard"
 import {BaseValue} from "@/types/FundBalance";
 
 const currBookStore = bookStore()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const chartRef = ref(null)
 let chartInstance: any = null
 const {statistics_period} = proxy!.useDict("statistics_period");

@@ -135,7 +135,7 @@ import {useRouter} from "vue-router"
 const {t} = useI18n();
 const router: any = useRouter();
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const passwordForm: any = ref<InstanceType<typeof ElForm> | null>(null);
 
 const data: any = reactive({

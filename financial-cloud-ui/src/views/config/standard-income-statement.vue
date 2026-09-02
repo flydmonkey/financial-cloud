@@ -169,7 +169,7 @@ import * as subjectApi from "@/api/standard/standard-subject";
 import {listStandardsAll} from "@/api/standard/standard";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()!.proxy;
 const {account_income_balance_type} = proxy?.useDict("account_income_balance_type");
 const currBookStore = bookStore()
 // 会计科目数据

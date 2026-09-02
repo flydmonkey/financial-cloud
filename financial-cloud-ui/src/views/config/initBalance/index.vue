@@ -172,7 +172,7 @@ import {handleTree, handleTreeToList} from "@/utils/financialCloud";
 import Decimal from 'decimal.js'
 import {handleSummaryMethod, SummaryMethodProps} from "@/utils/Subjects";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {subjects_category} = toRefs<any>(proxy?.useDict("subjects_category"));
 const {t} = useI18n()
 const currBookStore = bookStore()

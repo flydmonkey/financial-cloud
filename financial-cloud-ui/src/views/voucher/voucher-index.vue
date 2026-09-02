@@ -264,7 +264,7 @@ import {downloadData} from "@/utils/index"
 
 const currBookStore = bookStore()
 const router = useRouter();
-const {proxy} = getCurrentInstance();
+const proxy = getCurrentInstance()?.proxy
 const {t} = useI18n()
 const booksVoucherList = ref([]);
 const voucherSuccessiveList = ref([]);
@@ -409,8 +409,8 @@ function handlePreview(row) {
 
 /** 修改按钮操作 */
 function handleCancel(row) {
-  const _id = [row.id] || ids.value.join(",");
-  voucherApis.cancelVoucherByIds(_id).then(res => {
+  const _id = row?.id || ids.value.join(",");
+  voucherApis.cancelVoucherByIds(_id).then(_res => {
     proxy.$modal.msgSuccess("已取消");
     getList()
   });

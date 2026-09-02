@@ -491,7 +491,7 @@ const activeName = ref<string>('carry-forward')
 const route: any = useRoute();
 
 
-const {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()!.proxy;
 const {account_income_balance_type} = proxy?.useDict("account_income_balance_type");
 // 会计科目数据
 const subjectList = ref<any>([])

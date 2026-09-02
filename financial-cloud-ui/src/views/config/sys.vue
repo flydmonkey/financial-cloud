@@ -81,7 +81,7 @@ import bookStore from "@/store/modules/bookStore";
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
 import {ElForm, FormInstance} from "element-plus";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {t} = useI18n()
 const currBookStore = bookStore()
 const sysCfgList = ref<any>([]);

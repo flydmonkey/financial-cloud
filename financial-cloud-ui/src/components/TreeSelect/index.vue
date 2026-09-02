@@ -35,7 +35,7 @@
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent, watchEffect} from "vue";
 import modal from "@/plugins/modal";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const props: any = defineProps({
   /* 配置项 */

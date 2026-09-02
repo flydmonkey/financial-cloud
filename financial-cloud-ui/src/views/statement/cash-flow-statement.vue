@@ -215,7 +215,7 @@ import {downloadData} from "@/utils";
 
 const router = useRouter();
 const currBookStore = booksSetStore()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {t} = useI18n()
 const cashFlowStatementList = ref([]);
 const loading = ref(true);

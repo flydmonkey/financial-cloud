@@ -254,7 +254,7 @@ import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()!.proxy;
 const {account_income_balance_type} = proxy?.useDict("account_income_balance_type");
 const currBookStore = bookStore()
 const ableEdit = ref(false);

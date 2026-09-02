@@ -13,7 +13,7 @@
 import useTagsViewStore from '@/store/modules/tagsView'
 
 const tagAndTagSpacing = ref(4);
-const { proxy } = getCurrentInstance();
+const proxy = getCurrentInstance()?.proxy
 
 const scrollWrapper = computed(() => proxy.$refs.scrollContainer.$refs.wrapRef);
 

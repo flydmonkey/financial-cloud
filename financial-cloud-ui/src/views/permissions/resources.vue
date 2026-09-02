@@ -392,7 +392,7 @@ import {useI18n} from "vue-i18n";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 
 const {resource_type, action_type, method_type} = proxy.useDict("resource_type", "action_type", "method_type");

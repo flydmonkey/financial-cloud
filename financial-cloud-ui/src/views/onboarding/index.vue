@@ -113,7 +113,7 @@ import {resolveInstitutionLogo} from "@/constants/branding";
 import appStore from "@/store/modules/app.js";
 import modal from "@/plugins/modal";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {books_vat_type} = proxy?.useDict("books_vat_type");
 
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);

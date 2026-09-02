@@ -1,10 +1,13 @@
 /// <reference types="vite/client" />
 
+declare const __APP_VERSION__: string
+
 interface ImportMetaEnv {
-    readonly VITE_APP_BASE_API: string; // 你的环境变量
-    // 其他环境变量声明...
+    readonly VITE_APP_BASE_API: string
+    readonly VITE_APP_ENV?: string
+    readonly VITE_APP_CONTEXT_PATH?: string
 }
 
 interface ImportMeta {
-    readonly env: ImportMetaEnv;
+    readonly env: ImportMetaEnv
 }

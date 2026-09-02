@@ -219,7 +219,7 @@ import {useI18n} from "vue-i18n";
 import {h} from 'vue'
 import type {VNode} from 'vue'
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const queryRef = ref<InstanceType<typeof ElForm> | null>(null);
 const {t} = useI18n()

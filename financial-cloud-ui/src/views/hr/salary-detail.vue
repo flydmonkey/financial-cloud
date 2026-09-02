@@ -544,7 +544,7 @@ import voucherEdit from "@/views/voucher/voucher-edit.vue";
 
 const router: any = useRouter();
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const currBookStore = booksSetStore()
 const {employee_types}
     = proxy?.useDict("employee_types");

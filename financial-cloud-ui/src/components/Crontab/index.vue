@@ -219,7 +219,7 @@ import CrontabMonth from "./month.vue"
 import CrontabWeek from "./week.vue"
 import CrontabYear from "./year.vue"
 import CrontabResult from "./result.vue"
-const { proxy } = getCurrentInstance()
+const proxy: any = getCurrentInstance()!.proxy
 const emit: any = defineEmits(['hide', 'fill'])
 const props: any = defineProps({
     hideComponent: {

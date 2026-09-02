@@ -532,7 +532,7 @@ import {useI18n} from "vue-i18n";
 import {configGetCurrent, configUpdateCurrent} from "@/api/config/insurance-fund";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {t} = useI18n()
 
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);

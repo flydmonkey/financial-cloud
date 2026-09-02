@@ -158,7 +158,7 @@ const {t} = useI18n()
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const dialogStatus: any = ref(false);
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 
 const props: any = defineProps({

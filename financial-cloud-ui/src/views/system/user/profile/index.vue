@@ -145,7 +145,7 @@ import i18n from '@/languages'
 import {ElForm} from "element-plus";
 
 const {t} = i18n.global;
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {sys_data_object_from, sys_user_sex} = proxy!.useDict("sys_data_object_from", "sys_user_sex");
 const activeTab: any = ref("userinfo");
 const state: any = reactive({

@@ -445,7 +445,7 @@ import {useI18n} from "vue-i18n";
 import {ElForm} from "element-plus";
 import {getCurrentDetail, reCalculateSalary, updateDetailTemp} from "@/api/hr/salary-detail";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {employee_types}
     = proxy?.useDict( "employee_types");
 

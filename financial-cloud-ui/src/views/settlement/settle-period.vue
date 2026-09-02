@@ -169,7 +169,7 @@ const isCheckout: any = ref(false);
 const checkoutResult: any = ref(false);
 //const loadingInstance = ElLoading.service({});
 const loadingVerify: any = ref(false);
-const {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()!.proxy;
 const checkoutButtonLoading = ref(false)
 
 const data = reactive({

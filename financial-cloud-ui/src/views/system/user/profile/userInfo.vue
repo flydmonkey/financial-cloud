@@ -99,7 +99,7 @@ const props: any = defineProps({
 // 定义 emits
 const emit: any = defineEmits(['profileDisplay']);
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {t} = useI18n();
 

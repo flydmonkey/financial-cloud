@@ -81,7 +81,7 @@ const selectedTag = ref({});
 const affixTags = ref([]);
 const scrollPaneRef = ref(null);
 
-const { proxy } = getCurrentInstance();
+const proxy = getCurrentInstance()?.proxy
 const route = useRoute();
 const router = useRouter();
 

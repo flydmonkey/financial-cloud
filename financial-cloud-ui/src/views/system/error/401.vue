@@ -40,7 +40,7 @@ import modal from "@/plugins/modal";
 import errImage from "@/assets/401_images/401.gif";
 import usePermissionStore from "@/store/modules/permission";
 
-let {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()?.proxy;
 let indexPath: any = ref(import.meta.env.VITE_APP_CONTEXT_PATH)
 let usePermission: any = usePermissionStore()
 indexPath.value = indexPath.value.substring(0, indexPath.value.length - 1) + usePermission.topbarRouters[0].children[0].path

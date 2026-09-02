@@ -720,7 +720,7 @@ import {
 import {ElForm} from "element-plus";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 const props: any = defineProps({
   title: {

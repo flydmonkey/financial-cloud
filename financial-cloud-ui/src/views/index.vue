@@ -90,7 +90,7 @@ import OtherSubjects from "@/views/dashboard/accounting/other_subjects.vue";
 const {t} = useI18n()
 const route: any = useRoute();
 const router: any = useRouter();
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 
 </script>

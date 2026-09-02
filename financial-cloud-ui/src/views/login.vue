@@ -152,7 +152,7 @@ import type {FormInstance, FormRules} from 'element-plus';
 const userStore: any = useUserStore();
 const route: any = useRoute();
 const router: any = useRouter();
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const loginForm: any = ref({
   username: "",
   password: "",

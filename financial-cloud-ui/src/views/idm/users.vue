@@ -361,7 +361,7 @@ import {useRouter} from "vue-router";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {users_type, users_state, status, users_idType, users_married, post_options}
     = proxy?.useDict("users_type", "users_state", "status", "users_idType", "users_married", "post_options");
 

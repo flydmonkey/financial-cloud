@@ -6,4 +6,10 @@ declare module 'vue' {
     }
 }
 
+declare module '@vue/runtime-core' {
+    interface ComponentInternalInstance {
+        proxy: ComponentPublicInstance & Record<string, unknown>
+    }
+}
+
 export {}

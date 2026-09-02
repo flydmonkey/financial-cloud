@@ -94,7 +94,7 @@ const props: any = defineProps({
   }
 });
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const emit: any = defineEmits();
 const number: any = ref(0);
 const uploadList: any = ref<any>([]);

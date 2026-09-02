@@ -80,7 +80,7 @@ import * as settlementApi from "@/api/book/settlement";
 import bookStore from "@/store/modules/bookStore";
 import {parseTime} from "@/utils/financialCloud";
 
-const {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()!.proxy;
 const currBookStore = bookStore()
 const currentTerm = ref(currBookStore.termCurrent || parseTime(new Date(), "{y}-{m}"));
 

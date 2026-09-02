@@ -237,7 +237,7 @@ import {ElForm} from "element-plus";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const orgRef: any = ref<InstanceType<typeof ElForm> | null>(null);
 const childEx: any = ref<InstanceType<typeof exAttrsForm> | null>(null);
 const props: any = defineProps({

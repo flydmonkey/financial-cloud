@@ -168,7 +168,7 @@ import {ElForm} from "element-plus";
 import {getOne, saveOne, updateOne} from "@/api/book/book";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 const loading: any = ref(false);

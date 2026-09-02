@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import {
   VOUCHER_PRINT_PAGE_SIZE,
   buildAuxLabel,
+  buildSubjectLabel,
   filterPrintableItems,
   chunkVoucherPrintPages,
 } from './voucherPrint.ts'
@@ -20,6 +21,25 @@ describe('filterPrintableItems', () => {
   it('keeps only rows with subjectCode', () => {
     const items = [line(1), { ...line(2), subjectCode: '' }, line(3)]
     assert.equal(filterPrintableItems(items).length, 2)
+  })
+})
+
+describe('buildSubjectLabel', () => {
+  it('uses the subject code and selected subject name instead of detailed accounts', () => {
+    assert.equal(
+      buildSubjectLabel({
+        subjectCode: '1001',
+        subjectName: '库存现金',
+        displayName: '现金',
+        detailedAccounts: '客户：华东贸易',
+      }),
+      '1001 库存现金',
+    )
+  })
+
+  it('falls back to displayName, then to the subject code only', () => {
+    assert.equal(buildSubjectLabel({ subjectCode: '1002', displayName: '银行存款' }), '1002 银行存款')
+    assert.equal(buildSubjectLabel({ subjectCode: '1003', detailedAccounts: '辅助明细' }), '1003')
   })
 })
 

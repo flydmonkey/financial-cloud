@@ -31,7 +31,7 @@
         打印
       </el-button>
     </div>
-    <div v-if="!isPrintMode" ref="printMe" class="printable-content" id="printable-content"
+    <div v-if="!isClassicPrintMode" ref="printMe" class="printable-content" id="printable-content"
          @click="closeEditAll"
          :style="{margin: !isPrintMode ? '65px 0 0 0' : '0 auto', width: isPrintMode ? '980px' : '100%'}">
       <!--   标题头   -->
@@ -551,11 +551,12 @@ const countRow = ref<RecordingVoucher>({
   auxiliary: []
 });
 const formData = ref<any>({...props.modelValue})
+const isClassicPrintMode = computed(() => route.query.mode === 'print')
 const isPrintMode = computed(() => {
-  return route.query.mode === 'print' || !props.edit
+  return isClassicPrintMode.value || !props.edit
 })
 const printPages = computed<VoucherPrintPage[]>(() => {
-  if (!isPrintMode.value) return []
+  if (!isClassicPrintMode.value) return []
   return chunkVoucherPrintPages(formData.value.items || [], VOUCHER_PRINT_PAGE_SIZE)
 })
 const printDebitTotal = computed(() =>
@@ -1752,12 +1753,11 @@ document.addEventListener('focusin', (event: FocusEvent) => {
 }
 
 @media print {
+  .app-container:has(> .voucher-print-root) {
+    padding: 0 !important;
+  }
   .voucher-print-root {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
+    display: block;
     margin: 0;
     padding: 0;
     background: #fff;
@@ -1765,6 +1765,7 @@ document.addEventListener('focusin', (event: FocusEvent) => {
   .voucher-print-sheet {
     width: 100%;
     max-width: 100%;
+    margin: 0 auto;
     box-shadow: none;
     border: none;
     page-break-after: always;
@@ -1774,8 +1775,8 @@ document.addEventListener('focusin', (event: FocusEvent) => {
     page-break-after: auto;
     break-after: auto;
   }
-  .top-funs,
-  .contextmenu {
+  .app-container:has(> .voucher-print-root) > .top-funs,
+  .app-container:has(> .voucher-print-root) > .contextmenu {
     display: none !important;
   }
 }

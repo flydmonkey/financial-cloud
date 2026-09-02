@@ -16,6 +16,8 @@ type VoucherPrintAuxiliary = {
 export type VoucherPrintSourceItem = {
   summary?: string
   subjectCode?: string
+  subjectName?: string
+  displayName?: string
   detailedAccounts?: string
   debitAmount?: number | string | null
   creditAmount?: number | string | null
@@ -45,9 +47,9 @@ export function filterPrintableItems<T extends { subjectCode?: string }>(items: 
 }
 
 export function buildSubjectLabel(item: VoucherPrintSourceItem): string {
-  const detailed = (item.detailedAccounts || '').trim()
-  if (detailed) return detailed
-  return (item.subjectCode || '').trim()
+  const code = (item.subjectCode || '').trim()
+  const name = (item.subjectName || item.displayName || '').trim()
+  return `${code} ${name}`.trim()
 }
 
 export function buildAuxLabel(item: VoucherPrintSourceItem): string {

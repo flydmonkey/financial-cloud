@@ -1459,18 +1459,6 @@ document.addEventListener('focusin', (event: FocusEvent) => {
 <style scoped lang="scss">
 @import "../../assets/styles/recording-voucher";
 
-@media print and (orientation: landscape) {
-  .app-container {
-    width: 1090px;
-  }
-}
-
-@media print and (orientation: portrait) {
-  .app-container {
-    width: 1090px; /* 纵向模式下的宽度 */
-  }
-}
-
 .redWord {
   color: red;
 }
@@ -1756,4 +1744,148 @@ document.addEventListener('focusin', (event: FocusEvent) => {
   color: $serial-color;
 }
 
+</style>
+<style lang="scss">
+@page {
+  size: 229mm 162mm;
+  margin: 10mm 12mm;
+}
+
+@media print {
+  .voucher-print-root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+  .voucher-print-sheet {
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+    border: none;
+    page-break-after: always;
+    break-after: page;
+  }
+  .voucher-print-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  .top-funs,
+  .contextmenu {
+    display: none !important;
+  }
+}
+
+.voucher-print-root {
+  font-family: "Songti SC", "SimSun", "STSong", "Noto Serif CJK SC", serif;
+  color: #1a1a1a;
+}
+.voucher-print-sheet {
+  width: 210mm;
+  margin: 0 auto 16px;
+  padding: 14mm 16mm 12mm;
+  background: #fffef9;
+  border: 1px solid #c9c4b8;
+}
+.vp-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.55em;
+  padding-right: 0.55em;
+  border-bottom: 3px double #222;
+  width: fit-content;
+  min-width: 52%;
+  margin: 0 auto 6px;
+}
+.vp-date {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+}
+.vp-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.vp-meta-right {
+  display: flex;
+  gap: 16px;
+}
+.vp-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+.vp-table th,
+.vp-table td {
+  border: 1px solid #222;
+  padding: 7px 8px;
+  vertical-align: middle;
+}
+.vp-table thead th {
+  background: #f7f4ec;
+  font-weight: 700;
+  text-align: center;
+}
+.vp-table .col-summary { width: 22%; }
+.vp-table .col-subject { width: 34%; }
+.vp-table .col-debit,
+.vp-table .col-credit {
+  width: 18%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.vp-table .col-no { width: 8%; text-align: center; }
+.vp-table tbody tr td { height: 36px; }
+.vp-table .aux {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #444;
+}
+.vp-table tfoot td {
+  font-weight: 700;
+  background: #faf8f2;
+}
+.vp-table tfoot .label {
+  text-align: center;
+  background: #f7f4ec;
+  letter-spacing: 0.2em;
+}
+.vp-table tfoot .label-cn {
+  text-align: left;
+  padding-left: 10px;
+}
+.vp-table tfoot .remark-row td {
+  font-weight: 400;
+  background: #fffef9;
+  height: 44px;
+}
+.vp-table tfoot .remark-value {
+  text-align: left;
+  font-weight: 400;
+}
+.vp-signs {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+.vp-signs em {
+  font-style: normal;
+  border-bottom: 1px solid #222;
+  display: inline-block;
+  min-width: 4.5em;
+  margin-left: 2px;
+  padding: 0 4px;
+}
 </style>

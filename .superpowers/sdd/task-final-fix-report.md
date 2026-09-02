@@ -28,3 +28,60 @@
 - The first `mvnw.cmd` attempt under the configured JDK 21 printed Java usage and exited 1. Prior-agent-compatible direct wrapper invocation with `C:\Program Files\Java\jdk-17\bin\java.exe` completed both required verifications successfully.
 - Maven reports pre-existing duplicate `sonatype_releases` and `sonatype_snapshots` server IDs in the user settings.
 - Optional MySQL smoke test was not run.
+
+---
+
+## Ledger Books Menu — Final Review Fixes (2026-08-28)
+
+### I-1: Icon column → `res_style`
+
+Frontend reads `menu.resStyle` (`financial-cloud-ui/src/api/menu.ts`), not `icon`.
+
+**Files changed:**
+
+1. `sql/seed/ledger_books_menu.sql` — moved `'menus-kemuyuebiao'` from `icon` to `res_style`; `icon` is `NULL`.
+2. `sql/seed/general_ledger_menu.sql` — same pattern.
+3. `tools/apply_ledger_books_menu.py` — `verify()` now asserts ledger parent `icon IS NULL` and `res_style = 'menus-kemuyuebiao'`.
+
+### I-2: README order
+
+`sql/seed/README.md` — removed conflicting guidance to run `apply_general_ledger_menu.py` first when 总账 is missing. Single recommended order: `ledger_books_menu` first, then `general_ledger_menu` as needed.
+
+### Apply + verify commands
+
+```powershell
+cd C:\Users\Administrator\Projects\jinbooks
+python tools/apply_ledger_books_menu.py
+python tools/apply_general_ledger_menu.py
+python tools/apply_ledger_books_menu.py
+```
+
+**Exit codes:** all `0`.
+
+**Output:**
+
+```
+OK applied+verified ledger_books_menu.sql as jinbooks (twice)
+OK applied general_ledger_menu.sql as jinbooks
+resources: (('2026082816300000001', '总账', '/statement/general-ledger', '2026082817000000001', 2, 'y'),)
+permission: (('2026082816300000002', 'ROLE_ADMINISTRATORS', '2026082816300000001'),)
+OK applied+verified ledger_books_menu.sql as jinbooks (twice)
+```
+
+**DB SELECT** (`resources` for 账簿 + 总账):
+
+```sql
+SELECT id, res_name, icon, res_style
+FROM resources
+WHERE id IN ('2026082817000000001','2026082816300000001')
+ORDER BY id;
+```
+
+| id | res_name | icon | res_style |
+|---|---|---|---|
+| 2026082816300000001 | 总账 | NULL | menus-kemuyuebiao |
+| 2026082817000000001 | 账簿 | NULL | menus-kemuyuebiao |
+
+Both menus have `res_style` set and `icon` NULL as required.
+
+**Note:** No git commit per instruction.

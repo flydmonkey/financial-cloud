@@ -87,7 +87,7 @@ class StatementIncomeRulesTest {
         items.add(line("201", "+", bd("1000"), bd("1000")));
         items.add(line("202", "-", bd("500"), bd("500")));
         items.add(line("3", "+", BigDecimal.ZERO, BigDecimal.ZERO));
-        items.add(line("301", "+", bd("6500"), bd("6500")));
+        items.add(line("301", "-", bd("6500"), bd("6500")));
         items.add(line("4", "+", BigDecimal.ZERO, BigDecimal.ZERO));
 
         StatementIncomeRules.calculateDerivedLines(items);
@@ -96,8 +96,44 @@ class StatementIncomeRulesTest {
         assertEquals(0, bd("25000").compareTo(find(items, "2").getCurrentBalance()));
         // 利润总额 = 25000 + 1000 - 500 = 25500
         assertEquals(0, bd("25500").compareTo(find(items, "3").getCurrentBalance()));
-        // 净利润 = 25500 - 6500 = 19000
+        // 净利润 = 25500 - 6500 = 19000（301 symbol='-'，带符号加总）
         assertEquals(0, bd("19000").compareTo(find(items, "4").getCurrentBalance()));
+    }
+
+    @Test
+    void calculateDerivedLines_investmentIncomeAddsToOperatingProfit() {
+        List<StatementIncomeItem> items = new ArrayList<>();
+        items.add(line("1", "+", bd("100000"), bd("100000")));
+        items.add(line("105", "+", bd("10000"), bd("10000")));
+        // 模板误配为 '+' 时也应按「加：投资收益」纠正
+        items.add(lineNamed("107", "加：投资收益（损失以“-”号填列）", "+", bd("5000"), bd("5000")));
+        items.add(line("2", "+", BigDecimal.ZERO, BigDecimal.ZERO));
+        items.add(line("3", "+", BigDecimal.ZERO, BigDecimal.ZERO));
+        items.add(line("4", "+", BigDecimal.ZERO, BigDecimal.ZERO));
+
+        StatementIncomeRules.calculateDerivedLines(items);
+
+        // 营业利润 = 100000 - 10000 + 5000 = 95000
+        assertEquals(0, bd("95000").compareTo(find(items, "2").getCurrentBalance()));
+        assertEquals(0, bd("95000").compareTo(find(items, "4").getCurrentBalance()));
+    }
+
+    @Test
+    void calculateDerivedLines_taxWithMinusSymbolSubtractsFromTotalProfit() {
+        List<StatementIncomeItem> items = new ArrayList<>();
+        items.add(line("1", "+", bd("80000"), bd("80000")));
+        items.add(line("105", "+", bd("9300"), bd("9300")));
+        items.add(line("2", "+", BigDecimal.ZERO, BigDecimal.ZERO));
+        items.add(line("3", "+", BigDecimal.ZERO, BigDecimal.ZERO));
+        items.add(line("301", "-", bd("30"), bd("30")));
+        items.add(line("4", "+", BigDecimal.ZERO, BigDecimal.ZERO));
+
+        StatementIncomeRules.calculateDerivedLines(items);
+
+        assertEquals(0, bd("70700").compareTo(find(items, "2").getCurrentBalance()));
+        assertEquals(0, bd("70700").compareTo(find(items, "3").getCurrentBalance()));
+        assertEquals(0, bd("70670").compareTo(find(items, "4").getCurrentBalance()));
+        assertEquals(true, StatementIncomeRules.computeFormulaChainDiff(items).withinTolerance());
     }
 
     @Test
@@ -129,8 +165,14 @@ class StatementIncomeRulesTest {
 
     private static StatementIncomeItem line(
             String itemCode, String symbol, BigDecimal current, BigDecimal cumulative) {
+        return lineNamed(itemCode, itemCode, symbol, current, cumulative);
+    }
+
+    private static StatementIncomeItem lineNamed(
+            String itemCode, String itemName, String symbol, BigDecimal current, BigDecimal cumulative) {
         return StatementIncomeItem.builder()
                 .itemCode(itemCode)
+                .itemName(itemName)
                 .symbol(symbol)
                 .currentBalance(current)
                 .cumulativeBalance(cumulative)

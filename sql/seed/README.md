@@ -40,7 +40,11 @@ mysql -h127.0.0.1 -P3307 -ujinbooks -p jinbooks < sql/seed/standard_subjects.sql
 
 账簿顶级菜单（迁入明细账/总账/科目余额表）：`python tools/apply_ledger_books_menu.py`（或 `mysql ... < sql/seed/ledger_books_menu.sql`）。**推荐顺序**：先 `ledger_books_menu`（会创建父菜单并迁入已存在子项），再按需跑 `general_ledger_menu`（现默认挂到账簿下）。
 
+固定资产表结构 + 菜单（类别/卡片/计提折旧）：`python tools/apply_fixed_asset.py`（或依次执行 `sql/seed/fixed_asset_tables.sql`、`sql/seed/fixed_asset_menu.sql`）
+
 菜单图标语义对齐：`python tools/apply_menu_icons_align.py`（或 `mysql ... < sql/seed/menu_icons_align.sql`）。
+
+社保/税率进薪资 + 配置管理改名系统设置：`python tools/apply_menu_salary_tax_and_rename_config.py`
 
 冒烟：`python tools/smoke_general_ledger.py`（需后端 `http://localhost:2154`）
 

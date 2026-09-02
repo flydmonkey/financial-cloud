@@ -97,13 +97,11 @@ export async function fetchBookSubjects(
     return flattenTree(treeBody.data || [])
 }
 
-export function formatVoucherWord(head: string, term: string, wordNum: number): string {
-    const year = term.slice(0, 4)
-    const month = String(Number(term.slice(5, 7))).padStart(2, '0')
-    return `${head}${year}${month}第${String(wordNum).padStart(4, '0')}号`
+export function formatVoucherWord(head: string, _term: string, wordNum: number): string {
+    return formatVoucherWordListLabel(head, wordNum)
 }
 
-/** 凭证列表页「凭证字号」列展示格式，与 voucher-index.vue 一致 */
+/** 凭证字号统一对外格式：记-9 */
 export function formatVoucherWordListLabel(head: string, wordNum: number | string): string {
     return `${head}-${wordNum}`
 }

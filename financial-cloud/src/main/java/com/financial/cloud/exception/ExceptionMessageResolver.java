@@ -9,6 +9,7 @@ import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
 import com.financial.cloud.enums.error.CommonErrorCode;
 import com.financial.cloud.enums.error.ConfigErrorCode;
 import com.financial.cloud.enums.error.ExcelErrorCode;
+import com.financial.cloud.enums.error.FixedAssetErrorCode;
 import com.financial.cloud.enums.error.HrErrorCode;
 import com.financial.cloud.enums.error.JournalErrorCode;
 import com.financial.cloud.enums.error.OrgsBusinessExceptionEnum;
@@ -34,6 +35,7 @@ public final class ExceptionMessageResolver {
         register(JournalErrorCode.values());
         register(AssistErrorCode.values());
         register(ExcelErrorCode.values());
+        register(FixedAssetErrorCode.values());
     }
 
     private ExceptionMessageResolver() {

@@ -547,6 +547,9 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         bookLqw.eq(BookSubject::getBookId, bookId);
         bookLqw.eq(BookSubject::getDeleted, "n");
         BookSubject bookSubject = bookSubjectMapper.selectOne(bookLqw);
+        if (bookSubject == null) {
+            return null;
+        }
         List<String>subjectCodes = new ArrayList<>();
         subjectCodes.add(subjectCode);
         List<StatementSubjectBalance> listSubjectBalance = subjectBalanceService.selectSubjectBalance(bookId, subjectCodes);

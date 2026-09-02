@@ -180,6 +180,32 @@ public final class MessageKeys {
         }
     }
 
+    public static final class FixedAsset {
+        public static final String CATEGORY_CODE_DUPLICATE = "fixed_asset.error.category_code_duplicate";
+        public static final String CATEGORY_IN_USE = "fixed_asset.error.category_in_use";
+        public static final String ASSET_CODE_DUPLICATE = "fixed_asset.error.asset_code_duplicate";
+        public static final String ASSET_HAS_DEPR = "fixed_asset.error.asset_has_depr";
+        public static final String ASSET_NOT_FOUND = "fixed_asset.error.asset_not_found";
+        public static final String CALC_FIELDS_LOCKED = "fixed_asset.error.calc_fields_locked";
+        public static final String WORK_REQUIRED = "fixed_asset.error.work_required";
+        public static final String NOTHING_TO_ACCRUE = "fixed_asset.error.nothing_to_accrue";
+        public static final String REACCRUE_FORBIDDEN = "fixed_asset.error.reaccrue_forbidden";
+        public static final String SUBJECT_REQUIRED = "fixed_asset.error.subject_required";
+        public static final String CATEGORY_NOT_FOUND = "fixed_asset.error.category_not_found";
+        public static final String CHANGE_ITEMS_EMPTY = "fixed_asset.error.change_items_empty";
+        public static final String CHANGE_NO_DIFF = "fixed_asset.error.change_no_diff";
+        public static final String ALREADY_DISPOSED = "fixed_asset.error.already_disposed";
+        public static final String DISPOSE_SUBJECT_REQUIRED = "fixed_asset.error.dispose_subject_required";
+        public static final String ACCELERATED_LIFE_INVALID = "fixed_asset.error.accelerated_life_invalid";
+        public static final String PURCHASE_SUBJECT_REQUIRED = "fixed_asset.error.purchase_subject_required";
+        public static final String ALREADY_SUSPENDED = "fixed_asset.error.already_suspended";
+        public static final String NOT_SUSPENDED = "fixed_asset.error.not_suspended";
+        public static final String CANNOT_SUSPEND_DISPOSED = "fixed_asset.error.cannot_suspend_disposed";
+
+        private FixedAsset() {
+        }
+    }
+
     public static final class Standard {
         public static final String USED_BY_BOOK = "standard.error.used_by_book";
         public static final String SUBJECT_NOT_FOUND = "standard.error.subject_not_found";
@@ -313,6 +339,19 @@ public final class MessageKeys {
         public static final String VOUCHER_VOUCHER_TARGET_REQUIRED = "{validation.voucher.voucher_target.required}";
         public static final String VOUCHER_VOUCHER_WORD_REQUIRED = "{validation.voucher.voucher_word.required}";
         public static final String VOUCHER_VOUCHER_WORD_NUMBER_REQUIRED = "{validation.voucher.voucher_word_number.required}";
+        public static final String FIXED_ASSET_CATEGORY_CODE_REQUIRED = "{validation.fixed_asset.category_code.required}";
+        public static final String FIXED_ASSET_CATEGORY_NAME_REQUIRED = "{validation.fixed_asset.category_name.required}";
+        public static final String FIXED_ASSET_METHOD_REQUIRED = "{validation.fixed_asset.method.required}";
+        public static final String FIXED_ASSET_LIFE_MONTHS_REQUIRED = "{validation.fixed_asset.life_months.required}";
+        public static final String FIXED_ASSET_RESIDUAL_RATE_REQUIRED = "{validation.fixed_asset.residual_rate.required}";
+        public static final String FIXED_ASSET_SUBJECT_REQUIRED = "{validation.fixed_asset.subject.required}";
+        public static final String FIXED_ASSET_ACCUM_SUBJECT_REQUIRED = "{validation.fixed_asset.accum_subject.required}";
+        public static final String FIXED_ASSET_CODE_REQUIRED = "{validation.fixed_asset.code.required}";
+        public static final String FIXED_ASSET_NAME_REQUIRED = "{validation.fixed_asset.name.required}";
+        public static final String FIXED_ASSET_CATEGORY_REQUIRED = "{validation.fixed_asset.category.required}";
+        public static final String FIXED_ASSET_START_DATE_REQUIRED = "{validation.fixed_asset.start_date.required}";
+        public static final String FIXED_ASSET_ORIGINAL_VALUE_REQUIRED = "{validation.fixed_asset.original_value.required}";
+        public static final String FIXED_ASSET_EXPENSE_SUBJECT_REQUIRED = "{validation.fixed_asset.expense_subject.required}";
 
         private Validation() {
         }

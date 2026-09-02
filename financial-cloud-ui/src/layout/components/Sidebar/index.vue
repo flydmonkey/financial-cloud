@@ -1,6 +1,7 @@
 <template>
-  <div>
+  <div class="sidebar-panel">
     <el-scrollbar
+      class="sidebar-scroll"
       :class="sideTheme"
       wrap-class="scrollbar-wrapper"
     >
@@ -21,25 +22,29 @@
           :item="route"
           :base-path="isParentView(route) ? '' : route.path"
         />
-
-        <el-menu-item
-          index="toggleSide"
-          @click="toggleSideBar"
-        >
-          <el-tooltip :content="appStore.sidebar.opened ? '收缩' : '展开'">
-            <hamburger
-              :style="{marginLeft: appStore.sidebar.opened ? '80px': '0', padding: '0'}"
-              :is-active="appStore.sidebar.opened"
-            />
-          </el-tooltip>
-        </el-menu-item>
       </el-menu>
     </el-scrollbar>
+
+    <div
+      class="sidebar-collapse"
+      :class="{ 'is-collapsed': isCollapse }"
+      @click="toggleSideBar"
+    >
+      <el-tooltip
+        :content="appStore.sidebar.opened ? '收缩' : '展开'"
+        placement="right"
+      >
+        <hamburger
+          class="sidebar-collapse__icon"
+          :is-active="appStore.sidebar.opened"
+        />
+      </el-tooltip>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, ref, onMounted} from "vue"
+import {computed} from "vue"
 import {useRoute} from "vue-router";
 
 import SidebarItem from './SidebarItem.vue'
@@ -55,13 +60,12 @@ const settingsStore = useSettingsStore()
 const permissionStore = usePermissionStore()
 
 const sidebarRouters = computed(() => permissionStore.sidebarRouters);
-const showLogo = computed(() => settingsStore.sidebarLogo);
 const sideTheme = computed(() => settingsStore.sideTheme);
 const theme = computed(() => settingsStore.theme);
 const isCollapse = computed(() => !appStore.sidebar.opened);
 
 const activeMenu = computed(() => {
-  const {meta, path} = route;
+  const {path} = route;
   return path;
 })
 
@@ -79,5 +83,37 @@ const isParentView = (route: any) => {
 
 </script>
 <style scoped lang="scss">
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar-collapse {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  cursor: pointer;
+  border-top: 1px solid rgba(153, 153, 153, 0.35);
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  &.is-collapsed {
+    justify-content: center;
+  }
+
+  :deep(.sidebar-collapse__icon) {
+    padding: 0;
+  }
+}
 </style>

@@ -2308,7 +2308,7 @@ function loanBalance() {
 }
 
 function formatVoucherWordNum() {
-  return `凭证编号：${formData.value.wordHead} ${formData.value.wordNum} 号`;
+  return `凭证编号：${formData.value.wordHead}-${formData.value.wordNum}`;
 }
 
 function formatVoucherDateChinese() {

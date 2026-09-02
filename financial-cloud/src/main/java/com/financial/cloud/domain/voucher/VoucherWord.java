@@ -51,7 +51,7 @@ public class VoucherWord extends BaseEntity implements Serializable {
     private Integer wordNum;
 
     /**
-     * 凭证字，例：收字第2024第0001号
+     * 凭证字，例：记-9
      */
     private String word;
 

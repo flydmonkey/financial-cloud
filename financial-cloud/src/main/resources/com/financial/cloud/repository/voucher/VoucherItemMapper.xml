@@ -68,7 +68,7 @@
 
     <select id="subLedgerPage" parameterType="com.financial.cloud.dto.voucher.VoucherItemPageDto"
             resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
-        SELECT i.*, v.word
+        SELECT i.*, CONCAT(IFNULL(NULLIF(TRIM(v.word_head), ''), '记'), '-', v.word_num) AS word
         FROM voucher_item i
         LEFT JOIN voucher v ON i.voucher_id = v.id
         WHERE v.book_id = #{params.bookId}
@@ -109,7 +109,7 @@
             parameterType="com.financial.cloud.dto.voucher.VoucherItemPageDto"
             resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
         SELECT
-        v.word,
+        CONCAT(IFNULL(NULLIF(TRIM(v.word_head), ''), '记'), '-', v.word_num) AS word,
         COALESCE(aux.auxiliaryLabel, '') AS auxiliaryLabel,
         jvicf.*,
         i.id as voucherItemId,

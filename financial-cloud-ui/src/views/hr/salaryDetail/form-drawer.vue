@@ -363,7 +363,7 @@ import {ElForm} from "element-plus";
 import {getCurrentDetail, saveDetail, updateDetail} from "@/api/hr/employee-salary";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 const dialogStatus: any = ref(false);
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);

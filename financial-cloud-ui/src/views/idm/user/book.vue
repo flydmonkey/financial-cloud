@@ -159,7 +159,7 @@ import {listStandardsAll} from "@/api/standard/standard";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const emit: any = defineEmits(['groupDrawerClose'])
 

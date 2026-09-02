@@ -177,7 +177,7 @@ import {ElForm} from "element-plus";
 import {delConfigBalanceSheet} from "@/api/standard/standard-statement-balance-sheet";
 import modal from "@/plugins/modal";
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {salary_values, salary_directions, labor_fee_values}
     = proxy?.useDict( "salary_values", "salary_directions", "labor_fee_values");

@@ -464,7 +464,7 @@ const cascaderSubjectPropsOwn = ref<any>({...cascaderSubjectProps})
 cascaderSubjectPropsOwn.value.checkStrictly = true
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance();
+const proxy: any = getCurrentInstance()!.proxy;
 const {account_balance_type} = proxy?.useDict("account_balance_type");
 // 会计科目数据
 const subjectList = ref<any>([])

@@ -158,7 +158,7 @@ defineOptions({
   name: 'PostDrawer'
 })
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const emit: any = defineEmits(['postDrawerClose'])
 
 const props: any = defineProps({

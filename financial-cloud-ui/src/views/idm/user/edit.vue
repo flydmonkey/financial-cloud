@@ -226,7 +226,7 @@ defineOptions({
   name: 'UserEdit'
 })
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const emit: any = defineEmits(['dialogOfClosedMethods']);
 

@@ -313,7 +313,7 @@ import modal from '@/plugins/modal'
 import { reactive, ref, getCurrentInstance } from 'vue'
 import type { FormInstance } from 'element-plus'
 
-const { proxy } = getCurrentInstance() as any
+const proxy: any = getCurrentInstance()?.proxy as any
 const currBookStore = bookStore()
 const loading = ref(false)
 const buttonLoading = ref(false)

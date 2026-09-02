@@ -426,7 +426,7 @@ const data: any = reactive({
   }
 });
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {employee_types}
     = proxy?.useDict( "employee_types");
 const {queryParams} = toRefs(data);

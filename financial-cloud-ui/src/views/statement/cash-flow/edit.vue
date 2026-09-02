@@ -245,7 +245,7 @@ import bookStore from "@/store/modules/bookStore";
 const {t} = useI18n()
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 const dialogStatus: any = ref(false);
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const route = useRoute();
 
 const loading = ref(true);

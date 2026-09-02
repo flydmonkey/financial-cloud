@@ -160,7 +160,7 @@ import {deleteBatch} from "@/api/standard/standard-subject";
 import {handleTree, handleTreeToList} from "@/utils/financialCloud";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {subjects_category, subjects_auxiliary} = proxy?.useDict("subjects_category", "subjects_auxiliary");
 
 const data: any = reactive({

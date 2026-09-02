@@ -130,7 +130,7 @@ import useUserStore from "@/store/modules/user";
 import {useI18n} from "vue-i18n";
 
 const userStore: any = useUserStore();
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const open: any = ref(false);
 const visible: any = ref(false);

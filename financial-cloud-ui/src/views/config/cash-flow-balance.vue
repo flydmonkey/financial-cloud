@@ -226,7 +226,7 @@ import {formatBalance, validateNumber} from "@/utils/BalanceFormat";
 import {ElForm} from "element-plus";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const dataList: any = ref<any>([]);
 const bookInitBalances: any = ref<any>([]);
 const loading: any = ref(false);

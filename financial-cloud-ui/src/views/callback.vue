@@ -110,7 +110,7 @@ const { t } = useI18n()
 const userStore: any = useUserStore()
 const route: any = useRoute();
 const router: any = useRouter();
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const loginRef = ref<InstanceType<typeof ElForm> | null>(null);
 
 // 验证码开关

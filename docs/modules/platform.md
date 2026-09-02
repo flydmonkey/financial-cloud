@@ -51,9 +51,17 @@ VO 并入 `dto`；MyBatis mapper 在 `repository/**/*.xml`。
 | GET | `/auth/token/refresh` | 刷新 token |
 | GET | `/logout` | 黑名单作废 |
 
+## 鉴权 Phase 3 进度
+
+| 项 | 状态 |
+|----|------|
+| 默认拒绝拦截（`PermissionInterceptor` + `/**`） | **已落地**（见 `FinancialCloudMvcConfig`） |
+| 401 / `Message.UNAUTHORIZED` | **已有**（`Message.UNAUTHORIZED = 401`） |
+| `/api/v1` 路径 rewrite | **未实现** |
+
 ## 未实现 / 计划中
 
-- **Phase 3 鉴权**：默认拒绝拦截、401 Message 统一、`/api/v1` 前缀 rewrite
-- **Deadcode 换库**：自研 Redis → Spring Data Redis；kaptcha fork → 官方包
+- **`/api/v1` 前缀 rewrite**（兼容期保留原路径）
+- **Deadcode 换库**：自研 Redis → Spring Data Redis；验证码仍为 Hutool + Caffeine（非 kaptcha）
 - **性能**：凭证批量 N+1 修复、慢 SQL 专项
 - **分布式会话**、OAuth2 Resource Server（非目标）

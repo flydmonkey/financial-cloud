@@ -1,7 +1,7 @@
 <template>
   <div
     class="el-login-footer"
-    :style="{'position': props.position}"
+    :style="{ position: (props.position as 'fixed' | 'relative' | 'absolute' | 'static' | 'sticky') }"
   >
     <div>
       财务云<br>

@@ -1,16 +1,14 @@
 <template>
   <div>
-    <template v-for="(item, index) in options">
+    <template v-for="(item, index) in typedOptions" :key="item.value">
       <template v-if="values.includes(item.value)">
         <span
           v-if="(item.elTagType == 'default' || item.elTagType == '') && (item.elTagClass == '' || item.elTagClass == null)"
-          :key="item.value"
           :index="index"
           :class="item.elTagClass"
         >{{ item.label + " " }}</span>
         <el-tag
           v-else
-          :key="item.value + ''"
           :disable-transitions="true"
           :index="index"
           :type="item.elTagType === 'primary' ? '' : item.elTagType"
@@ -24,22 +22,28 @@
 </template>
 
 <script setup lang="ts">
-  const props: any = defineProps({
-    options: {
-      type: Array,
-      default: null,
-    },
-    value: [Number, String, Array],
-  });
+import {computed} from 'vue'
 
-  const values: any = computed(() => {
-      if (props.value !== null && typeof props.value !== 'undefined') {
-        return Array.isArray(props.value) ? props.value : [props.value];
-      } else {
-        return [];
-      }
-  });
+interface DictOption {
+  value: string | number
+  label: string
+  elTagType?: string
+  elTagClass?: string | null
+}
 
+const props = defineProps<{
+  options?: DictOption[] | null
+  value?: number | string | Array<string | number> | null
+}>()
+
+const typedOptions = computed<DictOption[]>(() => props.options ?? [])
+
+const values = computed(() => {
+  if (props.value !== null && typeof props.value !== 'undefined') {
+    return Array.isArray(props.value) ? props.value : [props.value]
+  }
+  return [] as Array<string | number>
+})
 </script>
 <style scoped>
 .el-tag + .el-tag {

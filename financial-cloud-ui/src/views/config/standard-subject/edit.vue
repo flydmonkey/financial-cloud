@@ -213,7 +213,7 @@ import {ElForm} from "element-plus";
 import {getOneSubject, getTree, saveSubject, updateSubject} from "@/api/standard/standard-subject";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {subjects_category, subjects_auxiliary} = proxy?.useDict("subjects_category", "subjects_auxiliary");
 const subjects_category_dicts = reactive(subjects_auxiliary.value.map((t: any) => {
   return {

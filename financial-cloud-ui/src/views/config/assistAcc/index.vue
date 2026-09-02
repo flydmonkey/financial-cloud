@@ -296,7 +296,7 @@ import modal from "@/plugins/modal";
 import {ElForm, FormInstance} from "element-plus";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {sys_disable, subjects_auxiliary} = toRefs<any>(proxy?.useDict('sys_disable', "subjects_auxiliary"));
 const {t} = useI18n()
 const currBookStore = bookStore()

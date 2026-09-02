@@ -99,7 +99,7 @@ import SvgIcon from "@/components/SvgIcon/index.vue";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {role_members_type, user_gender_type, group_category_options, group_type}
     = proxy?.useDict("role_members_type", "user_gender_type", "group_category_options", "group_type");

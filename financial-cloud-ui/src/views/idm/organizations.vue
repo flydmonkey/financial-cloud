@@ -257,7 +257,7 @@ import OrgEdit from "./organizations/edit.vue";
 import {useI18n} from "vue-i18n";
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {org_type} = proxy?.useDict("org_type");
 
 const deptList: any = ref<any[]>([]);

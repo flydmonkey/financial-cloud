@@ -73,7 +73,7 @@ const props: any = defineProps({
   }
 })
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {t} = useI18n();
 

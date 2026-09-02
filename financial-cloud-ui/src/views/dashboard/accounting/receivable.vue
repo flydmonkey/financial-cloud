@@ -128,7 +128,7 @@ import {BaseValue} from "@/types/FundBalance";
 import {statisticsAccountsReceivable, statisticsAccountsPayable} from "@/api/dashboard"
 
 const currBookStore = bookStore()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const loading = ref(false);
 const {statistics_period} = proxy!.useDict("statistics_period");
 

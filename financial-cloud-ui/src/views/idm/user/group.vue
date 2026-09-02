@@ -158,7 +158,7 @@ defineOptions({
   name: 'UserGroup'
 })
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {group_category_options}
     = proxy?.useDict("group_category_options");

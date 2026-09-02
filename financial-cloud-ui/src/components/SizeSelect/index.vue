@@ -36,7 +36,7 @@ const appStore: any = useAppStore();
 const size: any = computed(() => appStore.size);
 const route: any = useRoute();
 const router: any = useRouter();
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const sizeOptions: any = ref([
   { label: "较大", value: "large" },
   { label: "默认", value: "default" },

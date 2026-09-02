@@ -64,7 +64,7 @@ import {changePass, generateOnePas} from "@/api/idm/user";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formUser = ref<InstanceType<typeof ElForm> | null>(null);
 
 defineOptions({

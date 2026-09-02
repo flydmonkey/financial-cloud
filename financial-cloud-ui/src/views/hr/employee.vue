@@ -150,7 +150,7 @@ import modal from "@/plugins/modal";
 import editForm from "./employee/edit.vue"
 import {getTypeName} from "@/utils/enums/IdTypeEnum";
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const {users_idType, users_state, employee_types}
     = proxy?.useDict( "users_idType", "users_state", "employee_types");
 const {t} = useI18n()

@@ -124,7 +124,7 @@ import {ElForm} from "element-plus";
 import {addRule, getById, updateRule} from "@/api/hr/voucher-rule";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const resTreeRef: any = ref<any>({});
 const emit: any = defineEmits(['dialogOfClosedMethods'])

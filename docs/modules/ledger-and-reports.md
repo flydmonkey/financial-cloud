@@ -67,3 +67,4 @@ python tools/run_init_sql.py
 - **所有者权益变动表**：设计已完成，代码未实现（`/api/statement/owner-equity` 待定）
 - 总账：凭证级流水、多币别、未过账纳入
 - 费用明细：图表、同比、辅助核算展开、strict 勾稽拦截
+- **人工核对**：账套科目 4103/4104（或映射后的权益科目）与资产负债表权益合计抽检（见 [quality-dashboard](../quality-dashboard.md)）

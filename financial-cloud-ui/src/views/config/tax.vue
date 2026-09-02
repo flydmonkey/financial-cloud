@@ -142,7 +142,7 @@ import {deleteOne, fetchPage} from "@/api/config/tax";
 import modal from "@/plugins/modal";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const dataList: any = ref<any>([]);
 const loading: any = ref(false);

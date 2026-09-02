@@ -183,7 +183,7 @@ import SvgIcon from "@/components/SvgIcon/index.vue";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {books_vat_type, books_industry}
     = proxy?.useDict("books_vat_type", "books_industry");

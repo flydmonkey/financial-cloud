@@ -132,7 +132,7 @@ import SvgIcon from "@/components/SvgIcon/index.vue";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const {subjects_category, subjects_auxiliary}
     = proxy?.useDict("subjects_category", "subjects_auxiliary");

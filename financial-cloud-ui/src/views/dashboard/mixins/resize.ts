@@ -1,56 +1,59 @@
 import { debounce } from '@/utils'
 
-export default {
+/**
+ * Chart resize mixin (Options API).
+ * Host chart components provide `this.chart`.
+ */
+const resizeMixin = {
   data() {
     return {
-      $_sidebarElm: null,
-      $_resizeHandler: null
+      $_sidebarElm: null as HTMLElement | null,
+      $_resizeHandler: null as ((...args: any[]) => void) | null
     }
   },
-  mounted() {
+  mounted(this: any) {
     this.initListener()
   },
-  activated() {
+  activated(this: any) {
     if (!this.$_resizeHandler) {
-      // avoid duplication init
       this.initListener()
     }
-
-    // when keep-alive chart activated, auto resize
     this.resize()
   },
-  beforeDestroy() {
+  beforeDestroy(this: any) {
     this.destroyListener()
   },
-  deactivated() {
+  deactivated(this: any) {
     this.destroyListener()
   },
   methods: {
-    // use $_ for mixins properties
-    // https://vuejs.org/v2/style-guide/index.html#Private-property-names-essential
-    $_sidebarResizeHandler(e) {
+    $_sidebarResizeHandler(this: any, e: TransitionEvent) {
       if (e.propertyName === 'width') {
-        this.$_resizeHandler()
+        this.$_resizeHandler?.()
       }
     },
-    initListener() {
+    initListener(this: any) {
       this.$_resizeHandler = debounce(() => {
         this.resize()
-      }, 100)
+      }, 100, false)
       window.addEventListener('resize', this.$_resizeHandler)
 
-      this.$_sidebarElm = document.getElementsByClassName('sidebar-container')[0]
-      this.$_sidebarElm && this.$_sidebarElm.addEventListener('transitionend', this.$_sidebarResizeHandler)
+      this.$_sidebarElm = (document.getElementsByClassName('sidebar-container')[0] as HTMLElement) || null
+      this.$_sidebarElm?.addEventListener('transitionend', this.$_sidebarResizeHandler)
     },
-    destroyListener() {
-      window.removeEventListener('resize', this.$_resizeHandler)
+    destroyListener(this: any) {
+      if (this.$_resizeHandler) {
+        window.removeEventListener('resize', this.$_resizeHandler)
+      }
       this.$_resizeHandler = null
 
-      this.$_sidebarElm && this.$_sidebarElm.removeEventListener('transitionend', this.$_sidebarResizeHandler)
+      this.$_sidebarElm?.removeEventListener('transitionend', this.$_sidebarResizeHandler)
     },
-    resize() {
+    resize(this: any) {
       const { chart } = this
       chart && chart.resize()
     }
   }
 }
+
+export default resizeMixin as any

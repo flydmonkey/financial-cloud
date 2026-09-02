@@ -79,7 +79,7 @@ import {addNoUserGroup, listNoUserGroup} from "@/api/idm/group";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 const emit: any = defineEmits(['onSubmitSuccess'])
 

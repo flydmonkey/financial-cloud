@@ -86,7 +86,7 @@ import {addGroup, getOneGroup, updateGroup} from "@/api/idm/group.js";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const emit: any = defineEmits(['dialogOfClosedMethods'])
 

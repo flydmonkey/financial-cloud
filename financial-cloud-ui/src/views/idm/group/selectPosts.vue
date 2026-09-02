@@ -74,7 +74,7 @@ import {addMemberGroup, memberPostNotInGroup} from "@/api/idm/group.js";
 
 const {t} = useI18n()
 
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 
 // 声明 emits
 const emit: any = defineEmits(['onSubmitSuccess']);

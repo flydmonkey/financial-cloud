@@ -184,7 +184,7 @@ import modal from "@/plugins/modal";
 import {institutionsGetCurrent, institutionsUpdateCurrent} from "@/api/config/institutions";
 
 import {useI18n} from "vue-i18n";
-const {proxy} = getCurrentInstance()!;
+const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const { t } = useI18n()
 const { captcha_type } = proxy.useDict("captcha_type");

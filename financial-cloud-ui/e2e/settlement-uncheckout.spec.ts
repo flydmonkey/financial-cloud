@@ -25,7 +25,7 @@ import {
 } from './helpers/reports'
 
 /**
- * P0 反结账：打开最近已结月 → 改账 → 重结 → 勾稽；拒绝路径保持数据不变。
+ * P0 反结账：打开最近已结月 �?改账 �?重结 �?勾稽；拒绝路径保持数据不变�?
  */
 test.describe.serial('settlement uncheckout', () => {
     const ctx: {
@@ -46,15 +46,15 @@ test.describe.serial('settlement uncheckout', () => {
         const auth = await loginViaApi(request)
         ctx.headers = auth.headers
         const user = await getCurrentUser(request, auth.headers)
-        test.skip(!user?.bookId, '无账套')
+        test.skip(!user?.bookId, '无账�?)
         ctx.bookId = user.bookId
 
         const created = await createAndPostVoucher(
-            request, ctx.headers, ctx.bookId, '反结账-业务凭证', 80,
+            request, ctx.headers, ctx.bookId, '反结�?业务凭证', 80,
         )
         ctx.voucherId = created.voucherId
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
 
         const {closedTerm, nextTerm} = await checkoutCurrentPeriod(
             request, ctx.headers, ctx.bookId,
@@ -79,7 +79,7 @@ test.describe.serial('settlement uncheckout', () => {
         )
         expect(countClosedSettlements(records, closedTerm)).toBe(0)
 
-        // 凭证保持过账状态（未级联反过账）
+        // 凭证保持过账状态（未级联反过账�?
         const voucherRes = await request.get(`/api/voucher/get/${ctx.voucherId}`, {headers: ctx.headers})
         const voucherBody = await voucherRes.json()
         expect(voucherBody.code).toBe(0)
@@ -89,9 +89,9 @@ test.describe.serial('settlement uncheckout', () => {
     test('4.3 reject non-adjacent and when next period has voucher', async ({request}) => {
         test.skip(!ctx.closedTerm, '无已反结账上下文')
 
-        // 当前已回到 closedTerm；先再结一次得到 nextTerm，再在 next 录凭证
+        // 当前已回�?closedTerm；先再结一次得�?nextTerm，再�?next 录凭�?
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
         const {closedTerm, nextTerm} = await checkoutCurrentPeriod(
             request, ctx.headers, ctx.bookId,
         )
@@ -101,7 +101,7 @@ test.describe.serial('settlement uncheckout', () => {
         const older = addMonthsToTerm(closedTerm, -1)
         const badPeriod = await uncheckoutPeriod(request, ctx.headers, older)
         expect(badPeriod.code).not.toBe(0)
-        expect(badPeriod.message || '').toMatch(/只能反结账最近已结期间/)
+        expect(badPeriod.message || '').toMatch(/只能反结账最近已结期�?)
         expect(await getCurrentTerm(request, ctx.headers, ctx.bookId)).toBe(nextTerm)
         expect(countClosedSettlements(
             await fetchSettlementRecords(request, ctx.headers, closedTerm.slice(0, 4)),
@@ -109,7 +109,7 @@ test.describe.serial('settlement uncheckout', () => {
         )).toBe(1)
 
         await createAndPostVoucher(
-            request, ctx.headers, ctx.bookId, '反结账-下期阻挡', 20,
+            request, ctx.headers, ctx.bookId, '反结�?下期阻挡', 20,
         )
         const blocked = await uncheckoutPeriod(request, ctx.headers, closedTerm)
         expect(blocked.code).not.toBe(0)
@@ -118,7 +118,7 @@ test.describe.serial('settlement uncheckout', () => {
     })
 
     test('4.2 / 4.4 re-close after adjust reconciles equity aliases', async ({request}) => {
-        test.skip(!ctx.bookId, '无账套')
+        test.skip(!ctx.bookId, '无账�?)
 
         // 清掉阻挡凭证：反过账后删除，再反结账
         const listRes = await request.get(
@@ -141,7 +141,7 @@ test.describe.serial('settlement uncheckout', () => {
         expect(await getCurrentTerm(request, ctx.headers, ctx.bookId)).toBe(ctx.closedTerm)
 
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
         await checkoutCurrentPeriod(request, ctx.headers, ctx.bookId)
 
         const term = ctx.closedTerm
@@ -154,7 +154,7 @@ test.describe.serial('settlement uncheckout', () => {
         const balances = await fetchSubjectBalances(request, ctx.headers, term)
         const yearProfit = getSubjectBalanceByCodes(balances, YEAR_PROFIT_SUBJECT_CODES)
         const undistributed = getSubjectBalanceByCodes(balances, UNDISTRIBUTED_PROFIT_SUBJECT_CODES)
-        // 小企业 3103/3104 与企业别名 4103/4104 任一路径有余额即可核对存在性
+        // 小企�?3103/3104 与企业别�?4103/4104 任一路径有余额即可核对存在�?
         expect(Number.isFinite(yearProfit)).toBeTruthy()
         expect(Number.isFinite(undistributed)).toBeTruthy()
     })

@@ -66,6 +66,40 @@ public class FixedAssetDepreciationService extends ServiceImpl<FixedAssetAccrual
     private final VoucherService voucherService;
     private final IdentifierGenerator identifierGenerator;
 
+    /**
+     * Whether any fixed asset would produce a depreciation amount for the period
+     * (same eligibility as {@link #accrue}). Used by month-end close hard gates.
+     */
+    public boolean needsDepreciationAccrual(String bookId, String yearPeriod) {
+        String period = resolvePeriod(bookId, yearPeriod);
+        List<FixedAsset> assets = fixedAssetMapper.selectList(Wrappers.<FixedAsset>lambdaQuery()
+                .eq(FixedAsset::getBookId, bookId));
+        Map<String, BigDecimal> workMap = loadWorkMap(bookId, period);
+        for (FixedAsset asset : assets) {
+            String startPeriod = asset.getStartUseDate() != null
+                    ? FixedAssetDepreciationRules.periodOf(asset.getStartUseDate())
+                    : asset.getEntryPeriod();
+            if (!FixedAssetDepreciationRules.shouldAccrue(period, startPeriod, asset.getDisposedPeriod(),
+                    asset.getSuspendedPeriod(), asset.getStatus())) {
+                continue;
+            }
+            DepreciationMethod method = DepreciationMethod.from(asset.getDepreciationMethod());
+            if (!method.isDepreciable()) {
+                continue;
+            }
+            BigDecimal periodWork = workMap.get(asset.getId());
+            if (method == DepreciationMethod.UNITS_OF_PRODUCTION && periodWork == null) {
+                // Work missing still means accrual is required (will fail accrue until filled).
+                return true;
+            }
+            BigDecimal amount = calcAmount(asset, method, periodWork);
+            if (amount.compareTo(BigDecimal.ZERO) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Message<FixedAssetDepreciationStatusVo> status(String bookId, String yearPeriod) {
         String period = resolvePeriod(bookId, yearPeriod);
         FixedAssetDepreciationStatusVo vo = new FixedAssetDepreciationStatusVo();

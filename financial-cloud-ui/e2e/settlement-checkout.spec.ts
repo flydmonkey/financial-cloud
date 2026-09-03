@@ -41,7 +41,7 @@ test.describe.serial('settlement checkout guards', () => {
             request, ctx.headers, ctx.bookId, '结账守卫-凭证', 50,
         )
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
 
         const {closedTerm} = await checkoutCurrentPeriod(request, ctx.headers, ctx.bookId)
         ctx.closedTerm = closedTerm
@@ -77,13 +77,28 @@ test.describe.serial('settlement checkout guards', () => {
             request, ctx.headers, ctx.bookId, '结账守卫-下期凭证', 30,
         )
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
 
-        const retry = await tryCheckoutCurrentPeriod(request, ctx.headers, ctx.bookId)
-        expect(retry.code).toBe(0)
+        const retry = await checkoutCurrentPeriod(request, ctx.headers, ctx.bookId)
+        expect(retry.nextTerm).toBeTruthy()
 
         const records = await fetchSettlementRecords(request, ctx.headers, ctx.year)
         expect(countClosedSettlements(records, ctx.closedTerm)).toBe(1)
         expect(countClosedSettlements(records, nextOpenTerm)).toBe(1)
+    })
+
+    test('hard gates reject checkout without required carry', async ({request}) => {
+        const auth = await loginViaApi(request)
+        const user = await getCurrentUser(request, auth.headers)
+        test.skip(!user?.bookId, '无账套')
+        const headers = auth.headers
+        const bookId = user.bookId
+
+        await createAndPostVoucher(request, headers, bookId, '硬检拒绝-凭证', 20)
+        await fixVoucherNumbering(request, headers)
+
+        const blocked = await tryCheckoutCurrentPeriod(request, headers, bookId)
+        expect(blocked.code, blocked.message || 'should block').not.toBe(0)
+        expect(blocked.message || '').toMatch(/结账条件未通过|损益结转|尚未生成/)
     })
 })

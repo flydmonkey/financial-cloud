@@ -2,7 +2,9 @@ package com.financial.cloud.service.book;
 
 
 import lombok.RequiredArgsConstructor;
+import com.financial.cloud.service.arap.ArapService;
 import com.financial.cloud.service.config.ConfigSysService;
+import com.financial.cloud.service.fixedasset.FixedAssetDepreciationService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.service.statement.StatementReportService;
 import com.financial.cloud.service.statement.StatementIncomeService;
@@ -11,22 +13,30 @@ import com.financial.cloud.service.journal.JournalAccountService;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Settlement;
+import com.financial.cloud.domain.book.SettlementCarryforward;
 import com.financial.cloud.domain.journal.JournalEntry;
 import com.financial.cloud.domain.voucher.Voucher;
+import com.financial.cloud.domain.voucher.VoucherTemplate;
+import com.financial.cloud.dto.arap.ArapMonthEndSummaryVo;
 import com.financial.cloud.dto.book.SettlementPageDto;
 import com.financial.cloud.dto.book.SettlementVerifyVo;
+import com.financial.cloud.dto.fixedasset.FixedAssetDepreciationStatusVo;
 import com.financial.cloud.dto.statement.StatementParamsDto;
 import com.financial.cloud.dto.voucher.VoucherSuccessiveDto;
 import com.financial.cloud.dto.voucher.VoucherItemVo;
 import com.financial.cloud.enums.statement.StatementPeriodTypeEnum;
+import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.repository.book.BookMapper;
+import com.financial.cloud.repository.book.SettlementCarryforwardMapper;
 import com.financial.cloud.repository.book.SettlementMapper;
 import com.financial.cloud.repository.journal.JournalEntryMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
+import com.financial.cloud.repository.voucher.VoucherTemplateMapper;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.book.SettlementService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +44,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -70,6 +83,16 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
     private final JournalAccountService journalAccountService;
 
 	private final JournalEntryMapper journalEntryMapper;
+
+	private final SettlementCarryforwardMapper settlementCarryforwardMapper;
+
+	private final VoucherTemplateMapper voucherTemplateMapper;
+
+	@Lazy
+	private final FixedAssetDepreciationService fixedAssetDepreciationService;
+
+	@Lazy
+	private final ArapService arapService;
 
 	@Lazy
 	private final StatementReportService statementReportService;
@@ -142,6 +165,16 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 		wrapper.eq(Settlement::getYearPeriod, currentTerm);
         Settlement storedSettlement = settlementMapper.selectOne(wrapper);
         if(storedSettlement == null) {
+			List<SettlementVerifyVo> hardGates = evaluateHardGates(dto.getBookId(), currentTerm);
+			List<SettlementVerifyVo> failed = hardGates.stream()
+					.filter(v -> v.isHard() && v.isApplicable() && !v.isResult())
+					.collect(Collectors.toList());
+			if (!failed.isEmpty()) {
+				String detail = failed.stream()
+						.map(v -> v.getItem() + (StringUtils.isNotBlank(v.getReason()) ? ("：" + v.getReason()) : ""))
+						.collect(Collectors.joining("；"));
+				return Message.failed("结账条件未通过：" + detail);
+			}
 			Settlement settlement = new Settlement();
 	    	settlement.setBookId(dto.getBookId());
 	    	settlement.setYear(currentTermYearMonth.getYear());
@@ -287,59 +320,178 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	}
 	public Message<List<SettlementVerifyVo>> verify(String bookId) {
 		String currentTerm = configSysService.getCurrentTerm(bookId);
+		List<SettlementVerifyVo> settlementVerifyList = evaluateHardGates(bookId, currentTerm);
+		boolean hardFailed = settlementVerifyList.stream()
+				.anyMatch(v -> v.isHard() && v.isApplicable() && !v.isResult());
+		if (hardFailed) {
+			return new Message<>(Message.FAIL, "结账条件项检查失败", settlementVerifyList);
+		}
+		return new Message<>(Message.SUCCESS, "结账条件项检查完成", settlementVerifyList);
+	}
 
-		/**
-		 * 凭证号连续性检查
-		 */
+	/**
+	 * Hard gates for month-end close. Same evaluation is used by {@link #verify} and {@link #checkout}.
+	 */
+	List<SettlementVerifyVo> evaluateHardGates(String bookId, String currentTerm) {
+		List<SettlementVerifyVo> list = new ArrayList<>();
 		int checkIndex = 1;
-		List<SettlementVerifyVo> settlementVerifyList = new ArrayList<>();
-		Message<List<VoucherSuccessiveDto>> voucherSuccessiveMsg = voucherService.checkSuccessiveAll(bookId);
-		boolean verify = true;
-		boolean warning = false;
 
-		if(CollectionUtils.isEmpty(voucherSuccessiveMsg.getData())) {
-			settlementVerifyList.add(new SettlementVerifyVo(checkIndex,"凭证号连续性检查",true,false));
-		}else {
-			verify = false;
-			settlementVerifyList.add(new SettlementVerifyVo(checkIndex,"凭证号连续性检查",false,false));
+		long unposted = countUnpostedVouchers(bookId, currentTerm);
+		if (unposted > 0) {
+			list.add(SettlementVerifyVo.hardFail(checkIndex++, "未完成凭证检查",
+					"当前账期仍有 " + unposted + " 张未过账凭证"));
+		} else {
+			list.add(SettlementVerifyVo.hardPass(checkIndex++, "未完成凭证检查"));
 		}
 
-		/**
-		 * 借贷方余额的检查
-		 */
-		checkIndex ++;
+		Message<List<VoucherSuccessiveDto>> voucherSuccessiveMsg = voucherService.checkSuccessiveAll(bookId);
+		if (CollectionUtils.isEmpty(voucherSuccessiveMsg.getData())) {
+			list.add(SettlementVerifyVo.hardPass(checkIndex++, "凭证号连续性检查"));
+		} else {
+			list.add(SettlementVerifyVo.hardFail(checkIndex++, "凭证号连续性检查", "存在断号或凭证号不连续"));
+		}
+
 		StatementParamsDto statementParamsDto = new StatementParamsDto();
 		statementParamsDto.setPeriodType(StatementPeriodTypeEnum.MONTH.getValue());
 		statementParamsDto.setBookId(bookId);
 		statementParamsDto.setReportDate(currentTerm);
 		statementParamsDto.parse();
-
-		//借方
 		BigDecimal creditAmount = BigDecimal.ZERO;
-		//贷方
 		BigDecimal debitAmount = BigDecimal.ZERO;
+		List<VoucherItemVo> voucherItemVos = voucherItemMapper.selectSubjectAmount(statementParamsDto);
+		for (VoucherItemVo voucherItemVo : voucherItemVos) {
+			debitAmount = debitAmount.add(voucherItemVo.getDebitAmount() == null ? BigDecimal.ZERO : voucherItemVo.getDebitAmount());
+			creditAmount = creditAmount.add(voucherItemVo.getCreditAmount() == null ? BigDecimal.ZERO : voucherItemVo.getCreditAmount());
+		}
+		if (creditAmount.compareTo(debitAmount) == 0) {
+			list.add(SettlementVerifyVo.hardPass(checkIndex++, "凭证借贷方余额的检查"));
+		} else {
+			list.add(SettlementVerifyVo.hardFail(checkIndex++, "凭证借贷方余额的检查",
+					"借方合计 " + debitAmount + " 与贷方合计 " + creditAmount + " 不相等"));
+		}
 
-		//读取科目余额表
-        List<VoucherItemVo> voucherItemVos = voucherItemMapper.selectSubjectAmount(statementParamsDto);
-        for (VoucherItemVo voucherItemVo : voucherItemVos) {
-        	debitAmount  = debitAmount.add(voucherItemVo.getDebitAmount()== null?BigDecimal.ZERO:voucherItemVo.getDebitAmount());
-        	creditAmount = creditAmount.add(voucherItemVo.getCreditAmount()== null?BigDecimal.ZERO:voucherItemVo.getCreditAmount());
-        }
-        if(creditAmount.equals(debitAmount)) {
-        	settlementVerifyList.add(new SettlementVerifyVo(checkIndex,"凭证借贷方余额的检查",true,false));
-        }else {
-        	verify = false;
-        	settlementVerifyList.add(new SettlementVerifyVo(checkIndex,"凭证借贷方余额的检查",false,false));
-        }
+		checkIndex = appendRequiredCarryChecks(list, checkIndex, bookId, currentTerm);
+		checkIndex = appendDepreciationCheck(list, checkIndex, bookId, currentTerm);
+		appendArapSummaryCheck(list, checkIndex, bookId, currentTerm);
+		return list;
+	}
 
-		if(verify) {
-			if(warning) {
-				return new Message<>(Message.WARNING, "结账条件项检查完成，有警告信息，仍然可以结账",settlementVerifyList);
-			}else {
-				return new Message<>(Message.SUCCESS, "结账条件项检查完成",settlementVerifyList);
+	private long countUnpostedVouchers(String bookId, String currentTerm) {
+		YearMonth ym = YearMonth.parse(currentTerm);
+		LambdaQueryWrapper<Voucher> wrapper = Wrappers.lambdaQuery();
+		wrapper.eq(Voucher::getBookId, bookId);
+		wrapper.eq(Voucher::getVoucherYear, ym.getYear());
+		wrapper.eq(Voucher::getVoucherMonth, ym.getMonthValue());
+		wrapper.ne(Voucher::getStatus, VoucherStatusEnum.CANCELLED.getValue());
+		wrapper.and(w -> w.isNull(Voucher::getSenderId).or().eq(Voucher::getSenderId, ""));
+		return voucherService.count(wrapper);
+	}
+
+	private int appendRequiredCarryChecks(List<SettlementVerifyVo> list, int checkIndex,
+			String bookId, String currentTerm) {
+		List<String> requiredCodes = MonthEndCloseRules.requiredCarryCodesForTerm(currentTerm);
+		List<VoucherTemplate> templates = voucherTemplateMapper.selectList(
+				Wrappers.<VoucherTemplate>lambdaQuery()
+						.eq(VoucherTemplate::getRelatedId, bookId)
+						.in(VoucherTemplate::getCode, requiredCodes));
+		Set<String> foundCodes = templates.stream().map(VoucherTemplate::getCode).collect(Collectors.toSet());
+		Set<String> doneTemplateIds = new HashSet<>();
+		if (!templates.isEmpty()) {
+			List<String> templateIds = templates.stream().map(VoucherTemplate::getId).collect(Collectors.toList());
+			List<SettlementCarryforward> carries = settlementCarryforwardMapper.selectList(
+					Wrappers.<SettlementCarryforward>lambdaQuery()
+							.eq(SettlementCarryforward::getBookId, bookId)
+							.eq(SettlementCarryforward::getYearPeriod, currentTerm)
+							.in(SettlementCarryforward::getVoucherTemplateId, templateIds));
+			for (SettlementCarryforward carry : carries) {
+				if (StringUtils.isNotBlank(carry.getVoucherId())) {
+					doneTemplateIds.add(carry.getVoucherTemplateId());
+				}
 			}
-		}else {
-			return new Message<>(Message.FAIL, "结账条件项检查失败",settlementVerifyList);
+		}
+
+		for (String code : requiredCodes) {
+			String label = carryLabel(code);
+			if (!foundCodes.contains(code)) {
+				if (MonthEndCloseRules.isDecemberYearProfitCode(code)) {
+					list.add(SettlementVerifyVo.hardNa(checkIndex++, label, "账套无该结转模板，跳过"));
+				} else {
+					list.add(SettlementVerifyVo.hardFail(checkIndex++, label, "缺少必做结转模板 " + code));
+				}
+				continue;
+			}
+			VoucherTemplate template = templates.stream()
+					.filter(t -> code.equals(t.getCode()))
+					.findFirst()
+					.orElse(null);
+			if (template != null && doneTemplateIds.contains(template.getId())) {
+				list.add(SettlementVerifyVo.hardPass(checkIndex++, label));
+			} else if (MonthEndCloseRules.isDecemberYearProfitCode(code)) {
+				var profitBalance = statementSubjectBalanceService.getSubjectBalance(bookId, "4103");
+				boolean zeroProfit = profitBalance == null || profitBalance.getBalance() == null
+						|| profitBalance.getBalance().compareTo(BigDecimal.ZERO) == 0;
+				if (zeroProfit) {
+					list.add(SettlementVerifyVo.hardNa(checkIndex++, label, "本年利润无余额，无需结转"));
+				} else {
+					list.add(SettlementVerifyVo.hardFail(checkIndex++, label, "尚未生成结转本年利润凭证"));
+				}
+			} else {
+				list.add(SettlementVerifyVo.hardFail(checkIndex++, label, "尚未生成结转凭证"));
+			}
+		}
+		return checkIndex;
+	}
+
+	private static String carryLabel(String code) {
+		if (MonthEndCloseRules.CODE_CARRY_INCOME.equals(code)) {
+			return "损益结转-收入";
+		}
+		if (MonthEndCloseRules.CODE_CARRY_COST.equals(code)) {
+			return "损益结转-成本费用";
+		}
+		if (MonthEndCloseRules.CODE_CARRY_YEAR_PROFIT.equals(code)) {
+			return "损益结转-本年利润";
+		}
+		return "损益结转-" + code;
+	}
+
+	private int appendDepreciationCheck(List<SettlementVerifyVo> list, int checkIndex,
+			String bookId, String currentTerm) {
+		boolean needs = fixedAssetDepreciationService.needsDepreciationAccrual(bookId, currentTerm);
+		if (!needs) {
+			list.add(SettlementVerifyVo.hardNa(checkIndex++, "固定资产折旧", "本期无应计提折旧的资产"));
+			return checkIndex;
+		}
+		Message<FixedAssetDepreciationStatusVo> statusMsg =
+				fixedAssetDepreciationService.status(bookId, currentTerm);
+		boolean accrued = statusMsg.getData() != null && statusMsg.getData().isAccrued();
+		if (accrued) {
+			list.add(SettlementVerifyVo.hardPass(checkIndex++, "固定资产折旧"));
+		} else {
+			list.add(SettlementVerifyVo.hardFail(checkIndex++, "固定资产折旧", "本期尚有应折旧资产未计提"));
+		}
+		return checkIndex;
+	}
+
+	private void appendArapSummaryCheck(List<SettlementVerifyVo> list, int checkIndex,
+			String bookId, String currentTerm) {
+		try {
+			ArapMonthEndSummaryVo summary = arapService.monthEndSummary(bookId, currentTerm);
+			String reason = String.format(
+					"应收合计 %s，应付合计 %s；逾期应收 %s，逾期应付 %s（账龄按凭证日期FIFO估算，逾期不阻断结账）",
+					summary.getReceivableTotal(), summary.getPayableTotal(),
+					summary.getOverdueReceivable(), summary.getOverduePayable());
+			if (summary.isHasOverdue()) {
+				list.add(SettlementVerifyVo.hardPassWarning(checkIndex, "往来款项（应收应付/账龄）", reason));
+			} else {
+				SettlementVerifyVo pass = SettlementVerifyVo.hardPass(checkIndex, "往来款项（应收应付/账龄）");
+				pass.setReason(reason);
+				list.add(pass);
+			}
+		} catch (Exception ex) {
+			log.warn("arap month-end summary failed bookId={} term={}: {}", bookId, currentTerm, ex.getMessage());
+			list.add(SettlementVerifyVo.hardPassWarning(checkIndex, "往来款项（应收应付/账龄）",
+					"往来汇总查询异常，请人工核对：" + ex.getMessage()));
 		}
 	}
 

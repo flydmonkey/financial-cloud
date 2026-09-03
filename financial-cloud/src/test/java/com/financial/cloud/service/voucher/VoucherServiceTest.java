@@ -243,6 +243,17 @@ class VoucherServiceTest {
     }
 
     @Test
+    void saveRejectsClosedPeriod() {
+        VoucherChangeDto dto = validDraftDto();
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
+
+        Message<String> result = voucherService.save(dto);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("已结账期间"));
+    }
+
+    @Test
     void submitRejectsAlreadySubmittedVoucher() {
         VoucherChangeDto dto = validDraftDto();
         dto.setId("existing-voucher");

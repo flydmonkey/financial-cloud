@@ -14,8 +14,7 @@ import {
 } from './helpers/voucher'
 
 /**
- * TC-E2E-004 / TC-VCH-021：免审核账套全流程
- */
+ * TC-E2E-004 / TC-VCH-021：免审核账套全流�? */
 test.describe.serial('no-review voucher flow', () => {
     const ctx: {
         headers: Record<string, string>
@@ -47,7 +46,7 @@ test.describe.serial('no-review voucher flow', () => {
         const auth = await loginViaApi(request)
         ctx.headers = auth.headers
         const user = await getCurrentUser(request, auth.headers)
-        test.skip(!user?.bookId, '无账套')
+        test.skip(!user?.bookId, '无账�?)
         ctx.bookId = user.bookId
         ctx.term = await getCurrentTerm(request, auth.headers, user.bookId)
 
@@ -58,13 +57,13 @@ test.describe.serial('no-review voucher flow', () => {
         const subjects = await fetchBookSubjects(request, ctx.headers, ctx.bookId)
         test.skip(subjects.length < 2, '科目不足')
         const payload = await buildBalancedVoucherPayload(
-            request, ctx.headers, ctx.bookId, 'E2E免审核凭证', 66,
+            request, ctx.headers, ctx.bookId, 'E2E免审核凭�?, 66,
         )
         ctx.voucherId = await createDraftVoucher(request, ctx.headers, payload)
     })
 
     test('submit skips reviewing and goes to completed', async ({request}) => {
-        test.skip(!ctx.voucherId, '无凭证')
+        test.skip(!ctx.voucherId, '无凭�?)
         const detail = await getVoucherDetail(request, ctx.headers, ctx.voucherId)
         const payload = {
             bookId: detail.bookId,
@@ -91,9 +90,9 @@ test.describe.serial('no-review voucher flow', () => {
     })
 
     test('TC-VCH-033: no-review unaudit returns to draft', async ({request}) => {
-        test.skip(!ctx.bookId, '无账套')
+        test.skip(!ctx.bookId, '无账�?)
         const payload = await buildBalancedVoucherPayload(
-            request, ctx.headers, ctx.bookId, 'E2E免审核-反审', 67,
+            request, ctx.headers, ctx.bookId, 'E2E免审�?反审', 67,
         )
         const id = await createDraftVoucher(request, ctx.headers, payload)
         await submitVoucher(request, ctx.headers, payload, id)
@@ -103,7 +102,7 @@ test.describe.serial('no-review voucher flow', () => {
 
         const result = await tryUnauditVoucher(request, ctx.headers, id)
         expect(result.code).toBe(0)
-        expect(result.message || '').toMatch(/成功：1/)
+        expect(result.message || '').toMatch(/成功�?/)
 
         const after = await getVoucherDetail(request, ctx.headers, id)
         expect(after.status).toBe('draft')
@@ -111,7 +110,7 @@ test.describe.serial('no-review voucher flow', () => {
     })
 
     test('post and verify reports without audit step', async ({request}) => {
-        test.skip(!ctx.voucherId, '无凭证')
+        test.skip(!ctx.voucherId, '无凭�?)
         await postVoucher(request, ctx.headers, ctx.voucherId)
         const detail = await getVoucherDetail(request, ctx.headers, ctx.voucherId)
         expect(detail.senderName).toBeTruthy()
@@ -120,6 +119,6 @@ test.describe.serial('no-review voucher flow', () => {
 
     test('settlement verify passes with no-review voucher', async ({request}) => {
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
     })
 })

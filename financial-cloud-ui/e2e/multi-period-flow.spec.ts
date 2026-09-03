@@ -29,10 +29,8 @@ import {
 } from './helpers/voucher'
 
 /**
- * TC-E2E-003：多期连续做账
- * 第 1 期：录凭证 → 过账 → 结账
- * 第 2 期：录凭证 → 过账 → 验证利润表累计滚动 + 资产负债表平衡 + 现金流跨期衔接
- */
+ * TC-E2E-003：多期连续做�? * �?1 期：录凭�?�?过账 �?结账
+ * �?2 期：录凭�?�?过账 �?验证利润表累计滚�?+ 资产负债表平衡 + 现金流跨期衔�? */
 test.describe.serial('multi-period accounting flow', () => {
     const ctx: {
         headers: Record<string, string>
@@ -66,7 +64,7 @@ test.describe.serial('multi-period accounting flow', () => {
         const auth = await loginViaApi(request)
         ctx.headers = auth.headers
         const user = await getCurrentUser(request, auth.headers)
-        test.skip(!user?.bookId, '无账套，请先完成 onboarding 或登录有效账套')
+        test.skip(!user?.bookId, '无账套，请先完成 onboarding 或登录有效账�?)
         ctx.bookId = user.bookId
         ctx.period1Term = await getCurrentTerm(request, auth.headers, user.bookId)
         await ensureVoucherReviewEnabled(request, auth.headers, user.bookId)
@@ -74,7 +72,7 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('period 1: create voucher, post and checkout', async ({request}) => {
-        test.skip(!ctx.bookId, '账套未就绪')
+        test.skip(!ctx.bookId, '账套未就�?)
         const subjects = await fetchBookSubjects(request, ctx.headers, ctx.bookId)
         test.skip(subjects.length < 2, '账套科目不足')
         const pair = pickReconciliationSubjects(subjects)
@@ -83,7 +81,7 @@ test.describe.serial('multi-period accounting flow', () => {
             request,
             ctx.headers,
             ctx.bookId,
-            'E2E多期-第1期凭证',
+            'E2E多期-�?期凭�?,
             ctx.period1Amount,
             pair,
         )
@@ -99,7 +97,7 @@ test.describe.serial('multi-period accounting flow', () => {
         }
 
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
         await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
 
         ctx.period1Income = await getIncomeNetProfit(request, ctx.headers, ctx.period1Term)
@@ -120,12 +118,12 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('period 1: reports remain balanced after checkout', async ({request}) => {
-        test.skip(!ctx.period1Term, '第 1 期未结账')
+        test.skip(!ctx.period1Term, '�?1 期未结账')
         await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
     })
 
     test('TC-RPT-005: period 2 opening bank balance rolls from period 1 closing', async ({request}) => {
-        test.skip(ctx.period1BankBalance == null || !ctx.period2Term, '缺少第 1 期银行快照')
+        test.skip(ctx.period1BankBalance == null || !ctx.period2Term, '缺少�?1 期银行快�?)
 
         const p2SubjectsBeforeVoucher = await fetchSubjectBalances(request, ctx.headers, ctx.period2Term)
         const p2BankBefore = getSubjectBalance(p2SubjectsBeforeVoucher, '1002')
@@ -138,7 +136,7 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('CF-M01: period 2 cash flow beginning rolls from period 1 ending', async ({request}) => {
-        test.skip(ctx.period1CashEnding == null || !ctx.period2Term, '缺少第 1 期现金流快照')
+        test.skip(ctx.period1CashEnding == null || !ctx.period2Term, '缺少�?1 期现金流快照')
 
         const p2CashBefore = await getCashFlowTotals(request, ctx.headers, ctx.period2Term)
         test.info().annotations.push({
@@ -149,7 +147,7 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('period 2: create voucher in new term', async ({request}) => {
-        test.skip(!ctx.period2Term, '第 2 期账期未推进')
+        test.skip(!ctx.period2Term, '�?2 期账期未推进')
         const currentTerm = await getCurrentTerm(request, ctx.headers, ctx.bookId)
         expect(currentTerm).toBe(ctx.period2Term)
 
@@ -160,7 +158,7 @@ test.describe.serial('multi-period accounting flow', () => {
             request,
             ctx.headers,
             ctx.bookId,
-            'E2E多期-第2期凭证',
+            'E2E多期-�?期凭�?,
             ctx.period2Amount,
             pair,
         )
@@ -179,7 +177,7 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('CF-M02: period 2 inventory indirect uses prior month closing as opening', async ({request}) => {
-        test.skip(ctx.period1Inventory == null || !ctx.period2Term, '缺少存货基线或未进入第 2 期')
+        test.skip(ctx.period1Inventory == null || !ctx.period2Term, '缺少存货基线或未进入�?2 �?)
 
         const items = await fetchCashFlowStatement(request, ctx.headers, ctx.period2Term)
         const inventoryChange = num(findCashFlowItem(items, CashFlowItems.INVENTORY_CHANGE)?.monthlyAmount)
@@ -199,14 +197,14 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('TC-RPT-014: period 2 income cumulative rolls from period 1', async ({request}) => {
-        test.skip(!ctx.period1Income || !ctx.period2Term, '缺少第 1 期快照或第 2 期账期')
+        test.skip(!ctx.period1Income || !ctx.period2Term, '缺少�?1 期快照或�?2 期账�?)
 
         const period2Income = await getIncomeNetProfit(request, ctx.headers, ctx.period2Term)
         const expectedCumulative = ctx.period1Income.cumulative + period2Income.current
 
         test.info().annotations.push({
             type: 'note',
-            description: `P1累计=${ctx.period1Income.cumulative}, P2本期=${period2Income.current}, P2累计=${period2Income.cumulative}, 期望累计≈${expectedCumulative}`,
+            description: `P1累计=${ctx.period1Income.cumulative}, P2本期=${period2Income.current}, P2累计=${period2Income.cumulative}, 期望累计�?{expectedCumulative}`,
         })
 
         if (Math.abs(ctx.period1Income.cumulative) > 0.01 || Math.abs(period2Income.current) > 0.01) {
@@ -218,7 +216,7 @@ test.describe.serial('multi-period accounting flow', () => {
     })
 
     test('period 2: balance sheet totals roll forward consistently', async ({request}) => {
-        test.skip(!ctx.period1Balance || !ctx.period2Term, '缺少第 1 期资产负债表快照')
+        test.skip(!ctx.period1Balance || !ctx.period2Term, '缺少�?1 期资产负债表快照')
 
         const period2Balance = await getBalanceSheetTotals(request, ctx.headers, ctx.period2Term)
 

@@ -504,6 +504,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
+        Message<String> periodLock = rejectClosedPeriodWrite(dto);
+        if (periodLock != null) {
+            return periodLock;
+        }
         Voucher voucher = Voucher.builder().build();
         BeanUtil.copyProperties(dto, voucher);
         String currentId = identifierGenerator.nextId(voucher).toString();
@@ -571,6 +575,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         Message<String> validationResult = validateItemsForSave(dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
+        }
+        Message<String> periodLock = rejectClosedPeriodWrite(dto);
+        if (periodLock != null) {
+            return periodLock;
         }
         String currentId = dto.getId();
 //        dto.setWord(null);
@@ -1306,6 +1314,33 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         String currentTerm = configSysService.getCurrentTerm(voucher.getBookId());
         String voucherTerm = DateUtils.format(voucher.getVoucherDate(), DateUtils.FORMAT_DATE_YYYY_MM);
         return currentTerm.compareTo(voucherTerm) <= 0;
+    }
+
+    /**
+     * Reject create/update when voucher period is before the book's current open term.
+     * @return failed Message when locked; null when allowed
+     */
+    private Message<String> rejectClosedPeriodWrite(VoucherChangeDto dto) {
+        if (dto == null || StringUtils.isBlank(dto.getBookId())) {
+            return null;
+        }
+        String voucherTerm = null;
+        if (dto.getVoucherDate() != null) {
+            voucherTerm = DateUtils.format(dto.getVoucherDate(), DateUtils.FORMAT_DATE_YYYY_MM);
+        } else if (dto.getVoucherYear() != null && dto.getVoucherMonth() != null) {
+            voucherTerm = String.format("%d-%02d", dto.getVoucherYear(), dto.getVoucherMonth());
+        }
+        if (StringUtils.isBlank(voucherTerm)) {
+            return null;
+        }
+        String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
+        if (StringUtils.isBlank(currentTerm)) {
+            return null;
+        }
+        if (currentTerm.compareTo(voucherTerm) > 0) {
+            return Message.failed("已结账期间不允许新增或修改凭证（当前开放账期 " + currentTerm + "）");
+        }
+        return null;
     }
 
     private VoucherChangeDto toChangeDto(VoucherVo voucherVo) {

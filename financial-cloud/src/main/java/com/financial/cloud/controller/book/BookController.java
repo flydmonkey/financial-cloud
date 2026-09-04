@@ -48,9 +48,10 @@ public class BookController {
     }
 
     @PostMapping("/save")
-    public Message<String> save(@Validated(value = AddGroup.class) @RequestBody BookChangeDto dto) {
-        log.debug("save {}",dto);
-        return bookService.save(dto);
+    public Message<String> save(@Validated(value = AddGroup.class) @RequestBody BookChangeDto dto,
+                                @CurrentUser UserInfo currentUser) {
+        log.debug("save {} for user {}", dto, currentUser.getId());
+        return bookService.save(dto, currentUser);
     }
 
     @PutMapping("/update")

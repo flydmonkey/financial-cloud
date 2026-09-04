@@ -89,6 +89,9 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	private final VoucherTemplateMapper voucherTemplateMapper;
 
 	@Lazy
+	private final SettlementCarryService settlementCarryService;
+
+	@Lazy
 	private final FixedAssetDepreciationService fixedAssetDepreciationService;
 
 	@Lazy
@@ -427,14 +430,13 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 			if (template != null && doneTemplateIds.contains(template.getId())) {
 				list.add(SettlementVerifyVo.hardPass(checkIndex++, label));
 			} else if (MonthEndCloseRules.isDecemberYearProfitCode(code)) {
-				var profitBalance = statementSubjectBalanceService.getSubjectBalance(bookId, "4103");
-				boolean zeroProfit = profitBalance == null || profitBalance.getBalance() == null
-						|| profitBalance.getBalance().compareTo(BigDecimal.ZERO) == 0;
-				if (zeroProfit) {
+				if (!settlementCarryService.hasPnlCarrySourceBalance(bookId, code)) {
 					list.add(SettlementVerifyVo.hardNa(checkIndex++, label, "本年利润无余额，无需结转"));
 				} else {
 					list.add(SettlementVerifyVo.hardFail(checkIndex++, label, "尚未生成结转本年利润凭证"));
 				}
+			} else if (!settlementCarryService.hasPnlCarrySourceBalance(bookId, code)) {
+				list.add(SettlementVerifyVo.hardNa(checkIndex++, label, "本期无对应科目余额，无需结转"));
 			} else {
 				list.add(SettlementVerifyVo.hardFail(checkIndex++, label, "尚未生成结转凭证"));
 			}

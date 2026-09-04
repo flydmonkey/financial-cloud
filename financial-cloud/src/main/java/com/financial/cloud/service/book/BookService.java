@@ -66,7 +66,7 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         return new Message<>(Message.SUCCESS, page);
     }
     @Transactional
-    public Message<String> save(BookChangeDto dto) {
+    public Message<String> save(BookChangeDto dto, UserInfo currentUser) {
 
         //校验账套名称是否重复
         checkIfTheNameExists(dto, false);
@@ -98,8 +98,14 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         Book newBook = new Book();
         BeanUtil.copyProperties(dto, newBook);
         boolean saveResult = super.save(newBook);
-
-        return saveResult ? new Message<>(Message.SUCCESS, "新增成功") : new Message<>(Message.FAIL, "新增失败");
+        if (!saveResult) {
+            return new Message<>(Message.FAIL, "新增失败");
+        }
+        // 顶栏账套列表来自 permission_book；创建人默认获得访问权
+        if (currentUser != null && currentUser.getId() != null) {
+            permissionBookService.save(new PermissionBook(currentUser.getId(), dto.getId()));
+        }
+        return new Message<>(Message.SUCCESS, "新增成功");
     }
     @Transactional
     public Message<String> update(BookChangeDto dto) {
@@ -181,11 +187,10 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         if (!listBooks(currentUser.getId()).isEmpty()) {
             return new Message<>(Message.FAIL, "账套已存在，无需初始化");
         }
-        Message<String> saveResult = save(dto);
+        Message<String> saveResult = save(dto, currentUser);
         if (saveResult.getCode() != Message.SUCCESS) {
             return new Message<>(saveResult.getCode(), saveResult.getMessage());
         }
-        permissionBookService.save(new PermissionBook(currentUser.getId(), dto.getId()));
         return Message.ok(new BookSetupVo(dto.getId()));
     }
 

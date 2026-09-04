@@ -27,10 +27,11 @@ export function uncheckout(yearPeriod?: string): any {
     })
 }
 
-export function verify(): any {
+export function verify(options?: { silentError?: boolean }): any {
     return request({
         url: '/settlement/verify',
-        method: 'get'
+        method: 'get',
+        silentError: options?.silentError === true,
     })
 }
 
@@ -74,11 +75,12 @@ export function fetchcarry(query : any): any {
     })
 }
 
-export function generateVoucherSubmit(data: any) {
+export function generateVoucherSubmit(data: any, options?: { silentError?: boolean }) {
     return request({
         url: '/settlementcarry/generate-voucher',
         method: 'post',
-        data: data
+        data: data,
+        silentError: options?.silentError === true,
     })
   }
 

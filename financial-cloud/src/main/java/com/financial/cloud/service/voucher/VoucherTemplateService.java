@@ -21,7 +21,7 @@ import com.financial.cloud.repository.standard.StandardSubjectMapper;
 import com.financial.cloud.repository.voucher.VoucherTemplateItemMapper;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.financial.cloud.repository.voucher.VoucherTemplateMapper;
-import com.financial.cloud.service.voucher.VoucherTemplateService;
+import com.financial.cloud.service.book.MonthEndCloseRules;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -170,8 +170,13 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
     	LambdaQueryWrapper<VoucherTemplate>templateWrapper = new LambdaQueryWrapper<>();
     	templateWrapper.eq(VoucherTemplate::getRelatedId, standardId);
         List<VoucherTemplate> templates = voucherTemplateMapper.selectList(templateWrapper);
+        List<VoucherTemplate> bookTemplates = new ArrayList<>();
         List<VoucherTemplateItem> newItems = new ArrayList<>();
         for(VoucherTemplate template: templates) {
+        	// 已退役模板：销售成本并入 qm_jz_cbfy；折旧走固定资产模块
+        	if (MonthEndCloseRules.isRetiredTemplateCode(template.getCode())) {
+        		continue;
+        	}
         	LambdaQueryWrapper<VoucherTemplateItem> itemLqw = Wrappers.lambdaQuery();
             itemLqw.eq(VoucherTemplateItem::getRelatedId, standardId);
             itemLqw.eq(VoucherTemplateItem::getTemplateId, template.getId());
@@ -184,13 +189,80 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
             	item.setRelatedId(template.getRelatedId());
             	item.setTemplateId(template.getId());
             }
+            // 标准模板若无损益结转/计提分录，按所选会计制度生成默认分录
+            if (items.isEmpty() && MonthEndCloseRules.isAutoSeedTemplateCode(template.getCode())) {
+            	items = buildDefaultTemplateItems(bookId, template.getId(), template.getCode(), standardId);
+            }
             newItems.addAll(items);
+            bookTemplates.add(template);
         }
 
 
-        voucherTemplateItemMapper.insert(newItems);
-        voucherTemplateMapper.insert(templates);
+        if (CollectionUtils.isNotEmpty(newItems)) {
+        	voucherTemplateItemMapper.insert(newItems);
+        }
+        if (CollectionUtils.isNotEmpty(bookTemplates)) {
+        	voucherTemplateMapper.insert(bookTemplates);
+        }
+        // 再兜底一次：空分录的必做结转 + 计提模板
+        ensureDefaultTemplateItems(bookId, standardId);
 		return true;
+	}
+
+	/**
+	 * Ensure book-level P&amp;L carry and accrual templates have default lines for {@code standardId}.
+	 * Idempotent: skips templates that already have items.
+	 */
+	public void ensureDefaultTemplateItems(String bookId, String standardId) {
+		if (StringUtils.isBlank(bookId) || StringUtils.isBlank(standardId)) {
+			return;
+		}
+		List<String> codes = new ArrayList<>();
+		codes.add(MonthEndCloseRules.CODE_CARRY_INCOME);
+		codes.add(MonthEndCloseRules.CODE_CARRY_COST);
+		codes.addAll(MonthEndCloseRules.accrualTemplateCodes());
+		LambdaQueryWrapper<VoucherTemplate> tw = Wrappers.lambdaQuery();
+		tw.eq(VoucherTemplate::getRelatedId, bookId);
+		tw.in(VoucherTemplate::getCode, codes);
+		List<VoucherTemplate> templates = voucherTemplateMapper.selectList(tw);
+		List<VoucherTemplateItem> toInsert = new ArrayList<>();
+		for (VoucherTemplate template : templates) {
+			Long count = voucherTemplateItemMapper.selectCount(Wrappers.<VoucherTemplateItem>lambdaQuery()
+					.eq(VoucherTemplateItem::getTemplateId, template.getId())
+					.eq(VoucherTemplateItem::getRelatedId, bookId));
+			if (count != null && count > 0) {
+				continue;
+			}
+			toInsert.addAll(buildDefaultTemplateItems(bookId, template.getId(), template.getCode(), standardId));
+		}
+		if (CollectionUtils.isNotEmpty(toInsert)) {
+			Db.saveBatch(toInsert);
+		}
+	}
+
+	/** @deprecated use {@link #ensureDefaultTemplateItems(String, String)} */
+	@Deprecated
+	public void ensurePnlCarryTemplateItems(String bookId, String standardId) {
+		ensureDefaultTemplateItems(bookId, standardId);
+	}
+
+	List<VoucherTemplateItem> buildDefaultTemplateItems(String bookId, String templateId,
+			String templateCode, String standardId) {
+		List<MonthEndCloseRules.CarryTemplateItemSpec> specs =
+				MonthEndCloseRules.defaultCarryTemplateItems(templateCode, standardId);
+		List<VoucherTemplateItem> items = new ArrayList<>(specs.size());
+		for (MonthEndCloseRules.CarryTemplateItemSpec spec : specs) {
+			VoucherTemplateItem item = VoucherTemplateItem.builder()
+					.id(identifierGenerator.nextId(templateId).toString())
+					.relatedId(bookId)
+					.templateId(templateId)
+					.summary(spec.summary())
+					.subjectCode(spec.subjectCode())
+					.direction(spec.direction())
+					.build();
+			items.add(item);
+		}
+		return items;
 	}
 
 }

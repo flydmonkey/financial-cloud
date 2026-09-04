@@ -46,6 +46,8 @@ class BookServiceTest {
     private VoucherTemplateService voucherTemplateService;
     @Mock
     private StandardSubjectCashFlowService standardSubjectCashFlowService;
+    @Mock
+    private com.financial.cloud.service.permissions.PermissionBookService permissionBookService;
 
     @InjectMocks
     private BookService bookService;

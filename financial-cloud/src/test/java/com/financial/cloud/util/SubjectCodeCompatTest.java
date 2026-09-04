@@ -53,6 +53,12 @@ class SubjectCodeCompatTest {
     }
 
     @Test
+    void carryForwardSubjectCodes_includesXiaorenCostAlias() {
+        assertTrue(SubjectCodeCompat.carryForwardSubjectCodes("6401").contains("5401"));
+        assertTrue(SubjectCodeCompat.lookupCandidates("6401").contains("5401"));
+    }
+
+    @Test
     void carryForward_smallBusinessOnlyFixtureResolvesFromEnterpriseTemplateCodes() {
         // 模拟账套仅有小企业科目余额行：结转模板仍发企业准则编码时，候选集必须命中 5xxx/3xxx
         Map<String, BigDecimal> smallBusinessBalances = Map.of(

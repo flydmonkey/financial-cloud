@@ -146,6 +146,10 @@ service.interceptors.response.use((res: any) => {
         if (res.request.responseType === 'blob' || res.request.responseType === 'arraybuffer') {
             return res.data
         }
+        const silent = res.config?.silentError === true || res.config?.headers?.['X-Silent-Error'] === '1'
+        if (silent && code !== 0 && code !== 401) {
+            return Promise.reject(res.data)
+        }
         if (code === 401) {
             return err401(res)
         } else if (code === 500) {

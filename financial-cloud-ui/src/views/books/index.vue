@@ -180,6 +180,7 @@ import DictTagNumber from "@/components/DIctTagNumber/index.vue";
 import {listBooksSets, deleteBatch} from "@/api/book/book";
 import {listStandardsAll} from "@/api/standard/standard";
 import SvgIcon from "@/components/SvgIcon/index.vue";
+import booksSetStore from "@/store/modules/bookStore";
 
 const {t} = useI18n()
 
@@ -261,6 +262,8 @@ function dialogOfClosedMethods(val: any): any {
   id.value = undefined;
   if (val) {
     getList();
+    // 新建账套后刷新顶栏可选账套列表
+    booksSetStore().refreshData();
   }
 }
 

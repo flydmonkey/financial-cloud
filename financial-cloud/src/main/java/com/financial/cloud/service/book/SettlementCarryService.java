@@ -124,47 +124,55 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
            
             //凭证 不转结
             voucherChangeDto.setCarryForward("y");
+            String standardId = book != null ? book.getStandardId() : MonthEndCloseRules.STANDARD_SMALL_BUSINESS;
+            String yearProfitCode = MonthEndCloseRules.yearProfitSubjectForStandard(standardId);
 
             if (voucherTemplate.getCode().equals("qm_jz_sr")) {//结转收入
-                //贷方收入科目 → 借方结转
-                addCarryVoucherItems(bookId, "6001", voucherItems, itemsMap, 1);
-                addCarryVoucherItems(bookId, "6301", voucherItems, itemsMap, 1);
-                addCarryVoucherItems(bookId, "6051", voucherItems, itemsMap, 1);
+                for (String root : MonthEndCloseRules.incomeCarryRootsForStandard(standardId)) {
+                    addCarryVoucherItems(bookId, root, voucherItems, itemsMap, 1);
+                }
+                if (voucherItems.isEmpty()) {
+                    return Message.failed("本期无收入余额，无需结转");
+                }
                 for (VoucherItemChangeDto vt : voucherItems) {
                     debitAmount = debitAmount.add(vt.getDebitAmount());
                 }
                 creditAmount = debitAmount;
-                //贷 本年利润
-                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", debitAmount, 2));
+                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, debitAmount, 2));
             } else if (voucherTemplate.getCode().equals("qm_jz_cbfy")) {//结转成本
-                addCarryVoucherItems(bookId, "6401", voucherItems, itemsMap, 2);
-                addCarryVoucherItems(bookId, "6405", voucherItems, itemsMap, 2);
-                addCarryVoucherItems(bookId, "6601", voucherItems, itemsMap, 2);
-                addCarryVoucherItems(bookId, "6602", voucherItems, itemsMap, 2);
-                addCarryVoucherItems(bookId, "6603", voucherItems, itemsMap, 2);
-                addCarryVoucherItems(bookId, "6711", voucherItems, itemsMap, 2);
+                for (String root : MonthEndCloseRules.costCarryRootsForStandard(standardId)) {
+                    addCarryVoucherItems(bookId, root, voucherItems, itemsMap, 2);
+                }
+                if (voucherItems.isEmpty()) {
+                    return Message.failed("本期无成本费用余额，无需结转");
+                }
                 for (VoucherItemChangeDto vt : voucherItems) {
                     creditAmount = creditAmount.add(vt.getCreditAmount());
                 }
                 debitAmount = creditAmount;
-                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", debitAmount, 1));
+                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, debitAmount, 1));
             } else if (voucherTemplate.getCode().equals("qm_jz_sds")) {//结转所得税
-                addCarryVoucherItems(bookId, "6801", voucherItems, itemsMap, 2);
+                addCarryVoucherItems(bookId, MonthEndCloseRules.incomeTaxExpenseSubjectForStandard(standardId),
+                        voucherItems, itemsMap, 2);
+                if (voucherItems.isEmpty()) {
+                    return Message.failed("本期无所得税费用余额，无需结转");
+                }
                 for (VoucherItemChangeDto vt : voucherItems) {
                     creditAmount = creditAmount.add(vt.getCreditAmount());
                 }
                 debitAmount = creditAmount;
-                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", debitAmount, 1));
+                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, debitAmount, 1));
             } else if (voucherTemplate.getCode().equals("qm_jz_bnlr")) {//年末 结转本年利润
                 if (month == 12) {
-                    StatementSubjectBalance profitBalance = getCarrySubjectBalance(bookId, "4103");
+                    StatementSubjectBalance profitBalance = getCarrySubjectBalance(bookId, yearProfitCode);
                     if (profitBalance == null || profitBalance.getBalance() == null
                             || profitBalance.getBalance().compareTo(BigDecimal.ZERO) == 0) {
                         return Message.failed("本年利润无余额，无需结转");
                     }
                     BigDecimal amount = profitBalance.getBalance().abs();
-                    voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "4103", amount, 1));
-                    voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, "410406", amount, 2));
+                    String undistributed = MonthEndCloseRules.undistributedProfitSubjectForStandard(standardId);
+                    voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, amount, 1));
+                    voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, undistributed, amount, 2));
                 } else {
                     return Message.failed("非年末，无需结转本年利润");
                 }
@@ -340,6 +348,42 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
             templateItem = fallbackTemplateItem(templateSubjectCode, fallbackDirection);
         }
         return createVoucherItemDto(bookId, templateItem, amount);
+    }
+
+    /**
+     * Whether P&amp;L carry template has non-zero source balances (same roots as generate).
+     * Used by month-end verify to treat empty periods as N/A instead of hard-fail.
+     */
+    public boolean hasPnlCarrySourceBalance(String bookId, String templateCode) {
+        Book book = bookMapper.selectById(bookId);
+        String standardId = book != null ? book.getStandardId() : MonthEndCloseRules.STANDARD_SMALL_BUSINESS;
+        if (MonthEndCloseRules.CODE_CARRY_INCOME.equals(templateCode)) {
+            return hasLeafBalance(bookId, MonthEndCloseRules.incomeCarryRootsForStandard(standardId));
+        }
+        if (MonthEndCloseRules.CODE_CARRY_COST.equals(templateCode)) {
+            return hasLeafBalance(bookId, MonthEndCloseRules.costCarryRootsForStandard(standardId));
+        }
+        if (MonthEndCloseRules.CODE_CARRY_YEAR_PROFIT.equals(templateCode)) {
+            String yearProfit = MonthEndCloseRules.yearProfitSubjectForStandard(standardId);
+            StatementSubjectBalance profitBalance = getCarrySubjectBalance(bookId, yearProfit);
+            return profitBalance != null && profitBalance.getBalance() != null
+                    && profitBalance.getBalance().compareTo(BigDecimal.ZERO) != 0;
+        }
+        return true;
+    }
+
+    private boolean hasLeafBalance(String bookId, List<String> templateRoots) {
+        for (String root : templateRoots) {
+            for (String subjectCode : SubjectCodeCompat.carryForwardSubjectCodes(root)) {
+                List<BookSubject> subjectList = bookSubjectService.selectSubjectAndChild(bookId, subjectCode);
+                for (BookSubject s : subjectList) {
+                    if (s.getBalance() != null && s.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private StatementSubjectBalance getCarrySubjectBalance(String bookId, String templateSubjectCode) {

@@ -91,22 +91,24 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         String currentTerm = configSysService.getCurrentTerm(query.getBookId());
         Integer year = Integer.valueOf(currentTerm.substring(0, 4));
         Integer month = Integer.valueOf(currentTerm.substring(5, 7));
-        // 查询所有符合的凭证
+        // 查询所有符合的凭证（须含暂存/审核中，否则整理会与占用号的未过账单撞号）
         LambdaQueryWrapper<Voucher> lqw = Wrappers.lambdaQuery();
         lqw.eq(Voucher::getBookId, query.getBookId());
         lqw.eq(Voucher::getWordHead, query.getWordHead());
         lqw.eq(Voucher::getVoucherYear, year);
         lqw.eq(Voucher::getVoucherMonth, month);
         lqw.ge(Voucher::getWordNum, query.getStartWordNumber());
-        // 状态设定
         List<String> statusList = new ArrayList<>();
+        statusList.add(VoucherStatusEnum.DRAFT.getValue());
+        statusList.add(VoucherStatusEnum.UNDER_REVIEW.getValue());
         statusList.add(VoucherStatusEnum.COMPLETED.getValue());
-        if (query.getNullify()) {
+        statusList.add(VoucherStatusEnum.REJECTED.getValue());
+        if (Boolean.TRUE.equals(query.getNullify())) {
             statusList.add(VoucherStatusEnum.CANCELLED.getValue());
         }
         lqw.in(Voucher::getStatus, statusList);
-        lqw.orderByAsc(Voucher::getVoucherDate, Voucher::getWordNum);
-        lqw.select(Voucher::getId, Voucher::getWordNum, Voucher::getWord, Voucher::getWordHead,
+        lqw.orderByAsc(Voucher::getVoucherDate, Voucher::getWordNum, Voucher::getId);
+        lqw.select(Voucher::getId, Voucher::getBookId, Voucher::getWordNum, Voucher::getWord, Voucher::getWordHead,
                 Voucher::getVoucherDate, Voucher::getVoucherYear, Voucher::getVoucherMonth);
         List<Voucher> vouchers = baseMapper.selectList(lqw);
         if (vouchers.isEmpty()) {
@@ -169,6 +171,23 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
     @Transactional
     public Message<Void> updateSuccessive(List<VoucherSuccessiveDto> dtos) {
+        if (dtos == null || dtos.isEmpty()) {
+            return Message.ok(null);
+        }
+        // 两阶段改号，避免中间态互相抢占已占用号
+        final int tempBase = 1_000_000;
+        int tempIdx = 0;
+        for (VoucherSuccessiveDto dto : dtos) {
+            int tempNum = tempBase + tempIdx++;
+            String tempWord = VoucherUtils.createWord(dto.getWordHead(), tempNum);
+            LambdaUpdateWrapper<Voucher> tempUw = Wrappers.lambdaUpdate();
+            tempUw.eq(Voucher::getId, dto.getId());
+            tempUw.eq(Voucher::getBookId, dto.getBookId());
+            tempUw.set(Voucher::getWordNum, tempNum);
+            tempUw.set(Voucher::getWord, tempWord);
+            baseMapper.update(null, tempUw);
+        }
+
         Map<String, VoucherSuccessiveDto> maxWordNumMap = new HashMap<>();
         for (VoucherSuccessiveDto dto : dtos) {
             LambdaUpdateWrapper<Voucher> luw = Wrappers.lambdaUpdate();

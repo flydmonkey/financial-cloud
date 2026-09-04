@@ -13,6 +13,8 @@ public class FixedAssetDepreciationStatusVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private boolean accrued;
+    /** false when book has no assets requiring depreciation this period */
+    private boolean needed = true;
     private String voucherId;
     private String voucherWord;
     private BigDecimal totalAmount;

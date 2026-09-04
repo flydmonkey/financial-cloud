@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>记账凭证样张 · 现代简洁风</title>
+  <style>
+    @page { size: A4 portrait; margin: 14mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #eef1f4;
+      font-family: "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      color: #1c2430;
+    }
+    .toolbar {
+      max-width: 210mm;
+      margin: 0 auto 16px;
+      font-size: 13px;
+      color: #556070;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toolbar button {
+      font-family: inherit;
+      border: 1px solid #c5ced8;
+      background: #fff;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+    .sheet {
+      width: 210mm;
+      margin: 0 auto;
+      padding: 16mm 18mm 14mm;
+      background: #fff;
+      border-radius: 2px;
+      box-shadow: 0 10px 32px rgba(28, 36, 48, .08);
+    }
+    .head {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #d8dee6;
+    }
+    .head .brand {
+      font-size: 12px;
+      color: #6b7785;
+      letter-spacing: 0.04em;
+    }
+    .head .brand strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 14px;
+      color: #1c2430;
+      font-weight: 600;
+    }
+    .head .title {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 650;
+      letter-spacing: 0.35em;
+      margin-left: 0.35em;
+    }
+    .head .meta {
+      text-align: right;
+      font-size: 12px;
+      color: #6b7785;
+      line-height: 1.7;
+    }
+    .head .meta b {
+      color: #1c2430;
+      font-weight: 600;
+    }
+    .subbar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6b7785;
+      margin-bottom: 10px;
+    }
+    table.voucher {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+    table.voucher th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: none;
+      color: #6b7785;
+      padding: 0 10px 8px;
+      border-bottom: 1px solid #1c2430;
+    }
+    table.voucher th.num,
+    table.voucher td.num { text-align: right; }
+    table.voucher th.center,
+    table.voucher td.center { text-align: center; }
+    table.voucher td {
+      padding: 11px 10px;
+      border-bottom: 1px solid #e6ebf0;
+      vertical-align: top;
+    }
+    table.voucher .col-summary { width: 22%; }
+    table.voucher .col-subject { width: 36%; }
+    table.voucher .col-debit,
+    table.voucher .col-credit { width: 17%; }
+    table.voucher .col-no { width: 8%; }
+    table.voucher .code {
+      font-family: "SF Mono", "Consolas", ui-monospace, monospace;
+      font-size: 11px;
+      color: #6b7785;
+      margin-right: 6px;
+    }
+    table.voucher .aux {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      color: #8a95a3;
+    }
+    table.voucher tbody tr:last-child td { border-bottom-color: #1c2430; }
+    table.voucher tfoot td {
+      border-bottom: none;
+      padding-top: 12px;
+      font-weight: 650;
+    }
+    table.voucher tfoot .label {
+      text-align: left;
+      color: #6b7785;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+    .amount {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+    .remark {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: #f6f8fa;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #556070;
+      line-height: 1.5;
+    }
+    .remark strong {
+      color: #1c2430;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    .signs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 22px;
+      font-size: 12px;
+      color: #6b7785;
+    }
+    .signs div {
+      padding-top: 10px;
+      border-top: 1px solid #d8dee6;
+    }
+    .signs b {
+      display: block;
+      margin-top: 6px;
+      color: #1c2430;
+      font-weight: 600;
+      font-size: 13px;
+      min-height: 1.2em;
+    }
+    .hint {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: #8893a0;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .toolbar, .hint { display: none; }
+      .sheet { box-shadow: none; width: auto; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>样张 B · 现代简洁风</strong>
+    <button onclick="window.print()">打印预览</button>
+  </div>
+
+  <div class="sheet">
+    <div class="head">
+      <div class="brand">
+        FINANCIAL CLOUD
+        <strong>示例科技有限公司</strong>
+      </div>
+      <div class="title">记账凭证</div>
+      <div class="meta">
+        <div>日期 <b>2026-03-15</b></div>
+        <div>凭证号 <b>记-202603-12</b></div>
+        <div>附件 <b>3 张</b></div>
+      </div>
+    </div>
+
+    <div class="subbar">
+      <span>借贷平衡 · 已过账</span>
+      <span>金额单位：元</span>
+    </div>
+
+    <table class="voucher">
+      <thead>
+        <tr>
+          <th class="col-summary">摘要</th>
+          <th class="col-subject">会计科目</th>
+          <th class="col-debit num">借方</th>
+          <th class="col-credit num">贷方</th>
+          <th class="col-no center">#</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>收到客户货款</td>
+          <td>
+            <span class="code">1002</span>银行存款
+            <span class="aux">工商银行基本户</span>
+          </td>
+          <td class="num amount">50,000.00</td>
+          <td class="num amount"></td>
+          <td class="center">1</td>
+        </tr>
+        <tr>
+          <td>收到客户货款</td>
+          <td>
+            <span class="code">1122</span>应收账款
+            <span class="aux">客户 · 华东贸易</span>
+          </td>
+          <td class="num amount"></td>
+          <td class="num amount">50,000.00</td>
+          <td class="center">2</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td class="num"></td>
+          <td class="num"></td>
+          <td class="center">3</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td class="num"></td>
+          <td class="num"></td>
+          <td class="center">4</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="label" colspan="2">合计 TOTAL</td>
+          <td class="num amount">50,000.00</td>
+          <td class="num amount">50,000.00</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="remark">
+      <strong>备注</strong>银行回单已附；与对账单勾稽无误。
+    </div>
+
+    <div class="signs">
+      <div>会计主管<b>王敏</b></div>
+      <div>过账<b>李强</b></div>
+      <div>复核<b>赵倩</b></div>
+      <div>制单<b>陈晨</b></div>
+    </div>
+  </div>
+
+  <p class="hint">特征：细线分层、无衬线、等宽金额、浅底备注 · 屏幕与 PDF 更干净</p>
+</body>
+</html>

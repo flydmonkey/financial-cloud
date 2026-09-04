@@ -104,6 +104,7 @@ public class FixedAssetDepreciationService extends ServiceImpl<FixedAssetAccrual
         String period = resolvePeriod(bookId, yearPeriod);
         FixedAssetDepreciationStatusVo vo = new FixedAssetDepreciationStatusVo();
         vo.setYearPeriod(period);
+        vo.setNeeded(needsDepreciationAccrual(bookId, period));
         FixedAssetAccrual accrual = findAccrual(bookId, period);
         if (accrual == null || StringUtils.isBlank(accrual.getVoucherId())) {
             vo.setAccrued(false);

@@ -80,6 +80,8 @@ class SettlementServiceTest {
     @Mock
     private VoucherTemplateMapper voucherTemplateMapper;
     @Mock
+    private SettlementCarryService settlementCarryService;
+    @Mock
     private FixedAssetDepreciationService fixedAssetDepreciationService;
     @Mock
     private ArapService arapService;
@@ -210,6 +212,41 @@ class SettlementServiceTest {
         assertEquals(Message.FAIL, result.getCode());
         assertTrue(result.getData().stream().anyMatch(v ->
                 v.isHard() && !v.isResult() && v.getItem().contains("损益结转")));
+    }
+
+    @Test
+    void verify_naWhenCostCarryHasNoSourceBalance() {
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
+        when(voucherService.count(any(LambdaQueryWrapper.class))).thenReturn(0L);
+        when(voucherService.checkSuccessiveAll(BOOK_ID)).thenReturn(Message.ok(Collections.emptyList()));
+        when(voucherItemMapper.selectSubjectAmount(any())).thenReturn(Collections.emptyList());
+
+        VoucherTemplate sr = new VoucherTemplate();
+        sr.setId("t-sr");
+        sr.setCode(MonthEndCloseRules.CODE_CARRY_INCOME);
+        VoucherTemplate cbfy = new VoucherTemplate();
+        cbfy.setId("t-cbfy");
+        cbfy.setCode(MonthEndCloseRules.CODE_CARRY_COST);
+        when(voucherTemplateMapper.selectList(any())).thenReturn(List.of(sr, cbfy));
+        com.financial.cloud.domain.book.SettlementCarryforward carrySr =
+                new com.financial.cloud.domain.book.SettlementCarryforward();
+        carrySr.setVoucherTemplateId("t-sr");
+        carrySr.setVoucherId("v1");
+        when(settlementCarryforwardMapper.selectList(any())).thenReturn(List.of(carrySr));
+        when(settlementCarryService.hasPnlCarrySourceBalance(BOOK_ID, MonthEndCloseRules.CODE_CARRY_COST))
+                .thenReturn(false);
+        when(fixedAssetDepreciationService.needsDepreciationAccrual(BOOK_ID, "2025-03")).thenReturn(false);
+        stubArapOk();
+
+        Message<List<SettlementVerifyVo>> result = settlementService.verify(BOOK_ID);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        SettlementVerifyVo cost = result.getData().stream()
+                .filter(v -> "损益结转-成本费用".equals(v.getItem()))
+                .findFirst()
+                .orElseThrow();
+        assertTrue(cost.isResult());
+        assertFalse(cost.isApplicable());
     }
 
     @Test

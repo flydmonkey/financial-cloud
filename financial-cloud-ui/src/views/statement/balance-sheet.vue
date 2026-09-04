@@ -74,17 +74,14 @@
                 value="Q1"
               />
               <el-radio-button
-                v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-04')"
                 label="第二季度"
                 value="Q2"
               />
               <el-radio-button
-                v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-07')"
                 label="第三季度"
                 value="Q3"
               />
               <el-radio-button
-                v-if="currBookStore.termCurrent >= (new Date().getFullYear() + '-10')"
                 label="第四季度"
                 value="Q4"
               />

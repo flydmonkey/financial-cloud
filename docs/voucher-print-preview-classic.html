@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>记账凭证 · 样张（C5/B5）</title>
+  <style>
+    /*
+      纸张：C5 / B5 横向（按你的实际用纸，不是 A5）
+      视觉：第一版国标卡片风（米色、双线标题、细表线）
+    */
+    @page {
+      size: 229mm 162mm; /* 默认按 C5；对话框选 B5 时以对话框为准 */
+      margin: 0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 20px 32px;
+      background: #e8e6e1;
+      font-family: "宋体", SimSun, serif;
+      font-weight: 400;
+      font-synthesis: none;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .toolbar {
+      width: 229mm;
+      max-width: 100%;
+      margin: 0 0 14px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .toolbar button {
+      font-family: inherit;
+      border: 1px solid #888;
+      background: #fff;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+    .sheet {
+      width: 229mm;
+      max-width: 100%;
+      height: 162mm;
+      margin: 0 auto;
+      padding: 0;
+      background: #fff;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+      border: 1px solid #c9c4b8;
+      /* table + fixed：占满纸宽，避免内容收缩贴左 */
+      display: table;
+      table-layout: fixed;
+      overflow: hidden;
+    }
+    .sheet-inner {
+      display: table-cell;
+      vertical-align: middle;
+      padding: 10mm 12mm;
+      width: 100%;
+    }
+    .voucher-head {
+      text-align: center;
+      margin: 0 0 8px;
+    }
+    .title {
+      display: inline-block;
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 0.55em;
+      text-indent: 0.55em; /* 与字距配合，和日期同轴居中 */
+      font-weight: 700;
+      line-height: 1.2;
+      padding-bottom: 5px;
+      border-bottom: 2px double #555;
+      margin: 0 auto 6px;
+      min-width: 48%;
+      color: #222;
+    }
+    .meta-date {
+      text-align: center;
+      font-size: 13px;
+      margin: 0;
+      letter-spacing: 0.08em;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .meta-row .right { display: flex; gap: 22px; }
+    table.voucher {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+    table.voucher th,
+    table.voucher td {
+      border: 0.5pt solid #555;
+      padding: 2px 6px;
+      vertical-align: middle;
+      font-weight: 400;
+      color: #222;
+    }
+    table.voucher thead th {
+      background: #fff;
+      font-weight: 400;
+      text-align: center;
+      height: 7mm;
+      padding: 2px 4px;
+    }
+    table.voucher .col-summary { width: 24%; }
+    table.voucher .col-subject { width: 36%; }
+    table.voucher .col-debit,
+    table.voucher .col-credit {
+      width: 16%;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    table.voucher .col-no { width: 8%; text-align: center; }
+    table.voucher tbody td.subject,
+    table.voucher tbody td.summary { text-align: left; }
+    table.voucher tbody tr td {
+      height: 7.5mm;
+      max-height: 7.5mm;
+    }
+    table.voucher .aux {
+      display: block;
+      margin-top: 1px;
+      font-size: 10px;
+      color: #444;
+      line-height: 1.2;
+    }
+    table.voucher tfoot td {
+      font-weight: 400;
+      background: #fff;
+      height: 7.5mm;
+      padding: 2px 6px;
+    }
+    table.voucher tfoot .label {
+      text-align: center;
+      background: #fff;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+    }
+    table.voucher tfoot .label-cn {
+      text-align: left;
+      padding-left: 10px;
+      font-weight: 400;
+    }
+    table.voucher tfoot .cn-tag {
+      display: inline-block;
+      margin-right: 10px;
+      letter-spacing: 0.05em;
+    }
+    table.voucher tfoot .cn-amount { letter-spacing: 0.12em; }
+    table.voucher tfoot tr.remark-row td {
+      font-weight: 400;
+      background: #fff;
+      height: 8mm;
+    }
+    table.voucher tfoot tr.remark-row .label {
+      font-weight: 400;
+      background: #fff;
+      letter-spacing: 0.2em;
+    }
+    table.voucher tfoot .remark-value {
+      text-align: left;
+      padding: 3px 8px;
+      line-height: 1.3;
+      font-weight: 400;
+    }
+    .signs {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5mm;
+      padding: 0 4px;
+      font-size: 13px;
+    }
+    .signs span { min-width: 18%; }
+    .signs em {
+      font-style: normal;
+      border-bottom: 0.5pt solid #666;
+      display: inline-block;
+      min-width: 4.5em;
+      margin-left: 2px;
+      padding: 0 4px;
+    }
+    .hint {
+      width: 229mm;
+      max-width: 100%;
+      margin: 16px 0 0;
+      text-align: center;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      color: #777;
+      line-height: 1.6;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-synthesis: none !important;
+        text-shadow: none !important;
+        -webkit-text-stroke: 0 !important; /* 禁止描边，避免分录发糊 */
+      }
+      @page {
+        size: 229mm 162mm;
+        margin: 0;
+      }
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        display: block !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        font-family: "宋体", SimSun, serif !important;
+        font-weight: 400 !important;
+        font-synthesis: none !important;
+        color: #222 !important;
+      }
+      #root {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .sheet,
+      .sheet *:not(.title) {
+        font-family: "宋体", SimSun, serif !important;
+        font-weight: 400 !important;
+        font-synthesis: none !important;
+        -webkit-text-stroke: 0 !important;
+        text-shadow: none !important;
+      }
+      /* 仅标题加粗；宋体打印用阴影模拟粗体 */
+      .title {
+        font-weight: 700 !important;
+        font-synthesis: weight !important;
+        text-shadow: 0.3px 0 0 currentColor, -0.3px 0 0 currentColor !important;
+      }
+      table.voucher {
+        width: 100% !important;
+      }
+      table.voucher th,
+      table.voucher td {
+        border: 0.5pt solid #555 !important;
+        color: #222 !important;
+        font-size: 13px !important;
+      }
+      .toolbar, .hint { display: none !important; }
+      .sheet {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        display: table !important;
+        table-layout: fixed !important;
+        page-break-after: always;
+        page-break-inside: avoid !important;
+      }
+      .sheet-inner {
+        display: table-cell !important;
+        vertical-align: middle !important;
+        width: 100% !important;
+        padding: 10mm 12mm !important;
+      }
+      .sheet:last-child {
+        page-break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>样张（C5 / B5 横向）</strong>
+    <button type="button" onclick="window.print()">打印预览</button>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-inner">
+    <div class="voucher-head">
+      <div class="title">记账凭证</div>
+      <div class="meta-date">2026 年 03 月 15 日</div>
+    </div>
+    <div class="meta-row">
+      <div>核算单位：示例科技有限公司</div>
+      <div class="right">
+        <span>记 12 号</span>
+        <span>附件 3 张</span>
+      </div>
+    </div>
+
+    <table class="voucher">
+      <thead>
+        <tr>
+          <th class="col-summary">摘要</th>
+          <th class="col-subject">会计科目</th>
+          <th class="col-debit">借方金额</th>
+          <th class="col-credit">贷方金额</th>
+          <th class="col-no">行次</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="summary">收到客户货款</td>
+          <td class="subject">
+            1002 银行存款
+            <span class="aux">辅助：工商银行基本户</span>
+          </td>
+          <td class="col-debit">50,000.00</td>
+          <td class="col-credit"></td>
+          <td class="col-no">1</td>
+        </tr>
+        <tr>
+          <td class="summary">收到客户货款</td>
+          <td class="subject">
+            1122 应收账款
+            <span class="aux">辅助：客户—华东贸易</span>
+          </td>
+          <td class="col-debit"></td>
+          <td class="col-credit">50,000.00</td>
+          <td class="col-no">2</td>
+        </tr>
+        <tr>
+          <td class="summary">&nbsp;</td>
+          <td class="subject">&nbsp;</td>
+          <td class="col-debit"></td>
+          <td class="col-credit"></td>
+          <td class="col-no">3</td>
+        </tr>
+        <tr>
+          <td class="summary">&nbsp;</td>
+          <td class="subject">&nbsp;</td>
+          <td class="col-debit"></td>
+          <td class="col-credit"></td>
+          <td class="col-no">4</td>
+        </tr>
+        <tr>
+          <td class="summary">&nbsp;</td>
+          <td class="subject">&nbsp;</td>
+          <td class="col-debit"></td>
+          <td class="col-credit"></td>
+          <td class="col-no">5</td>
+        </tr>
+        <tr>
+          <td class="summary">&nbsp;</td>
+          <td class="subject">&nbsp;</td>
+          <td class="col-debit"></td>
+          <td class="col-credit"></td>
+          <td class="col-no">6</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="label">合　计</td>
+          <td class="label-cn">
+            <span class="cn-tag">人民币（大写）</span>
+            <span class="cn-amount">伍万圆整</span>
+          </td>
+          <td class="col-debit">50,000.00</td>
+          <td class="col-credit">50,000.00</td>
+          <td></td>
+        </tr>
+        <tr class="remark-row">
+          <td class="label">备　注</td>
+          <td colspan="4" class="remark-value">银行回单已附；与对账单勾稽无误。</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="signs">
+      <span>会计主管：<em>王敏</em></span>
+      <span>过账：<em>李强</em></span>
+      <span>复核：<em>赵倩</em></span>
+      <span>制单：<em>陈晨</em></span>
+    </div>
+    </div>
+  </div>
+
+  <p class="hint">
+    纸张请用 <b>信封 C5</b> 或 <b>B5</b>，方向 <b>横向</b>。<br/>
+    边距务必选 <b>无</b>（选「默认」会变成 2 页）。缩放 100，建议勾选背景图形。
+  </p>
+</body>
+</html>

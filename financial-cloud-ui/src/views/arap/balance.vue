@@ -94,6 +94,13 @@
             <el-button
               link
               type="primary"
+              @click.stop="goWriteoff(scope.row)"
+            >
+              核销
+            </el-button>
+            <el-button
+              link
+              type="primary"
               @click.stop="exportStatement(scope.row)"
             >
               对账单
@@ -135,6 +142,12 @@ async function load() {
 function goDetail(row: any) {
   proxy.$tab.openPage(
     `/arap/detail?side=${query.side}&counterpartId=${row.counterpartId}&periodStart=${query.periodStart}&periodEnd=${query.periodEnd}&name=${encodeURIComponent(row.counterpartName || '')}`,
+  )
+}
+
+function goWriteoff(row: any) {
+  proxy.$tab.openPage(
+    `/arap/writeoff?side=${query.side}&counterpartId=${row.counterpartId}`,
   )
 }
 

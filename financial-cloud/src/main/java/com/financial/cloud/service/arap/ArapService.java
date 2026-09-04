@@ -36,6 +36,7 @@ import java.util.Map;
 public class ArapService {
 
 	private final ArapMapper arapMapper;
+	private final ArapWriteoffService arapWriteoffService;
 
 	public Message<List<ArapBalanceVo>> balances(String bookId, ArapQueryDto dto) {
 		String side = normalizeSide(dto.getSide());
@@ -128,9 +129,16 @@ public class ArapService {
 	public Message<List<ArapAgingVo>> aging(String bookId, ArapQueryDto dto) {
 		String side = normalizeSide(dto.getSide());
 		LocalDate asOf = parseAsOf(dto.getAsOfDate());
+		boolean receivable = ArapRules.isReceivableSide(side);
 		List<ArapMovementRow> rows = loadFiltered(bookId, side, dto.getCounterpartId());
-		List<ArapAgingVo> list = ArapAgingCalculator.age(
-				rows, asOf, ArapRules.isReceivableSide(side), dto.isIncludeZero());
+		boolean openItem = arapWriteoffService.hasActiveWriteoffs(bookId, dto.getCounterpartId(), side);
+		String method = openItem ? ArapWriteoffRules.AGING_OPEN_ITEM : ArapWriteoffRules.AGING_FIFO_ESTIMATE;
+		if (openItem) {
+			Map<String, BigDecimal> written = arapWriteoffService.loadWrittenOff(bookId);
+			Map<String, BigDecimal> remaining = ArapWriteoffRules.remainingByItem(rows, receivable, written);
+			rows = ArapWriteoffRules.scaleMovementsToRemaining(rows, receivable, remaining);
+		}
+		List<ArapAgingVo> list = ArapAgingCalculator.age(rows, asOf, receivable, dto.isIncludeZero(), method);
 		return Message.ok(list);
 	}
 

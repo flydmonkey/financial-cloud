@@ -20,3 +20,23 @@ export function exportArapStatement(query: any) {
     responseType: 'blob',
   })
 }
+
+export function fetchArapOpenItems(query: any) {
+  return request({ url: '/arap/writeoff/open-items', method: 'get', params: query })
+}
+
+export function fetchArapWriteoffSuggest(query: any) {
+  return request({ url: '/arap/writeoff/suggest', method: 'get', params: query })
+}
+
+export function confirmArapWriteoff(data: any) {
+  return request({ url: '/arap/writeoff/confirm', method: 'post', data })
+}
+
+export function reverseArapWriteoff(id: string) {
+  return request({ url: `/arap/writeoff/reverse/${id}`, method: 'post' })
+}
+
+export function fetchArapWriteoffList(query: any) {
+  return request({ url: '/arap/writeoff/list', method: 'get', params: query })
+}

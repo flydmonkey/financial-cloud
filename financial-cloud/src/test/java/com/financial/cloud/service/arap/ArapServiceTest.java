@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,11 +34,15 @@ class ArapServiceTest {
 	@Mock
 	private ArapMapper arapMapper;
 
+	@Mock
+	private ArapWriteoffService arapWriteoffService;
+
 	@InjectMocks
 	private ArapService arapService;
 
 	@BeforeEach
 	void stubMovements() {
+		lenient().when(arapWriteoffService.hasActiveWriteoffs(any(), any(), any())).thenReturn(false);
 		when(arapMapper.selectMovements(eq(BOOK), eq(ArapRules.ASSIST_CUSTOMER), any(), anyList()))
 				.thenAnswer(inv -> {
 					String counterpartId = inv.getArgument(2);

@@ -5,7 +5,7 @@
         type="info"
         :closable="false"
         show-icon
-        title="账龄按凭证日期先进先出估算，非核销账龄；仅供参考。"
+        :title="agingHint"
         style="margin-bottom: 12px"
       />
       <el-form
@@ -87,13 +87,19 @@
 </template>
 
 <script lang="ts" setup>
-import {reactive, ref, onMounted} from 'vue'
+import {reactive, ref, onMounted, computed} from 'vue'
 import {fetchArapAging} from '@/api/arap'
 import bookStore from '@/store/modules/bookStore'
 
 const store = bookStore()
 const loading = ref(false)
 const rows = ref<any[]>([])
+const agingMethod = ref('FIFO_ESTIMATE')
+const agingHint = computed(() =>
+  agingMethod.value === 'OPEN_ITEM'
+    ? '账龄口径：开项剩余（已核销）。分桶合计应等于未核销余额。'
+    : '账龄口径：按凭证日期 FIFO 估算（尚无核销数据时）。非核销开项账龄，仅供参考。',
+)
 const term = (store.termCurrent || '').toString()
 function endOfMonth(ym: string) {
   const [y, m] = ym.split('-').map(Number)
@@ -113,6 +119,7 @@ async function load() {
   try {
     const res: any = await fetchArapAging({...query})
     rows.value = res.data || []
+    agingMethod.value = rows.value[0]?.agingMethod || 'FIFO_ESTIMATE'
   } finally {
     loading.value = false
   }

@@ -16,4 +16,6 @@ public class ArapAgingVo {
 	private BigDecimal bucket91To180;
 	private BigDecimal bucketOver180;
 	private BigDecimal total;
+	/** OPEN_ITEM or FIFO_ESTIMATE */
+	private String agingMethod;
 }

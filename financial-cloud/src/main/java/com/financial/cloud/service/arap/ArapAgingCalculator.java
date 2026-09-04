@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FIFO open-item aging by voucher date (estimate without 核销).
+ * FIFO open-item aging by voucher date.
  */
 public final class ArapAgingCalculator {
 
@@ -27,6 +27,15 @@ public final class ArapAgingCalculator {
 			LocalDate asOf,
 			boolean receivableSide,
 			boolean includeZero) {
+		return age(movements, asOf, receivableSide, includeZero, ArapWriteoffRules.AGING_FIFO_ESTIMATE);
+	}
+
+	public static List<ArapAgingVo> age(
+			List<ArapMovementRow> movements,
+			LocalDate asOf,
+			boolean receivableSide,
+			boolean includeZero,
+			String agingMethod) {
 		Map<String, List<ArapMovementRow>> byCounterpart = new LinkedHashMap<>();
 		for (ArapMovementRow row : movements) {
 			if (row.getVoucherDate() == null) {
@@ -89,6 +98,7 @@ public final class ArapAgingCalculator {
 					.bucket91To180(b91)
 					.bucketOver180(b180)
 					.total(total)
+					.agingMethod(agingMethod)
 					.build());
 		}
 		return result;

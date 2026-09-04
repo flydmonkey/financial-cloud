@@ -78,6 +78,19 @@ public class EmployeeSalaryController {
             return employeeSalaryService.exportTaxItems(dto, response);
     }
 
+    @GetMapping("/export-payment")
+    public Message<String> exportPayment(SalaryDetailPageDto dto,
+            HttpServletResponse response, @CurrentUser UserInfo currentUser) {
+        dto.setBookId(currentUser.getBookId());
+        return employeeSalaryService.exportPaymentFile(dto, response);
+    }
+
+    @GetMapping("/count")
+    public Message<Long> countByBelongDate(SalaryDetailPageDto dto, @CurrentUser UserInfo currentUser) {
+        dto.setBookId(currentUser.getBookId());
+        return Message.ok(employeeSalaryService.countByBelongDate(dto.getBookId(), dto.getBelongDate()));
+    }
+
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
         return employeeSalaryService.delete(dto);

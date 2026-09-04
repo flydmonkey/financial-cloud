@@ -154,6 +154,9 @@ public final class MessageKeys {
         public static final String EMPLOYEE_NOT_FOUND = "hr.error.employee_not_found";
         public static final String RECORD_NOT_FOUND = "hr.error.record_not_found";
         public static final String NO_DATA = "hr.error.no_data";
+        public static final String CUSTOM_PAY_BASE_REQUIRED = "hr.error.custom_pay_base_required";
+        public static final String PAYMENT_EXPORT_NO_DATA = "hr.error.payment_export_no_data";
+        public static final String PAYMENT_EXPORT_MISSING_BANK = "hr.error.payment_export_missing_bank";
 
         private Hr() {
         }

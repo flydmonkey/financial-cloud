@@ -3,8 +3,8 @@
 <mapper namespace="com.financial.cloud.repository.hr.EmployeeSalaryTempMapper">
     <select id="pageList" parameterType="com.financial.cloud.dto.hr.SalaryDetailPageDto"
             resultType="com.financial.cloud.domain.hr.EmployeeSalaryTemp">
-        select jest.*, je.display_name as employeeName, je.bank_card_no as bankCardNo,je.bank_name,
-               je.employee_number as employeeNumber,je.employee_type
+        select jest.*, je.display_name as employeeName, je.bank_card_no as bankCardNo, je.bank_name as bankName,
+               je.employee_number as employeeNumber, je.employee_type as employeeType
         from employee_salary_temp jest
         inner join employee je on jest.employee_id = je.id
         and je.deleted = 'n'

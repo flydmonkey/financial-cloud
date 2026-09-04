@@ -116,4 +116,16 @@ public class EmployeeSalaryTemp extends BaseEntity {
     
     @TableField(exist = false)
     private String employeeType;
+
+    /**
+     * Effective social-insurance contribution base used in calculation (not persisted).
+     */
+    @TableField(exist = false)
+    private BigDecimal effectivePayBase;
+
+    /**
+     * 0 = book default, 1 = employee custom (not persisted).
+     */
+    @TableField(exist = false)
+    private Integer payBaseSource;
 }

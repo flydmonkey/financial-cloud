@@ -66,7 +66,9 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.time.YearMonth;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -269,17 +271,117 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         }
         return null;
     }
+
+    /**
+     * Export bank payment file from confirmed salary details for one belonging month.
+     * Blocks when month is empty or any row lacks bankCardNo.
+     */
+    public Message<String> exportPaymentFile(SalaryDetailPageDto dto, HttpServletResponse response) {
+        if (StringUtils.isBlank(dto.getBelongDate())) {
+            throw new BusinessException(HrErrorCode.PAYMENT_EXPORT_NO_DATA);
+        }
+        YearMonth belongMonth = YearMonth.parse(dto.getBelongDate());
+        List<EmployeeSalary> salaries = employeeSalaryMapper.selectList(Wrappers.<EmployeeSalary>lambdaQuery()
+                .eq(EmployeeSalary::getBookId, dto.getBookId())
+                .eq(EmployeeSalary::getBelongDate, belongMonth));
+        List<SalaryPaymentExportRules.PaymentRow> paymentRows = new ArrayList<>();
+        if (ObjectUtils.isNotEmpty(salaries)) {
+            List<String> employeeIds = salaries.stream().map(EmployeeSalary::getEmployeeId).distinct().toList();
+            Map<String, Employee> employeeMap = employeeMapper.selectBatchIds(employeeIds).stream()
+                    .collect(Collectors.toMap(Employee::getId, e -> e, (a, b) -> a));
+            for (EmployeeSalary salary : salaries) {
+                Employee employee = employeeMap.get(salary.getEmployeeId());
+                String name = employee != null ? employee.getDisplayName() : salary.getEmployeeName();
+                String number = employee != null ? employee.getEmployeeNumber() : salary.getEmployeeNumber();
+                String bankName = employee != null ? employee.getBankName() : null;
+                String bankCardNo = employee != null ? employee.getBankCardNo() : salary.getBankCardNo();
+                paymentRows.add(new SalaryPaymentExportRules.PaymentRow(
+                        name,
+                        number,
+                        bankName,
+                        bankCardNo,
+                        salary.getTotalAmount(),
+                        dto.getBelongDate()));
+            }
+        }
+        if (SalaryPaymentExportRules.isEmptyMonth(paymentRows)) {
+            throw new BusinessException(HrErrorCode.PAYMENT_EXPORT_NO_DATA);
+        }
+        List<String> missing = SalaryPaymentExportRules.missingBankAccountNames(paymentRows);
+        if (!missing.isEmpty()) {
+            throw new BusinessException(HrErrorCode.PAYMENT_EXPORT_MISSING_BANK, String.join("、", missing));
+        }
+
+        Workbook workbook = new XSSFWorkbook();
+        try {
+            Sheet sheet = workbook.createSheet("代发盘");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("工号");
+            header.createCell(1).setCellValue("姓名");
+            header.createCell(2).setCellValue("开户行");
+            header.createCell(3).setCellValue("账号");
+            header.createCell(4).setCellValue("实发金额");
+            header.createCell(5).setCellValue("所属月");
+
+            CellStyle amountStyle = workbook.createCellStyle();
+            DataFormat dataFormat = workbook.createDataFormat();
+            amountStyle.setDataFormat(dataFormat.getFormat("0.00"));
+
+            int rowIdx = 1;
+            for (SalaryPaymentExportRules.PaymentRow paymentRow : paymentRows) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(paymentRow.employeeNumber() != null ? paymentRow.employeeNumber() : "");
+                row.createCell(1).setCellValue(paymentRow.employeeName() != null ? paymentRow.employeeName() : "");
+                row.createCell(2).setCellValue(paymentRow.bankName() != null ? paymentRow.bankName() : "");
+                row.createCell(3).setCellValue(paymentRow.bankCardNo() != null ? paymentRow.bankCardNo() : "");
+                Cell amountCell = row.createCell(4);
+                amountCell.setCellValue(paymentRow.netPay() != null ? paymentRow.netPay().doubleValue() : 0);
+                amountCell.setCellStyle(amountStyle);
+                row.createCell(5).setCellValue(paymentRow.belongDate() != null ? paymentRow.belongDate() : "");
+            }
+
+            String fileName = URLEncoder.encode("salary-payment-" + dto.getBelongDate(), "UTF8");
+            response.setContentType(ContentType.APPLICATION_MS_EXCEL);
+            response.setHeader(ConstsHttpHeader.CONTENT_DISPOSITION, ConstsHttpHeader.ATTACHMENT_FILE.formatted(fileName));
+            ServletOutputStream out = response.getOutputStream();
+            workbook.write(out);
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            log.error("export payment file error", e);
+            throw new BusinessException(HrErrorCode.NO_DATA);
+        } finally {
+            try {
+                workbook.close();
+            } catch (IOException e) {
+                log.error("error close payment workbook", e);
+            }
+        }
+        return null;
+    }
+
+    public long countByBelongDate(String bookId, String belongDate) {
+        if (StringUtils.isBlank(belongDate)) {
+            return 0L;
+        }
+        return employeeSalaryMapper.selectCount(Wrappers.<EmployeeSalary>lambdaQuery()
+                .eq(EmployeeSalary::getBookId, bookId)
+                .eq(EmployeeSalary::getBelongDate, YearMonth.parse(belongDate)));
+    }
+
     @Transactional
     public Message<String> generateVoucher(GenerateVoucherDto dto) {
         String bookId = dto.getBookId();
         Book book = bookMapper.selectById(bookId);
         Integer voucherType = dto.getVoucherType();
         EmployeeSalary salary = super.getById(dto.getId());
-        String tplCode = (voucherType == 2 ? "fp_lwf" : "zf_lwf");
+        Employee employee = employeeMapper.selectById(salary.getEmployeeId());
+        String employeeType = employee != null ? employee.getEmployeeType() : null;
+        String tplCode = SalaryVoucherTemplateRules.resolveTemplateCode(employeeType, voucherType);
         if (voucherType == 2 && StringUtils.isNotBlank(salary.getAccrualVoucherId())) {
-            return Message.ok("收票凭证已生成");
+            return Message.ok(SalaryVoucherTemplateRules.alreadyGeneratedMessage(employeeType, voucherType));
         } else if (voucherType == 3 && StringUtils.isNotBlank(salary.getSalaryVoucherId())) {
-            return Message.ok("发放凭证已生成");
+            return Message.ok(SalaryVoucherTemplateRules.alreadyGeneratedMessage(employeeType, voucherType));
         }
         
         String currentTerm = configSysService.getCurrentTerm(bookId);
@@ -354,16 +456,50 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 	   			 }
 	         }
 	   		creditAmount = debitAmount;
+        } else if ("jt_gz".equals(voucherTemplate.getCode())) {
+            BigDecimal amount = salary.getPayAmount() != null ? salary.getPayAmount() : BigDecimal.ZERO;
+            for (VoucherTemplateItem item : items) {
+                voucherItems.add(createVoucherItemDto(bookId, item, amount));
+                if (item.getDirection() != null && item.getDirection() == 1) {
+                    debitAmount = debitAmount.add(amount);
+                } else {
+                    creditAmount = creditAmount.add(amount);
+                }
+            }
+        } else if ("zf_gz".equals(voucherTemplate.getCode())) {
+            BigDecimal netPay = salary.getTotalAmount() != null ? salary.getTotalAmount() : BigDecimal.ZERO;
+            String payableCode = null;
+            if (SubjectCodeCompat.mapContains(itemsMap, "221101")
+                    || SubjectCodeCompat.mapContains(itemsMap, "2211")
+                    || SubjectCodeCompat.mapContains(itemsMap, "2151")) {
+                if (SubjectCodeCompat.mapContains(itemsMap, "221101")) {
+                    payableCode = "221101";
+                } else if (SubjectCodeCompat.mapContains(itemsMap, "2211")) {
+                    payableCode = "2211";
+                } else {
+                    payableCode = "2151";
+                }
+                debitAmount = debitAmount.add(netPay);
+                voucherItems.add(createVoucherItemDto(
+                        bookId, SubjectCodeCompat.resolveFromMap(itemsMap, payableCode), netPay));
+            }
+            for (VoucherTemplateItem item : items) {
+                if (item.getSubjectCode() != null && item.getSubjectCode().startsWith("1002")) {
+                    voucherItems.add(createVoucherItemDto(bookId, item, netPay));
+                }
+            }
+            creditAmount = debitAmount;
         }
-
-        Employee employee = employeeMapper.selectById(salary.getEmployeeId());
 
         VoucherChangeDto voucherChangeDto = createVoucherChangeDto(book, bookId, voucherDate, year, month, debitAmount);
         voucherChangeDto.setRemark(voucherTemplate.getRemark().replace("{yyyy}", year + "").replace("{mm}", month + "").replace("{name}", employee.getDisplayName()));
         voucherChangeDto.setItems(voucherItems);
         voucherChangeDto.setStatus(VoucherStatusEnum.DRAFT.getValue());
 
-        voucherService.save(voucherChangeDto);
+        Message<String> saveResult = voucherService.save(voucherChangeDto);
+        if (saveResult.getCode() != Message.SUCCESS) {
+            return saveResult;
+        }
 
         LambdaUpdateWrapper<EmployeeSalary> updateWrapper = new LambdaUpdateWrapper<>();
         if (voucherType == 0 || voucherType == 2) {

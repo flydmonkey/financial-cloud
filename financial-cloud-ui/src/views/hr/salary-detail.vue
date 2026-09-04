@@ -65,6 +65,14 @@
         >
           {{ $t('jbx.text.export') }}
         </el-button>
+        <el-button
+          type="primary"
+          plain
+          data-testid="salary-export-payment"
+          @click="exportBankPaymentFromDetail"
+        >
+          导出代发盘
+        </el-button>
         <!--        <el-button type="primary"
                     @click="totalSalary">
                   合计本月工资
@@ -378,7 +386,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          label="收票凭证"
+          label="计提/收票"
           align="center"
           width="100"
           :show-overflow-tooltip="true"
@@ -386,23 +394,23 @@
         >
           <template #default="scope">
             <el-button
-              v-if="scope.row.employeeType === 'PARTTIME' && (scope.row.accrualVoucherId === null ||scope.row.accrualVoucherId ==='')"
+              v-if="(isSalaryEmployee(scope.row.employeeType) || isLaborEmployee(scope.row.employeeType)) && (scope.row.accrualVoucherId === null || scope.row.accrualVoucherId === '')"
               type="text"
-              @click="generateVoucher(scope.row,2)"
+              @click="generateVoucher(scope.row, 2)"
             >
               生成
             </el-button>
             <el-button
-              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.accrualVoucherId !== null &&scope.row.accrualVoucherId !==''"
+              v-if="(isSalaryEmployee(scope.row.employeeType) || isLaborEmployee(scope.row.employeeType)) && scope.row.accrualVoucherId !== null && scope.row.accrualVoucherId !== ''"
               type="text"
               @click="viewVoucher(scope.row.accrualVoucherId)"
             >
               查看
             </el-button>
             <el-button
-              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.accrualVoucherId !== null &&scope.row.accrualVoucherId !==''"
+              v-if="(isSalaryEmployee(scope.row.employeeType) || isLaborEmployee(scope.row.employeeType)) && scope.row.accrualVoucherId !== null && scope.row.accrualVoucherId !== ''"
               type="text"
-              @click="deleteVoucher(scope.row,2)"
+              @click="deleteVoucher(scope.row, 2)"
             >
               删除
             </el-button>
@@ -417,23 +425,23 @@
         >
           <template #default="scope">
             <el-button
-              v-if="scope.row.employeeType === 'PARTTIME' && (scope.row.salaryVoucherId === null ||scope.row.salaryVoucherId ==='')"
+              v-if="(isSalaryEmployee(scope.row.employeeType) || isLaborEmployee(scope.row.employeeType)) && (scope.row.salaryVoucherId === null || scope.row.salaryVoucherId === '')"
               type="text"
-              @click="generateVoucher(scope.row,3)"
+              @click="generateVoucher(scope.row, 3)"
             >
               生成
             </el-button>
             <el-button
-              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.salaryVoucherId !== null &&scope.row.salaryVoucherId !==''"
+              v-if="(isSalaryEmployee(scope.row.employeeType) || isLaborEmployee(scope.row.employeeType)) && scope.row.salaryVoucherId !== null && scope.row.salaryVoucherId !== ''"
               type="text"
               @click="viewVoucher(scope.row.salaryVoucherId)"
             >
               查看
             </el-button>
             <el-button
-              v-if="scope.row.employeeType === 'PARTTIME' && scope.row.salaryVoucherId !== null &&scope.row.salaryVoucherId !==''"
+              v-if="(isSalaryEmployee(scope.row.employeeType) || isLaborEmployee(scope.row.employeeType)) && scope.row.salaryVoucherId !== null && scope.row.salaryVoucherId !== ''"
               type="text"
-              @click="deleteVoucher(scope.row,3)"
+              @click="deleteVoucher(scope.row, 3)"
             >
               删除
             </el-button>
@@ -531,7 +539,7 @@
 <script setup lang="ts">
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
 import {useI18n} from "vue-i18n";
-import {delSalary, exportSalary, fetchPage, salarySummary, generateVoucherSubmit,deleteVoucherSubmit} from "@/api/hr/employee-salary";
+import {delSalary, exportSalary, exportPayment, fetchPage, salarySummary, generateVoucherSubmit,deleteVoucherSubmit} from "@/api/hr/employee-salary";
 import {ElForm} from "element-plus";
 import modal from "@/plugins/modal";
 import {formatAmount} from "@/utils";
@@ -548,6 +556,16 @@ const proxy: any = getCurrentInstance()!.proxy;
 const currBookStore = booksSetStore()
 const {employee_types}
     = proxy?.useDict("employee_types");
+
+const SALARY_VOUCHER_TYPES = ['NORMAL', 'INTERN', 'RETIREMENT']
+
+function isSalaryEmployee(type: string) {
+  return SALARY_VOUCHER_TYPES.includes(type)
+}
+
+function isLaborEmployee(type: string) {
+  return type === 'PARTTIME'
+}
 
 const data: any = reactive({
   queryParams: {
@@ -810,6 +828,38 @@ function submitForm() {
     URL.revokeObjectURL(a.href);
     a.remove();
   })
+}
+
+function exportBankPaymentFromDetail() {
+  const belongDate = queryParams.value.belongDateRange?.[0] || getCurrentYearMonth();
+  exportPayment({belongDate}).then((data: any) => {
+    if (!data || data.size === 0) {
+      modal.msgError("导出失败：返回数据为空");
+      return;
+    }
+    const isJson = data.type && data.type.includes('application/json');
+    if (isJson) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const json = JSON.parse(String(reader.result));
+          modal.msgError(json.message || "导出失败");
+        } catch {
+          modal.msgError("导出失败");
+        }
+      };
+      reader.readAsText(data);
+      return;
+    }
+    const blob: any = new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8'});
+    const url: any = URL.createObjectURL(blob);
+    const a: any = document.createElement('a');
+    a.href = url;
+    a.download = 'salary_payment_' + belongDate + '.xlsx';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  });
 }
 
 function generateVoucher(row: any, voucherType: number) {

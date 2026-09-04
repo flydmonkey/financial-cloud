@@ -175,16 +175,24 @@ service.interceptors.response.use((res: any) => {
     (error: any) => {
         let {message, response} = error;
         console.error(error)
-        if (response.status === 401) {
+        const silent = error?.config?.silentError === true || error?.config?.headers?.['X-Silent-Error'] === '1'
+        if (response?.status === 401) {
             return err401(response)
+        }
+        if (silent) {
+            return Promise.reject(error)
         }
 
         if (message === "Network Error") {
             message = "后端接口连接异常";
-        } else if (message.includes("timeout")) {
+        } else if (message && message.includes("timeout")) {
             message = "系统接口请求超时";
-        } else if (message.includes("Request failed with status code")) {
+        } else if (message && message.includes("Request failed with status code")) {
             message = "系统接口异常：" + message.substring(message.length - 3);
+        } else if (response?.data?.message) {
+            message = response.data.message;
+        } else if (!message) {
+            message = "系统接口异常";
         }
 
         ElMessage({message: message, type: 'error', duration: 5 * 1000})

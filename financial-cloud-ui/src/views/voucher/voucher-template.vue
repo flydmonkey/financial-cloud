@@ -1,6 +1,21 @@
 <template>
-  <div class="app-container">
-    <el-card class="common-card query-box">
+  <div
+    class="app-container"
+    :class="{ 'salary-scope-page': salaryScope }"
+  >
+    <el-alert
+      v-if="salaryScope"
+      class="salary-scope-alert"
+      type="info"
+      show-icon
+      :closable="false"
+      title="工资凭证规则"
+      description="以下为当前账套中与工资/劳务相关的凭证模板（如计提工资 jt_gz、劳务计提/发放等）。修改后将影响工资明细中的「生成凭证」。完整模板库请到「凭证模板」维护。"
+    />
+    <el-card
+      v-if="!salaryScope"
+      class="common-card query-box"
+    >
       <div class="queryForm">
         <el-form
           v-show="showSearch"
@@ -46,50 +61,75 @@
       </div>
     </el-card>
     <el-card class="common-card">
+      <div
+        v-if="salaryScope"
+        class="salary-scope-toolbar"
+      >
+        <el-button
+          type="primary"
+          plain
+          @click="goFullTemplate"
+        >
+          打开完整凭证模板
+        </el-button>
+        <el-button @click="getList">
+          刷新
+        </el-button>
+      </div>
       <el-table
         v-loading="loading"
         :data="vouchertemplateList"
         border
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        :tree-props="salaryScope ? undefined : { children: 'children', hasChildren: 'hasChildren' }"
         row-key="id"
-        default-expand-all
-        height="650"
+        :default-expand-all="!salaryScope"
+        :height="salaryScope ? undefined : 650"
+        :empty-text="salaryScope ? '当前账套暂无工资/劳务相关凭证模板（常见编码：jt_gz、zf_gz、fp_lwf、zf_lwf）。可打开完整凭证模板查看或补齐。' : '暂无数据'"
         @cell-mouse-enter="cellMouseEnter"
         @cell-mouse-leave="cellMouseLeave"
       >
         <el-table-column
           label="编码"
           align="left"
-          header-align="center"
+          header-align="left"
           prop="code"
+          min-width="120"
         />
         <el-table-column
           label="名称"
           align="left"
-          header-align="center"
+          header-align="left"
           prop="name"
+          min-width="140"
         />
         <el-table-column
           label="字头"
           align="center"
+          header-align="center"
           prop="wordHead"
+          width="80"
         />
         <el-table-column
           label="备注"
           align="left"
+          header-align="left"
           prop="remark"
+          min-width="220"
+          show-overflow-tooltip
         />
         <el-table-column
           label="排序"
-          align="left"
+          align="center"
+          header-align="center"
           prop="sortIndex"
+          width="80"
         />
         <el-table-column
           label="操作"
           align="center"
           header-align="center"
           width="120"
-          prop="sortIndex"
+          fixed="right"
         >
           <template #default="scope">
             <el-tooltip content="新增">
@@ -406,7 +446,8 @@
 
 <script setup name="ReportBalanceSheet" lang="ts">
 import {getCurrentQuarter, parseTime} from '@/utils/financialCloud'
-import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs} from 'vue'
+import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs, computed} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
 import bookStore from "@/store/modules/bookStore";
 import {ElForm, FormInstance} from "element-plus";
 import {cascaderSubjectProps, formatSubjectLabel, indexSubjectTree} from "@/utils/Subjects"
@@ -417,10 +458,29 @@ import * as subjectApi from "@/api/standard/standard-subject";
 import {Delete, Edit, Plus} from '@element-plus/icons-vue'
 import {listStandardsAll} from "@/api/standard/standard";
 
+/** 工资模块实际用到的模板编码 + 名称启发 */
+const SALARY_TEMPLATE_CODES = new Set(['jt_gz', 'zf_gz', 'fp_lwf', 'zf_lwf'])
+
+function isSalaryTemplate(row: any): boolean {
+  if (!row) {
+    return false
+  }
+  if (row.code && SALARY_TEMPLATE_CODES.has(String(row.code))) {
+    return true
+  }
+  const name = String(row.name || '')
+  return name.includes('工资') || name.includes('劳务') || name.includes('薪资')
+}
+
 const {t} = useI18n()
+const route = useRoute()
+const router = useRouter()
 const {proxy} = getCurrentInstance();
 const {account_income_balance_type} = proxy?.useDict("account_income_balance_type");
 const currBookStore = bookStore()
+const salaryScope = computed(() =>
+  route.path.includes('salary-voucher-rules') || route.query.scope === 'salary'
+)
 const cascaderSubjectPropsOwn = ref<any>({...cascaderSubjectProps})
 cascaderSubjectPropsOwn.value.checkStrictly = true
 // 会计科目数据
@@ -483,19 +543,55 @@ const disabledDate = (time: any) => {
   return time.getTime() > now.getTime(); // 禁用过去的日期
 }
 
+function resolveTemplateRelatedId(): string {
+  if (salaryScope.value) {
+    return currBookStore.bookId || ''
+  }
+  return queryParams.value.standardId
+}
+
+function resolveSubjectStandardId(): string {
+  if (salaryScope.value) {
+    const book = currBookStore.getBookItem?.()
+    return book?.standardId || queryParams.value.standardId || ''
+  }
+  return queryParams.value.standardId
+}
+
 /** 查询列表 */
 function getList() {
   loading.value = true;
-  voucherTemplateService.list(queryParams.value.standardId,queryParams.value.category).then((response: any) => {
-    vouchertemplateList.value = response.data.records;
-    //total.value = response.data.total;
-    loading.value = false;
+  const relatedId = resolveTemplateRelatedId()
+  if (!relatedId) {
+    vouchertemplateList.value = []
+    loading.value = false
+    return
+  }
+  // salary scope: category=0 表示不按类型过滤，再在前端筛工资相关
+  const category = salaryScope.value ? 0 : queryParams.value.category
+  voucherTemplateService.list(relatedId, category).then((response: any) => {
+    let rows = response.data?.records || response.data || []
+    if (!Array.isArray(rows)) {
+      rows = []
+    }
+    if (salaryScope.value) {
+      rows = rows.filter(isSalaryTemplate)
+    }
+    vouchertemplateList.value = rows
+    loading.value = false
+  }).catch(() => {
+    vouchertemplateList.value = []
+    loading.value = false
   });
 }
 
 /** 搜索按钮操作 */
 function handleQuery() {
   getList();
+}
+
+function goFullTemplate() {
+  router.push({ path: '/voucher/voucher-template' })
 }
 
 function handleExport() {
@@ -526,8 +622,13 @@ const updateSubjectKeys = (items: any) => {
 }
 
 function getSubjectList() {
+  const standardId = resolveSubjectStandardId()
+  if (!standardId) {
+    subjectList.value = []
+    return
+  }
   //传入当前账套ID
-  subjectApi.getTree({ standardId:queryParams.value.standardId}).then((res: any) => {
+  subjectApi.getTree({ standardId }).then((res: any) => {
     subjectList.value = res.data
     updateSubjectKeys(subjectList.value)
   })
@@ -567,14 +668,15 @@ const reset = () => {
 
 function handleAdd(row?: any) {
   reset();
-  form.value.relatedId = queryParams.value.standardId;
+  form.value.relatedId = resolveTemplateRelatedId();
   dialog.visible = true;
   dialog.title = "添加";
 }
 
 function handleEdit(row: any) {
   reset();
-  voucherTemplateService.get(queryParams.value.standardId,row.id).then((res: any) => {
+  const relatedId = resolveTemplateRelatedId();
+  voucherTemplateService.get(relatedId,row.id).then((res: any) => {
     form.value = res.data
     if (!form.value.items || form.value.items.length === 0) {
       form.value.items = [{}]
@@ -603,7 +705,7 @@ const submitForm = () => {
       form.value.items = form.value.items.filter((item: any) => {
         return item.subjectCode && item.summary && item.direction
       })
-      form.value.relatedId =form.value.relatedId||queryParams.value.standardId;
+      form.value.relatedId =form.value.relatedId|| resolveTemplateRelatedId();
 
       buttonLoading.value = true;
       await voucherTemplateService.save(form.value).finally(() => buttonLoading.value = false);
@@ -624,6 +726,15 @@ function tableCellClassName({row, column, rowIndex, columnIndex}: any) {
 
 /*获取准则列表*/
 function getStandardList() {
+  if (salaryScope.value) {
+    const book = currBookStore.getBookItem?.()
+    if (book?.standardId) {
+      queryParams.value.standardId = book.standardId
+    }
+    getSubjectList();
+    getList();
+    return
+  }
   listStandardsAll({}).then((res: any) => {
     if (res.code === 0) {
       if (Array.isArray(res.data) && res.data.length > 0) {
@@ -656,5 +767,28 @@ getStandardList();
 
 .common-card {
   margin-bottom: 15px;
+}
+
+.salary-scope-alert {
+  margin-bottom: 12px;
+}
+
+.salary-scope-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.salary-scope-page {
+  .common-card {
+    :deep(.el-card__body) {
+      padding: 16px;
+    }
+  }
+
+  .el-table {
+    width: 100%;
+  }
 }
 </style>

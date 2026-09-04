@@ -117,6 +117,9 @@ public class EmployeeSalary extends BaseEntity {
     private String bankCardNo;
 
     @TableField(exist = false)
+    private String bankName;
+
+    @TableField(exist = false)
     private String employeeNumber;
 
     @TableField(exist = false)

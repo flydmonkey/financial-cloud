@@ -65,6 +65,7 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         dto.setCurrentYearMonth(YearMonth.parse(configSysService.getCurrentTerm(dto.getBookId())));
 
         Page<EmployeeSalaryTemp> employeeSalaryTempPage = employeeSalaryTempMapper.pageList(dto.build(), dto);
+        enrichEffectivePayBase(dto.getBookId(), employeeSalaryTempPage.getRecords());
 
         return Message.ok(employeeSalaryTempPage);
     }
@@ -107,6 +108,11 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
                 throw new BusinessException(HrErrorCode.INSURANCE_FUND_CONFIG_REQUIRED);
             } else {
                 configInsuranceFund = configInsuranceFunds.get(0);
+            }
+
+            String incomplete = SalaryContributionBaseRules.incompleteCustomBaseLabel(employee);
+            if (incomplete != null) {
+                throw new BusinessException(HrErrorCode.CUSTOM_PAY_BASE_REQUIRED, incomplete);
             }
 
             //赋值员工信息
@@ -235,6 +241,13 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
             configInsuranceFund = configInsuranceFunds.get(0);
         }
 
+        for (Employee employee : employees) {
+            String incomplete = SalaryContributionBaseRules.incompleteCustomBaseLabel(employee);
+            if (incomplete != null) {
+                throw new BusinessException(HrErrorCode.CUSTOM_PAY_BASE_REQUIRED, incomplete);
+            }
+        }
+
         //获取附加税抵扣
         Map<String, BigDecimal> taxDeduction = getTaxDeduction(employees, bookId);
 
@@ -354,44 +367,31 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
 
 	        //实习生和退休返聘不需要计算社保公积金
 	        if(employee.getEmployeeType().equals(ConstsUser.EMPLOYEE_TYPE.NORMAL)){
-		        //设置社保公积金
-		        if (employee.getPayBaseRule() == 1) {
-		            //个人配置
-		            BigDecimal payBaseNumber = employee.getPayBaseNumber();
-		            employmentInjuryPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEmploymentInjuryPersonalRate());
-		            endowmentPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEndowmentPersonalRate());
-		            medicalPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMedicalPersonalRate());
-		            maternityPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMaternityPersonalRate());
-		            unemploymentPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getUnemploymentPersonalRate());
-		            providentFundSupPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getProvidentFundSupPersonalRate());
-		            seriousMedicalPersonal = configInsuranceFund.getSeriousMedicalPersonal();
-		            //企业
-		            employmentInjuryBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEmploymentInjuryBusinessRate());
-		            endowmentBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEndowmentBusinessRate());
-		            medicalBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMedicalBusinessRate());
-		            maternityBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMaternityBusinessRate());
-		            unemploymentBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getUnemploymentBusinessRate());
-		            providentFundSupBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getProvidentFundSupBusinessRate());
-		            seriousMedicalBusiness = configInsuranceFund.getSeriousMedicalBusiness();
-		        } else {
-		        	BigDecimal payBaseConfig = configInsuranceFund.getPayBase();
-		            //系统配置
-		            employmentInjuryPersonalFee = calculateInsurance(payBaseConfig,configInsuranceFund.getEmploymentInjuryPersonalRate());
-		            endowmentPersonalFee = calculateInsurance(payBaseConfig,configInsuranceFund.getEndowmentPersonalRate());
-		            medicalPersonalFee = calculateInsurance(payBaseConfig,configInsuranceFund.getMedicalPersonalRate());
-		            maternityPersonalFee = calculateInsurance(payBaseConfig,configInsuranceFund.getMaternityPersonalRate());
-		            unemploymentPersonalFee = calculateInsurance(payBaseConfig,configInsuranceFund.getUnemploymentPersonalRate());
-		            providentFundSupPersonalFee = calculateInsurance(payBaseConfig,configInsuranceFund.getProvidentFundSupPersonalRate());
-		            seriousMedicalPersonal = configInsuranceFund.getSeriousMedicalPersonal();
-		            //企业
-		            employmentInjuryBusinessFee = calculateInsurance(payBaseConfig,configInsuranceFund.getEmploymentInjuryBusinessRate());
-		            endowmentBusinessFee = calculateInsurance(payBaseConfig,configInsuranceFund.getEndowmentBusinessRate());
-		            medicalBusinessFee = calculateInsurance(payBaseConfig,configInsuranceFund.getMedicalBusinessRate());
-		            maternityBusinessFee = calculateInsurance(payBaseConfig,configInsuranceFund.getMaternityBusinessRate());
-		            unemploymentBusinessFee = calculateInsurance(payBaseConfig,configInsuranceFund.getUnemploymentBusinessRate());
-		            providentFundSupBusinessFee = calculateInsurance(payBaseConfig,configInsuranceFund.getProvidentFundSupBusinessRate());
-		            seriousMedicalBusiness = configInsuranceFund.getSeriousMedicalBusiness();
+		        SalaryContributionBaseRules.ResolvedBase resolved =
+		                SalaryContributionBaseRules.resolve(employee, configInsuranceFund.getPayBase());
+		        if (resolved == null || resolved.amount() == null) {
+		            throw new BusinessException(HrErrorCode.CUSTOM_PAY_BASE_REQUIRED,
+		                    employee.getDisplayName() != null ? employee.getDisplayName() : employee.getId());
 		        }
+		        employeeSalary.setEffectivePayBase(resolved.amount());
+		        employeeSalary.setPayBaseSource(resolved.source());
+		        BigDecimal payBaseNumber = resolved.amount();
+		        //设置社保公积金
+		        employmentInjuryPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEmploymentInjuryPersonalRate());
+		        endowmentPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEndowmentPersonalRate());
+		        medicalPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMedicalPersonalRate());
+		        maternityPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMaternityPersonalRate());
+		        unemploymentPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getUnemploymentPersonalRate());
+		        providentFundSupPersonalFee = calculateInsurance(payBaseNumber,configInsuranceFund.getProvidentFundSupPersonalRate());
+		        seriousMedicalPersonal = configInsuranceFund.getSeriousMedicalPersonal();
+		        //企业
+		        employmentInjuryBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEmploymentInjuryBusinessRate());
+		        endowmentBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getEndowmentBusinessRate());
+		        medicalBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMedicalBusinessRate());
+		        maternityBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getMaternityBusinessRate());
+		        unemploymentBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getUnemploymentBusinessRate());
+		        providentFundSupBusinessFee = calculateInsurance(payBaseNumber,configInsuranceFund.getProvidentFundSupBusinessRate());
+		        seriousMedicalBusiness = configInsuranceFund.getSeriousMedicalBusiness();
 	        }
 
 	        //设置个人社保三项
@@ -545,6 +545,25 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         return result ? Message.ok("删除成功") : Message.failed("删除失败");
     }
 
-
+    private void enrichEffectivePayBase(String bookId, List<EmployeeSalaryTemp> records) {
+        if (ObjectUtils.isEmpty(records)) {
+            return;
+        }
+        List<ConfigInsuranceFund> configs = configInsuranceFundMapper.selectList(Wrappers.<ConfigInsuranceFund>lambdaQuery()
+                .eq(ConfigInsuranceFund::getBookId, bookId));
+        BigDecimal bookDefault = ObjectUtils.isEmpty(configs) ? null : configs.get(0).getPayBase();
+        List<String> employeeIds = records.stream().map(EmployeeSalaryTemp::getEmployeeId).distinct().toList();
+        Map<String, Employee> employeeMap = employeeMapper.selectBatchIds(employeeIds).stream()
+                .collect(Collectors.toMap(Employee::getId, e -> e, (a, b) -> a));
+        for (EmployeeSalaryTemp row : records) {
+            Employee employee = employeeMap.get(row.getEmployeeId());
+            SalaryContributionBaseRules.ResolvedBase resolved =
+                    SalaryContributionBaseRules.resolve(employee, bookDefault);
+            if (resolved != null) {
+                row.setEffectivePayBase(resolved.amount());
+                row.setPayBaseSource(resolved.source());
+            }
+        }
+    }
 
 }

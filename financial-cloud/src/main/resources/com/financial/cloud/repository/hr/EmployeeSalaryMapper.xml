@@ -3,8 +3,8 @@
 <mapper namespace="com.financial.cloud.repository.hr.EmployeeSalaryMapper">
     <select id="pageList" parameterType="com.financial.cloud.dto.hr.SalaryDetailPageDto"
             resultType="com.financial.cloud.domain.hr.EmployeeSalary">
-        select jes.*, je.display_name as employeeName, je.bank_card_no as bankCardNo,
-               je.employee_number as employeeNumber,je.employee_type
+        select jes.*, je.display_name as employeeName, je.bank_card_no as bankCardNo, je.bank_name as bankName,
+               je.employee_number as employeeNumber, je.employee_type as employeeType
         from employee_salary jes
         left join employee je on jes.employee_id = je.id
         and je.deleted = 'n'
@@ -16,6 +16,9 @@
         </if>
         <if test="Dto.employeeNumber != null and Dto.employeeNumber != '' ">
             and je.employee_number like CONCAT('%', #{Dto.employeeNumber}, '%')
+        </if>
+        <if test="Dto.belongDate != null and Dto.belongDate != '' ">
+            and jes.belong_date = #{Dto.belongDate}
         </if>
         <if test="Dto.belongDateRange != null and Dto.belongDateRange.length == 2">
             and jes.belong_date between #{Dto.belongDateRange[0]} and #{Dto.belongDateRange[1]}

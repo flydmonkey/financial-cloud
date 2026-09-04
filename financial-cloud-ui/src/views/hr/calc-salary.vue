@@ -1,5 +1,54 @@
 <template>
   <div class="app-container">
+    <el-card class="common-card payroll-guide">
+      <el-steps
+        :active="activeStep"
+        finish-status="success"
+        align-center
+      >
+        <el-step title="选月预览" description="生成当月工资预览" />
+        <el-step title="调整推送" description="调整后推送工资明细" />
+        <el-step title="生成凭证" description="计提/发放进总账" />
+        <el-step title="导出代发盘" description="导出银行批量支付文件" />
+      </el-steps>
+      <div class="guide-actions">
+        <el-button
+          type="primary"
+          data-testid="payroll-step-preview"
+          @click="createSalaryDetail"
+        >
+          1. 生成工资预览
+        </el-button>
+        <el-button
+          type="primary"
+          plain
+          data-testid="payroll-step-push"
+          @click="pushSalaryDetail"
+        >
+          2. 推送工资明细
+        </el-button>
+        <el-button
+          type="primary"
+          plain
+          data-testid="payroll-step-voucher"
+          @click="goGenerateVoucher"
+        >
+          3. 去生成凭证
+        </el-button>
+        <el-button
+          type="success"
+          plain
+          data-testid="payroll-step-payment"
+          :disabled="!hasConfirmedDetails"
+          @click="exportBankPayment"
+        >
+          4. 导出代发盘
+        </el-button>
+      </div>
+      <p class="guide-hint">
+        当前账期：{{ currentTerm || '—' }}。请按步骤完成；第 3 步进入工资明细后，普通员工点「计提/发放」，兼职点「收票/发放」。代发盘仅针对已推送确认的工资明细。
+      </p>
+    </el-card>
     <el-card class="common-card query-box">
       <div class="queryForm">
         <el-form
@@ -44,24 +93,11 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button
-          type="primary"
-          @click="createSalaryDetail"
-        >
-          生成工资预览
-        </el-button>
-        <el-button
           type="danger"
           :disabled="ids.length === 0"
           @click="handleDelete"
         >
           {{ t('org.button.deleteBatch') }}
-        </el-button>
-        <el-button
-          type="primary"
-          plain
-          @click="pushSalaryDetail"
-        >
-          推送工资明细
         </el-button>
       </div>
       <el-table
@@ -111,6 +147,25 @@
               :options="employee_types"
               :value="scope.row.employeeType"
             />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="缴费基数"
+          align="center"
+          width="140"
+        >
+          <template #default="scope">
+            <span v-if="scope.row.effectivePayBase != null">
+              {{ formatAmount(scope.row.effectivePayBase) }}
+              <el-tag
+                size="small"
+                :type="scope.row.payBaseSource === 1 ? 'warning' : 'info'"
+                style="margin-left: 4px"
+              >
+                {{ scope.row.payBaseSource === 1 ? '自定义' : '账套默认' }}
+              </el-tag>
+            </span>
+            <span v-else>—</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -175,7 +230,6 @@
               {{ formatAmount(scope.row.laborFee) }}
             </template>
           </el-table-column>
-
           <el-table-column
             prop="bonus"
             label="奖金"
@@ -408,16 +462,19 @@
 
 <script setup lang="ts">
 import {ElForm} from "element-plus";
-import {reactive, ref, toRefs,getCurrentInstance} from "vue";
+import {computed, reactive, ref, toRefs, getCurrentInstance} from "vue";
 import {batchDelete, createDetailTemp, createFinalDetail, fetchPage} from "@/api/hr/salary-detail";
+import {hasSalaryDetailsForMonth, exportPayment} from "@/api/hr/employee-salary";
 import {useI18n} from "vue-i18n";
 import {formatAmount} from "@/utils";
 import editForm from "./calc-salary/edit.vue";
 import modal from "@/plugins/modal";
 import {useRouter} from "vue-router";
+import bookStore from "@/store/modules/bookStore";
 
 const router: any = useRouter();
 const {t} = useI18n()
+const currBookStore = bookStore();
 const data: any = reactive({
   queryParams: {
     pageNumber: 1,
@@ -438,14 +495,24 @@ const editFlag: any = ref(false);
 const editTitle: any = ref('');
 const ids = ref([]);
 const selectionlist: any = ref<any>([]);
+const hasConfirmedDetails = ref(false);
 
-/** 搜索按钮操作 */
+const currentTerm = computed(() => currBookStore.termCurrent);
+const activeStep = computed(() => {
+  if (hasConfirmedDetails.value) {
+    return 3;
+  }
+  if (total.value > 0) {
+    return 1;
+  }
+  return 0;
+});
+
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
 function resetQuery() {
   queryParams.value.employeeName = undefined;
   queryParams.value.employeeNumber = undefined;
@@ -458,6 +525,22 @@ function getList() {
     total.value = response.data.total;
     loading.value = false;
   });
+  refreshConfirmedCount();
+}
+
+function refreshConfirmedCount() {
+  const belongDate = currBookStore.termCurrent;
+  if (!belongDate) {
+    hasConfirmedDetails.value = false;
+    return;
+  }
+  hasSalaryDetailsForMonth(belongDate, { silentError: true }).then((res: any) => {
+    if (res.code === 0) {
+      hasConfirmedDetails.value = (res.data || 0) > 0;
+    }
+  }).catch(() => {
+    hasConfirmedDetails.value = false;
+  });
 }
 
 function handleUpdate(row: any) {
@@ -466,7 +549,6 @@ function handleUpdate(row: any) {
   editFlag.value = true;
 }
 
-/*关闭抽屉*/
 function dialogOfClosedMethods(val: any): any {
   editFlag.value = false;
   id.value = undefined;
@@ -475,7 +557,6 @@ function dialogOfClosedMethods(val: any): any {
   }
 }
 
-
 function createSalaryDetail() {
   loading.value = true;
   createDetailTemp({}).then((response: any) => {
@@ -483,13 +564,16 @@ function createSalaryDetail() {
       getList();
       modal.msgSuccess("已生成");
       loading.value = false;
+    } else {
+      loading.value = false;
     }
+  }).catch(() => {
+    loading.value = false;
   });
 }
 
-/** 删除按钮操作 */
 function handleDelete(row: any) {
-  const _ids = row.id ? [row.id] : ids.value;
+  const _ids = row?.id ? [row.id] : ids.value;
   modal.confirm('是否确认删除？').then(function () {
     return batchDelete({listIds: _ids});
   }).then((res: any) => {
@@ -503,7 +587,6 @@ function handleDelete(row: any) {
   });
 }
 
-// 多选框选中数据
 function handleSelectionChange(selection: any) {
   selectionlist.value = selection;
   ids.value = selectionlist.value.map((item: any) => item.id);
@@ -513,9 +596,67 @@ function pushSalaryDetail() {
   createFinalDetail().then((res: any) => {
     if (res.code === 0) {
       modal.msgSuccess(res.data);
+      refreshConfirmedCount();
       router.push({path: "/hr/salary-detail"});
     }
   })
+}
+
+function goGenerateVoucher() {
+  const belongDate = currBookStore.termCurrent;
+  if (!belongDate) {
+    modal.msgError("当前账期未知，无法生成凭证");
+    return;
+  }
+  hasSalaryDetailsForMonth(belongDate, { silentError: true }).then((res: any) => {
+    if (res.code !== 0 || !(res.data > 0)) {
+      modal.msgError("请先推送工资明细后再生成凭证");
+      return;
+    }
+    router.push({path: "/hr/salary-detail"});
+  }).catch(() => {
+    modal.msgError("请先推送工资明细后再生成凭证");
+  });
+}
+
+function exportBankPayment() {
+  const belongDate = currBookStore.termCurrent;
+  if (!belongDate) {
+    modal.msgError("当前账期未知，无法导出代发盘");
+    return;
+  }
+  if (!hasConfirmedDetails.value) {
+    modal.msgError("请先推送工资明细后再导出代发盘");
+    return;
+  }
+  exportPayment({belongDate}).then((data: any) => {
+    if (!data || data.size === 0) {
+      modal.msgError("导出失败：返回数据为空");
+      return;
+    }
+    const isJson = data.type && data.type.includes('application/json');
+    if (isJson) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const json = JSON.parse(String(reader.result));
+          modal.msgError(json.message || "导出失败");
+        } catch {
+          modal.msgError("导出失败");
+        }
+      };
+      reader.readAsText(data);
+      return;
+    }
+    const blob: any = new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8'});
+    const url: any = URL.createObjectURL(blob);
+    const a: any = document.createElement('a');
+    a.href = url;
+    a.download = 'salary_payment_' + belongDate + '.xlsx';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  });
 }
 
 getList();
@@ -528,6 +669,23 @@ getList();
 
 .common-card {
   margin-bottom: 15px;
+}
+
+.payroll-guide {
+  .guide-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .guide-hint {
+    margin: 12px 0 0;
+    text-align: center;
+    color: #909399;
+    font-size: 13px;
+  }
 }
 
 .app-container {

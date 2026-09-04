@@ -48,6 +48,8 @@ class BookServiceTest {
     private StandardSubjectCashFlowService standardSubjectCashFlowService;
     @Mock
     private com.financial.cloud.service.permissions.PermissionBookService permissionBookService;
+    @Mock
+    private com.financial.cloud.service.config.ConfigInsuranceFundService configInsuranceFundService;
 
     @InjectMocks
     private BookService bookService;

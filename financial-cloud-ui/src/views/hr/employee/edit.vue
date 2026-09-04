@@ -358,6 +358,9 @@
                   自定义缴纳基数
                 </el-radio>
               </el-radio-group>
+              <div class="form-hint">
+                本期算薪按「统一基数」计算（账套默认或本员工自定义）；分险种自定义基数暂未启用。
+              </div>
             </el-form-item>
             <el-form-item
               v-if="form.payBaseRule === 1 &&form.employeeType === 'NORMAL'"
@@ -366,7 +369,7 @@
             >
               <el-input-number
                 v-model="form.payBaseNumber"
-                :min="0"
+                :min="0.01"
                 :precision="2"
                 style="width: 200px"
               >
@@ -590,5 +593,12 @@ interface TreeNode {
   font-size: 16px; /* text-lg */
   font-weight: 500; /* font-medium */
   margin-bottom: 4px; /* mb-4 */
+}
+
+.form-hint {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>

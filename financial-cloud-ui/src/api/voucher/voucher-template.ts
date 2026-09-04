@@ -12,15 +12,20 @@ export function get(relatedId:string,id: string): any {
     })
 }
 
-// 获取
-export function list(relatedId: string,category: number): any {
+// 获取；category<=0 时不按类型过滤
+export function list(relatedId: string, category: number): any {
+    const params: any = {
+        relatedId: relatedId,
+        pageNumber: 1,
+        pageSize: 500,
+    }
+    if (category != null && category > 0) {
+        params.category = category
+    }
     return request({
         url: '/vouchertemplate/fetch',
         method: 'get',
-        params: {
-            relatedId: relatedId,
-            category :category
-        }
+        params
     })
 }
 

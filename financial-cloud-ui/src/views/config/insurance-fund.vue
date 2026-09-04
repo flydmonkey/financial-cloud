@@ -584,6 +584,27 @@ const data: any = reactive({
 const {form, rules} = toRefs(data);
 const loading: any = ref(true);
 
+/** 全国最低比例默认值（与后端 InsuranceFundDefaults 对齐） */
+function nationalMinDefaults(): any {
+  return {
+    payBase: 2500,
+    endowmentBusiness: 16,
+    endowmentPersonal: 8,
+    medicalBusiness: 6,
+    medicalPersonal: 2,
+    maternityBusiness: 0,
+    maternityPersonal: 0,
+    unemploymentBusiness: 0.3,
+    unemploymentPersonal: 0.2,
+    employmentInjuryBusiness: 0.2,
+    employmentInjuryPersonal: 0,
+    providentFundSupBusiness: 5,
+    providentFundSupPersonal: 5,
+    seriousMedicalBusiness: 0,
+    seriousMedicalPersonal: 0,
+  };
+}
+
 function percentValue(feeValue: number, percentValue: number): number {
   return Math.round(Number((feeValue * percentValue).toFixed(3))) / 100;
 }
@@ -654,7 +675,17 @@ watch(
 function get(): any {
   loading.value = true;
   configGetCurrent().then((res: any) => {
-    form.value = res.data
+    if (res.code === 0 && res.data) {
+      form.value = res.data;
+    } else {
+      form.value = nationalMinDefaults();
+    }
+    nextTick(() => {
+      calculateFees()
+      loading.value = false;
+    })
+  }).catch(() => {
+    form.value = nationalMinDefaults();
     nextTick(() => {
       calculateFees()
       loading.value = false;

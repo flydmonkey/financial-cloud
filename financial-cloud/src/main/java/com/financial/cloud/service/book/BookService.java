@@ -4,6 +4,7 @@ package com.financial.cloud.service.book;
 import lombok.RequiredArgsConstructor;
 import com.financial.cloud.service.standard.StandardSubjectCashFlowService;
 import com.financial.cloud.service.config.ConfigCashFlowBalanceService;
+import com.financial.cloud.service.config.ConfigInsuranceFundService;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementIncomeService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
@@ -60,6 +61,9 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
     private final StandardSubjectCashFlowService standardSubjectCashFlowService;
 
     private final PermissionBookService permissionBookService;
+
+    private final ConfigInsuranceFundService configInsuranceFundService;
+
     public Message<Page<Book>> pageList(BookPageDto dto) {
         Page<Book> page = bookMapper.pageList(dto.build(), dto);
 
@@ -75,6 +79,9 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
 
         // 账套配置参数初始化
         configSysService.initBooksConfig(dto.getId(),dto.getEnableDate().toString());
+
+        // 社保公积金最低比例默认配置
+        configInsuranceFundService.ensureDefaults(dto.getId());
 
         //账套科目
         bookSubjectService.initBookSubject(dto);

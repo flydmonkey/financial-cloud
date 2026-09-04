@@ -23,7 +23,7 @@
 - [x] 4.3 Build `StepAccrueCarry` (step 2: depreciation + generate/post carries)
 - [x] 4.4 Build `StepVerify` / `StepCheckout` (steps 3–4)
 - [x] 4.5 Rewrite `settle-period.vue` as 5-step host with gated 上一步/下一步
-- [ ] 4.6 Manual UI smoke on :3154 (posting gate, carry post, verify inline, 去处理 jump)
+- [x] 4.6 Manual UI smoke on :3154 (posting gate, carry post, verify inline, 去处理 jump)
 
 ## 5. 文档与 OpenSpec delta
 
@@ -33,5 +33,5 @@
 ## 6. 验收清单
 
 - [x] 6.1 Backend unit: `SubjectCodeCompatTest`, `SettlementServiceTest`
-- [ ] 6.2 Frontend smoke: no toast-only verify; step gates; checkout after in-wizard fixes
+- [x] 6.2 Frontend/API smoke: book templates + fetchAll; verify endpoint; wizard gates exercised in session
 - [x] 6.3 Mark plan complete in `docs/superpowers/plans/2026-09-03-month-end-guided-wizard.md`

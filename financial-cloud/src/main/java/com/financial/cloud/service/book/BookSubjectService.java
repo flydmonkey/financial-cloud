@@ -31,8 +31,10 @@ import com.financial.cloud.repository.standard.StandardSubjectMapper;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.util.StrUtils;
+import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.SubjectHierarchyUtils;
+import com.financial.cloud.util.PostableSubjectRules;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -559,6 +561,31 @@ public class BookSubjectService extends ServiceImpl<BookSubjectMapper, BookSubje
         	bookSubject.setBalance(BigDecimal.ZERO);
         }
         return bookSubject;
+    }
+
+    /**
+     * Resolve a template subject code to a postable leaf in the book.
+     * Parents such as {@code 5602}/{@code 2211} map to preferred leaves when present.
+     */
+    public BookSubject resolvePostableSubject(String bookId, String templateSubjectCode) {
+        if (StringUtils.isBlank(templateSubjectCode) || StringUtils.isBlank(bookId)) {
+            return null;
+        }
+        LinkedHashMap<String, BookSubject> merged = new LinkedHashMap<>();
+        for (String candidate : SubjectCodeCompat.lookupCandidates(templateSubjectCode)) {
+            for (BookSubject subject : selectSubjectAndChild(bookId, candidate)) {
+                if (subject != null && StringUtils.isNotBlank(subject.getCode())) {
+                    merged.putIfAbsent(subject.getCode(), subject);
+                }
+            }
+        }
+        BookSubject picked = PostableSubjectRules.pickPostable(
+                templateSubjectCode, new ArrayList<>(merged.values()));
+        if (picked == null) {
+            return null;
+        }
+        BookSubject withBalance = selectSubject(bookId, picked.getCode());
+        return withBalance != null ? withBalance : picked;
     }
 
     /**

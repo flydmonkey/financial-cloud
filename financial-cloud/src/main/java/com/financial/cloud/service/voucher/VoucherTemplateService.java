@@ -21,6 +21,8 @@ import com.financial.cloud.repository.standard.StandardSubjectMapper;
 import com.financial.cloud.repository.voucher.VoucherTemplateItemMapper;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.financial.cloud.repository.voucher.VoucherTemplateMapper;
+import com.financial.cloud.domain.book.BookSubject;
+import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.book.MonthEndCloseRules;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,7 +46,12 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
     private final BookSubjectMapper bookSubjectMapper;
 
     private final StandardSubjectMapper bookStandardSubjectMapper;
+
+    private final BookSubjectService bookSubjectService;
     public Message<Page<VoucherTemplate>> pageList(VoucherTemplatePageDto dto) {
+        if (StringUtils.isNotBlank(dto.getRelatedId())) {
+            rematchSalaryAccrualParentSubjects(dto.getRelatedId());
+        }
         Page<VoucherTemplate> page = voucherTemplateMapper.pageList(dto.build(), dto);
 
         return new Message<>(Message.SUCCESS, page);
@@ -143,7 +150,13 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
     }
 	public Message<VoucherTemplate> get(String id) {
     	 VoucherTemplate voucherTemplate = voucherTemplateMapper.selectById(id);
-    	 
+    	 if (voucherTemplate == null) {
+    		 return Message.ok(null);
+    	 }
+    	 // 账套内计提工资模板：父级科目改写为可入账末级，避免规则页只显示编码
+    	 rematchSalaryAccrualParentSubjects(voucherTemplate.getRelatedId());
+    	 voucherTemplate = voucherTemplateMapper.selectById(id);
+
     	 LambdaQueryWrapper<VoucherTemplateItem> lqw = Wrappers.lambdaQuery();
          lqw.eq(VoucherTemplateItem::getRelatedId, voucherTemplate.getRelatedId());
          lqw.eq(VoucherTemplateItem::getTemplateId, voucherTemplate.getId());
@@ -151,9 +164,7 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
          lqw.orderByAsc(VoucherTemplateItem::getDirection,VoucherTemplateItem::getSubjectCode);
          List<VoucherTemplateItem> items = voucherTemplateItemMapper.selectList(lqw);
 
-         if(voucherTemplate != null) {
-        	 voucherTemplate.setItems(items);
-         }
+         voucherTemplate.setItems(items);
 		return Message.ok(voucherTemplate);
 	}
 	public boolean deleteByBookIds(List<String> bookIds) {
@@ -237,6 +248,38 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
 		}
 		if (CollectionUtils.isNotEmpty(toInsert)) {
 			Db.saveBatch(toInsert);
+		}
+		rematchSalaryAccrualParentSubjects(bookId);
+	}
+
+	/**
+	 * Existing books may still store parent codes (5602/2211) on jt_gz.
+	 * Rewrite to preferred postable leaves when available so month-end UI matches generation.
+	 */
+	public void rematchSalaryAccrualParentSubjects(String bookId) {
+		if (StringUtils.isBlank(bookId)) {
+			return;
+		}
+		List<VoucherTemplate> templates = voucherTemplateMapper.selectList(Wrappers.<VoucherTemplate>lambdaQuery()
+				.eq(VoucherTemplate::getRelatedId, bookId)
+				.eq(VoucherTemplate::getCode, MonthEndCloseRules.CODE_ACCRUE_SALARY));
+		if (CollectionUtils.isEmpty(templates)) {
+			return;
+		}
+		for (VoucherTemplate template : templates) {
+			List<VoucherTemplateItem> items = voucherTemplateItemMapper.selectList(Wrappers.<VoucherTemplateItem>lambdaQuery()
+					.eq(VoucherTemplateItem::getTemplateId, template.getId())
+					.eq(VoucherTemplateItem::getRelatedId, bookId));
+			for (VoucherTemplateItem item : items) {
+				if (StringUtils.isBlank(item.getSubjectCode())) {
+					continue;
+				}
+				BookSubject leaf = bookSubjectService.resolvePostableSubject(bookId, item.getSubjectCode());
+				if (leaf != null && !leaf.getCode().equals(item.getSubjectCode())) {
+					item.setSubjectCode(leaf.getCode());
+					voucherTemplateItemMapper.updateById(item);
+				}
+			}
 		}
 	}
 

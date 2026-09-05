@@ -151,8 +151,9 @@ public final class MonthEndCloseRules {
 		boolean enterprise = isEnterpriseAccountingSystem(standardId);
 		return switch (templateCode == null ? "" : templateCode) {
 			case CODE_ACCRUE_SALARY -> List.of(
-					new CarryTemplateItemSpec(enterprise ? "5502" : "5602", 1, "计提工资"),
-					new CarryTemplateItemSpec(enterprise ? "2151" : "2211", 2, "计提工资"));
+					// 小企业：末级科目；企业制度：父级编码，生成凭证时再解析末级
+					new CarryTemplateItemSpec(enterprise ? "5502" : "5602.07", 1, "计提工资"),
+					new CarryTemplateItemSpec(enterprise ? "2151" : "2211.01", 2, "计提工资"));
 			case CODE_ACCRUE_INCOME_TAX -> List.of(
 					new CarryTemplateItemSpec(enterprise ? "5701" : "5801", 1, "计提所得税"),
 					new CarryTemplateItemSpec(enterprise ? "2171.06" : "2221.05", 2, "计提所得税"));

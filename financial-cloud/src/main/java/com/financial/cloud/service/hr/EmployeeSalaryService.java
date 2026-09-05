@@ -426,7 +426,8 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         for (VoucherTemplateItem item : items) {
             itemsMap.put(item.getSubjectCode(), item);
         }
-        
+
+        try {
         if (voucherTemplate.getCode().equals("fp_lwf")) {//收发票
         	if(SubjectCodeCompat.mapContains(itemsMap, "660222")) {
 	       		 //劳务费
@@ -490,6 +491,9 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
             }
             creditAmount = debitAmount;
         }
+        } catch (IllegalStateException ex) {
+            return Message.failed(ex.getMessage());
+        }
 
         VoucherChangeDto voucherChangeDto = createVoucherChangeDto(book, bookId, voucherDate, year, month, debitAmount);
         voucherChangeDto.setRemark(voucherTemplate.getRemark().replace("{yyyy}", year + "").replace("{mm}", month + "").replace("{name}", employee.getDisplayName()));
@@ -515,8 +519,11 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
     private VoucherItemChangeDto createVoucherItemDto(String bookId,
             VoucherTemplateItem item, BigDecimal amount) {
-		BookSubject bookSubject = bookSubjectService.selectSubject(bookId, item.getSubjectCode());
-		
+		BookSubject bookSubject = bookSubjectService.resolvePostableSubject(bookId, item.getSubjectCode());
+		if (bookSubject == null) {
+			throw new IllegalStateException("凭证模板科目[" + item.getSubjectCode() + "]在账套中无可用末级科目");
+		}
+
 		VoucherItemChangeDto itemDto = new VoucherItemChangeDto();
 		itemDto.setSummary(item.getSummary());
 		itemDto.setSubjectId(bookSubject.getId());
@@ -530,7 +537,7 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 		itemDto.setSubjectCode(bookSubject.getCode());
 		itemDto.setSubjectName(bookSubject.getCode() + "-" + bookSubject.getName());
 		itemDto.setDetailedAccounts("");
-		
+
 		return itemDto;
 	}
 

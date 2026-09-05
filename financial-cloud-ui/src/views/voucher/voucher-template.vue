@@ -446,7 +446,7 @@
 
 <script setup name="ReportBalanceSheet" lang="ts">
 import {getCurrentQuarter, parseTime} from '@/utils/financialCloud'
-import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs, computed} from 'vue'
+import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs, computed, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import bookStore from "@/store/modules/bookStore";
 import {ElForm, FormInstance} from "element-plus";
@@ -550,12 +550,30 @@ function resolveTemplateRelatedId(): string {
   return queryParams.value.standardId
 }
 
-function resolveSubjectStandardId(): string {
+function resolveSubjectTreeQuery(): Record<string, string> | null {
   if (salaryScope.value) {
-    const book = currBookStore.getBookItem?.()
-    return book?.standardId || queryParams.value.standardId || ''
+    const bookId = currBookStore.bookId
+    return bookId ? { bookId } : null
   }
-  return queryParams.value.standardId
+  const standardId = queryParams.value.standardId
+  return standardId ? { standardId } : null
+}
+
+function getSubjectList() {
+  const query = resolveSubjectTreeQuery()
+  if (!query) {
+    subjectList.value = []
+    subjectKeyIdItem.value = {}
+    return
+  }
+  subjectApi.getTree(query).then((res: any) => {
+    subjectList.value = res.data || []
+    subjectKeyIdItem.value = {}
+    updateSubjectKeys(subjectList.value)
+  }).catch(() => {
+    subjectList.value = []
+    subjectKeyIdItem.value = {}
+  })
 }
 
 /** 查询列表 */
@@ -619,19 +637,6 @@ const cellMouseLeave = (row: any, column: any, cell: HTMLTableCellElement, event
 // 更新会计科目ID关联
 const updateSubjectKeys = (items: any) => {
   indexSubjectTree(items, subjectKeyIdItem.value)
-}
-
-function getSubjectList() {
-  const standardId = resolveSubjectStandardId()
-  if (!standardId) {
-    subjectList.value = []
-    return
-  }
-  //传入当前账套ID
-  subjectApi.getTree({ standardId }).then((res: any) => {
-    subjectList.value = res.data
-    updateSubjectKeys(subjectList.value)
-  })
 }
 
 const handleSubjectChange = (scope: any, value: any) => {
@@ -752,6 +757,18 @@ function getStandardList() {
 }
 
 getStandardList();
+
+// 账套异步就绪后，薪资范围需重新拉账套科目与模板（否则科目只显示编码）
+watch(
+  () => currBookStore.bookId,
+  (bookId, prev) => {
+    if (!salaryScope.value || !bookId || bookId === prev) {
+      return
+    }
+    getSubjectList()
+    getList()
+  }
+)
 
 </script>
 

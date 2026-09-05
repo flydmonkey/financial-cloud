@@ -54,7 +54,7 @@ class MonthEndCloseRulesTest {
 
     @Test
     void defaultAccrualTemplateItemsFollowSmallBusiness() {
-        assertAccrualPair("jt_gz", "1", "5602", "2211", "计提工资");
+        assertAccrualPair("jt_gz", "1", "5602.07", "2211.01", "计提工资");
         assertAccrualPair("jt_sds", "1", "5801", "2221.05", "计提所得税");
         assertAccrualPair("jt_fjs", "1", "5403", "2221", "计提附加税");
         assertTrue(MonthEndCloseRules.defaultCarryTemplateItems("jt_zj", "1").isEmpty());

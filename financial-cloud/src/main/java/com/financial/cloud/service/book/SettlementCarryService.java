@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.service.voucher.VoucherService;
+import com.financial.cloud.service.voucher.VoucherTemplateService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -73,8 +74,11 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
     
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
 
+    private final VoucherTemplateService voucherTemplateService;
+
     public Message<Page<SettlementCarryforwardVo>> fetchCarry(VoucherTemplatePageDto dto) {
         dto.setYearPeriod(configSysService.getCurrentTerm(dto.getBookId()));
+        voucherTemplateService.rematchSalaryAccrualParentSubjects(dto.getBookId());
         Page<SettlementCarryforwardVo> page = settlementCarryforwardMapper.pageList(dto.build(), dto);
         return Message.ok(page);
     }
@@ -83,6 +87,7 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         String bookId = dto.getBookId();
         Book book = bookMapper.selectById(bookId);
         String currentTerm = configSysService.getCurrentTerm(bookId);
+        voucherTemplateService.rematchSalaryAccrualParentSubjects(bookId);
         VoucherTemplate voucherTemplate = voucherTemplateMapper.selectById(dto.getTemplateId());
         log.debug("voucherTemplate {}", voucherTemplate);
         LambdaQueryWrapper<VoucherTemplateItem> itemLqw = Wrappers.lambdaQuery();
@@ -119,7 +124,8 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         for (VoucherTemplateItem item : items) {
             itemsMap.put(item.getSubjectCode(), item);
         }
-        
+
+        try {
         if (voucherTemplate.getCode().startsWith("qm_jz_")) {
            
             //凭证 不转结
@@ -255,6 +261,10 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
             for (VoucherTemplateItem item : items) {
                 voucherItems.add(createVoucherItemDto(bookId, item, BigDecimal.ZERO));
             }
+        }
+
+        } catch (IllegalStateException ex) {
+            return Message.failed(ex.getMessage());
         }
 
         voucherChangeDto.setItems(voucherItems);
@@ -455,18 +465,9 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
      */
     private VoucherItemChangeDto createVoucherItemDto(String bookId,
                                                       VoucherTemplateItem item, BigDecimal amount) {
-        String subjectCode = item.getSubjectCode();
-        BookSubject bookSubject = null;
-        for (String candidate : SubjectCodeCompat.carryForwardSubjectCodes(subjectCode)) {
-            List<BookSubject> subjects = bookSubjectService.selectSubjectAndChild(bookId, candidate);
-            if (!subjects.isEmpty()) {
-                bookSubject = bookSubjectService.selectSubject(bookId, candidate);
-                subjectCode = candidate;
-                break;
-            }
-        }
+        BookSubject bookSubject = bookSubjectService.resolvePostableSubject(bookId, item.getSubjectCode());
         if (bookSubject == null) {
-            bookSubject = bookSubjectService.selectSubject(bookId, subjectCode);
+            throw new IllegalStateException("凭证模板科目[" + item.getSubjectCode() + "]在账套中无可用末级科目");
         }
 
         VoucherItemChangeDto itemDto = new VoucherItemChangeDto();

@@ -102,7 +102,7 @@
 | `employee_salary_summary` | 汇总 |
 | `employee_salary_temp` | 计算临时数据 |
 | `employee_tax_deduction` | 专项附加扣除 |
-| `config_personal_tax` | 税率 |
+| `config_personal_tax` | 税率（工资 type=0 须为**年度累计**预扣区间，见 §7 第 6 条） |
 | `config_salary_formula` | 公式 |
 | `config_insurance_fund` | 社保公积金 |
 
@@ -132,11 +132,12 @@
    - 累计专项附加 = 本年已确认明细专项附加 + 本期专项附加
    - 累计减除费用 = 5000 × 任职受雇月数（自入职月或当年 1 月起至所属月）
    - 累计应纳税所得额 = max(0, 累计收入 − 累计减除费用 − 累计专项 − 累计专项附加)
-   - 累计应纳税额 = 按 `config_personal_tax` type=0 税率档套算
+   - 累计应纳税额 = 按 `config_personal_tax` type=0 **年度累计**税率档套算（区间单位为**元/年**，非旧版月度档）
    - 本期应扣个税 = max(0, 累计应纳税额 − 本年已预扣)
    - `taxableWages` 字段表示**累计应纳税所得额**（便于对账；不再表示当月应税工资旧口径）；`personalTax` 为**本期应扣个税**。
    - 本年历史取自本账套已确认 `employee_salary`；**不支持**入职前其他单位累计收入/已扣税导入。
    - 若修改已确认的历史月份，需**人工重算并重推后续月份**，系统不会自动级联更新。
+6. **工资个税税率配置（type=0）**须维护为国家综合所得**年度累计**七档（如 0–36000 @3%、…、960000+ @45%）。早期 seed 误用**月度**区间会导致累计预扣算税严重偏差。**已有环境**请执行 `sql/patches/2026-09-05-wage-tax-brackets-annual-cumulative.sql`，或在「个税税率配置」页手工改为年度档并重算受影响工资。
 
 ## 8. 已知缺口 / Non-goals
 

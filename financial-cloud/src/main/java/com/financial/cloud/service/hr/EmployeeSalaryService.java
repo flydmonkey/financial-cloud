@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import com.financial.cloud.repository.hr.EmployeeSalaryMapper;
 import com.financial.cloud.repository.hr.EmployeeMapper;
 import com.financial.cloud.repository.book.BookMapper;
+import com.financial.cloud.repository.book.SettlementCarryforwardMapper;
 import com.financial.cloud.repository.voucher.VoucherTemplateItemMapper;
 import com.financial.cloud.repository.voucher.VoucherTemplateMapper;
+import com.financial.cloud.domain.book.SettlementCarryforward;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -44,6 +46,7 @@ import com.financial.cloud.dto.hr.TaxDeductionExportVo;
 import com.financial.cloud.enums.error.HrErrorCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.book.BookSubjectService;
+import com.financial.cloud.service.book.MonthEndCloseRules;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.hr.EmployeeSalaryService;
 import com.financial.cloud.util.PeriodDateUtils;
@@ -89,6 +92,9 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     private final ConfigSysService configSysService;
     
     private final BookSubjectService bookSubjectService;
+
+    private final SettlementCarryforwardMapper settlementCarryforwardMapper;
+
     public Message<Page<EmployeeSalary>> pageList(SalaryDetailPageDto dto) {
 
         Page<EmployeeSalary> employeeSalaryPage = employeeSalaryMapper.pageList(dto.build(), dto);
@@ -398,6 +404,12 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         if(voucherTemplate == null) {
         	return Message.failed("凭证模板["+tplCode+"]未设置！");
         }
+
+        if (SalaryAccrualMutexRules.isWageSalaryAccrualTemplate(tplCode)
+                && salary.getBelongDate() != null
+                && hasMonthEndWageAccrual(bookId, salary.getBelongDate().toString())) {
+            return Message.failed(SalaryAccrualMutexRules.BLOCK_DETAIL_BECAUSE_MONTH_END);
+        }
         
         Date voucherDate = null;
         if(voucherTemplate.getVoucherDate().equals(0)) {
@@ -576,5 +588,66 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         super.update(updateWrapper);
         
 		return Message.ok("删除成功！");
+	}
+
+	boolean hasMonthEndWageAccrual(String bookId, String yearPeriod) {
+		if (StringUtils.isBlank(bookId) || StringUtils.isBlank(yearPeriod)) {
+			return false;
+		}
+		VoucherTemplate jtGz = voucherTemplateMapper.selectOne(Wrappers.<VoucherTemplate>lambdaQuery()
+				.eq(VoucherTemplate::getRelatedId, bookId)
+				.eq(VoucherTemplate::getCode, MonthEndCloseRules.CODE_ACCRUE_SALARY)
+				.eq(VoucherTemplate::getDeleted, "n")
+				.last("limit 1"));
+		if (jtGz == null || StringUtils.isBlank(jtGz.getId())) {
+			return false;
+		}
+		Long count = settlementCarryforwardMapper.selectCount(Wrappers.<SettlementCarryforward>lambdaQuery()
+				.eq(SettlementCarryforward::getBookId, bookId)
+				.eq(SettlementCarryforward::getYearPeriod, yearPeriod)
+				.eq(SettlementCarryforward::getVoucherTemplateId, jtGz.getId()));
+		return count != null && count > 0;
+	}
+
+	/**
+	 * True when any non-labor salary detail in the period already has an accrual voucher.
+	 */
+	public boolean hasWageDetailAccrual(String bookId, String yearPeriod) {
+		if (StringUtils.isBlank(bookId) || StringUtils.isBlank(yearPeriod)) {
+			return false;
+		}
+		YearMonth belongDate;
+		try {
+			belongDate = YearMonth.parse(yearPeriod);
+		} catch (Exception ex) {
+			return false;
+		}
+		List<EmployeeSalary> salaries = employeeSalaryMapper.selectList(Wrappers.<EmployeeSalary>lambdaQuery()
+				.eq(EmployeeSalary::getBookId, bookId)
+				.eq(EmployeeSalary::getBelongDate, belongDate)
+				.isNotNull(EmployeeSalary::getAccrualVoucherId)
+				.ne(EmployeeSalary::getAccrualVoucherId, "")
+				.eq(EmployeeSalary::getDeleted, "n"));
+		if (salaries == null || salaries.isEmpty()) {
+			return false;
+		}
+		List<String> employeeIds = salaries.stream()
+				.map(EmployeeSalary::getEmployeeId)
+				.filter(StringUtils::isNotBlank)
+				.distinct()
+				.toList();
+		if (employeeIds.isEmpty()) {
+			return false;
+		}
+		Map<String, Employee> employees = employeeMapper.selectBatchIds(employeeIds).stream()
+				.collect(Collectors.toMap(Employee::getId, e -> e, (a, b) -> a));
+		for (EmployeeSalary salary : salaries) {
+			Employee employee = employees.get(salary.getEmployeeId());
+			String employeeType = employee != null ? employee.getEmployeeType() : null;
+			if (SalaryAccrualMutexRules.countsAsWageDetailAccrual(employeeType, salary.getAccrualVoucherId())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

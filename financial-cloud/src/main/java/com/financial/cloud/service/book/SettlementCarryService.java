@@ -18,6 +18,8 @@ import com.financial.cloud.domain.book.Settlement;
 import com.financial.cloud.domain.book.SettlementCarryforward;
 import com.financial.cloud.dto.book.SettlementCarryforwardVo;
 import com.financial.cloud.domain.hr.EmployeeSalarySummary;
+import com.financial.cloud.service.hr.EmployeeSalaryService;
+import com.financial.cloud.service.hr.SalaryAccrualMutexRules;
 import com.financial.cloud.domain.statement.StatementSubjectBalance;
 import com.financial.cloud.domain.voucher.VoucherTemplate;
 import com.financial.cloud.domain.voucher.VoucherTemplateItem;
@@ -75,6 +77,8 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
 
     private final VoucherTemplateService voucherTemplateService;
+
+    private final EmployeeSalaryService employeeSalaryService;
 
     public Message<Page<SettlementCarryforwardVo>> fetchCarry(VoucherTemplatePageDto dto) {
         dto.setYearPeriod(configSysService.getCurrentTerm(dto.getBookId()));
@@ -185,6 +189,10 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
             }
         }else if (voucherTemplate.getCode().startsWith("jt_gz")||voucherTemplate.getCode().startsWith("jt_shebao")) {
         	//计提本月
+        	if (SalaryAccrualMutexRules.isWageSalaryAccrualTemplate(voucherTemplate.getCode())
+        			&& employeeSalaryService.hasWageDetailAccrual(bookId, currentTerm)) {
+        		return Message.failed(SalaryAccrualMutexRules.BLOCK_MONTH_END_BECAUSE_DETAIL);
+        	}
         	LambdaQueryWrapper<EmployeeSalarySummary> salaryWrapper = new LambdaQueryWrapper<>();
         	salaryWrapper.eq(EmployeeSalarySummary::getBelongDate, currentTerm);
         	salaryWrapper.eq(EmployeeSalarySummary::getBookId, bookId);

@@ -12,7 +12,7 @@
 
 - 不新建工资凭证规则表；复用账套 `voucher_template`。
 - 不自动补种 `fp_lwf`/`zf_lwf`/`zf_gz`；缺模板返回 `凭证模板[code]未设置！`。
-- 与期末汇总计提不做硬互斥；文档提示择一。
+- 与期末汇总计提：**先到先得双向硬互斥**（`SalaryAccrualMutexRules`）。
 - `voucherType`：`2`=计提/收票侧 → `accrualVoucherId`；`3`=发放侧 → `salaryVoucherId`。
 - TDD：先写失败测试再写实现；提交仅在用户要求时执行（本计划 Step「Commit」改为「暂不 commit，除非用户要求」）。
 

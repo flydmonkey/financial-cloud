@@ -39,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -122,22 +124,14 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
             employee.setLaborFee(dto.getLaborFee());
             calculateOtherValue(configInsuranceFund, employee, dto, taxDeduction);
 
-            //个税计算map
-            Map<String, BigDecimal> needPersonalTaxMap = new HashMap<>();
             //兼职人员个税计算map
             Map<String, BigDecimal> needLaborTaxMap = new HashMap<>();
 
             if(employee.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.NORMAL)
                     ||employee.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.INTERN)
                     ||employee.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.RETIREMENT)) {
-            	needPersonalTaxMap.put(employee.getId(), dto.getTaxableWages());
-            	
-            	//计算个税
-                Map<String, BigDecimal> personalTaxMap = calculatePersonalTax(needPersonalTaxMap, bookId, 0);
-                // 设置个税
-                String employeeId = dto.getEmployeeId();
-                BigDecimal personalTax = personalTaxMap.getOrDefault(employeeId, BigDecimal.ZERO);
-                dto.setPersonalTax(personalTax);
+                applyCumulativePit(dto, employee, dto.getBelongDate(), loadWageBrackets());
+                BigDecimal personalTax = dto.getPersonalTax();
                 dto.setTotalAmount(dto.getTotalAmount().subtract(dto.getPersonalTax()).max(BigDecimal.ZERO));
                 dto.setBusinessExpenditureCosts(dto.getTotalAmount().add(personalTax).add(dto.getTotalSocialInsurance())
                         .add(dto.getProvidentFund()).add(dto.getBusinessSocialInsurance()).add(dto.getBusinessProvidentFund()));
@@ -254,9 +248,6 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         //工资明细集合
         List<EmployeeSalaryTemp> employeeSalaryTemps = new ArrayList<>();
 
-        //个税计算map
-        Map<String, BigDecimal> needPersonalTaxMap = new HashMap<>();
-
         //兼职人员个税计算map
         Map<String, BigDecimal> needLaborTaxMap = new HashMap<>();
 
@@ -280,7 +271,6 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         	if(employeeSalaryTemp.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.NORMAL)
         			||employeeSalaryTemp.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.INTERN)
         			||employeeSalaryTemp.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.RETIREMENT)) {
-        		needPersonalTaxMap.put(employee.getId(), employeeSalaryTemp.getTaxableWages());
         	} else {
                 needLaborTaxMap.put(employee.getId(), employeeSalaryTemp.getTaxableWages());
             }
@@ -288,10 +278,11 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         	employeeSalaryTemps.add(employeeSalaryTemp);
         }
 
-        //计算个税
-        Map<String, BigDecimal> personalTaxMap = calculatePersonalTax(needPersonalTaxMap, bookId, 0);
         //计算劳务个税
         Map<String, BigDecimal> stringBigDecimalMap = calculatePersonalTax(needLaborTaxMap, bookId, 1);
+        List<CumulativePitRules.TaxBracket> wageBrackets = loadWageBrackets();
+        Map<String, Employee> employeeById = employees.stream()
+                .collect(Collectors.toMap(Employee::getId, e -> e, (a, b) -> a));
 
         // 设置个税
         employeeSalaryTemps.forEach(salaryDetail -> {
@@ -305,8 +296,8 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         			||salaryDetail.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.INTERN)
         			||salaryDetail.getEmployeeType().equalsIgnoreCase(ConstsUser.EMPLOYEE_TYPE.RETIREMENT))
             		&& salaryAmount.compareTo(BigDecimal.ZERO)>0) {
-	            personalTax = personalTaxMap.getOrDefault(employeeId, BigDecimal.ZERO);
-	            salaryDetail.setPersonalTax(personalTax);
+	            applyCumulativePit(salaryDetail, employeeById.get(employeeId), dto.getLastMonth(), wageBrackets);
+	            personalTax = salaryDetail.getPersonalTax();
 	            salaryDetail.setTotalAmount(salaryDetail.getTotalAmount().subtract(salaryDetail.getPersonalTax()).max(BigDecimal.ZERO));
 	            salaryDetail.setBusinessExpenditureCosts(salaryDetail.getTotalAmount().add(personalTax).add(salaryDetail.getTotalSocialInsurance())
 	                    .add(salaryDetail.getProvidentFund()).add(salaryDetail.getBusinessSocialInsurance()).add(salaryDetail.getBusinessProvidentFund()));
@@ -320,6 +311,78 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         });
 
         return employeeSalaryTemps;
+    }
+
+    private List<CumulativePitRules.TaxBracket> loadWageBrackets() {
+        return configPersonalTaxMapper.selectList(Wrappers.<ConfigPersonalTax>lambdaQuery()
+                        .eq(ConfigPersonalTax::getType, 0)
+                        .orderByAsc(ConfigPersonalTax::getLevel))
+                .stream()
+                .map(t -> new CumulativePitRules.TaxBracket(
+                        t.getMinNum() != null ? BigDecimal.valueOf(t.getMinNum()) : BigDecimal.ZERO,
+                        t.getMaxNum() != null ? BigDecimal.valueOf(t.getMaxNum()) : new BigDecimal("999999999"),
+                        BigDecimal.valueOf(t.getTaxRate()).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP),
+                        t.getCalculationDeduction() != null
+                                ? BigDecimal.valueOf(t.getCalculationDeduction())
+                                : BigDecimal.ZERO))
+                .toList();
+    }
+
+    private CumulativePitRules.YtdInputs buildYtdInputs(
+            String bookId, String employeeId, YearMonth belongMonth,
+            BigDecimal currentIncome, BigDecimal currentSpecial, BigDecimal currentAdditional,
+            Date entryDate) {
+        YearMonth yearStart = YearMonth.of(belongMonth.getYear(), 1);
+        List<EmployeeSalary> priors = employeeSalaryMapper.selectList(Wrappers.<EmployeeSalary>lambdaQuery()
+                .eq(EmployeeSalary::getBookId, bookId)
+                .eq(EmployeeSalary::getEmployeeId, employeeId)
+                .eq(EmployeeSalary::getDeleted, "n")
+                .ge(EmployeeSalary::getBelongDate, yearStart)
+                .lt(EmployeeSalary::getBelongDate, belongMonth));
+        BigDecimal priorIncome = BigDecimal.ZERO;
+        BigDecimal priorSpecial = BigDecimal.ZERO;
+        BigDecimal priorAdditional = BigDecimal.ZERO;
+        BigDecimal priorTax = BigDecimal.ZERO;
+        if (priors != null) {
+            for (EmployeeSalary row : priors) {
+                priorIncome = priorIncome.add(NumberUtil.nullToZero(row.getPayAmount()));
+                priorSpecial = priorSpecial.add(NumberUtil.nullToZero(row.getTotalSocialInsurance()))
+                        .add(NumberUtil.nullToZero(row.getProvidentFund()));
+                priorAdditional = priorAdditional.add(NumberUtil.nullToZero(row.getTaxDeduction()));
+                priorTax = priorTax.add(NumberUtil.nullToZero(row.getPersonalTax()));
+            }
+        }
+        int months = CumulativePitRules.employmentMonths(belongMonth, toLocalDate(entryDate));
+        return new CumulativePitRules.YtdInputs(
+                priorIncome, priorSpecial, priorAdditional, priorTax,
+                NumberUtil.nullToZero(currentIncome),
+                NumberUtil.nullToZero(currentSpecial),
+                NumberUtil.nullToZero(currentAdditional),
+                months);
+    }
+
+    private void applyCumulativePit(
+            EmployeeSalaryTemp row, Employee employee, YearMonth belongMonth,
+            List<CumulativePitRules.TaxBracket> brackets) {
+        BigDecimal currentSpecial = NumberUtil.nullToZero(row.getTotalSocialInsurance())
+                .add(NumberUtil.nullToZero(row.getProvidentFund()));
+        CumulativePitRules.YtdInputs inputs = buildYtdInputs(
+                row.getBookId(), row.getEmployeeId(), belongMonth,
+                row.getPayAmount(), currentSpecial, row.getTaxDeduction(),
+                employee.getEntryDate());
+        CumulativePitRules.PitResult pit = CumulativePitRules.compute(inputs, brackets);
+        row.setTaxableWages(pit.cumulativeTaxableIncome());
+        row.setPersonalTax(pit.periodTax());
+    }
+
+    private static LocalDate toLocalDate(Date date) {
+        if (date == null) {
+            return null;
+        }
+        if (date instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
+        }
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     private void calculateOtherValue(ConfigInsuranceFund configInsuranceFund,

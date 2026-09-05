@@ -485,7 +485,7 @@ git commit -m "docs: document cumulative PIT and add calc-salary hint"
 
 ### Task 4: Verification
 
-- [ ] **Step 1: Run unit tests**
+- [x] **Step 1: Run unit tests**
 
 ```bash
 cd financial-cloud
@@ -494,13 +494,13 @@ mvn "-Dtest=CumulativePitRulesTest,SalaryContributionBaseRulesTest,SalaryAccrual
 
 Expected: PASS.
 
-- [ ] **Step 2: Manual smoke (optional if env up)**
+- [x] **Step 2: Manual smoke (optional if env up)** — skipped (env unavailable)
 
 1. Login → calc-salary generate preview for a NORMAL employee with no prior year salary → expect tax ≈ (income − 5000 − SI − additional) × 3% when in first bracket.
 2. Confirm/push month 1, then preview month 2 → period tax ≈ second-month cumulative tax − month1 personalTax.
 3. Part-time employee tax unchanged vs prior behavior.
 
-- [ ] **Step 3: Mark plan tasks complete in this file** (checkboxes).
+- [x] **Step 3: Mark plan tasks complete in this file** (checkboxes).
 
 ---
 

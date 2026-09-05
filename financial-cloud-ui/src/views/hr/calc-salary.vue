@@ -91,6 +91,13 @@
       </div>
     </el-card>
     <el-card class="common-card">
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        title="普通员工个税已按综合所得累计预扣计算（减除费用 5000×任职月数，并扣减本年已预扣）。"
+        class="pit-hint"
+      />
       <div class="btn-form">
         <el-button
           type="danger"
@@ -663,6 +670,10 @@ getList();
 </script>
 
 <style lang="scss" scoped>
+.pit-hint {
+  margin-bottom: 12px;
+}
+
 .btn-form {
   margin-bottom: 10px;
 }

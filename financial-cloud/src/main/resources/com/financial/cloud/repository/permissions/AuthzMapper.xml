@@ -11,10 +11,21 @@
         and mg.deleted = 'n'
         and (
         role_code = 'ROLE_ALL_USER'
-        or mgm.member_id in(
-        <foreach collection="members" item="item" separator=",">
-            #{item}
-        </foreach>
+        or (
+            <choose>
+                <when test="bookId != null and bookId != ''">
+                    mgm.member_id in(
+                    <foreach collection="members" item="item" separator=",">
+                        #{item}
+                    </foreach>
+                    )
+                    and mgm.book_id = #{bookId}
+                </when>
+                <otherwise>
+                    <!-- Fail-closed: no active book ⇒ no book-scoped product roles -->
+                    1 = 0
+                </otherwise>
+            </choose>
         )
         )
     </select>

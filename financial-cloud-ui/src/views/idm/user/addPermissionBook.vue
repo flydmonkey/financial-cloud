@@ -6,6 +6,21 @@
       :inline="true"
       @submit.native.prevent
     >
+      <el-form-item label="产品角色" required>
+        <el-select
+          v-model="roleId"
+          filterable
+          style="width: 200px"
+          placeholder="请选择角色"
+        >
+          <el-option
+            v-for="item in roleOptions"
+            :key="item.id"
+            :label="item.roleName"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="账套名称">
         <el-input
           v-model="queryParams.bookName"
@@ -87,10 +102,17 @@ import {
   reactive,
   toRefs,
   watch,
-  PropType
 } from "vue";
 import {listStandardsAll} from "@/api/standard/standard";
+import {listGroup} from "@/api/idm/group";
 import * as userApi from "@/api/idm/user";
+
+const PRODUCT_ROLE_IDS = [
+  "ROLE_ADMINISTRATORS",
+  "ROLE_BOOKKEEPER",
+  "ROLE_REVIEWER",
+  "ROLE_VIEWER",
+];
 
 const {t} = useI18n()
 
@@ -128,6 +150,8 @@ const total: any = ref(0);
 const selectionlist: any = ref<any>([]);
 const ids: any = ref<any>([]);
 const names: any = ref<any>([]);
+const roleId: any = ref('');
+const roleOptions: any = ref<any[]>([]);
 //会计准则
 const standardList: any = ref<any>([]);
 
@@ -140,6 +164,7 @@ watch(
       if (val && props.username) {
         queryParams.value.username = props.username;
         queryParams.value.userId = props.userId;
+        loadRoleOptions();
         getList();
       } else {
         reset();
@@ -147,6 +172,13 @@ watch(
     },
     {immediate: true}
 );
+
+function loadRoleOptions(): any {
+  listGroup({pageNumber: 1, pageSize: 100}).then((res: any) => {
+    const records = res.data?.records || res.data || [];
+    roleOptions.value = records.filter((r: any) => PRODUCT_ROLE_IDS.includes(r.id));
+  });
+}
 
 function reset(): any {
   queryParams.value = {
@@ -156,6 +188,8 @@ function reset(): any {
     pageNumber: 1,
     pageSizeOptions: [5, 10, 20]
   }
+  roleId.value = '';
+  ids.value = [];
   loading.value = true;
 }
 
@@ -203,7 +237,20 @@ function handleSelectionChange(selection: any): any {
 }
 
 function submitAdd(): any {
-    userApi.addAccessBook({bookIds: ids.value, username: props.username,userId:props.userId}).then((res: any) =>  {
+  if (!roleId.value) {
+    modal.msgError('请选择产品角色');
+    return;
+  }
+  if (!ids.value.length) {
+    modal.msgError('请至少选择一个账套');
+    return;
+  }
+  userApi.addAccessBook({
+    bookIds: ids.value,
+    roleId: roleId.value,
+    username: props.username,
+    userId: props.userId,
+  }).then((res: any) =>  {
     if (res.code === 0) {
       modal.msgSuccess(t('org.success.add'));
       emit('onSubmitSuccess');

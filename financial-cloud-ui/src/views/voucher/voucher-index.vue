@@ -27,12 +27,14 @@
         </div>
         <div class="toolbar-right">
           <el-button
+            v-hasRole="['ROLE_ADMINISTRATORS','ROLE_BOOKKEEPER','ROLE_REVIEWER']"
             type="primary"
             @click="handleAdd"
           >
             新增
           </el-button>
           <el-dropdown
+            v-hasRole="['ROLE_ADMINISTRATORS','ROLE_REVIEWER']"
             split-button
             class="toolbar-split-btn"
             :disabled="ids.length === 0"
@@ -48,6 +50,7 @@
             </template>
           </el-dropdown>
           <el-dropdown
+            v-hasRole="['ROLE_ADMINISTRATORS','ROLE_BOOKKEEPER','ROLE_REVIEWER']"
             split-button
             class="toolbar-split-btn"
             :disabled="ids.length === 0"

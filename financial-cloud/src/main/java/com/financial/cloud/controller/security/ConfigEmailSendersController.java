@@ -21,7 +21,8 @@ import com.financial.cloud.service.security.ConfigEmailSendersService;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+// DISABLED open-register-book-auth: menu hidden, code retained
+//@RestController
 @RequestMapping(value={"/api/security/emailsenders"})
 public class ConfigEmailSendersController {
 

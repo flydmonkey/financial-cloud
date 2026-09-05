@@ -2,6 +2,7 @@ package com.financial.cloud.controller.standard;
 
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.standard.StandardSubjectCashFlowDto;
 import com.financial.cloud.dto.standard.StandardSubjectCashFlowVo;
@@ -21,6 +22,7 @@ public class StandardSubjectCashFlowController {
     @PostMapping(value = {"/save"})
     public Message<String> save(@Validated @RequestBody StandardSubjectCashFlowDto dto,
                                                  @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireAdministrator();
         dto.setBookId(userInfo.getBookId());
         return standardSubjectCashFlowService.save(dto);
     }

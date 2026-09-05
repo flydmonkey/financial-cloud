@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.authn.support.AuthorizationUtils;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.journal.JournalEntry;
@@ -46,23 +47,28 @@ public class JournalEntryController {
 
     @PostMapping("/add")
     public Message<String> add(@Validated(value = AddGroup.class) @RequestBody JournalEntryDto dto) {
+    	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return journalEntryService.save(dto);
     }
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody JournalEntryDto dto) {
+    	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return journalEntryService.update(dto);
     }
 
     @DeleteMapping("/delete")
-    public Message<String> delete(@Validated ListIdsDto dto) {
+    public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
+    	ProductRoles.requireWriteBusiness();
         return journalEntryService.delete(dto);
     }
-    
+
     @PostMapping("/generate-voucher")
-    public Message<String> generateVoucher(@Validated @RequestBody GenerateVoucherDto dto, @CurrentUser UserInfo currentUser) {
+    public Message<String> generateVoucher(@Validated @RequestBody GenerateVoucherDto dto,
+                                          @CurrentUser UserInfo currentUser) {
+    	ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         return journalEntryService.generateVoucher(dto);
     }

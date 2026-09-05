@@ -77,7 +77,11 @@ public class LoginService  extends ServiceImpl<LoginMapper,UserInfo>{
 		return this.getMapper().findById(userId);
 	}
 	public UserInfo findByUsername(String loginName) {
-    	UserInfo userInfo = this.getMapper().findByUsername(loginName);
+		String username = StringUtils.trim(loginName);
+    	UserInfo userInfo = this.getMapper().findByUsername(username);
+		if (userInfo == null) {
+			return null;
+		}
         if(StringUtils.isBlank(userInfo.getBookId())) {
         	//未设置默认账号情况，读取有权限的账套的第一个
         	List<BookVo> books = bookService.listBooks(userInfo.getId());

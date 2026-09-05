@@ -90,16 +90,8 @@ public class PasswordPolicyValidatorService{
    }
 
    public String generateRandomPassword() {
-       StringBuilder chars = new StringBuilder();
-       chars.append(RandomStringUtils.random(passwordPolicy.getLowerCase(), 'a', 'z'));
-       chars.append(RandomStringUtils.random(passwordPolicy.getUpperCase(), 'A', 'Z'));
-       chars.append(RandomStringUtils.random(passwordPolicy.getDigits(), '0', '9'));
-       chars.append(RandomStringUtils.random(passwordPolicy.getSpecialChar(), "~@#^()[]*$-+?_&=!%{}/".toCharArray()));
-       int remaining = passwordPolicy.getRandomPasswordLength() - chars.length();
-       if (remaining > 0) {
-           chars.append(RandomStringUtils.random(remaining, true, true));
-       }
-       return RandomStringUtils.random(passwordPolicy.getRandomPasswordLength(), chars.toString().toCharArray());
+       int length = Math.max(6, passwordPolicy.getRandomPasswordLength());
+       return RandomStringUtils.random(length, true, true);
    }
 
 }

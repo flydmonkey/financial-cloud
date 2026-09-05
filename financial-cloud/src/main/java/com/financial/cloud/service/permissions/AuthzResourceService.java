@@ -47,6 +47,11 @@ public class AuthzResourceService   extends ServiceImpl<AuthzResourceMapper,User
     public Set<Resources> getResourcesBySubject(UserInfo user){
     	log.debug("user {} , app {}",user);
 
+    	// Fail-closed: menus require an active book; blank bookId must not merge multi-book packs.
+    	if (user == null || user.getBookId() == null || user.getBookId().isBlank()) {
+    		return Set.of();
+    	}
+
     	List<CompletableFuture<List<Resources>>> futures = new ArrayList<>();
     	//根据用户读取应用资源
     	QueryAppResourceDto dto = new QueryAppResourceDto(user.getId());
@@ -62,6 +67,10 @@ public class AuthzResourceService   extends ServiceImpl<AuthzResourceMapper,User
 	    	});
 	    	futures.add(subjectRoleResourcesFuture);
     	}
+
+        if (futures.isEmpty()) {
+        	return Set.of();
+        }
 
         @SuppressWarnings("unchecked")
 		CompletableFuture<List<Resources>>[] completableFutures = futures.toArray(new CompletableFuture[futures.size()]);

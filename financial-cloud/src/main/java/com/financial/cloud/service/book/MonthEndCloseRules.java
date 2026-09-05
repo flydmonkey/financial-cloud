@@ -24,6 +24,8 @@ public final class MonthEndCloseRules {
 	public static final String CODE_ACCRUE_SALARY = "jt_gz";
 	public static final String CODE_ACCRUE_INCOME_TAX = "jt_sds";
 	public static final String CODE_ACCRUE_SURTAX = "jt_fjs";
+	/** 工资发放（借：应付职工薪酬 / 贷：银行存款） */
+	public static final String CODE_PAY_SALARY = "zf_gz";
 
 	/** @deprecated 已退役：折旧走固定资产模块，不再使用期末模板 {@code jt_zj}. */
 	@Deprecated
@@ -31,6 +33,8 @@ public final class MonthEndCloseRules {
 
 	private static final Set<String> ACCRUAL_TEMPLATE_CODES = Set.of(
 			CODE_ACCRUE_SALARY, CODE_ACCRUE_INCOME_TAX, CODE_ACCRUE_SURTAX);
+
+	private static final Set<String> SALARY_PAYMENT_TEMPLATE_CODES = Set.of(CODE_PAY_SALARY);
 
 	/** Codes retired from book template catalogs (overlap with other modules / carries). */
 	private static final Set<String> RETIRED_TEMPLATE_CODES = Set.of("qm_jz_xscb", "jt_zj");
@@ -120,6 +124,14 @@ public final class MonthEndCloseRules {
 		return ACCRUAL_TEMPLATE_CODES;
 	}
 
+	public static Set<String> salaryPaymentTemplateCodes() {
+		return SALARY_PAYMENT_TEMPLATE_CODES;
+	}
+
+	public static boolean isSalaryPaymentTemplateCode(String code) {
+		return code != null && SALARY_PAYMENT_TEMPLATE_CODES.contains(code);
+	}
+
 	/**
 	 * One default voucher-template line for P&amp;L carry (direction 1=借 2=贷).
 	 */
@@ -164,6 +176,14 @@ public final class MonthEndCloseRules {
 		};
 	}
 
+	/** Default wage-payment lines: 借应付职工薪酬 / 贷银行存款. */
+	public static List<CarryTemplateItemSpec> defaultPaySalaryTemplateItems(String standardId) {
+		boolean enterprise = isEnterpriseAccountingSystem(standardId);
+		return List.of(
+				new CarryTemplateItemSpec(enterprise ? "2151" : "2211.01", 1, "发放工资"),
+				new CarryTemplateItemSpec("1002", 2, "发放工资"));
+	}
+
 	public static List<CarryTemplateItemSpec> defaultCarryTemplateItems(String templateCode, String standardId) {
 		if (CODE_CARRY_INCOME.equals(templateCode)) {
 			return defaultIncomeCarryTemplateItems(standardId);
@@ -174,12 +194,16 @@ public final class MonthEndCloseRules {
 		if (isAccrualTemplateCode(templateCode)) {
 			return defaultAccrualTemplateItems(templateCode, standardId);
 		}
+		if (isSalaryPaymentTemplateCode(templateCode)) {
+			return defaultPaySalaryTemplateItems(standardId);
+		}
 		return List.of();
 	}
 
 	/** Codes that get auto-seeded empty template lines when creating a book. */
 	public static boolean isAutoSeedTemplateCode(String code) {
-		return isAlwaysRequiredCarryCode(code) || isAccrualTemplateCode(code);
+		return isAlwaysRequiredCarryCode(code) || isAccrualTemplateCode(code)
+				|| isSalaryPaymentTemplateCode(code);
 	}
 
 	public static List<String> requiredCarryCodesForTerm(String yearPeriod) {

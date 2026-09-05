@@ -22,14 +22,19 @@ import com.financial.cloud.dto.book.BookPageDto;
 import com.financial.cloud.dto.book.BookVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.error.UsersBusinessCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.service.book.BookService;
 import com.financial.cloud.domain.permissions.PermissionBook;
+import com.financial.cloud.domain.idm.RoleMember;
 import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.book.BookSetupVo;
 import com.financial.cloud.dto.book.OnboardingStatusVo;
 import com.financial.cloud.service.permissions.PermissionBookService;
+import com.financial.cloud.service.idm.RoleMemberService;
+import com.financial.cloud.context.WebContext;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
@@ -62,11 +67,13 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
 
     private final PermissionBookService permissionBookService;
 
+    private final RoleMemberService roleMemberService;
+
     private final ConfigInsuranceFundService configInsuranceFundService;
 
-    public Message<Page<Book>> pageList(BookPageDto dto) {
+    public Message<Page<Book>> pageList(BookPageDto dto, String userId) {
+        dto.setUserId(userId);
         Page<Book> page = bookMapper.pageList(dto.build(), dto);
-
         return new Message<>(Message.SUCCESS, page);
     }
     @Transactional
@@ -108,14 +115,19 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         if (!saveResult) {
             return new Message<>(Message.FAIL, "新增失败");
         }
-        // 顶栏账套列表来自 permission_book；创建人默认获得访问权
+        // 顶栏账套列表来自 permission_book；创建人默认获得访问权 + 账套管理员角色
         if (currentUser != null && currentUser.getId() != null) {
             permissionBookService.save(new PermissionBook(currentUser.getId(), dto.getId()));
+            RoleMember adminMember = new RoleMember(
+                    ProductRoles.ADMINISTRATORS, currentUser.getId(), "USER", dto.getId());
+            adminMember.setId(WebContext.genId());
+            roleMemberService.save(adminMember);
         }
         return new Message<>(Message.SUCCESS, "新增成功");
     }
     @Transactional
-    public Message<String> update(BookChangeDto dto) {
+    public Message<String> update(BookChangeDto dto, UserInfo currentUser) {
+        requireBookAdministrator(currentUser, dto.getId());
         checkIfTheNameExists(dto, true);
 
         //新增现金流量余额配置
@@ -140,8 +152,11 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         }
     }
     @Transactional
-    public Message<String> delete(ListIdsDto dto) {
+    public Message<String> delete(ListIdsDto dto, UserInfo currentUser) {
         List<String> bookIds = dto.getListIds();
+        for (String bookId : bookIds) {
+            requireBookAdministrator(currentUser, bookId);
+        }
 
         //校验是否为活跃状态
         LambdaQueryWrapper<Book> wrapper = new LambdaQueryWrapper<>();
@@ -180,6 +195,25 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         boolean result = super.removeByIds(bookIds);
 
         return result ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
+    }
+
+    /**
+     * Caller must hold ROLE_ADMINISTRATORS for the target book.
+     */
+    public void requireBookAdministrator(UserInfo currentUser, String bookId) {
+        if (currentUser == null || currentUser.getId() == null || currentUser.getId().isBlank()) {
+            throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
+        }
+        if (bookId == null || bookId.isBlank()) {
+            throw new BusinessException(UsersBusinessCode.BOOK_REQUIRED);
+        }
+        long count = roleMemberService.count(new LambdaQueryWrapper<RoleMember>()
+                .eq(RoleMember::getMemberId, currentUser.getId())
+                .eq(RoleMember::getBookId, bookId)
+                .eq(RoleMember::getRoleId, ProductRoles.ADMINISTRATORS));
+        if (count == 0) {
+            throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
+        }
     }
     public List<BookVo> listBooks(String userId) {
         return bookMapper.listBooks(userId);

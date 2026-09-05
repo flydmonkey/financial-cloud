@@ -72,16 +72,21 @@
               />
             </el-form-item>
            
-            <el-form-item label="证件类型">
+            <el-form-item
+              label="证件类型"
+              prop="idType"
+              :required="true"
+            >
               <el-select
                 v-model="form.idType"
                 style="width: 100%"
-                :required="true"
+                placeholder="请选择"
               >
                 <el-option
                   v-for="item in usersIdType"
+                  :key="item.value"
                   :label="item.label"
-                  :value="item.value"
+                  :value="Number(item.value)"
                 />
               </el-select>
             </el-form-item>
@@ -490,6 +495,7 @@ const data: any = reactive({
     status: 1,
     gender: 0,
     payBaseRule: 0,
+    idType: 1,
   },
   rules: {
     displayName: [
@@ -505,7 +511,7 @@ const data: any = reactive({
       {required: true, message: "证件编码不能为空", trigger: "blur"},
     ],
     idType: [
-      {required: true, message: "证件类型不能为空", trigger: "blur"},
+      {required: true, message: "证件类型不能为空", trigger: ["blur", "change"]},
     ]
   }
 })
@@ -545,7 +551,8 @@ function reset(): any {
   form.value = {
     status: 1,
     gender: 0,
-    payBaseRule: 0
+    payBaseRule: 0,
+    idType: 1,
   };
   isEdit.value = false;
   formRef?.value?.resetFields();

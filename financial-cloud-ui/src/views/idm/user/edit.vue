@@ -266,7 +266,7 @@ const data: any = reactive({
     gender: 1,
     extraAttrs: undefined,
     pictureId: undefined,
-    department: undefined
+    department: undefined,
   },
   rules: {
     username: [
@@ -354,7 +354,7 @@ function reset(): any {
     extraAttrs: undefined,
     gender: 1,
     pictureId: undefined,
-    department: undefined
+    department: undefined,
   };
   previewImage.value = undefined;
   userRef?.value?.resetFields();
@@ -366,6 +366,12 @@ function dialogOfClosedMethods(val: any): any {
 }
 
 function submitForm(): any {
+  if (form.value.username) {
+    form.value.username = String(form.value.username).trim();
+  }
+  if (form.value.displayName) {
+    form.value.displayName = String(form.value.displayName).trim();
+  }
   const handleResponse: any = (res: any, successMessage: any) => {
     if (res.code === 0) {
       modal.msgSuccess(successMessage);

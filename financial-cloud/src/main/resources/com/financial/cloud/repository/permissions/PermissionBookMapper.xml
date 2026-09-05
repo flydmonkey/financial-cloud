@@ -7,10 +7,18 @@
         	pb.id,
         	b.id as book_id,
 			b.name,
-			b.standard_id
+			b.standard_id,
+			rm.role_id as roleId,
+			r.role_name as roleName
         from
         book b ,
         permission_book pb
+        left join role_member rm
+        	on rm.member_id = pb.user_id
+        	and rm.book_id = pb.book_id
+        left join roles r
+        	on r.id = rm.role_id
+        	and r.deleted = 'n'
         where  pb.book_id = b.id
         	<if test="dto.bookId != null and dto.bookId != ''">
         		and b.id = #{dto.bookId}

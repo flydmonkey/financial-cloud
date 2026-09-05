@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.dto.fixedasset.FixedAssetChangeDto;
@@ -56,6 +57,7 @@ public class FixedAssetController {
     public Message<FixedAssetImportResultVo> importExcel(
             @ModelAttribute("excelImportFile") ExcelImport excelImportFile,
             @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         return fixedAssetService.importFromExcel(userInfo.getBookId(), excelImportFile);
     }
 
@@ -67,6 +69,7 @@ public class FixedAssetController {
     @PostMapping("/save")
     public Message<FixedAssetSaveResultVo> save(@Validated(AddGroup.class) @RequestBody FixedAssetChangeDto dto,
                                                 @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return fixedAssetService.save(dto);
     }
@@ -74,27 +77,32 @@ public class FixedAssetController {
     @PutMapping("/update")
     public Message<String> update(@Validated(EditGroup.class) @RequestBody FixedAssetChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return fixedAssetService.update(dto);
     }
 
     @PostMapping("/copy/{id}")
     public Message<String> copy(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         return fixedAssetService.copy(id, userInfo.getBookId());
     }
 
     @PostMapping("/suspend/{id}")
     public Message<String> suspend(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         return fixedAssetService.suspend(id, userInfo.getBookId());
     }
 
     @PostMapping("/resume/{id}")
     public Message<String> resume(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         return fixedAssetService.resume(id, userInfo.getBookId());
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        ProductRoles.requireWriteBusiness();
         return fixedAssetService.delete(dto);
     }
 
@@ -102,6 +110,7 @@ public class FixedAssetController {
     public Message<FixedAssetDisposeResultVo> dispose(@PathVariable("id") String id,
                                                       @RequestBody(required = false) FixedAssetDisposeDto dto,
                                                       @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         return fixedAssetService.dispose(id, userInfo.getBookId(), dto);
     }
 }

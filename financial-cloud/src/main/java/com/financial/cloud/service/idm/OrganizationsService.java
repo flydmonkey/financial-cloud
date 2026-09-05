@@ -48,8 +48,22 @@ public class OrganizationsService extends ServiceImpl<OrganizationsMapper, Organ
         //设置路径
         organization.setCodePath(generateIdPath(organization.getParentId(), organization.getId()));
         organization.setNamePath(generateNamePath(organization.getParentId(), organization.getOrgName()));
+        if (organization.getLevel() == null) {
+            organization.setLevel(resolveOrgLevel(organization.getParentId()));
+        }
 
         return super.save(organization);
+    }
+
+    private int resolveOrgLevel(String parentId) {
+        if (StringUtils.isBlank(parentId)) {
+            return 1;
+        }
+        Organizations parent = getById(parentId);
+        if (parent == null || parent.getLevel() == null) {
+            return 1;
+        }
+        return parent.getLevel() + 1;
     }
 
     /**

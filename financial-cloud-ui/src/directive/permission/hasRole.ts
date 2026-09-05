@@ -1,7 +1,7 @@
 import type {DirectiveBinding, ObjectDirective} from 'vue'
 import useUserStore from '@/store/modules/user'
 
-const superAdminRole = 'admin'
+const superAdminRoles = ['ROLE_ADMINISTRATORS']
 
 const hasRoleDirective: ObjectDirective = {
     mounted(el: HTMLElement, binding: DirectiveBinding<string[]>) {
@@ -13,7 +13,7 @@ const hasRoleDirective: ObjectDirective = {
             const requiredRoles = value
 
             const hasRole = roles.some((role: string) =>
-                role === superAdminRole || requiredRoles.includes(role)
+                superAdminRoles.includes(role) || requiredRoles.includes(role)
             )
 
             if (!hasRole && el.parentNode) {

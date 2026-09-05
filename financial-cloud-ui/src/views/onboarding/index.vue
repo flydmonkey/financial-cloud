@@ -6,8 +6,16 @@
           :src="staticAppInfo.logo"
           alt=""
         >
-        {{ staticAppInfo.consoleTitle || '金账簿' }}
+        {{ staticAppInfo.consoleTitle || t('appTitle') }}
       </div>
+      <el-button
+        link
+        type="primary"
+        class="logout-btn"
+        @click="handleLogout"
+      >
+        退出登录
+      </el-button>
     </div>
 
     <div class="onboarding-card">
@@ -104,15 +112,19 @@
 
 <script setup lang="ts">
 import {getCurrentInstance, onMounted, reactive, ref, toRefs} from "vue";
-import {ElForm} from "element-plus";
+import {ElForm, ElMessageBox} from "element-plus";
+import {useI18n} from "vue-i18n";
 import {listStandardsAll} from "@/api/standard/standard";
 import {setupBook} from "@/api/book/book";
 import {switchBook} from "@/api/idm/user";
-import {loginPreGet} from "@/api/login.js";
+import {loginPreGet, logoutApi} from "@/api/login";
 import {resolveInstitutionLogo} from "@/constants/branding";
 import appStore from "@/store/modules/app.js";
+import useUserStore from "@/store/modules/user";
 import modal from "@/plugins/modal";
 
+const {t} = useI18n();
+const userStore = useUserStore();
 const proxy: any = getCurrentInstance()!.proxy;
 const {books_vat_type} = proxy?.useDict("books_vat_type");
 
@@ -158,6 +170,24 @@ function loadAppInfo() {
       staticAppInfo.value = inst;
       appStore().setAppInfo(inst);
     }
+  });
+}
+
+function handleLogout() {
+  ElMessageBox.confirm("确定注销并退出系统吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(() => {
+    logoutApi().then((res: any) => {
+      if (res.code === 0) {
+        userStore.logOut().then(() => {
+          const base = import.meta.env.VITE_APP_CONTEXT_PATH || "/";
+          window.location.href = (base.endsWith("/") ? base : `${base}/`) + "login";
+        });
+      }
+    });
+  }).catch(() => {
   });
 }
 
@@ -219,6 +249,10 @@ onMounted(() => {
       height: 36px;
       margin-right: 12px;
     }
+  }
+
+  .logout-btn {
+    font-size: 14px;
   }
 }
 

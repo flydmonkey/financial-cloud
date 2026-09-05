@@ -35,15 +35,14 @@
 </template>
 
 <script setup lang="ts">
-import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";
-import modal from "@/plugins/modal";
+import {ref, getCurrentInstance} from "vue";
 import errImage from "@/assets/401_images/401.gif";
 import usePermissionStore from "@/store/modules/permission";
 
 const proxy: any = getCurrentInstance()?.proxy;
-let indexPath: any = ref(import.meta.env.VITE_APP_CONTEXT_PATH)
-let usePermission: any = usePermissionStore()
-indexPath.value = indexPath.value.substring(0, indexPath.value.length - 1) + usePermission.topbarRouters[0].children[0].path
+const permissionStore = usePermissionStore()
+const homeChild = permissionStore.topbarRouters?.[0]?.children?.[0]
+const indexPath = ref(homeChild?.path || '/')
 
 const errGif: any = ref(errImage + "?" + +new Date());
 

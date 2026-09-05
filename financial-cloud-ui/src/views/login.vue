@@ -102,6 +102,15 @@
           <span v-else>{{ t("login.logging") }}</span>
         </el-button>
       </el-form-item>
+      <div class="register-link">
+        <el-button
+          link
+          type="primary"
+          @click="showRegister = true"
+        >
+          没有账号？立即注册
+        </el-button>
+      </div>
       <el-form-item
         v-if="others.length > 0"
         style="width:100%;"
@@ -127,6 +136,55 @@
         </div>
       </el-form-item>
     </el-form>
+    <el-dialog
+      v-model="showRegister"
+      title="注册账号"
+      width="420px"
+      align-center
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="registerRef"
+        :model="registerForm"
+        :rules="registerRules"
+        label-width="80px"
+      >
+        <el-form-item
+          label="用户名"
+          prop="username"
+        >
+          <el-input v-model="registerForm.username" />
+        </el-form-item>
+        <el-form-item
+          label="显示名"
+          prop="displayName"
+        >
+          <el-input v-model="registerForm.displayName" />
+        </el-form-item>
+        <el-form-item
+          label="密码"
+          prop="password"
+        >
+          <el-input
+            v-model="registerForm.password"
+            type="password"
+            show-password
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRegister = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="registerLoading"
+          @click="handleRegister"
+        >
+          注册
+        </el-button>
+      </template>
+    </el-dialog>
     <!--  底部  -->
     <Footer />
   </div>
@@ -134,7 +192,7 @@
 
 <script setup lang="ts">
 import {ref, getCurrentInstance, reactive, watch} from "vue";
-import {getCodeImg, loginPreGet, getThirdById} from "@/api/login";
+import {getCodeImg, loginPreGet, getThirdById, registerAccount} from "@/api/login";
 import {privateImage} from "@/utils/financialCloud";
 import Cookies from "js-cookie";
 import useUserStore from '@/store/modules/user'
@@ -167,6 +225,50 @@ const loginRules: any = reactive<FormRules>({
   password: [{required: true, trigger: "blur", message: t('login.textPwdNotice')}],
   captcha: [{required: true, trigger: "change", message: t('login.textCodeNotice')}]
 });
+
+const showRegister: any = ref(false);
+const registerLoading: any = ref(false);
+const registerRef: any = ref<FormInstance>();
+const registerForm: any = reactive({
+  username: "",
+  displayName: "",
+  password: "",
+});
+const registerRules: any = reactive<FormRules>({
+  username: [{required: true, trigger: "blur", message: "请输入用户名"}],
+  displayName: [{required: true, trigger: "blur", message: "请输入显示名"}],
+  password: [
+    {required: true, trigger: "blur", message: "请输入密码"},
+    {min: 6, trigger: "blur", message: "密码至少6位"},
+  ],
+});
+
+function handleRegister(): any {
+  registerRef.value?.validate((valid: boolean) => {
+    if (!valid) {
+      return;
+    }
+    registerLoading.value = true;
+    registerAccount({
+      username: String(registerForm.username || "").trim(),
+      displayName: String(registerForm.displayName || "").trim(),
+      password: registerForm.password,
+    }).then((res: any) => {
+      if (res.code === 0) {
+        modal.msgSuccess("注册成功，请登录");
+        loginForm.value.username = String(registerForm.username || "").trim();
+        showRegister.value = false;
+        registerForm.username = "";
+        registerForm.displayName = "";
+        registerForm.password = "";
+      } else {
+        modal.msgError(res.message || "注册失败");
+      }
+    }).finally(() => {
+      registerLoading.value = false;
+    });
+  });
+}
 const state: any = ref("");
 const staticAppInfo: any = ref({
   logo: DEFAULT_LOGO,
@@ -440,5 +542,11 @@ getState();
   padding: 6.4px 15px;
   font-size: 16px;
   border-radius: 2px;
+}
+
+.register-link {
+  margin-top: -4px;
+  margin-bottom: 8px;
+  text-align: center;
 }
 </style>

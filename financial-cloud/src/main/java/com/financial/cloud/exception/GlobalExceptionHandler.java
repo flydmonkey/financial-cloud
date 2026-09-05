@@ -1,6 +1,7 @@
 package com.financial.cloud.exception;
 
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.exc.InvalidFormatException;
 import com.financial.cloud.common.Message;
@@ -9,6 +10,9 @@ import com.financial.cloud.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.UnexpectedTypeException;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -26,8 +30,10 @@ import java.util.Objects;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
+    private final MessageSource messageSource;
 
     /**
      * 缺少请求体异常处理器
@@ -36,8 +42,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Message<Void> parameterBodyMissingExceptionHandler(HttpMessageNotReadableException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',请求体缺失'{}'", requestURI, e.getMessage(),e);
-        return new Message<>(Message.FAIL, "缺少请求体");
+        log.error("请求地址'{}',请求体无法解析'{}'", requestURI, e.getMessage(), e);
+        String detail = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage();
+        if (detail != null && detail.contains("Cannot map `null` into type")) {
+            return new Message<>(Message.FAIL, "请求参数格式错误：数值字段不能为空");
+        }
+        return new Message<>(Message.FAIL, "缺少请求体或请求体无法解析");
     }
 
     // get请求的对象参数校验异常
@@ -57,9 +67,6 @@ public class GlobalExceptionHandler {
         log.error("请求地址 '{}',不支持'{}' 请求", requestURI, e.getMethod(),e);
         return new Message<>(HttpStatus.METHOD_NOT_ALLOWED.value(),HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase());
     }
-
-
-
 
     /**
      * 参数不正确
@@ -84,8 +91,6 @@ public class GlobalExceptionHandler {
 
     /**
      * 捕获转换类型异常
-     * @param e
-     * @return
      */
     @ExceptionHandler(UnexpectedTypeException.class)
     public Message<String> unexpectedTypeHandler(UnexpectedTypeException e)
@@ -95,9 +100,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 捕获转换类型异常
-     * @param e
-     * @return
+     * 捕获参数校验异常
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Message<String> methodArgumentNotValidException(MethodArgumentNotValidException e)
@@ -106,8 +109,7 @@ public class GlobalExceptionHandler {
         List<ObjectError> errors = bindingResult.getAllErrors();
         log.error("参数验证异常：{}",e.getMessage(), e);
         if (!errors.isEmpty()) {
-            // 只显示第一个错误信息
-            return new Message<>(HttpStatus.BAD_REQUEST.value(), errors.get(0).getDefaultMessage());
+            return new Message<>(HttpStatus.BAD_REQUEST.value(), resolveValidationMessage(errors.get(0)));
         }
         return new Message<>(HttpStatus.BAD_REQUEST.value(),"MethodArgumentNotValid");
     }
@@ -128,39 +130,29 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * IllegalArgumentException 捕获转换类型异常
-     * @param e
-     * @return
+     * IllegalArgumentException
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public Message<String> illegalArgumentException(IllegalArgumentException e)
+    public Message<?> illegalArgumentException(IllegalArgumentException e)
     {
         String message = e.getMessage();
         log.error("IllegalArgumentException：{}",e.getMessage(),e);
-        if (Objects.nonNull(message)) {
-            //错误信息
-            return new Message<>(HttpStatus.BAD_REQUEST.value(),message);
-        }
-        return  new Message<>(HttpStatus.BAD_REQUEST.value(),"error");
+        return  new Message<>(HttpStatus.BAD_REQUEST.value(),message);
     }
+
     /**
-     * InvalidFormatException 捕获转换类型异常
-     * @param e
-     * @return
+     * InvalidFormatException
      */
     @ExceptionHandler(InvalidFormatException.class)
-    public Message<String> invalidFormatException(InvalidFormatException e)
+    public Message<?> invalidFormatException(InvalidFormatException e)
     {
         String message = e.getMessage();
         log.error("InvalidFormatException：{}",e.getMessage(),e);
-        if (Objects.nonNull(message)) {
-            //错误信息
+        if (message != null) {
             return new Message<>(HttpStatus.BAD_REQUEST.value(),message);
         }
         return new Message<>(HttpStatus.BAD_REQUEST.value(),"error");
     }
-
-
 
     /**
      * 自定义验证异常
@@ -171,20 +163,33 @@ public class GlobalExceptionHandler {
         List<ObjectError> errors = bindingResult.getAllErrors();
         log.error("参数验证异常：{}",e.getMessage(), e);
         if (!errors.isEmpty()) {
-            // 只显示第一个错误信息
-            return new Message<>(HttpStatus.BAD_REQUEST.value(), errors.get(0).getDefaultMessage());
+            return new Message<>(HttpStatus.BAD_REQUEST.value(), resolveValidationMessage(errors.get(0)));
         }
         return new Message<>(HttpStatus.BAD_REQUEST.value(),"MethodArgumentNotValid");
     }
 
     /**
      * 业务异常处理
-     * 业务自定义code 与 message
-     *
      */
     @ExceptionHandler(BusinessException.class)
     public Message<String> handleBusinessException(BusinessException e) {
         log.error("业务异常: code={}", e.getCode(), e);
         return new Message<>(e.getCode(), e.resolveMessage());
+    }
+
+    private String resolveValidationMessage(ObjectError error) {
+        String defaultMessage = error.getDefaultMessage();
+        if (StringUtils.isBlank(defaultMessage)) {
+            return "参数验证失败";
+        }
+        String code = defaultMessage;
+        if (code.startsWith("{") && code.endsWith("}")) {
+            code = code.substring(1, code.length() - 1);
+        }
+        try {
+            return messageSource.getMessage(code, error.getArguments(), defaultMessage, LocaleContextHolder.getLocale());
+        } catch (Exception ex) {
+            return defaultMessage;
+        }
     }
 }

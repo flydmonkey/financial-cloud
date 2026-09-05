@@ -12,6 +12,7 @@ import com.financial.cloud.dto.voucher.VoucherSuccessiveQueryDto;
 import com.financial.cloud.dto.voucher.VoucherItemVo;
 import com.financial.cloud.dto.voucher.VoucherSuccessiveDto;
 import com.financial.cloud.dto.voucher.VoucherVo;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.validation.AddGroup;
@@ -72,6 +73,7 @@ public class VoucherController {
     @PostMapping("/draft")
     public Message<String> draft(@Validated(value = AddGroup.class) @RequestBody VoucherChangeDto dto,
                                  @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         dto.setBookId(userInfo.getBookId());
         if (StringUtils.isEmpty(dto.getId())) {
             dto.setStatus(VoucherStatusEnum.DRAFT.getValue());
@@ -90,6 +92,7 @@ public class VoucherController {
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody VoucherChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         dto.setBookId(userInfo.getBookId());
         return voucherService.update(dto);
     }
@@ -97,12 +100,14 @@ public class VoucherController {
     @DeleteMapping("/delete/{ids}")
     public Message<String> delete(@PathVariable(name = "ids") List<String> ids,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         return voucherService.delete(ids, userInfo.getBookId());
     }
 
     @PostMapping("/submit")
     public Message<String> submit(@Validated @RequestBody VoucherChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         dto.setBookId(userInfo.getBookId());
         return voucherService.submit(dto, true);
     }
@@ -110,12 +115,14 @@ public class VoucherController {
     @PostMapping("/submit/{ids}")
     public Message<String> submitBatch(@PathVariable(name = "ids") List<String> ids,
                                        @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         return voucherService.submitBatch(ids, userInfo.getBookId());
     }
 
     @PutMapping("/cancel/{ids}")
     public Message<Integer> cancelByIds(@PathVariable(name = "ids") List<String> ids,
                                         @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         return voucherService.cancelByIds(ids, userInfo.getBookId());
     }
 
@@ -138,30 +145,35 @@ public class VoucherController {
     @PutMapping("/audit/{ids}")
     public Message<Void> audit(@PathVariable(name = "ids") List<String> ids,
                                @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireApproveVoucher();
         return voucherService.audit(ids, userInfo);
     }
 
     @PutMapping("/unaudit/{ids}")
     public Message<Void> unaudit(@PathVariable(name = "ids") List<String> ids,
                                    @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireApproveVoucher();
         return voucherService.unaudit(ids, userInfo.getBookId());
     }
 
     @PutMapping("/sender/{ids}")
     public Message<Void> sender(@PathVariable(name = "ids") List<String> ids,
                                 @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         return voucherService.sender(ids, userInfo);
     }
 
     @PutMapping("/unsender/{ids}")
     public Message<Void> unsender(@PathVariable(name = "ids") List<String> ids,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
         return voucherService.unsender(ids, userInfo.getBookId());
     }
 
     @PutMapping("/manage-audit/{ids}")
     public Message<Void> manageAudit(@PathVariable(name = "ids") List<String> ids,
                                      @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireApproveVoucher();
         return voucherService.manageAudit(ids, userInfo);
     }
 

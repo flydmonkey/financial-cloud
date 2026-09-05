@@ -61,7 +61,7 @@ public class Organizations extends BaseEntity implements Serializable {
     //数据库关键字，解决人大金仓数据库适配修改2023-1-30-shibanglin
 //    @Column(name = "organizations.level")
 
-    private int level;
+    private Integer level;
 
     private String hasChild;
 

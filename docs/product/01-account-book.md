@@ -8,10 +8,11 @@
 
 ## 2. 典型场景
 
-1. 管理员创建账套，选择「小企业会计准则」，填写企业信息与启用年月。
+1. 用户自助注册后创建账套，选择「小企业会计准则」，填写企业信息与启用年月（创建者自动成为该账套管理员）。
 2. 新用户登录后无账套 → 进入 `/onboarding` 引导完成首次建账。
-3. 代账会计在顶栏切换账套，系统刷新 JWT / Session 中的 `bookId`。
-4. 禁用空闲账套后删除（有数据时需先清理关联，见服务层约束）。
+3. 账套管理员在账套管理中邀请其他注册用户并选择产品角色。
+4. 代账会计在顶栏切换账套，系统刷新 JWT / Session 中的 `bookId`。
+5. 禁用空闲账套后删除（有数据时需先清理关联，见服务层约束）。
 
 ## 3. 功能清单
 
@@ -21,7 +22,7 @@
 | 账套列表、搜索、编辑 | **已实现** | `views/books/index.vue` |
 | 启用 / 禁用 | **已实现** | `status`：1 启用 / 0 禁用 |
 | 账套切换 | **已实现** | `GET /api/users/switchBook/{bookId}` |
-| 用户-账套授权 | **已实现** | `permission_book` + `PermissionBookController` |
+| 用户-账套授权 | **已实现（主路径）** | 账套管理「成员授权」`/api/book/members/*` |
 | Onboarding 向导 | **已实现** | `views/onboarding/index.vue`，`/api/book/setup`、`onboarding-status` |
 | 企业信息：信用代码、纳税人类型、行业、启用月、准则 | **已实现** | 见数据模型 |
 | 账套封存（结账后禁止改往期） | **未实现** | 往期锁定靠结账期间，非账套封存态 |
@@ -35,7 +36,8 @@
 | 账套列表 | `/books/index` → `views/books/index.vue` | CRUD、进入账套 |
 | 账套编辑 | `views/books/edit.vue` | 表单（含 vatType、industry、standardId） |
 | 初始化向导 | `/onboarding` → `views/onboarding/index.vue` | 无账套时强制引导 |
-| 账套授权 | 用户编辑内 `user/book.vue` 等 | 分配可访问账套 |
+| 账套授权 | 账套管理「成员授权」`books/members.vue` | 账套管理员邀请注册用户并选择产品角色 |
+| 角色管理 | 系统设置「角色管理」 | 角色-资源授权 |
 
 顶栏账套选择：`layout/components/Navbar.vue`（切换后 `location.reload()`）。
 
@@ -62,8 +64,8 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/book/fetch` | 分页列表 |
-| GET | `/api/book/fetchAll` | 当前用户可见账套 |
+| GET | `/api/book/fetch` | 分页列表（仅当前用户 `permission_book` 已授权账套） |
+| GET | `/api/book/fetchAll` | 当前用户可见账套（顶栏切换） |
 | GET | `/api/book/get/{id}` | 详情 |
 | POST | `/api/book/save` | 新建并初始化 |
 | POST | `/api/book/setup` | Onboarding 建账 |
@@ -77,10 +79,11 @@
 ## 7. 业务规则与约束
 
 1. **初始化**：创建时按 `standardId` 复制准则科目、报表模板、凭证模板、现金流量关系等（`BookService`）。
-2. **可见范围**：`BookService.listBooks(userId)` 仅返回 `permission_book` 授权账套；首次 setup 自动写入授权。
-3. **删除**：禁用后方可删；需处理关联数据（服务层校验）。
-4. **当前账期**：存在于账套字段与 `config`；结账推进期间见 [06-settlement.md](06-settlement.md)。
-5. **无账套用户**：路由守卫 `permission.ts` 导向 `/onboarding`。
+2. **可见范围**：账套管理分页（`/api/book/fetch`）与顶栏切换（`/api/book/fetchAll`）均仅返回当前用户在 `permission_book` 中已授权的账套；首次创建/setup 自动写入授权。管理员也只能看到自己有权限的账套。
+3. **管理员操作**：编辑 / 删除 / 成员授权仅账套管理员（`ROLE_ADMINISTRATORS`）可见；后端 `update`/`delete`/`book/members/*` 均校验该角色。
+4. **删除**：禁用后方可删；需处理关联数据（服务层校验）。
+5. **当前账期**：存在于账套字段与 `config`；结账推进期间见 [06-settlement.md](06-settlement.md)。
+6. **无账套用户**：路由守卫 `permission.ts` 导向 `/onboarding`。
 
 ## 8. 已知缺口
 

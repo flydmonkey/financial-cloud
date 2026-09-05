@@ -22,7 +22,8 @@ import com.financial.cloud.service.security.ConfigSmsProviderService;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+// DISABLED open-register-book-auth: menu hidden, code retained
+//@RestController
 @RequestMapping(value={"/api/security/smsprovider"})
 public class ConfigSmsProviderController {
 

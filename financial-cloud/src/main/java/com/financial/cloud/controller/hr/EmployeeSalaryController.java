@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.hr.EmployeeSalary;
 import com.financial.cloud.domain.hr.EmployeeSalarySummary;
@@ -43,6 +44,7 @@ public class EmployeeSalaryController {
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody SalaryDetailChangeDto dto,
                                   @CurrentUser UserInfo currentUser) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         log.debug("-update  {}", dto);
         return employeeSalaryService.update(dto);
@@ -51,6 +53,7 @@ public class EmployeeSalaryController {
     @PutMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody SalaryDetailChangeDto dto,
                                   @CurrentUser UserInfo currentUser) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         log.debug("-save  {}", dto);
         return employeeSalaryService.save(dto);
@@ -93,18 +96,21 @@ public class EmployeeSalaryController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        ProductRoles.requireWriteBusiness();
         return employeeSalaryService.delete(dto);
     }
 
 
     @PostMapping("/generate-voucher")
     public Message<String> generateVoucher(@Validated @RequestBody GenerateVoucherDto dto, @CurrentUser UserInfo currentUser) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         return employeeSalaryService.generateVoucher(dto);
     }
     
     @PostMapping("/delete-voucher")
     public Message<String> deleteVoucher(@Validated @RequestBody GenerateVoucherDto dto, @CurrentUser UserInfo currentUser) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         return employeeSalaryService.deleteVoucher(dto);
     }

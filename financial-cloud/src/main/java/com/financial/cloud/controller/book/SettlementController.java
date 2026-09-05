@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.book.Settlement;
 import com.financial.cloud.dto.book.SettlementPageDto;
 import com.financial.cloud.dto.book.SettlementVerifyVo;
@@ -35,6 +36,7 @@ public class SettlementController {
     
     @GetMapping(value = { "/checkout" })
     public Message<Settlement> checkout(Settlement dto,@CurrentUser UserInfo userInfo) {
+        ProductRoles.requireClosePeriod();
     	dto.setBookId(userInfo.getBookId());
     	return settlementService.checkout(dto);
     }
@@ -46,6 +48,7 @@ public class SettlementController {
     public Message<String> uncheckout(@RequestBody(required = false) Settlement dto,
                                       @RequestParam(value = "yearPeriod", required = false) String yearPeriod,
                                       @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireClosePeriod();
         String period = yearPeriod;
         if (dto != null && org.apache.commons.lang3.StringUtils.isNotBlank(dto.getYearPeriod())) {
             period = dto.getYearPeriod();

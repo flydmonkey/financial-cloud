@@ -140,6 +140,12 @@ public class UserInfo extends BaseEntity  implements Serializable {
 	String bookId;
 
     @TableField(exist = false)
+    java.util.List<String> roleIds;
+
+    @TableField(exist = false)
+    java.util.List<String> bookIds;
+
+    @TableField(exist = false)
     String syncId;
 
     @TableField(exist = false)

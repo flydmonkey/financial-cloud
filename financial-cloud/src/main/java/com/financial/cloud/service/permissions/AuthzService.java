@@ -31,6 +31,7 @@ public class AuthzService   extends ServiceImpl<AuthzMapper,UserInfo>{
 		// query groups for user
         QueryGroupMembersDto groupMembersDto = new QueryGroupMembersDto();
         groupMembersDto.add(userInfo.getId());
+        groupMembersDto.setBookId(userInfo.getBookId());
         List<Roles> listGroup = authzMapper.queryRolesByMembers(groupMembersDto);
         log.debug("listGroup : {}" , listGroup);
         return listGroup;
@@ -39,6 +40,7 @@ public class AuthzService   extends ServiceImpl<AuthzMapper,UserInfo>{
 		// query groups for user
         QueryGroupMembersDto groupMembersDto = new QueryGroupMembersDto();
         groupMembersDto.add(userInfo.getId());
+        groupMembersDto.setBookId(userInfo.getBookId());
         List<Roles> listGroup = authzMapper.queryRolesByMembers(groupMembersDto);
         log.debug("listGroup : {}" , listGroup);
         return listGroup;

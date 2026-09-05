@@ -24,7 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+// DISABLED open-register-book-auth: menu hidden, code retained
+//@RestController
 @RequestMapping(value = { "/api/access/session" })
 public class SessionController {
 

@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.support.AuthorizationUtils;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.journal.JournalAccount;
 import com.financial.cloud.dto.journal.JournalAccountDto;
@@ -64,18 +65,21 @@ public class JournalAccountController {
 
     @PostMapping("/add")
     public Message<String> add(@Validated(value = AddGroup.class) @RequestBody JournalAccountDto dto) {
+    	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return journalAccountService.save(dto);
     }
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody JournalAccountDto dto) {
+    	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
     	return journalAccountService.update(dto);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated ListIdsDto dto) {
+    	ProductRoles.requireWriteBusiness();
         return journalAccountService.delete(dto);
     }
 }

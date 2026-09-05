@@ -175,18 +175,7 @@
                 @click="handleUpdate(scope.row)"
               />
             </el-tooltip>
-            <el-tooltip content="账套配置">
-              <el-button
-                link
-                type="text"
-                @click="bookDrawerOpen(scope.row)"
-              >
-                <svg-icon
-                  size="0.9em"
-                  icon-class="menus-zhangtaoguanli"
-                />
-              </el-button>
-            </el-tooltip>
+            <!-- 账套授权已迁至「账套管理 → 成员授权」 -->
             <el-dropdown
               v-if="scope.row.status !== 9"
               style="margin-left: 8px"

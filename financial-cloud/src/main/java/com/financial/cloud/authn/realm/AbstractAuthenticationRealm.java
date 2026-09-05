@@ -16,6 +16,7 @@ import com.financial.cloud.service.auth.LoginService;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public abstract class AbstractAuthenticationRealm {
@@ -92,8 +93,8 @@ public abstract class AbstractAuthenticationRealm {
         historyLogin.setDisplayName(userInfo.getDisplayName());
         historyLogin.setBookId(userInfo.getBookId());
 
-        historyLogin.setBrowser(client.getBrowser());
-        historyLogin.setPlatform(client.getPlatform());
+        historyLogin.setBrowser(StringUtils.abbreviate(client.getBrowser(), 45));
+        historyLogin.setPlatform(StringUtils.abbreviate(client.getPlatform(), 45));
 
         historyLogin.setCountry(client.getCountry());
         historyLogin.setProvince(client.getProvince());

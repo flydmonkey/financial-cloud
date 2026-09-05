@@ -18,12 +18,16 @@ import com.financial.cloud.authn.jwt.service.AuthTokenService;
 import com.financial.cloud.authn.provider.AbstractAuthenticationProvider;
 import com.financial.cloud.configuration.LoginConfig;
 import com.financial.cloud.domain.config.Institutions;
+import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.dto.auth.RegisterDto;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.service.auth.LoginService;
+import com.financial.cloud.service.idm.UserInfoService;
 import com.financial.cloud.context.WebConstants;
 import com.financial.cloud.context.WebContext;
 
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 
 
 @RequiredArgsConstructor
@@ -40,6 +44,8 @@ public class LoginController {
 
 	private final LoginService loginService;
 
+	private final UserInfoService userInfoService;
+
 	/**
 	 * init login。登录界面初始化信息
 	 * @return
@@ -54,6 +60,15 @@ public class LoginController {
 		conf.setState(authTokenService.genState());
 		return new Message<>(conf);
 	}
+
+ 	/**
+ 	 * Public self-registration (no email/phone verification in this phase).
+ 	 */
+ 	@PostMapping(value={"/register"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+	public Message<Void> register(@Validated @RequestBody RegisterDto dto) {
+ 		userInfoService.registerPublic(dto.username(), dto.password(), dto.displayName());
+ 		return new Message<>(Message.SUCCESS);
+ 	}
 
  	/**
  	 * 常规用户名和密码登录

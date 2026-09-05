@@ -48,6 +48,7 @@ import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.book.MonthEndCloseRules;
 import com.financial.cloud.service.config.ConfigSysService;
+import com.financial.cloud.service.voucher.VoucherTemplateService;
 import com.financial.cloud.service.hr.EmployeeSalaryService;
 import com.financial.cloud.util.PeriodDateUtils;
 import com.financial.cloud.util.DateUtils;
@@ -94,6 +95,8 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     private final BookSubjectService bookSubjectService;
 
     private final SettlementCarryforwardMapper settlementCarryforwardMapper;
+
+    private final VoucherTemplateService voucherTemplateService;
 
     public Message<Page<EmployeeSalary>> pageList(SalaryDetailPageDto dto) {
 
@@ -394,6 +397,10 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
         int year = Integer.parseInt(currentTerm.split("-")[0]);
         int month = Integer.parseInt(currentTerm.split("-")[1]);
+
+        if (book != null && MonthEndCloseRules.isSalaryPaymentTemplateCode(tplCode)) {
+            voucherTemplateService.ensureSalaryPaymentTemplates(bookId, book.getStandardId());
+        }
 
         LambdaQueryWrapper<VoucherTemplate> itemTpl = Wrappers.lambdaQuery();
         itemTpl.eq(VoucherTemplate::getRelatedId, bookId);

@@ -14,7 +14,24 @@ import appStore from "@/store/modules/app.js";
 
 NProgress.configure({showSpinner: false});
 
-const whiteList: any = ['/login', '/register', '/callback', '/forgot', '/onboarding'];
+const whiteList: any = ['/login', '/register', '/callback', '/forgot'];
+const authWhiteList: any = ['/onboarding', '/no-access'];
+
+function firstMenuPath(routes: any[]): string | null {
+    for (const route of routes || []) {
+        if (route.redirect && route.redirect !== 'noRedirect') {
+            return route.redirect
+        }
+        const child = route.children?.[0]
+        if (child?.path) {
+            return child.path.startsWith('/') ? child.path : `/${child.path}`
+        }
+        if (route.path && route.path !== '/' && route.path !== '') {
+            return route.path.startsWith('/') ? route.path : `/${route.path}`
+        }
+    }
+    return null
+}
 
 router.beforeEach(async (to: any, from: any, next: any) => {
     NProgress.start();
@@ -26,7 +43,7 @@ router.beforeEach(async (to: any, from: any, next: any) => {
         if (to.path === '/login') {
             next({path: '/'});
             NProgress.done();
-        } else if (whiteList.includes(to.path)) {
+        } else if (whiteList.includes(to.path) || authWhiteList.includes(to.path)) {
             next();
         } else {
             const userStore = useUserStore();
@@ -68,12 +85,24 @@ router.beforeEach(async (to: any, from: any, next: any) => {
                         }
                     });
 
+                    const homePath = firstMenuPath(accessRoutes)
+                    if (!homePath) {
+                        ElMessage.warning('当前账套未分配菜单权限，请联系账套管理员')
+                        next({path: '/no-access', replace: true})
+                        return
+                    }
+
+                    if (to.path === '/' || to.path === '/index') {
+                        next({path: homePath, replace: true})
+                        return
+                    }
+
                     next({...to, replace: true});
                 } catch (err: any) {
                     console.error(err);
                     await userStore.logOut();
                     ElMessage.error(err);
-                    next({path: '/'});
+                    next({path: '/login'});
                 }
             } else {
                 const booksStore = booksSetStore();

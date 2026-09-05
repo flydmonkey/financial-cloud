@@ -26,7 +26,6 @@ import com.financial.cloud.enums.error.UsersBusinessCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.idm.UserInfoMapper;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
-import com.financial.cloud.service.idm.UserInfoService;
 import com.financial.cloud.util.DateUtils;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +56,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
     }
     @Transactional
     public boolean saveOneUser(UserInfo userInfo) {
+        normalizeUserIdentity(userInfo);
         String username = userInfo.getUsername();
         String mobile = userInfo.getMobile();
         String email = userInfo.getEmail();
@@ -74,6 +74,32 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
         passwordEncoder(userInfo);
 
         return super.save(userInfo);
+    }
+
+    /**
+     * Public self-registration (no admin, no book/role yet).
+     */
+    @Transactional
+    public UserInfo registerPublic(String username, String password, String displayName) {
+        UserInfo userInfo = new UserInfo();
+        userInfo.setId(WebContext.genId());
+        userInfo.setUsername(StringUtils.trim(username));
+        userInfo.setPassword(password);
+        userInfo.setDisplayName(StringUtils.trim(displayName));
+        userInfo.setUserType("EMPLOYEE");
+        userInfo.setUserState("RESIDENT");
+        userInfo.setStatus(1);
+        userInfo.setSortIndex(1);
+        userInfo.setIsLocked(0);
+        userInfo.setLoginCount(0);
+        userInfo.setBadPasswordCount(0);
+        userInfo.setBookId("");
+        userInfo.setCreatedBy("register");
+        userInfo.setCreatedDate(new Date());
+        if (!saveOneUser(userInfo)) {
+            throw new BusinessException(UsersBusinessCode.USERNAME_USED);
+        }
+        return userInfo;
     }
 
     /**
@@ -135,6 +161,7 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
     }
     @Transactional
     public boolean updateOneUser(UserInfo userInfo) {
+        normalizeUserIdentity(userInfo);
         String username = userInfo.getUsername();
         String mobile = userInfo.getMobile();
         String email = userInfo.getEmail();
@@ -154,11 +181,26 @@ public class UserInfoService extends ServiceImpl<UserInfoMapper, UserInfo>{
         return super.updateById(userInfo);
     }
 
+    private void normalizeUserIdentity(UserInfo userInfo) {
+        if (userInfo.getUsername() != null) {
+            userInfo.setUsername(StringUtils.trim(userInfo.getUsername()));
+        }
+        if (userInfo.getDisplayName() != null) {
+            userInfo.setDisplayName(StringUtils.trim(userInfo.getDisplayName()));
+        }
+        if (userInfo.getMobile() != null) {
+            userInfo.setMobile(StringUtils.trimToNull(userInfo.getMobile()));
+        }
+        if (userInfo.getEmail() != null) {
+            userInfo.setEmail(StringUtils.trimToNull(userInfo.getEmail()));
+        }
+    }
+
     public boolean delete(UserInfo userInfo) {
         return super.removeById(userInfo.getId());
     }
     public UserInfo findByUsername(String username) {
-        return getMapper().findByUsername(username);
+        return getMapper().findByUsername(StringUtils.trim(username));
     }
 
     public void passwordEncoder(UserInfo userInfo) {

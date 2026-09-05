@@ -3,11 +3,29 @@
 <mapper namespace="com.financial.cloud.repository.book.BookMapper">
     <select id="pageList" parameterType="com.financial.cloud.dto.book.BookPageDto"
             resultType="com.financial.cloud.domain.book.Book">
-        select jbs.*, jbas.name AS standardsName
+        select jbs.*, jbas.name AS standardsName,
+            (
+                select rm.role_id
+                from role_member rm
+                where rm.member_id = #{Dto.userId}
+                  and rm.book_id = jbs.id
+                  and rm.role_id in (
+                      'ROLE_ADMINISTRATORS',
+                      'ROLE_BOOKKEEPER',
+                      'ROLE_REVIEWER',
+                      'ROLE_VIEWER'
+                  )
+                order by case when rm.role_id = 'ROLE_ADMINISTRATORS' then 0 else 1 end
+                limit 1
+            ) as roleId
         from book jbs
+        inner join permission_book pb
+            on pb.book_id = jbs.id
+            and pb.deleted = 'n'
+            and pb.user_id = #{Dto.userId}
         left join standard jbas
-        on jbs.standard_id = jbas.id
-        and jbas.deleted = 'n'
+            on jbs.standard_id = jbas.id
+            and jbas.deleted = 'n'
         where jbs.deleted = 'n'
         <if test="Dto.name != null and Dto.name != ''">
             and jbs.name like CONCAT('%', #{Dto.name}, '%')

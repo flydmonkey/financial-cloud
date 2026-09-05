@@ -2,6 +2,7 @@ package com.financial.cloud.controller.arap;
 
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.arap.ArapOpenItemVo;
 import com.financial.cloud.dto.arap.ArapQueryDto;
@@ -37,11 +38,13 @@ public class ArapWriteoffController {
 
 	@PostMapping("/confirm")
 	public Message<String> confirm(@RequestBody ArapWriteoffConfirmDto dto, @CurrentUser UserInfo userInfo) {
+		ProductRoles.requireWriteBusiness();
 		return arapWriteoffService.confirm(userInfo.getBookId(), userInfo.getId(), dto);
 	}
 
 	@PostMapping("/reverse/{id}")
 	public Message<String> reverse(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+		ProductRoles.requireWriteBusiness();
 		return arapWriteoffService.reverse(userInfo.getBookId(), id);
 	}
 

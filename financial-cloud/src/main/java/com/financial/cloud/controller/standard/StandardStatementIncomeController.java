@@ -2,6 +2,7 @@ package com.financial.cloud.controller.standard;
 
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.standard.StandardStatementIncome;
 import com.financial.cloud.service.standard.StandardStatementIncomeService;
@@ -35,11 +36,13 @@ public class StandardStatementIncomeController {
     @PostMapping(value = {"/save"})
     public Message<StandardStatementIncome> save(@Validated @RequestBody StandardStatementIncome dto,
                                                            @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireAdministrator();
         return standardStatementIncomeService.save(dto);
     }
 
     @DeleteMapping(value = {"/delete/{id}"})
     public Message<Boolean> delete(@PathVariable("id") String id) {
+        ProductRoles.requireAdministrator();
         return standardStatementIncomeService.delete(id);
     }
 

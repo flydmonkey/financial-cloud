@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.financial.cloud.authn.support.AuthorizationUtils;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.dto.journal.JournalSummaryDto;
 import com.financial.cloud.dto.journal.JournalSummaryPageDto;
@@ -34,6 +35,7 @@ public class JournalSummaryController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated ListIdsDto dto) {
+    	ProductRoles.requireWriteBusiness();
         return journalSummaryService.delete(dto);
     }
     

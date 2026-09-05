@@ -72,6 +72,12 @@
           align="left"
         />
         <el-table-column
+          prop="roleName"
+          label="产品角色"
+          min-width="90"
+          align="left"
+        />
+        <el-table-column
           prop="standardId"
           label="会计准则"
           align="left"

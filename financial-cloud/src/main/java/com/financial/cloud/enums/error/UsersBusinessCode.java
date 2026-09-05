@@ -16,7 +16,13 @@ public enum UsersBusinessCode implements ErrorCode {
 
     MOBILE_USED(500010, MessageKeys.User.MOBILE_USED),
 
-    EMAIL_USED(500011, MessageKeys.User.EMAIL_USED);
+    EMAIL_USED(500011, MessageKeys.User.EMAIL_USED),
+
+    ROLE_REQUIRED(500012, MessageKeys.User.ROLE_REQUIRED),
+
+    BOOK_REQUIRED(500013, MessageKeys.User.BOOK_REQUIRED),
+
+    PERMISSION_DENIED(500014, MessageKeys.User.PERMISSION_DENIED);
 
     private final int code;
     private final String messageKey;

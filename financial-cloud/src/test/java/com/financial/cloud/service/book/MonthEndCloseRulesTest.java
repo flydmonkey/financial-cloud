@@ -68,6 +68,30 @@ class MonthEndCloseRulesTest {
         assertAccrualPair("jt_fjs", "2", "5402", "2171", "计提附加税");
     }
 
+    @Test
+    void defaultPaySalaryTemplateItemsFollowSmallBusiness() {
+        var items = MonthEndCloseRules.defaultCarryTemplateItems("zf_gz", "1");
+        assertEquals(2, items.size());
+        assertEquals("2211.01", items.get(0).subjectCode());
+        assertEquals(1, items.get(0).direction());
+        assertEquals("发放工资", items.get(0).summary());
+        assertEquals("1002", items.get(1).subjectCode());
+        assertEquals(2, items.get(1).direction());
+        assertEquals("发放工资", items.get(1).summary());
+        assertTrue(MonthEndCloseRules.isAutoSeedTemplateCode("zf_gz"));
+        assertTrue(MonthEndCloseRules.salaryPaymentTemplateCodes().contains("zf_gz"));
+    }
+
+    @Test
+    void defaultPaySalaryTemplateItemsFollowEnterpriseSystem() {
+        var items = MonthEndCloseRules.defaultCarryTemplateItems("zf_gz", "2");
+        assertEquals(2, items.size());
+        assertEquals("2151", items.get(0).subjectCode());
+        assertEquals(1, items.get(0).direction());
+        assertEquals("1002", items.get(1).subjectCode());
+        assertEquals(2, items.get(1).direction());
+    }
+
     private static void assertAccrualPair(String templateCode, String standardId,
             String debit, String credit, String summary) {
         var items = MonthEndCloseRules.defaultCarryTemplateItems(templateCode, standardId);

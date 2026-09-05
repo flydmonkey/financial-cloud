@@ -32,11 +32,9 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping(value = { "/fetch" })
-    public Message<Page<Book>> fetch(BookPageDto dto) {
-
-        log.debug("fetch {}",dto);
-
-        return bookService.pageList(dto);
+    public Message<Page<Book>> fetch(BookPageDto dto, @CurrentUser UserInfo currentUser) {
+        log.debug("fetch {} for user {}", dto, currentUser.getId());
+        return bookService.pageList(dto, currentUser.getId());
     }
 
     @GetMapping("/get/{id}")
@@ -55,17 +53,17 @@ public class BookController {
     }
 
     @PutMapping("/update")
-    public Message<String> update(@Validated(value = EditGroup.class) @RequestBody BookChangeDto dto) {
-        log.debug("update {}",dto);
-        return bookService.update(dto);
+    public Message<String> update(@Validated(value = EditGroup.class) @RequestBody BookChangeDto dto,
+                                  @CurrentUser UserInfo currentUser) {
+        log.debug("update {} by user {}", dto, currentUser.getId());
+        return bookService.update(dto, currentUser);
     }
 
     @DeleteMapping(value = { "/delete" })
-    public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
-
-        log.debug("delete {}",dto);
-
-        return bookService.delete(dto);
+    public Message<String> delete(@Validated @RequestBody ListIdsDto dto,
+                                  @CurrentUser UserInfo currentUser) {
+        log.debug("delete {} by user {}", dto, currentUser.getId());
+        return bookService.delete(dto, currentUser);
     }
 
     @GetMapping("/fetchAll")

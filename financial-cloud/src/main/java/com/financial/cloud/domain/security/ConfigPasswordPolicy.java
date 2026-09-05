@@ -153,47 +153,11 @@ public class ConfigPasswordPolicy implements Serializable {
 
 
     public void check(String username, String newPassword, String oldPassword) throws PasswordPolicyException {
-        if ((1 == this.getUsername()) && newPassword.toLowerCase().contains(username.toLowerCase())) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000001);
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000003, 6);
         }
-        if (oldPassword != null && newPassword.equalsIgnoreCase(oldPassword)) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000002);
-        }
-        if (newPassword.length() < this.getMinLength()) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000003, this.getMinLength());
-        }
-        if (newPassword.length() > this.getMaxLength()) {
+        if (this.getMaxLength() > 0 && newPassword.length() > this.getMaxLength()) {
             throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000004, this.getMaxLength());
-        }
-        int numCount = 0, upperCount = 0, lowerCount = 0, spacil = 0;
-        char[] chPwd = newPassword.toCharArray();
-        for (int i = 0; i < chPwd.length; i++) {
-            char ch = chPwd[i];
-            if (Character.isDigit(ch)) {
-                numCount++;
-                continue;
-            }
-            if (Character.isLowerCase(ch)) {
-                lowerCount++;
-                continue;
-            }
-            if (Character.isUpperCase(ch)) {
-                upperCount++;
-                continue;
-            }
-            spacil++;
-        }
-        if (numCount < this.getDigits()) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000005, this.getDigits());
-        }
-        if (lowerCount < this.getLowerCase()) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000006, this.getLowerCase());
-        }
-        if (upperCount < this.getUpperCase()) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000007, this.getUpperCase());
-        }
-        if (spacil < this.getSpecialChar()) {
-            throw new PasswordPolicyException(ConstsServiceMessage.PASSWORDPOLICY.XW00000008, this.getSpecialChar());
         }
     }
 

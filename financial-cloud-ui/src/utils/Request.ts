@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
+import {ElLoading, ElMessage} from 'element-plus'
 import {
     getRefreshToken,
     getToken,
@@ -37,27 +37,24 @@ const serviceRefresh: any = axios.create({
     timeout: 15000
 })
 
+function getLoginUrl(): string {
+    const base = import.meta.env.VITE_APP_CONTEXT_PATH || '/'
+    return (base.endsWith('/') ? base : `${base}/`) + 'login'
+}
+
 function showReLoginToast(): any {
-    if (!isRelogin.show) {
-        isRefreshing = false;
-        isRelogin.show = true;
-        ElMessageBox.confirm(
-            '登录状态已过期，您可以继续留在该页面，或者重新登录',
-            '系统提示',
-            {confirmButtonText: '重新登录', cancelButtonText: '取消', type: 'warning'}
-        )
-            .then(() => {
-                isRelogin.show = false;
-                useUserStore().logOut().finally(() => {
-                    window.location.reload()
-                })
-            })
-            .catch(() => {
-                isRelogin.show = false;
-            });
-    } else {
-        console.error('错误', isRelogin.show)
+    if (isRelogin.show) {
+        return
     }
+    isRefreshing = false
+    isRelogin.show = true
+    useUserStore().logOut().finally(() => {
+        if (!window.location.pathname.endsWith('/login')) {
+            window.location.href = getLoginUrl()
+        } else {
+            isRelogin.show = false
+        }
+    })
 }
 
 // 刷新token

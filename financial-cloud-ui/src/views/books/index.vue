@@ -36,6 +36,7 @@
           {{ t('org.button.add') }}
         </el-button>
         <el-button
+          v-if="hasAdminBooks"
           type="danger"
           :disabled="ids.length === 0"
           @click="onBatchDelete"
@@ -50,9 +51,11 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column
+          v-if="hasAdminBooks"
           type="selection"
           width="55"
           align="center"
+          :selectable="isBookAdmin"
         />
         <el-table-column
           prop="id"
@@ -129,24 +132,36 @@
         <el-table-column
           :label="$t('jbx.text.action')"
           align="center"
-          width="120"
+          width="160"
         >
           <template #default="scope">
-            <el-tooltip content="编辑">
-              <el-button
-                link
-                icon="Edit"
-                @click="handleUpdate(scope.row)"
-              />
-            </el-tooltip>
-            <el-tooltip content="移除">
-              <el-button
-                link
-                icon="Delete"
-                type="danger"
-                @click="handleDelete(scope.row)"
-              />
-            </el-tooltip>
+            <template v-if="isBookAdmin(scope.row)">
+              <el-tooltip content="编辑">
+                <el-button
+                  link
+                  icon="Edit"
+                  @click="handleUpdate(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip content="成员授权">
+                <el-button
+                  link
+                  type="primary"
+                  @click="openMembers(scope.row)"
+                >
+                  成员
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="移除">
+                <el-button
+                  link
+                  icon="Delete"
+                  type="danger"
+                  @click="handleDelete(scope.row)"
+                />
+              </el-tooltip>
+            </template>
+            <span v-else class="text-muted">—</span>
           </template>
         </el-table-column>
       </el-table>
@@ -168,13 +183,20 @@
       :books_industry="books_industry"
       @dialog-of-closed-methods="dialogOfClosedMethods"
     />
+    <members-drawer
+      :open="membersOpen"
+      :book-id="membersBookId"
+      :book-name="membersBookName"
+      @close="closeMembers"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import {useI18n} from "vue-i18n";
-import {getCurrentInstance, reactive, ref, toRefs} from "vue";
+import {computed, getCurrentInstance, reactive, ref, toRefs} from "vue";
 import editForm from "./edit.vue";
+import membersDrawer from "./members.vue";
 import modal from "@/plugins/modal";
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
 import {listBooksSets, deleteBatch} from "@/api/book/book";
@@ -189,6 +211,29 @@ const proxy: any = getCurrentInstance()!.proxy;
 const {books_vat_type, books_industry}
     = proxy?.useDict("books_vat_type", "books_industry");
 
+const membersOpen: any = ref(false);
+const membersBookId: any = ref("");
+const membersBookName: any = ref("");
+
+function isBookAdmin(row: any): boolean {
+  return row?.roleId === "ROLE_ADMINISTRATORS";
+}
+
+function openMembers(row: any): any {
+  if (!isBookAdmin(row)) {
+    modal.msgWarning("仅账套管理员可管理成员");
+    return;
+  }
+  membersBookId.value = row.id;
+  membersBookName.value = row.name || row.companyName || row.id;
+  membersOpen.value = true;
+}
+
+function closeMembers(): any {
+  membersOpen.value = false;
+  membersBookId.value = "";
+  membersBookName.value = "";
+}
 const data: any = reactive({
   queryParams: {
     pageNumber: 1,
@@ -200,6 +245,9 @@ const data: any = reactive({
 const {queryParams} = toRefs(data);
 
 const setsList: any = ref<any>([]);
+const hasAdminBooks = computed(() =>
+  (setsList.value || []).some((row: any) => isBookAdmin(row))
+);
 const open: any = ref(false);
 const subjectOpen: any = ref(false);
 const loading: any = ref(true);
@@ -290,6 +338,10 @@ interface TreeNode {
 
 /** 修改按钮操作 */
 function handleUpdate(row: any): any {
+  if (!isBookAdmin(row)) {
+    modal.msgWarning("仅账套管理员可编辑账套");
+    return;
+  }
   id.value = row.id;
   title.value = t('org.titleEdit');
   open.value = true;
@@ -297,6 +349,10 @@ function handleUpdate(row: any): any {
 
 /** 删除按钮操作 */
 function handleDelete(row: any): any {
+  if (!isBookAdmin(row)) {
+    modal.msgWarning("仅账套管理员可删除账套");
+    return;
+  }
   modal.confirm(t('org.deleteTip1') + row.name + t('org.deleteTip2')).then(function () {
     return deleteBatch({listIds: [row.id]});
   }).then((res: any) => {
@@ -341,5 +397,9 @@ getList();
 .app-container {
   padding: 0;
   background-color: #f5f7fa;
+}
+
+.text-muted {
+  color: #c0c4cc;
 }
 </style>

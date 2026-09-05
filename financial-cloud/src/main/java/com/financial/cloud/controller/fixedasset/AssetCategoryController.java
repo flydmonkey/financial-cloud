@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.dto.fixedasset.AssetCategoryChangeDto;
@@ -47,6 +48,7 @@ public class AssetCategoryController {
     @PostMapping("/save")
     public Message<String> save(@Validated(AddGroup.class) @RequestBody AssetCategoryChangeDto dto,
                                 @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assetCategoryService.save(dto);
     }
@@ -54,12 +56,14 @@ public class AssetCategoryController {
     @PutMapping("/update")
     public Message<String> update(@Validated(EditGroup.class) @RequestBody AssetCategoryChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assetCategoryService.update(dto);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        ProductRoles.requireWriteBusiness();
         return assetCategoryService.delete(dto);
     }
 }

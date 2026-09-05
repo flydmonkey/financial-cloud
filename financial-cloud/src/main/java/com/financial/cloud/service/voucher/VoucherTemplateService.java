@@ -250,6 +250,54 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
 			Db.saveBatch(toInsert);
 		}
 		rematchSalaryAccrualParentSubjects(bookId);
+		ensureSalaryPaymentTemplates(bookId, standardId);
+	}
+
+	/**
+	 * Ensure book has {@code zf_gz} (wage payment) template header + default lines.
+	 * Idempotent for existing books that never received a payment template from the standard catalog.
+	 */
+	public void ensureSalaryPaymentTemplates(String bookId, String standardId) {
+		if (StringUtils.isBlank(bookId) || StringUtils.isBlank(standardId)) {
+			return;
+		}
+		for (String code : MonthEndCloseRules.salaryPaymentTemplateCodes()) {
+			VoucherTemplate template = voucherTemplateMapper.selectOne(Wrappers.<VoucherTemplate>lambdaQuery()
+					.eq(VoucherTemplate::getRelatedId, bookId)
+					.eq(VoucherTemplate::getCode, code)
+					.eq(VoucherTemplate::getDeleted, "n")
+					.last("limit 1"));
+			if (template == null) {
+				template = VoucherTemplate.builder()
+						.id(identifierGenerator.nextId(bookId).toString())
+						.relatedId(bookId)
+						.code(code)
+						.name("发放工资")
+						.category(2)
+						.voucherType(0)
+						.voucherDate(0)
+						.wordHead("记")
+						.remark("发放{yyyy}年{mm}月{name}工资")
+						.sortIndex(110)
+						.status("1")
+						.build();
+				voucherTemplateMapper.insert(template);
+			}
+			Long count = voucherTemplateItemMapper.selectCount(Wrappers.<VoucherTemplateItem>lambdaQuery()
+					.eq(VoucherTemplateItem::getTemplateId, template.getId())
+					.eq(VoucherTemplateItem::getRelatedId, bookId));
+			if (count == null || count == 0) {
+				List<VoucherTemplateItem> items =
+						buildDefaultTemplateItems(bookId, template.getId(), code, standardId);
+				for (VoucherTemplateItem item : items) {
+					rematchItemSubjectToLeaf(bookId, item);
+				}
+				if (CollectionUtils.isNotEmpty(items)) {
+					Db.saveBatch(items);
+				}
+			}
+		}
+		rematchSalaryPaymentParentSubjects(bookId);
 	}
 
 	/**
@@ -257,12 +305,21 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
 	 * Rewrite to preferred postable leaves when available so month-end UI matches generation.
 	 */
 	public void rematchSalaryAccrualParentSubjects(String bookId) {
-		if (StringUtils.isBlank(bookId)) {
+		rematchTemplateSubjectsToLeaves(bookId, List.of(MonthEndCloseRules.CODE_ACCRUE_SALARY));
+	}
+
+	/** Rematch {@code zf_gz} payable/bank parents to postable leaves when available. */
+	public void rematchSalaryPaymentParentSubjects(String bookId) {
+		rematchTemplateSubjectsToLeaves(bookId, List.copyOf(MonthEndCloseRules.salaryPaymentTemplateCodes()));
+	}
+
+	private void rematchTemplateSubjectsToLeaves(String bookId, List<String> codes) {
+		if (StringUtils.isBlank(bookId) || CollectionUtils.isEmpty(codes)) {
 			return;
 		}
 		List<VoucherTemplate> templates = voucherTemplateMapper.selectList(Wrappers.<VoucherTemplate>lambdaQuery()
 				.eq(VoucherTemplate::getRelatedId, bookId)
-				.eq(VoucherTemplate::getCode, MonthEndCloseRules.CODE_ACCRUE_SALARY));
+				.in(VoucherTemplate::getCode, codes));
 		if (CollectionUtils.isEmpty(templates)) {
 			return;
 		}
@@ -271,16 +328,23 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
 					.eq(VoucherTemplateItem::getTemplateId, template.getId())
 					.eq(VoucherTemplateItem::getRelatedId, bookId));
 			for (VoucherTemplateItem item : items) {
-				if (StringUtils.isBlank(item.getSubjectCode())) {
-					continue;
-				}
-				BookSubject leaf = bookSubjectService.resolvePostableSubject(bookId, item.getSubjectCode());
-				if (leaf != null && !leaf.getCode().equals(item.getSubjectCode())) {
-					item.setSubjectCode(leaf.getCode());
+				if (rematchItemSubjectToLeaf(bookId, item)) {
 					voucherTemplateItemMapper.updateById(item);
 				}
 			}
 		}
+	}
+
+	private boolean rematchItemSubjectToLeaf(String bookId, VoucherTemplateItem item) {
+		if (item == null || StringUtils.isBlank(item.getSubjectCode())) {
+			return false;
+		}
+		BookSubject leaf = bookSubjectService.resolvePostableSubject(bookId, item.getSubjectCode());
+		if (leaf != null && !leaf.getCode().equals(item.getSubjectCode())) {
+			item.setSubjectCode(leaf.getCode());
+			return true;
+		}
+		return false;
 	}
 
 	/** @deprecated use {@link #ensureDefaultTemplateItems(String, String)} */

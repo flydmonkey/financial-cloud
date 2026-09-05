@@ -45,25 +45,14 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  getCurrentInstance,
-  reactive,
-  toRefs,
-  watch,
-  defineComponent
-} from "vue";
-import modal from "@/plugins/modal";
+import {ref, computed} from "vue";
 import usePermissionStore from "@/store/modules/permission"
 
-let message: any = computed(() => {
-  return '找不到网页！'
-})
+const message = computed(() => '找不到网页！')
 
-let indexPath: any = ref(import.meta.env.VITE_APP_CONTEXT_PATH)
-let usePermission: any = usePermissionStore()
-indexPath.value = usePermission.topbarRouters[0].children[0].path
+const permissionStore = usePermissionStore()
+const homeChild = permissionStore.topbarRouters?.[0]?.children?.[0]
+const indexPath = ref(homeChild?.path || '/')
 </script>
 
 <style lang="scss" scoped>

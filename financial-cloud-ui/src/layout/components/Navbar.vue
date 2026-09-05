@@ -165,7 +165,8 @@ function logout() {
     logoutApi().then((res: any) => {
       if (res.code === 0) {
         userStore.logOut().then(() => {
-          window.location.reload()
+          const base = import.meta.env.VITE_APP_CONTEXT_PATH || '/'
+          window.location.href = (base.endsWith('/') ? base : `${base}/`) + 'login'
         })
       }
     });

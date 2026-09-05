@@ -11,6 +11,7 @@ import java.util.List;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.permissions.Permission;
 import com.financial.cloud.dto.permissions.PermissionDto;
@@ -42,6 +43,7 @@ public class PermissionController {
 	public Message<Permission> update(
 			@RequestBody PermissionDto dto,
 			@CurrentUser UserInfo currentUser) {
+		ProductRoles.requireAdministrator();
 		log.debug("-update  : {}" , dto);
 		//have
 		Permission queryPermission =

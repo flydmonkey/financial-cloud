@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.standard.Standard;
 import com.financial.cloud.dto.standard.StandardChangeDto;
@@ -54,7 +55,7 @@ public class StandardController {
 
     @PostMapping(value = { "/save" })
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody StandardChangeDto dto) {
-
+        ProductRoles.requireAdministrator();
         log.debug("save {}",dto);
 
         return standardService.save(dto);
@@ -62,7 +63,7 @@ public class StandardController {
 
     @PutMapping(value = { "/update" })
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody StandardChangeDto dto) {
-
+        ProductRoles.requireAdministrator();
         log.debug("update {}",dto);
 
         return standardService.update(dto);
@@ -70,7 +71,7 @@ public class StandardController {
 
     @DeleteMapping(value = { "/delete" })
     public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
-
+        ProductRoles.requireAdministrator();
         log.debug("delete {}",dto);
 
         return standardService.delete(dto);

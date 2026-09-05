@@ -15,7 +15,7 @@ UPDATE resources SET res_style = 'wallet', icon = NULL WHERE id = '2026082814300
 -- 薪资 / 配置
 UPDATE resources SET res_style = 'menus-gongzizonglan', icon = NULL WHERE id = '981334321270882304'; -- 薪资
 UPDATE resources SET res_style = 'calculator', icon = NULL WHERE id = '1894665979168575489'; -- 当月工资计算
-UPDATE resources SET res_style = 'menus-zhangtaoguanli', icon = NULL WHERE id = '981334814802051072'; -- 账套管理（顶级）
+UPDATE resources SET res_style = 'menus-zhangtaoguanli', icon = NULL WHERE id = '981334814802051072'; -- 系统设置（原账套管理顶级）
 UPDATE resources SET res_style = 'fund', icon = NULL WHERE id = '1899369820127911938'; -- 初始余额
 UPDATE resources SET res_style = 'menus-xianjinliuliangxiangmu', icon = NULL WHERE id = '1913072049310191618'; -- 科目现金流量项配置
 UPDATE resources SET res_style = 'fund', icon = NULL WHERE id = '1902625741973843969'; -- 现金流量初始余额

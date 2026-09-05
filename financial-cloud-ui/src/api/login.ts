@@ -34,13 +34,17 @@ export function getThirdById(id: any): any {
 // 注册方法
 export function register(data: any): any {
     return request({
-        url: '/register',
+        url: '/login/register?_allow_anonymous=true',
         headers: {
             isToken: false
         },
         method: 'post',
         data: data
     })
+}
+
+export function registerAccount(data: any): any {
+    return register(data)
 }
 
 //忘记密码-发送短信验证码

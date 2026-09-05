@@ -13,11 +13,12 @@ function authPermission(permission: any): any {
 }
 
 function authRole(role: any): any {
-    const super_admin: any = "admin";
+    // Only book-scoped product admin bypasses role checks (not ROLE_SUPERVISOR / 1000).
+    const productAdmins: any = ["ROLE_ADMINISTRATORS"];
     const roles: any = useUserStore().roles
     if (role && role.length > 0) {
         return roles.some((v: any) => {
-            return super_admin === v || v === role
+            return productAdmins.includes(v) || v === role
         })
     } else {
         return false

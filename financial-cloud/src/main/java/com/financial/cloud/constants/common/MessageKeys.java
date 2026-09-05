@@ -96,6 +96,9 @@ public final class MessageKeys {
         public static final String MOBILE_USED = "user.error.mobile_used";
         public static final String EMAIL_USED = "user.error.email_used";
         public static final String VERIFY_MOBILE_ABSENT = "user.error.verify_mobile_absent";
+        public static final String ROLE_REQUIRED = "user.error.role_required";
+        public static final String BOOK_REQUIRED = "user.error.book_required";
+        public static final String PERMISSION_DENIED = "user.error.permission_denied";
 
         private User() {
         }

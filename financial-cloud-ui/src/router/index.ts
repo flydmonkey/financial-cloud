@@ -64,6 +64,20 @@ export const constantRoutes: any = [
         meta: {title: '初始化账套'}
     },
     {
+        path: '',
+        component: Layout,
+        redirect: '/index',
+        hidden: true,
+        children: [
+            {
+                path: '/index',
+                component: () => import('@/views/index.vue'),
+                name: 'Index',
+                meta: {title: '首页', icon: 'dashboard', affix: true}
+            }
+        ]
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import('@/views/system/error/404.vue'),
         hidden: true
@@ -72,6 +86,12 @@ export const constantRoutes: any = [
         path: '/401',
         component: () => import('@/views/system/error/401.vue'),
         hidden: true
+    },
+    {
+        path: '/no-access',
+        component: () => import('@/views/system/error/no-access.vue'),
+        hidden: true,
+        meta: {title: '暂无权限'}
     },
     {
         path: '/404',

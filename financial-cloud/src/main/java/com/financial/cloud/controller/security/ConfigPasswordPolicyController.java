@@ -24,7 +24,8 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+// DISABLED open-register-book-auth: menu hidden, code retained
+//@RestController
 @RequestMapping(value={"/api/security/passwordpolicy"})
 public class ConfigPasswordPolicyController {
 

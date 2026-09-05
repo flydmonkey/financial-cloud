@@ -2,6 +2,7 @@ package com.financial.cloud.controller.standard;
 
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.domain.standard.StandardStatementBalanceSheet;
 import com.financial.cloud.dto.standard.StandardStatementBalanceSheetListVo;
 import com.financial.cloud.service.standard.StandardStatementBalanceSheetService;
@@ -42,6 +43,7 @@ public class StandardStatementBalanceSheetController {
      */
     @PostMapping(value = {"/save"})
     public Message<StandardStatementBalanceSheet> save(@Validated @RequestBody StandardStatementBalanceSheet dto) {
+        ProductRoles.requireAdministrator();
         return statementBalanceSheetService.save(dto);
     }
 
@@ -53,6 +55,7 @@ public class StandardStatementBalanceSheetController {
      */
     @DeleteMapping(value = {"/delete/{id}"})
     public Message<Boolean> delete(@PathVariable("id") String id) {
+        ProductRoles.requireAdministrator();
         return statementBalanceSheetService.delete(id);
     }
 

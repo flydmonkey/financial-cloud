@@ -2,6 +2,12 @@ package com.financial.cloud.dto.permissions;
 
 import java.util.ArrayList;
 
-public record PermissionBookDto(String userId,ArrayList<String> bookIds) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
+public record PermissionBookDto(
+		@NotBlank String userId,
+		@NotEmpty ArrayList<String> bookIds,
+		@NotBlank String roleId
+) {
 }

@@ -53,4 +53,10 @@ public class Book extends BaseEntity implements Serializable {
     
     @TableField(exist = false)
     String bookId;
+
+    @TableField(exist = false)
+    String roleId;
+
+    @TableField(exist = false)
+    String roleName;
 }

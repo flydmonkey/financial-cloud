@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.book.SubjectChangeDto;
 import com.financial.cloud.dto.book.SubjectPageDto;
 import com.financial.cloud.dto.book.BookSubjectTreeDto;
@@ -58,6 +59,7 @@ public class StandardSubjectController {
 
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody SubjectChangeDto dto) {
+        ProductRoles.requireAdministrator();
         if (StringUtils.isBlank(dto.getStandardId())) {
             return Message.failed("所属会计准则不能为空");
         }
@@ -66,11 +68,13 @@ public class StandardSubjectController {
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody SubjectChangeDto dto) {
+        ProductRoles.requireAdministrator();
         return standardSubjectService.update(dto);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
+        ProductRoles.requireAdministrator();
         return standardSubjectService.delete(dto);
     }
 }

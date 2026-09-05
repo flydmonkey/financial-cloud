@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.dto.book.AssistAccVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.dto.book.AssistAccChangeDto;
@@ -42,6 +43,7 @@ public class AssistAccController {
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody AssistAccChangeDto dto,
                                 @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assistAccService.save(dto);
     }
@@ -49,12 +51,14 @@ public class AssistAccController {
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody AssistAccChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assistAccService.update(dto);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        ProductRoles.requireWriteBusiness();
         return assistAccService.delete(dto);
     }
 

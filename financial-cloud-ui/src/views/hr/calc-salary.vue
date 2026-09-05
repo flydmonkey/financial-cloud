@@ -393,7 +393,7 @@
         </el-table-column>
         <el-table-column
           prop="taxableWages"
-          label="应税工资"
+          label="累计应纳税所得额"
           align="right"
           width="110"
           :show-overflow-tooltip="true"

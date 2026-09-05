@@ -369,7 +369,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="span">
-            <el-form-item label="应税工资">
+            <el-form-item label="累计应纳税所得额">
               <el-input
                 v-model="form.taxableWages"
                 :precision="2"

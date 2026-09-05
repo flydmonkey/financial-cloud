@@ -34,6 +34,7 @@ class CumulativePitRulesTest {
                 bd("10000"), bd("2000"), bd("1000"), 1);
         var result = CumulativePitRules.compute(inputs, BRACKETS);
         assertEquals(0, bd("2000.00").compareTo(result.cumulativeTaxableIncome()));
+        assertEquals(0, bd("60.00").compareTo(result.cumulativeTax()));
         assertEquals(0, bd("60.00").compareTo(result.periodTax()));
     }
 

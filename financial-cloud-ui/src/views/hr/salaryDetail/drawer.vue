@@ -286,7 +286,7 @@
         </el-table-column>
         <el-table-column
           prop="taxableWages"
-          label="应税工资"
+          label="累计应纳税所得额"
           align="center"
           width="110"
           :show-overflow-tooltip="true"
@@ -644,7 +644,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="span">
-              <el-form-item label="应税工资">
+              <el-form-item label="累计应纳税所得额">
                 <el-input-number
                   v-model="form.taxableWages"
                   :precision="2"

@@ -306,7 +306,7 @@
         </el-table-column>
         <el-table-column
           prop="taxableWages"
-          label="应税工资"
+          label="累计应纳税所得额"
           align="center"
           width="110"
           :show-overflow-tooltip="true"
@@ -595,7 +595,7 @@ const getSummaries = () => {
     sums[sumsIndex++] = tableSummary.value.businessSocialInsurance;
     sums[sumsIndex++] = tableSummary.value.businessProvidentFund;
     sums[sumsIndex++] = formatAmount(tableSummary.value.payAmount);
-    sums[sumsIndex++] = formatAmount(tableSummary.value.taxableWages);
+    sums[sumsIndex++] = '';
     sums[sumsIndex++] = formatAmount(tableSummary.value.totalAmount);
     sums[sumsIndex++] = h('div', {
       style: {

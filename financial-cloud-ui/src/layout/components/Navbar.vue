@@ -33,34 +33,6 @@
       </el-tooltip>
       -->
       <el-divider direction="vertical" />
-      <div class="right-menu-item">
-        <ScreenFull
-          id="screenfull"
-          class="right-menu-item hover-effect"
-        />
-        <!--
-        <el-dropdown placement="bottom" trigger="click">
-          <svg-icon icon-class="setting"></svg-icon>
-          <template #dropdown>
-            <el-dropdown-menu>
-
-              <el-dropdown-item>
-                <svg-icon icon-class="border-left"></svg-icon>
-                <span style="margin-left: 5px">RTL</span>
-              </el-dropdown-item>
-
-              <el-dropdown-item>
-
-              </el-dropdown-item>
-              <el-dropdown-item>
-                <CleanSession class="right-menu-item hover-effect"/>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-         -->
-      </div>
-      <el-divider direction="vertical" />
       <div class="right-menu-item avatar-box">
         <el-dropdown placement="bottom">
           <div class="avatar-wrapper">
@@ -80,20 +52,6 @@
                   <span style="margin-left: 5px">个人中心</span>
                 </router-link>
               </el-dropdown-item>
-              <!--              <el-dropdown-item>-->
-              <!--                <svg-icon icon-class="setting"></svg-icon>-->
-              <!--                <span style="margin-left: 5px">个人设置</span>-->
-              <!--              </el-dropdown-item>-->
-
-              <!--              <el-dropdown-item>-->
-              <!--                <router-link to="/exception/trigger">-->
-              <!--                  <svg-icon icon-class="close-circle"></svg-icon>-->
-              <!--                  <span style="margin-left: 5px">触发错误</span>-->
-              <!--                </router-link>-->
-              <!--              </el-dropdown-item>-->
-              <el-dropdown-item>
-                <CleanSession class="right-menu-item hover-effect" />
-              </el-dropdown-item>
               <el-dropdown-item style="border-top: 1px solid #888888;">
                 <div @click="logout">
                   <svg-icon icon-class="logout" />
@@ -111,9 +69,6 @@
 <script setup lang="ts">
 import {computed, ref} from "vue"
 import {ElMessageBox} from 'element-plus'
-import ScreenFull from '@/components/Screenfull/index.vue'
-import CleanSession from '@/components/CleanSession/index.vue'
-import Hamburger from '@/components/Hamburger/index.vue'
 import useAppStore from '@/store/modules/app'
 import * as userService from "@/api/idm/user";
 import useUserStore from '@/store/modules/user'

@@ -175,8 +175,8 @@ def main() -> None:
         if cur.fetchone():
             cur.execute(
                 "update roles set role_code=%s, role_name=%s, category='general', "
-                "status=1, deleted='n', modified_date=now() where id=%s",
-                (code, name, rid),
+                "description=%s, status=1, deleted='n', modified_date=now() where id=%s",
+                (code, name, name, rid),
             )
         else:
             cur.execute(
@@ -191,7 +191,7 @@ def main() -> None:
                   %s, 'n'
                 )
                 """,
-                (rid, code, name, f"product role {name}"),
+                (rid, code, name, name),
             )
 
     # 2) Remap legacy members

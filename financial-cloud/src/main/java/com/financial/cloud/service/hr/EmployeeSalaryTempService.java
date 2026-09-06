@@ -84,6 +84,11 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         if (ObjectUtils.isNotEmpty(employeeSalaries)) {
             //删除原先生成的本月数据
             YearMonth lastMonth = dto.getCurrentYearMonth();
+            int linked = employeeSalaryMapper.countActiveRowsWithLinkedVouchers(
+                    dto.getBookId(), lastMonth.toString());
+            if (SalaryVoucherDedupeRules.shouldBlockPush(linked)) {
+                return Message.failed(SalaryVoucherDedupeRules.BLOCK_PUSH_BECAUSE_VOUCHERS);
+            }
             employeeSalaryMapper.delete(Wrappers.<EmployeeSalary>lambdaQuery()
                     .eq(EmployeeSalary::getBookId, dto.getBookId())
                     .eq(EmployeeSalary::getBelongDate, lastMonth));

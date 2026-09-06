@@ -8,16 +8,16 @@
         from employee_salary_temp jest
         inner join employee je on jest.employee_id = je.id
         and je.deleted = 'n'
-        and je.book_id = #{Dto.bookId}
-        <if test="Dto.employeeName != null and Dto.employeeName != '' ">
-            and je.display_name like CONCAT('%', #{Dto.employeeName}, '%')
+        and je.book_id = #{dto.bookId}
+        <if test="dto.employeeName != null and dto.employeeName != '' ">
+            and je.display_name like CONCAT('%', #{dto.employeeName}, '%')
         </if>
-        <if test="Dto.employeeNumber != null and Dto.employeeNumber != '' ">
-            and je.employee_number like CONCAT('%', #{Dto.employeeNumber}, '%')
+        <if test="dto.employeeNumber != null and dto.employeeNumber != '' ">
+            and je.employee_number like CONCAT('%', #{dto.employeeNumber}, '%')
         </if>
         where jest.deleted = 'n'
-        and jest.belong_date = #{Dto.currentYearMonth}
-        and jest.book_id = #{Dto.bookId}
+        and jest.belong_date = #{dto.currentYearMonth}
+        and jest.book_id = #{dto.bookId}
         order by jest.created_date desc
     </select>
 
@@ -27,15 +27,15 @@
         from employee_salary_temp jest
         inner join employee je on jest.employee_id = je.id
         and je.deleted = 'n'
-        and je.book_id = #{Dto.bookId}
+        and je.book_id = #{dto.bookId}
         where jest.deleted = 'n'
-        and jest.belong_date = #{Dto.currentYearMonth}
-        and jest.book_id = #{Dto.bookId}
+        and jest.belong_date = #{dto.currentYearMonth}
+        and jest.book_id = #{dto.bookId}
     </select>
 
     <delete id="removeCurrentMonth" parameterType="com.financial.cloud.dto.hr.ListNoCalCurrentDto">
         delete from employee_salary_temp
-        where book_id = #{Dto.bookId}
-        and belong_date = #{Dto.belongDate}
+        where book_id = #{dto.bookId}
+        and belong_date = #{dto.belongDate}
     </delete>
 </mapper>

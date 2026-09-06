@@ -1,6 +1,5 @@
 package com.financial.cloud.repository.hr;
 
-import com.financial.cloud.repository.hr.EmployeeMapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.domain.hr.Employee;
@@ -13,7 +12,7 @@ import java.util.List;
 
 @Mapper
 public interface EmployeeMapper extends BaseMapper<Employee> {
-    Page<Employee> pageList(Page page, @Param("Dto") EmployeePageDto dto);
+    Page<Employee> pageList(Page<?> page, @Param("dto") EmployeePageDto dto);
 
-    List<Employee> listNoCalCurrent(@Param("Dto") ListNoCalCurrentDto dto);
+    List<Employee> listNoCalCurrent(@Param("dto") ListNoCalCurrentDto dto);
 }

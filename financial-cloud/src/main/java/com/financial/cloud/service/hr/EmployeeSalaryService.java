@@ -10,6 +10,7 @@ import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.book.SettlementCarryforwardMapper;
 import com.financial.cloud.repository.voucher.VoucherTemplateItemMapper;
 import com.financial.cloud.repository.voucher.VoucherTemplateMapper;
+import com.financial.cloud.repository.voucher.VoucherMapper;
 import com.financial.cloud.domain.book.SettlementCarryforward;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -19,6 +20,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.book.BookSubject;
 import com.financial.cloud.domain.hr.*;
+import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.domain.voucher.VoucherTemplate;
 import com.financial.cloud.domain.voucher.VoucherTemplateItem;
 import com.financial.cloud.dto.voucher.GenerateVoucherDto;
@@ -87,6 +89,8 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     private final VoucherTemplateMapper voucherTemplateMapper; 
     
     private final VoucherTemplateItemMapper voucherTemplateItemMapper;
+
+    private final VoucherMapper voucherMapper;
 
     private final VoucherService voucherService;
     
@@ -387,10 +391,14 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         Employee employee = employeeMapper.selectById(salary.getEmployeeId());
         String employeeType = employee != null ? employee.getEmployeeType() : null;
         String tplCode = SalaryVoucherTemplateRules.resolveTemplateCode(employeeType, voucherType);
-        if (voucherType == 2 && StringUtils.isNotBlank(salary.getAccrualVoucherId())) {
-            return Message.ok(SalaryVoucherTemplateRules.alreadyGeneratedMessage(employeeType, voucherType));
-        } else if (voucherType == 3 && StringUtils.isNotBlank(salary.getSalaryVoucherId())) {
-            return Message.ok(SalaryVoucherTemplateRules.alreadyGeneratedMessage(employeeType, voucherType));
+        if (salary.getBelongDate() != null && StringUtils.isNotBlank(salary.getEmployeeId())) {
+            String belongDate = salary.getBelongDate().toString();
+            String existingId = (voucherType != null && (voucherType == 2 || voucherType == 0))
+                    ? employeeSalaryMapper.findAnyAccrualVoucherId(bookId, salary.getEmployeeId(), belongDate)
+                    : employeeSalaryMapper.findAnySalaryVoucherId(bookId, salary.getEmployeeId(), belongDate);
+            if (StringUtils.isNotBlank(existingId) && isLiveVoucher(existingId)) {
+                return Message.failed(SalaryVoucherDedupeRules.generateBlockedMessage(employeeType, voucherType));
+            }
         }
         
         String currentTerm = configSysService.getCurrentTerm(bookId);
@@ -534,6 +542,14 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         super.update(updateWrapper);
 
         return Message.ok(voucherChangeDto.getId());
+    }
+
+    private boolean isLiveVoucher(String voucherId) {
+        if (StringUtils.isBlank(voucherId)) {
+            return false;
+        }
+        Voucher voucher = voucherMapper.selectById(voucherId);
+        return voucher != null;
     }
 
     private VoucherItemChangeDto createVoucherItemDto(String bookId,

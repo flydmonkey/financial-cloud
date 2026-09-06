@@ -8,20 +8,20 @@
         from employee_salary jes
         left join employee je on jes.employee_id = je.id
         and je.deleted = 'n'
-        and je.book_id = #{Dto.bookId}
+        and je.book_id = #{dto.bookId}
         where jes.deleted = 'n'
-        and jes.book_id = #{Dto.bookId}
-        <if test="Dto.employeeName != null and Dto.employeeName != '' ">
-            and je.display_name like CONCAT('%', #{Dto.employeeName}, '%')
+        and jes.book_id = #{dto.bookId}
+        <if test="dto.employeeName != null and dto.employeeName != '' ">
+            and je.display_name like CONCAT('%', #{dto.employeeName}, '%')
         </if>
-        <if test="Dto.employeeNumber != null and Dto.employeeNumber != '' ">
-            and je.employee_number like CONCAT('%', #{Dto.employeeNumber}, '%')
+        <if test="dto.employeeNumber != null and dto.employeeNumber != '' ">
+            and je.employee_number like CONCAT('%', #{dto.employeeNumber}, '%')
         </if>
-        <if test="Dto.belongDate != null and Dto.belongDate != '' ">
-            and jes.belong_date = #{Dto.belongDate}
+        <if test="dto.belongDate != null and dto.belongDate != '' ">
+            and jes.belong_date = #{dto.belongDate}
         </if>
-        <if test="Dto.belongDateRange != null and Dto.belongDateRange.length == 2">
-            and jes.belong_date between #{Dto.belongDateRange[0]} and #{Dto.belongDateRange[1]}
+        <if test="dto.belongDateRange != null and dto.belongDateRange.length == 2">
+            and jes.belong_date between #{dto.belongDateRange[0]} and #{dto.belongDateRange[1]}
         </if>
         order by jes.created_date desc
     </select>
@@ -30,10 +30,10 @@
     <select id="selectSalarySummary" parameterType="com.financial.cloud.dto.hr.SalarySummaryChangeDto"
     resultType="com.financial.cloud.domain.hr.EmployeeSalarySummary">
         SELECT
-            #{Dto.bookId} AS book_id,
-            #{Dto.belongDate} AS belong_date,
+            #{dto.bookId} AS book_id,
+            #{dto.belongDate} AS belong_date,
             'salary' AS label,
-            #{Dto.description} AS description,
+            #{dto.description} AS description,
             sum(1) AS people_number,
             SUM(pay_basic) AS pay_basic,
             SUM(pay_merit) AS pay_merit,
@@ -56,8 +56,8 @@
             SUM(tax_deduction) AS tax_deduction,
             SUM(business_expenditure_costs) AS business_expenditure_costs
         FROM employee_salary
-        WHERE book_id = #{Dto.bookId}
-          AND belong_date = #{Dto.belongDate}
+        WHERE book_id = #{dto.bookId}
+          AND belong_date = #{dto.belongDate}
           AND deleted = 'n'
           AND labor_fee = 0 
         HAVING COUNT(*) > 0
@@ -66,10 +66,10 @@
     <select id="selectSalarySummaryLabor" parameterType="com.financial.cloud.dto.hr.SalarySummaryChangeDto"
     resultType="com.financial.cloud.domain.hr.EmployeeSalarySummary">
         SELECT
-            #{Dto.bookId} AS book_id,
-            #{Dto.belongDate} AS belong_date,
+            #{dto.bookId} AS book_id,
+            #{dto.belongDate} AS belong_date,
             'labor' AS label,
-            #{Dto.description} AS description,
+            #{dto.description} AS description,
             sum(1) AS people_number,
             SUM(pay_basic) AS pay_basic,
             SUM(pay_merit) AS pay_merit,
@@ -92,8 +92,8 @@
             SUM(tax_deduction) AS tax_deduction,
             SUM(business_expenditure_costs) AS business_expenditure_costs
         FROM employee_salary
-        WHERE book_id = #{Dto.bookId}
-          AND belong_date = #{Dto.belongDate}
+        WHERE book_id = #{dto.bookId}
+          AND belong_date = #{dto.belongDate}
           AND deleted = 'n'
           AND labor_fee > 0
         HAVING COUNT(*) > 0
@@ -103,8 +103,8 @@
     <select id="countEmployeeSalaries" resultType="int" parameterType="com.financial.cloud.dto.hr.SalarySummaryChangeDto">
         SELECT COUNT(*)
         FROM employee_salary
-        WHERE book_id = #{Dto.bookId}
-          AND belong_date = #{Dto.belongDate}
+        WHERE book_id = #{dto.bookId}
+          AND belong_date = #{dto.belongDate}
           AND deleted = 'n'
     </select>
 
@@ -119,12 +119,12 @@
             from employee je
             join employee_salary jes on je.id = jes.employee_id
             and jes.deleted = 'n'
-            and jes.book_id = #{Dto.bookId}
-            and jes.belong_date = #{Dto.belongDate}
+            and jes.book_id = #{dto.bookId}
+            and jes.belong_date = #{dto.belongDate}
             join employee_tax_deduction jetd on je.display_name = jetd.employee_name and je.id_card_no = jetd.id_card_no
             and jetd.deleted = 'n'
-            and jetd.book_id = #{Dto.bookId}
+            and jetd.book_id = #{dto.bookId}
             where je.deleted = 'n'
-            and je.book_id = #{Dto.bookId}
+            and je.book_id = #{dto.bookId}
     </select>
 </mapper>

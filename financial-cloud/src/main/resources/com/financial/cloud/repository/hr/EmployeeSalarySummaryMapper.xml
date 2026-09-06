@@ -6,7 +6,7 @@
     <select id="selectSalarySummary" parameterType="com.financial.cloud.dto.hr.SalarySummaryChangeDto"
     resultType="com.financial.cloud.domain.hr.EmployeeSalarySummary">
         SELECT
-            #{Dto.bookId} AS book_id,
+            #{dto.bookId} AS book_id,
             SUM(pay_basic) AS pay_basic,
             SUM(pay_merit) AS pay_merit,
             SUM(pay_post) AS pay_post,
@@ -28,8 +28,8 @@
             SUM(tax_deduction) AS tax_deduction,
             SUM(business_expenditure_costs) AS business_expenditure_costs
         FROM employee_salary_summary
-        WHERE book_id = #{Dto.bookId}
-          AND (belong_date >= #{Dto.startDateRange} AND  #{Dto.endDateRange}>= belong_date)
+        WHERE book_id = #{dto.bookId}
+          AND (belong_date >= #{dto.startDateRange} AND  #{dto.endDateRange}>= belong_date)
           AND deleted = 'n'
         HAVING COUNT(*) > 0
     </select>

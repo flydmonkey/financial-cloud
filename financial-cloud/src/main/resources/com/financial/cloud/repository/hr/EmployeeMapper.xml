@@ -13,22 +13,22 @@
         organizations jo
         ON je.department_id = jo.id
         AND jo.deleted = 'n'
-        and jo.book_id = #{Dto.bookId}
-        <if test="Dto.departmentId != null and Dto.departmentId != ''">
-            AND jo.code_path LIKE CONCAT('%', #{Dto.departmentId}, '%')
+        and jo.book_id = #{dto.bookId}
+        <if test="dto.departmentId != null and dto.departmentId != ''">
+            AND jo.code_path LIKE CONCAT('%', #{dto.departmentId}, '%')
         </if>
         INNER JOIN
         book jbs
         ON je.book_id = jbs.id
         AND jbs.deleted = 'n'
-        and jbs.id = #{Dto.bookId}
+        and jbs.id = #{dto.bookId}
         WHERE
         je.deleted = 'n'
-        <if test="Dto.displayName != null and Dto.displayName != ''">
-            AND je.display_name LIKE CONCAT('%', #{Dto.displayName}, '%')
+        <if test="dto.displayName != null and dto.displayName != ''">
+            AND je.display_name LIKE CONCAT('%', #{dto.displayName}, '%')
         </if>
-        <if test="Dto.employeeNumber != null and Dto.employeeNumber != ''">
-            AND je.employee_number LIKE CONCAT('%', #{Dto.employeeNumber}, '%')
+        <if test="dto.employeeNumber != null and dto.employeeNumber != ''">
+            AND je.employee_number LIKE CONCAT('%', #{dto.employeeNumber}, '%')
         </if>
     </select>
 
@@ -36,12 +36,12 @@
             resultType="com.financial.cloud.domain.hr.Employee">
         SELECT je.* FROM employee je
                              LEFT JOIN employee_salary_temp jest ON je.id = jest.employee_id
-            AND jest.belong_date = #{Dto.belongDate}
+            AND jest.belong_date = #{dto.belongDate}
             AND jest.deleted = 'n'
-            AND jest.book_id = #{Dto.bookId}
+            AND jest.book_id = #{dto.bookId}
         WHERE jest.employee_id IS NULL
           AND je.deleted = 'n'
           AND je.employee_status = 'RESIDENT'
-          AND je.book_id = #{Dto.bookId}
+          AND je.book_id = #{dto.bookId}
     </select>
 </mapper>

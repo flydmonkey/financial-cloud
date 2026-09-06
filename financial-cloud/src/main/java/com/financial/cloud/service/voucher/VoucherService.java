@@ -943,8 +943,11 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return new Message<>(Message.FAIL, "部分凭证不存在");
         }
         for (Voucher voucher : toDelete) {
-            if (!VoucherStatusEnum.DRAFT.getValue().equals(voucher.getStatus())) {
-                return new Message<>(Message.FAIL, "仅暂存状态的凭证可以删除");
+            boolean unpostedCompleted = VoucherStatusEnum.COMPLETED.getValue().equals(voucher.getStatus())
+                    && StringUtils.isBlank(voucher.getSenderId());
+            boolean draft = VoucherStatusEnum.DRAFT.getValue().equals(voucher.getStatus());
+            if (!draft && !unpostedCompleted) {
+                return new Message<>(Message.FAIL, "仅暂存或待过账（未过账）的凭证可以删除");
             }
             if (StringUtils.isNotBlank(voucher.getSenderId())) {
                 return new Message<>(Message.FAIL, "已过账的凭证不能删除");

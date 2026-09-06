@@ -10,10 +10,10 @@
       >
         <el-form-item
           :label="$t('jbx.journalentry.remark')"
-          prop="providerName"
+          prop="remark"
         >
           <el-input
-            v-model="queryParams.providerName"
+            v-model="queryParams.remark"
             placeholder=""
             clearable
             @keyup.enter.native="handleQuery"
@@ -320,10 +320,13 @@
           prop="income"
           required
         >
-          <el-input
+          <el-input-number
             v-model="form.income"
-            :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-            :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
+            class="amount-input-left"
+            :min="0"
+            :precision="2"
+            :controls="false"
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item
@@ -332,10 +335,13 @@
           prop="income"
           required
         >
-          <el-input
+          <el-input-number
             v-model="form.income"
-            :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-            :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
+            class="amount-input-left"
+            :min="0"
+            :precision="2"
+            :controls="false"
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item
@@ -344,10 +350,13 @@
           prop="expenditure"
           required
         >
-          <el-input
+          <el-input-number
             v-model="form.expenditure"
-            :formatter="(value:any) => `￥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-            :parser="(value:any) => value.replace(/￥\s?|(,*)/g, '')"
+            class="amount-input-left"
+            :min="0"
+            :precision="2"
+            :controls="false"
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item
@@ -460,16 +469,17 @@ const data: any = reactive({
   queryParams: {
     pageNumber: 1,
     pageSize: 10,
-    providerName: undefined
+    remark: undefined,
+    accName: undefined
   },
   rules: {
-    icon: [{required: true, message: 'Not empty', trigger: "blur"}],
-    provider: [{required: true, message: 'Not empty', trigger: "blur"}],
-    providerName: [{required: true, message: 'Not empty', trigger: "blur"}],
-    clientId: [{required: true, message: 'Not empty', trigger: "blur"}],
-    income: [{required: true, message: '请输入收入金额', trigger: "blur"}],
-    expenditure: [{required: true, message: '请输入支出金额', trigger: "blur"}],
-    clientSecret: [{required: true, message: 'Not empty', trigger: "blur"}]
+    remark: [{required: true, message: t('jbx.journalentry.remarkRequired'), trigger: "blur"}],
+    accId: [{required: true, message: t('jbx.journalentry.accIdRequired'), trigger: "change"}],
+    tradeDate: [{required: true, message: t('jbx.journalentry.tradeDateRequired'), trigger: "change"}],
+    subjectId: [{required: true, message: t('jbx.journalentry.subjectIdRequired'), trigger: "change"}],
+    direction: [{required: true, message: t('jbx.journalentry.directionRequired'), trigger: "change"}],
+    income: [{required: true, message: t('jbx.journalentry.incomeRequired'), trigger: "blur"}],
+    expenditure: [{required: true, message: t('jbx.journalentry.expenditureRequired'), trigger: "blur"}]
   },
 });
 
@@ -488,11 +498,11 @@ function getSubjectName(subjectId: string): string {
   return "";
 }
 
-function disabledFilter(data: any, node: any): any {
-  if (!currBookStore.bookId) {
-    return false;
-  }
-  return new RegExp(`/${currBookStore.bookId}(/|$)`).test(data.idPath)
+function disabledFilter(data: any): any {
+  const fundSubjectId = form.value?.accId
+    ? accOptions.value.find((o: any) => o.value === form.value.accId)?.data?.subjectId
+    : undefined;
+  return fundSubjectId != null && data.id === fundSubjectId;
 }
 
 interface TreeNode {
@@ -512,14 +522,21 @@ function buildSubject(nodes: TreeNode[]) {
 }
 
 function getSubjectTree() {
+  if (!currBookStore.bookId) {
+    subjectOptions.value = [];
+    subjectList.value = [];
+    return;
+  }
   getTree({bookId: currBookStore.bookId}).then((response: { data: TreeNode[] }) => {
-    subjectOptions.value = response.data;
-    buildSubject(response.data);
-    form.value.parentId = undefined;
+    subjectList.value = [];
+    subjectOptions.value = response.data || [];
+    buildSubject(subjectOptions.value);
   });
 }
 
-getSubjectTree();
+watch(() => currBookStore.bookId, () => {
+  getSubjectTree();
+}, {immediate: true});
 
 /** 分页列表 */
 function getList(): any {
@@ -585,6 +602,10 @@ function handleSelectionChange(selection: any): any {
 
 
 /** 重置新增的表单以及其他数据  */
+function defaultTradeDate(): string {
+  return dayjs().format("YYYY-MM-DD HH:mm:ss");
+}
+
 function reset(): any {
 
   accOptions.value = [];
@@ -592,7 +613,7 @@ function reset(): any {
 
   form.value = {
     id: undefined,
-    tradeDate: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
+    tradeDate: defaultTradeDate(),
     direction: "i",
     income: 0.0,
     expenditure: 0.0,
@@ -653,6 +674,10 @@ function handleAccIdChange(val: any) {
       form.value.accName = accOptions.value[i].data.accName;
       form.value.category = accOptions.value[i].data.category;
       form.value.initBalance = new Decimal(accOptions.value[i].data.balance).eq(new Decimal(0));
+      // 对方科目不能与资金科目相同
+      if (form.value.subjectId && form.value.subjectId === accOptions.value[i].data.subjectId) {
+        form.value.subjectId = undefined;
+      }
     }
   }
 }
@@ -699,4 +724,7 @@ getList();
   white-space: nowrap
 }
 
+.amount-input-left :deep(.el-input__inner) {
+  text-align: left;
+}
 </style>

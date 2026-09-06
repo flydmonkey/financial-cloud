@@ -13,6 +13,9 @@
 		<if test="dto.accName != null and dto.accName != ''">
 			and jja.acc_name like CONCAT('%', #{dto.accName}, '%')
 		</if>
-		order by jja.created_date desc
+		<if test="dto.remark != null and dto.remark != ''">
+			and jja.remark like CONCAT('%', #{dto.remark}, '%')
+		</if>
+		order by jja.trade_date desc, jja.id desc
 	</select>
 </mapper>

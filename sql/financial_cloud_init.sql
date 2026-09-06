@@ -842,6 +842,7 @@ CREATE TABLE `journal_account` (
   `balance` decimal(10,2) DEFAULT '0.00' COMMENT '可用余额',
   `sort_index` int DEFAULT NULL,
   `description` varchar(200) DEFAULT NULL COMMENT '备注',
+  `status` tinyint NOT NULL DEFAULT '1' COMMENT '状态:1-启用;0-禁用',
   `created_by` varchar(45) DEFAULT NULL COMMENT '创建人',
   `created_date` datetime DEFAULT NULL COMMENT '创建时间',
   `modified_by` varchar(45) DEFAULT NULL COMMENT '修改人',

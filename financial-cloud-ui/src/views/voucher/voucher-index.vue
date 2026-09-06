@@ -716,7 +716,12 @@ function canEditVoucher(voucher) {
 }
 
 function isDeletable(voucher) {
-  if (!voucher?.voucherDate || voucher.status !== 'draft' || voucher.senderId) {
+  if (!voucher?.voucherDate || voucher.senderId) {
+    return false
+  }
+  const unposted = voucher.status === 'draft'
+    || (voucher.status === 'completed' && !voucher.senderId)
+  if (!unposted) {
     return false
   }
   return currBookStore.termCurrent <= voucher.voucherDate.substring(0, 7)
@@ -839,13 +844,13 @@ function handleDelete(row) {
     deleteIds = getSelectedVouchers().filter(isDeletable).map(item => item.id)
   }
   if (!deleteIds.length) {
-    proxy.$modal.msgError("没有可以删除的凭证项（仅暂存且当期及以后凭证可删）。");
+    proxy.$modal.msgError("没有可以删除的凭证项（仅暂存/待过账且当期及以后凭证可删）。");
     return
   }
   proxy.$modal.confirm(`删除凭证可能导致不连号，确认删除 ${deleteIds.length} 条凭证？`).then(function () {
     return voucherApis.deleteBatch(deleteIds.join(","));
   }).then(() => {
-    getList();image.png
+    getList();
     proxy.$modal.msgSuccess("删除成功");
   }).catch((err) => {
     showActionError(err)

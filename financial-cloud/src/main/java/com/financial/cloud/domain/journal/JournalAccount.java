@@ -63,6 +63,11 @@ public class JournalAccount  extends BaseEntity implements Serializable {
 	BigDecimal balance;
 	
 	String description;
+
+	/**
+	 * 状态:1-启用;0-禁用
+	 */
+	Integer status;
 	
 	/**
      * 删除标记

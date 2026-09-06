@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.financial.cloud.authn.SignedPrincipal;
+import com.financial.cloud.authn.core.AuthAuthentication;
 import com.financial.cloud.authn.core.Authority;
 import com.financial.cloud.authn.support.AuthorizationUtils;
 import com.financial.cloud.enums.error.UsersBusinessCode;
@@ -90,11 +91,20 @@ public final class ProductRoles {
     }
 
     private static boolean hasAny(Set<String> wanted) {
-        SignedPrincipal principal = AuthorizationUtils.getPrincipal();
-        if (principal == null || principal.getAuthorities() == null) {
+        AuthAuthentication authentication = AuthorizationUtils.getAuthentication();
+        Collection<? extends Authority> authorities = null;
+        if (authentication != null && authentication.getAuthorities() != null
+                && !authentication.getAuthorities().isEmpty()) {
+            authorities = authentication.getAuthorities();
+        } else {
+            SignedPrincipal principal = AuthorizationUtils.getPrincipal();
+            if (principal != null) {
+                authorities = principal.getAuthorities();
+            }
+        }
+        if (authorities == null || authorities.isEmpty()) {
             return false;
         }
-        Collection<? extends Authority> authorities = principal.getAuthorities();
         for (Authority authority : authorities) {
             if (authority != null && wanted.contains(authority.getAuthority())) {
                 return true;

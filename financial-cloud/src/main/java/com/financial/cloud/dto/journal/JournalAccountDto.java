@@ -36,6 +36,11 @@ public class JournalAccountDto {
 	 * 账户余额
 	 */
 	BigDecimal balance;
+
+	/**
+	 * 状态:1-启用;0-禁用
+	 */
+	Integer status;
 	
 	String description;
 }

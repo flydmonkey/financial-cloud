@@ -84,6 +84,7 @@ public abstract class AbstractAuthenticationProvider {
         //读取用户授权角色
         List<Authority> grantedAuthoritys = authenticationRealm.grantAuthority(userInfo);
         principal.setAuthenticated(true);
+        principal.setGrantedAuthority(grantedAuthoritys);
         principal.setStyle(session.getStyle());
         //判断管理员角色
         for (Authority adminAuthority : ConstsRoles.grantedAdminAuthoritys) {

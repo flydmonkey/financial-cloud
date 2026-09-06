@@ -22,6 +22,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.SignedPrincipal;
 import com.financial.cloud.authn.annotation.CurrentUser;
+import com.financial.cloud.authn.core.AuthAuthentication;
+import com.financial.cloud.authn.core.Authority;
 import com.financial.cloud.authn.session.Session;
 import com.financial.cloud.authn.session.SessionManager;
 import com.financial.cloud.authn.support.AuthorizationUtils;
@@ -42,7 +44,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.MediaType;
-import com.financial.cloud.authn.core.AuthAuthentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -121,11 +122,13 @@ public class UserInfoController {
 		}
 		principal.setBookId(bookId);
 		principal.setUserInfo(currentUser);
+		List<Authority> authorities = loginService.grantAuthority(currentUser);
+		principal.setGrantedAuthority(authorities);
 		AuthAuthentication authenticationToken =
                 AuthAuthentication.authenticated(
                 		principal,
                         null,
-                        loginService.grantAuthority(currentUser)
+                        authorities
                 );
 		AuthorizationUtils.setAuthentication(request, authenticationToken);
 		Session session = sessionManager.get(currentUser.getSessionId());

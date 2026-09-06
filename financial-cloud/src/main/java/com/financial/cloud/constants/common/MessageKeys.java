@@ -174,6 +174,12 @@ public final class MessageKeys {
 
     public static final class Journal {
         public static final String INSUFFICIENT_BALANCE = "journal.error.insufficient_balance";
+        public static final String VOUCHER_ALREADY_LINKED = "journal.error.voucher_already_linked";
+        public static final String OPENING_CANNOT_GENERATE = "journal.error.opening_cannot_generate";
+        public static final String SUBJECT_REQUIRED = "journal.error.subject_required";
+        public static final String SUBJECT_NOT_FOUND = "journal.error.subject_not_found";
+        public static final String ENTRY_LINKED_LOCKED = "journal.error.entry_linked_locked";
+        public static final String SUBJECT_SAME_AS_FUND = "journal.error.subject_same_as_fund";
 
         private Journal() {
         }

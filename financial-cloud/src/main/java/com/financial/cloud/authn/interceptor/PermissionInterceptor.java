@@ -50,6 +50,7 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 		if (userInfo != null) {
 			List<Authority> authorities = loginService.grantAuthority(userInfo);
 			principal.setAuthenticated(true);
+			principal.setGrantedAuthority(authorities);
 			AuthAuthentication authenticationToken =
 					AuthAuthentication.authenticated(principal, null, authorities);
 			AuthorizationUtils.setAuthentication(request, authenticationToken);

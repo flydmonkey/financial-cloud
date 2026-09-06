@@ -8,6 +8,7 @@ test.describe('journal module', () => {
         const endpoints = [
             `/api/journal/account/fetch?pageNumber=1&pageSize=10`,
             `/api/journal/entry/fetch?pageNumber=1&pageSize=10`,
+            `/api/journal/entry/fetch?pageNumber=1&pageSize=10&remark=test`,
             `/api/journal/summary/fetch?pageNumber=1&pageSize=10`,
         ]
 

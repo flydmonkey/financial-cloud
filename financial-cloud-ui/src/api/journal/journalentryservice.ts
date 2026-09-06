@@ -36,8 +36,9 @@ export function del(id : any): any {
     id = [id]
   }
   return request({
-    url: '/journal/entry/delete?listIds=' + id.join(','),
-    method: 'delete'
+    url: '/journal/entry/delete',
+    method: 'delete',
+    data: { listIds: id }
   })
 }
 

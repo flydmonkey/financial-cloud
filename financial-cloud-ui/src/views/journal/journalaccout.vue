@@ -113,8 +113,9 @@
           prop="status"
         >
           <template #default="scope">
-            <span v-if="scope.row.status == 1"><el-icon color="green"><SuccessFilled class="success" /></el-icon></span>
-            <span v-if="scope.row.status == 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
+            <span v-if="scope.row.status === 1 || scope.row.status === '1'"><el-icon color="green"><SuccessFilled class="success" /></el-icon></span>
+            <span v-else-if="scope.row.status === 0 || scope.row.status === '0'"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
+            <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -202,22 +203,22 @@
         <el-form-item
           :label="$t('jbx.journalaccout.subjectId')"
           prop="subjectId"
+          required
         >
-          <el-input
+          <el-tree-select
             v-model="form.subjectId"
-            placeholder=""
+            :data="subjectOptions"
+            :props="subjectTreeProps"
+            check-strictly
+            filterable
+            clearable
+            value-key="id"
+            style="width: 100%"
+            placeholder="请选择科目"
           />
         </el-form-item>
         <el-form-item
-          :label="$t('jbx.journalaccout.currency')"
-          prop="currency"
-        >
-          <el-input
-            v-model="form.currency"
-            placeholder=""
-          />
-        </el-form-item>
-        <el-form-item
+          v-if="form.category === 'deposit'"
           :label="$t('jbx.journalaccout.bankNo')"
           prop="bankNo"
         >
@@ -227,20 +228,12 @@
           />
         </el-form-item>
         <el-form-item
+          v-if="form.category === 'deposit'"
           :label="$t('jbx.journalaccout.bank')"
           prop="bank"
         >
           <el-input
             v-model="form.bank"
-            placeholder=""
-          />
-        </el-form-item>
-        <el-form-item
-          :label="$t('jbx.text.sortIndex')"
-          prop="sortIndex"
-        >
-          <el-input-number
-            v-model="form.sortIndex"
             placeholder=""
           />
         </el-form-item>
@@ -297,11 +290,14 @@ import {h} from 'vue'
 import type {VNode} from 'vue'
 import {useI18n} from "vue-i18n";
 import {formatAmount} from "@/utils"
+import booksSetStore from "@/store/modules/bookStore";
+import {getTree} from "@/api/standard/standard-subject";
 
 const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const queryRef = ref<InstanceType<typeof ElForm> | null>(null);
 const {t} = useI18n()
+const currBookStore = booksSetStore()
 
 const list: any = ref<any>([]);
 const open: any = ref(false);
@@ -313,6 +309,12 @@ const multiple: any = ref(true);
 const total: any = ref(0);
 const title: any = ref("");
 const accountAllBalance: any = ref(0);
+const subjectOptions: any = ref<any[]>([]);
+const subjectTreeProps: any = ref({
+  value: 'id',
+  children: 'children',
+  label: 'name',
+})
 
 const {journalAccout_category_types}
     = proxy?.useDict("journalAccout_category_types");
@@ -323,7 +325,8 @@ const data: any = reactive({
     scanCode: 'false',
     display: 'false',
     sortIndex: 1,
-    status: 1
+    status: 1,
+    subjectId: undefined
   },
   queryParams: {
     pageNumber: 1,
@@ -331,15 +334,32 @@ const data: any = reactive({
     providerName: undefined
   },
   rules: {
-    icon: [{required: true, message: 'Not empty', trigger: "blur"}],
-    provider: [{required: true, message: 'Not empty', trigger: "blur"}],
-    providerName: [{required: true, message: 'Not empty', trigger: "blur"}],
-    clientId: [{required: true, message: 'Not empty', trigger: "blur"}],
-    clientSecret: [{required: true, message: 'Not empty', trigger: "blur"}]
+    category: [{required: true, message: '请选择账户类型', trigger: "change"}],
+    subjectId: [{required: true, message: '请选择科目', trigger: "change"}],
   },
 });
 
 const {queryParams, form, rules} = toRefs(data);
+
+watch(
+  () => form.value.category,
+  (category: string) => {
+    if (category === 'cash') {
+      form.value.bankNo = undefined;
+      form.value.bank = undefined;
+    }
+  }
+);
+
+function getSubjectTree(): any {
+  if (!currBookStore.bookId) {
+    subjectOptions.value = [];
+    return;
+  }
+  getTree({bookId: currBookStore.bookId}).then((response: { data: any[] }) => {
+    subjectOptions.value = response.data || [];
+  });
+}
 
 /** 分页列表 */
 function getList(): any {
@@ -410,7 +430,9 @@ function reset(): any {
     scanCode: 'false',
     display: 'false',
     sortIndex: 1,
-    status: 1
+    status: 1,
+    subjectId: undefined,
+    currency: '人民币'
   };
   formRef.value?.clearValidate();
 }
@@ -418,6 +440,7 @@ function reset(): any {
 /** 添加分组 */
 function handleAdd(): any {
   reset();
+  getSubjectTree();
   open.value = true;
   title.value = t('jbx.text.add');
 }
@@ -426,6 +449,7 @@ function handleAdd(): any {
 function handleUpdate(row: any): any {
   reset();
   const id: any = row.id || ids.value;
+  getSubjectTree();
   get(id).then((res: any) => {
     form.value = res.data;
     open.value = true;
@@ -438,14 +462,20 @@ function handleUpdate(row: any): any {
 function submitForm(): any {
   formRef?.value?.validate((valid: any) => {
     if (valid) {
-      if (form.value.id != undefined) {
-        update(form.value).then((response: any) => {
+      const payload = {...form.value};
+      if (payload.category === 'cash') {
+        payload.bankNo = undefined;
+        payload.bank = undefined;
+      }
+      payload.currency = payload.currency || '人民币';
+      if (payload.id != undefined) {
+        update(payload).then((response: any) => {
           modal.msgSuccess(t('jbx.alert.operate.success'));
           open.value = false;
           getList();
         });
       } else {
-        add(form.value).then((response: any) => {
+        add(payload).then((response: any) => {
           modal.msgSuccess(t('jbx.alert.operate.success'));
           open.value = false;
           getList();

@@ -18,6 +18,7 @@
             type="month"
             value-format="YYYY-MM"
             style="width: 130px"
+            :disabled-date="disabledPeriodDate"
             @keyup.enter.native="handleQuery"
           />
         </el-form-item>
@@ -188,6 +189,7 @@
             placeholder=""
             type="month"
             value-format="YYYY-MM"
+            :disabled-date="disabledPeriodDate"
           />
         </el-form-item>
       </el-form>
@@ -211,18 +213,20 @@
 <script setup name="SecuritySocialsprovider" lang="ts">
 import {ElForm} from "element-plus";
 import dayjs from 'dayjs'
-import {ref, getCurrentInstance, reactive, toRefs} from "vue";
+import {ref, getCurrentInstance, reactive, toRefs, watch} from "vue";
 import modal from "@/plugins/modal";
 import * as journalSummaryService from "@/api/journal/journalsummaryservice";
 import {formatAmount} from "@/utils"
 import {useI18n} from "vue-i18n";
 import {h} from 'vue'
 import type {VNode} from 'vue'
+import booksSetStore from "@/store/modules/bookStore";
 
 const proxy: any = getCurrentInstance()!.proxy;
 const formRef = ref<InstanceType<typeof ElForm> | null>(null);
 const queryRef = ref<InstanceType<typeof ElForm> | null>(null);
 const {t} = useI18n()
+const currBookStore = booksSetStore()
 
 const list: any = ref<any>([]);
 const open: any = ref(false);
@@ -235,6 +239,26 @@ const total: any = ref(0);
 const title: any = ref("");
 let tableSummary: any = ref([]);
 
+function defaultPeriod(): string {
+  return currBookStore.termCurrent || dayjs().format("YYYY-MM");
+}
+
+function disabledPeriodDate(time: Date): boolean {
+  const term = currBookStore.termCurrent;
+  const start = currBookStore.termStart;
+  if (!term) {
+    return false;
+  }
+  const ym = dayjs(time).format("YYYY-MM");
+  if (ym > term) {
+    return true;
+  }
+  if (start && ym < start) {
+    return true;
+  }
+  return false;
+}
+
 const data: any = reactive({
   form: {
     id: undefined,
@@ -246,22 +270,28 @@ const data: any = reactive({
   queryParams: {
     pageNumber: 1,
     pageSize: 10,
-    yearPeriodPicker: dayjs(new Date()).format("YYYY-MM"),
+    yearPeriodPicker: undefined,
     providerName: undefined
   },
   rules: {
-    icon: [{required: true, message: 'Not empty', trigger: "blur"}],
-    provider: [{required: true, message: 'Not empty', trigger: "blur"}],
-    providerName: [{required: true, message: 'Not empty', trigger: "blur"}],
-    clientId: [{required: true, message: 'Not empty', trigger: "blur"}],
-    clientSecret: [{required: true, message: 'Not empty', trigger: "blur"}]
+    yearPeriodPicker: [{required: true, message: '请选择期间', trigger: "change"}]
   },
 });
 
 const {queryParams, form, rules} = toRefs(data);
 
+watch(() => currBookStore.termCurrent, (term) => {
+  if (term && !queryParams.value.yearPeriodPicker) {
+    queryParams.value.yearPeriodPicker = term;
+    getList();
+  }
+}, {immediate: true});
+
 /** 分页列表 */
 function getList(): any {
+  if (!queryParams.value.yearPeriodPicker) {
+    queryParams.value.yearPeriodPicker = defaultPeriod();
+  }
   loading.value = true;
   journalSummaryService.fetch(queryParams.value).then((res: any) => {
     loading.value = false;
@@ -282,8 +312,8 @@ function handleQuery(): any {
 
 /** 重置按钮操作 */
 function resetQuery(): any {
-  queryRef?.value?.resetFields();
-  ;
+  queryParams.value.yearPeriodPicker = defaultPeriod();
+  queryParams.value.pageNumber = 1;
   handleQuery();
 }
 
@@ -312,7 +342,7 @@ function handleSelectionChange(selection: any): any {
 function reset(): any {
   form.value = {
     id: undefined,
-    yearPeriodPicker: dayjs(new Date()).format("YYYY-MM"),
+    yearPeriodPicker: defaultPeriod(),
     direction: "i",
     scanCode: 'false',
     display: 'false',
@@ -383,8 +413,6 @@ const getSummaries = () => {
 
   return sums
 }
-
-getList();
 
 </script>
 <style scoped>

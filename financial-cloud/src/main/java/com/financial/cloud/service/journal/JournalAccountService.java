@@ -38,6 +38,18 @@ public class JournalAccountService extends ServiceImpl<JournalAccountMapper, Jou
         BeanUtil.copyProperties(dto, account);
         //通过新增记录初始化
         account.setOpeningBalance(null);
+        if (account.getStatus() == null) {
+            account.setStatus(1);
+        }
+        if (account.getBalance() == null) {
+            account.setBalance(BigDecimal.ZERO);
+        }
+        if (account.getCurrency() == null || account.getCurrency().isBlank()) {
+            account.setCurrency("人民币");
+        }
+        if (account.getSortIndex() == null) {
+            account.setSortIndex(1);
+        }
         boolean saveResult = super.save(account);
         return saveResult ? new Message<>(Message.SUCCESS, "新增成功") : new Message<>(Message.FAIL, "新增失败");
     }
@@ -45,9 +57,19 @@ public class JournalAccountService extends ServiceImpl<JournalAccountMapper, Jou
     public Message<String> update(JournalAccountDto dto) {
         String id = dto.getId();
         JournalAccount account = super.getById(id);
+        Integer previousStatus = account.getStatus();
         BeanUtil.copyProperties(dto, account);
         //通过新增记录初始化
         account.setOpeningBalance(null);
+        if (account.getStatus() == null) {
+            account.setStatus(previousStatus != null ? previousStatus : 1);
+        }
+        if (account.getCurrency() == null || account.getCurrency().isBlank()) {
+            account.setCurrency("人民币");
+        }
+        if (account.getSortIndex() == null) {
+            account.setSortIndex(1);
+        }
         boolean result = super.updateById(account);
         return result ? new Message<>(Message.SUCCESS, "修改成功") : new Message<>(Message.FAIL, "修改失败");
     }
@@ -64,6 +86,16 @@ public class JournalAccountService extends ServiceImpl<JournalAccountMapper, Jou
 	}
 	public int expenditure(String accId, BigDecimal expenditure) {
 		return this.getBaseMapper().expenditure(accId, expenditure);
+	}
+
+	/**
+	 * 绝对设置账户可用余额（流水重算后同步）。
+	 */
+	public boolean setBalance(String accId, BigDecimal balance) {
+		return this.lambdaUpdate()
+				.set(JournalAccount::getBalance, balance)
+				.eq(JournalAccount::getId, accId)
+				.update();
 	}
 
 	/**

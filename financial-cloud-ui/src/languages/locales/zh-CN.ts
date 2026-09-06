@@ -315,15 +315,22 @@ export default {
         "cash":"现金"
       },
       "remark": "摘要",
+      "remarkRequired": "请输入摘要",
       "tradeDate": "交易日期",
-      "accId": "账户ID",
+      "tradeDateRequired": "请选择交易日期",
+      "accId": "账户",
+      "accIdRequired": "请选择账户",
       "accCode": "账户编码",
       "accName": "账户名称",
       "subjectId": "对方科目",
+      "subjectIdRequired": "请选择对方科目",
       "voucherId": "凭证编码",
       "direction":"方向",
+      "directionRequired":"请选择方向",
       "income":"收入",
+      "incomeRequired":"请输入收入金额",
       "expenditure":"支出",
+      "expenditureRequired":"请输入支出金额",
       "balance": "余额"
     },
     "journalsummary": {

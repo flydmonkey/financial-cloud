@@ -2,10 +2,12 @@ package com.financial.cloud.controller.voucher;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
+import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
+import com.financial.cloud.dto.voucher.VoucherImportResultVo;
 import com.financial.cloud.dto.voucher.VoucherItemPageDto;
 import com.financial.cloud.dto.voucher.VoucherPageDto;
 import com.financial.cloud.dto.voucher.VoucherSuccessiveQueryDto;
@@ -183,5 +185,19 @@ public class VoucherController {
                        @CurrentUser UserInfo userInfo) throws IOException {
         dto.setBookId(userInfo.getBookId());
         voucherService.export(dto, response);
+    }
+
+    @GetMapping("/import-template")
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        voucherService.downloadImportTemplate(response);
+    }
+
+    @PostMapping("/import")
+    public Message<VoucherImportResultVo> importExcel(
+            @ModelAttribute("excelImportFile") ExcelImport excelImportFile,
+            @RequestParam(value = "conflictMode", required = false) String conflictMode,
+            @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
+        return voucherService.importFromExcel(userInfo.getBookId(), excelImportFile, conflictMode);
     }
 }

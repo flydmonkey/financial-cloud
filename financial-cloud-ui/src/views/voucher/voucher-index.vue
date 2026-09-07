@@ -74,6 +74,12 @@
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item @click="handleDownloadTemplate">
+                  下载模板
+                </el-dropdown-item>
+                <el-dropdown-item @click="importVisible = true">
+                  导入
+                </el-dropdown-item>
                 <el-dropdown-item @click="handleExport">
                   导出
                 </el-dropdown-item>
@@ -82,6 +88,12 @@
                 </el-dropdown-item>
                 <el-dropdown-item @click="handleShowVoucherSuccessive">
                   凭证整理
+                </el-dropdown-item>
+                <el-dropdown-item
+                  :disabled="ids.length === 0"
+                  @click="handleSubmit()"
+                >
+                  提交审核
                 </el-dropdown-item>
                 <el-dropdown-item
                   divided
@@ -383,6 +395,123 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <ImportUpload
+      :import-visible="importVisible"
+      :http-request="handleImportUpload"
+      @cancel="importVisible = false"
+    />
+
+    <el-dialog
+      v-model="conflictDialog.visible"
+      title="凭证字号冲突"
+      width="640px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="!conflictDialog.loading"
+      :show-close="!conflictDialog.loading"
+      @closed="clearPendingImport"
+    >
+      <el-alert
+        title="以下凭证字号已存在，请选择处理方式"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <el-table
+        border
+        :data="conflictDialog.conflicts"
+        max-height="420"
+        style="margin-top: 16px"
+      >
+        <el-table-column
+          prop="wordLabel"
+          label="字号"
+          min-width="160"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            {{ row.wordLabel || `${row.wordHead || ''}-${row.wordNum ?? ''}` }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="existingStatus"
+          label="状态"
+          width="140"
+          align="center"
+        />
+        <el-table-column
+          prop="row"
+          label="行号"
+          width="90"
+          align="center"
+        />
+      </el-table>
+      <template #footer>
+        <el-button
+          :disabled="conflictDialog.loading"
+          @click="cancelConflictImport"
+        >
+          取消
+        </el-button>
+        <el-button
+          :loading="conflictDialog.loading"
+          @click="retryImport('skip')"
+        >
+          跳过冲突
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="conflictDialog.loading"
+          @click="retryImport('overwrite')"
+        >
+          覆盖
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="importResult.visible"
+      title="导入结果"
+      width="640px"
+    >
+      <p class="import-summary">
+        成功 {{ importResult.success }} 条，失败 {{ importResult.failed }} 条
+      </p>
+      <el-table
+        v-if="importResult.errors.length"
+        border
+        :data="importResult.errors"
+        max-height="420"
+      >
+        <el-table-column
+          prop="row"
+          label="行号"
+          width="80"
+          align="center"
+        />
+        <el-table-column
+          prop="code"
+          label="字号"
+          width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="message"
+          label="失败原因"
+          min-width="240"
+          show-overflow-tooltip
+        />
+      </el-table>
+      <el-empty
+        v-else
+        description="全部导入成功"
+      />
+      <template #footer>
+        <el-button @click="importResult.visible = false">
+          关闭
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -393,10 +522,12 @@ import {useRouter} from "vue-router";
 import {getVoucherStatusDesc} from "@/utils/enums/VoucherStatusEnum"
 import {parseTime} from "@/utils/financialCloud";
 import {formatAmount} from "@/utils";
-import {reactive, computed, ref} from "vue";
+import {reactive, computed, ref, getCurrentInstance} from "vue";
 import {ArrowDown} from "@element-plus/icons-vue";
 import bookStore from "@/store/modules/bookStore";
 import {downloadData} from "@/utils/index"
+import ImportUpload from "@/components/ImportUpload/index.vue"
+import modal from "@/plugins/modal"
 
 const currBookStore = bookStore()
 const router = useRouter();
@@ -412,6 +543,19 @@ const ids = ref([]);
 const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
+const importVisible = ref(false);
+const pendingImportFile = ref(null);
+const conflictDialog = reactive({
+  visible: false,
+  loading: false,
+  conflicts: []
+});
+const importResult = reactive({
+  visible: false,
+  success: 0,
+  failed: 0,
+  errors: []
+});
 const dialogVoucherSuccessive = reactive({
   visible: false,
   loading: false,
@@ -902,6 +1046,76 @@ function handleExport() {
   voucherApis.exportVouchers(queryParams.value).then(data => {
     downloadData(data, "凭证 " + parseTime(new Date()) + ".xlsx")
   })
+}
+
+function handleDownloadTemplate() {
+  voucherApis.downloadVoucherImportTemplate().then((blob) => {
+    downloadData(blob, "凭证导入模板.xlsx")
+  })
+}
+
+function showImportResponse(res, file) {
+  if (res.code !== 0) {
+    modal.msgError(res.message || "导入失败")
+    return
+  }
+
+  const result = res.data || {}
+  if (result.needsConflictDecision) {
+    pendingImportFile.value = file || pendingImportFile.value
+    conflictDialog.conflicts = result.conflicts || []
+    conflictDialog.visible = true
+    return
+  }
+
+  conflictDialog.visible = false
+  pendingImportFile.value = null
+  importResult.success = result.success || 0
+  importResult.failed = result.failed || 0
+  importResult.errors = result.errors || []
+  if (importResult.failed > 0) {
+    importResult.visible = true
+  } else {
+    modal.msgSuccess(res.message || `导入完成，成功 ${importResult.success} 条`)
+  }
+  getList()
+}
+
+function handleImportUpload(item) {
+  const formData = new FormData()
+  formData.append("excelFile", item.file)
+  voucherApis.importVouchers(formData).then((res) => {
+    importVisible.value = false
+    showImportResponse(res, item.file)
+  })
+}
+
+function retryImport(mode) {
+  if (!pendingImportFile.value || conflictDialog.loading) {
+    return
+  }
+  const formData = new FormData()
+  formData.append("excelFile", pendingImportFile.value)
+  formData.append("conflictMode", mode)
+  conflictDialog.loading = true
+  voucherApis.importVouchers(formData).then((res) => {
+    showImportResponse(res, pendingImportFile.value)
+  }).finally(() => {
+    conflictDialog.loading = false
+  })
+}
+
+function clearPendingImport() {
+  if (!conflictDialog.loading) {
+    pendingImportFile.value = null
+    conflictDialog.conflicts = []
+  }
+}
+
+function cancelConflictImport() {
+  pendingImportFile.value = null
+  conflictDialog.conflicts = []
+  conflictDialog.visible = false
 }
 
 function isEditable(date) {

@@ -42,6 +42,54 @@ export function exportVouchers(query: any): any {
     })
 }
 
+export function downloadVoucherImportTemplate(): any {
+    return request({
+        url: '/voucher/import-template',
+        method: 'get',
+        responseType: 'blob'
+    })
+}
+
+export type VoucherImportConflictMode = 'overwrite' | 'skip'
+
+export interface VoucherImportConflict {
+    row: number
+    wordHead: string
+    wordNum: number
+    wordLabel: string
+    existingStatus: string
+    existingId: string
+    posted: boolean
+}
+
+export interface VoucherImportRowError {
+    row: number
+    code: string
+    message: string
+}
+
+export interface VoucherImportResult {
+    success: number
+    failed: number
+    skipped: number
+    errors: VoucherImportRowError[]
+    needsConflictDecision: boolean
+    conflicts: VoucherImportConflict[]
+}
+
+export function importVouchers(data: FormData): Promise<{
+    code: number
+    message?: string
+    data?: VoucherImportResult
+}> {
+    return request({
+        url: '/voucher/import',
+        method: 'post',
+        data,
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+}
+
 export function deleteBatch(ids: any): any {
     return request({
         url: '/voucher/delete/' + ids,

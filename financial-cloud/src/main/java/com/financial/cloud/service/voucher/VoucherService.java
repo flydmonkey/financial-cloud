@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.book.BookSubject;
@@ -39,26 +40,35 @@ import com.financial.cloud.enums.voucher.VoucherSuccessiveMethodEnum;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
-import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.util.DateUtils;
+import com.financial.cloud.util.ExcelUtils;
 import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.VoucherUtils;
 import com.financial.cloud.util.excel.ExcelExporter;
-import com.financial.cloud.util.excel.ExcelParams;
-import com.financial.cloud.util.excel.ExportTemplateFiles;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,6 +76,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
+
+    /** Shared import/export column contract (one row per journal line). */
+    static final String[] VOUCHER_IO_HEADERS = {
+            "凭证日期", "凭证字头", "凭证字号", "附单据数", "备注", "摘要", "科目编码", "借方金额", "贷方金额"
+    };
+    static final String SHEET_INSTRUCTIONS = "填写说明";
+    static final String SHEET_DATA = "凭证";
+    static final int[] COLUMN_WIDTHS = {14, 10, 10, 10, 20, 28, 14, 14, 14};
+    private static final String DEFAULT_WORD_HEAD = "记";
 
     private final IdentifierGenerator identifierGenerator;
     private final VoucherItemMapper voucherItemMapper;
@@ -905,21 +924,638 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         ) : Message.failed("操作失败");
     }
     public void export(VoucherPageDto dto, HttpServletResponse response) throws IOException {
-        List<VoucherVo> data = pageList(dto).getData().getRecords();
+        List<VoucherVo> data = listAllMatching(dto);
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet(SHEET_DATA);
+            Row header = sheet.createRow(0);
+            for (int i = 0; i < VOUCHER_IO_HEADERS.length; i++) {
+                header.createCell(i).setCellValue(VOUCHER_IO_HEADERS[i]);
+            }
+            styleHeaderRow(workbook, header);
+            sheet.createFreezePane(0, 1);
+            applyColumnWidths(sheet);
+            CellStyle amountStyle = createAmountStyle(workbook, null);
+            int rowIdx = 1;
+            SimpleDateFormat dateFmt = new SimpleDateFormat(DateUtils.FORMAT_DATE_DEFAULT);
+            for (VoucherVo voucher : data) {
+                List<VoucherItemVo> items = voucher.getItems();
+                if (CollectionUtils.isEmpty(items)) {
+                    Row row = sheet.createRow(rowIdx++);
+                    writeExportHeaderCells(row, voucher, dateFmt);
+                    continue;
+                }
+                for (int i = 0; i < items.size(); i++) {
+                    VoucherItemVo item = items.get(i);
+                    Row row = sheet.createRow(rowIdx++);
+                    if (i == 0) {
+                        writeExportHeaderCells(row, voucher, dateFmt);
+                    }
+                    row.createCell(5).setCellValue(StringUtils.defaultString(item.getSummary()));
+                    row.createCell(6).setCellValue(StringUtils.defaultString(item.getSubjectCode()));
+                    setAmountCell(row, 7, item.getDebitAmount(), amountStyle);
+                    setAmountCell(row, 8, item.getCreditAmount(), amountStyle);
+                }
+            }
+            response.setContentType(ExcelExporter.APPLICATION_MS_EXCEL);
+            response.setHeader("Content-Disposition", "attachment; filename="
+                    + URLEncoder.encode("凭证.xlsx", StandardCharsets.UTF_8));
+            workbook.write(response.getOutputStream());
+            response.getOutputStream().flush();
+        }
+    }
 
-        File templateSource = ExportTemplateFiles.copyToTemp("static/export-template/template-voucher.xlsx", "template-voucher_");
-        ExcelParams<List<VoucherVo>> paramsObj = ExcelParams.<List<VoucherVo>>builder()
-                .httpResponse(response)
-                .dataModel(data)
-//                .outputDirectory("C:\\Users\\Administrator\\Desktop\\")
-//                .outputFileName("voucher_exported_temp.xlsx")
-                .enableMergeCells(true)
-                .autoSizeColumns(false)
-                .recalculateFormulas(true)
-                .templateFilePath(templateSource.getAbsolutePath())
+    public void downloadImportTemplate(HttpServletResponse response) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            writeInstructionSheet(workbook);
+            Sheet sheet = workbook.createSheet(SHEET_DATA);
+            Row header = sheet.createRow(0);
+            for (int i = 0; i < VOUCHER_IO_HEADERS.length; i++) {
+                header.createCell(i).setCellValue(VOUCHER_IO_HEADERS[i]);
+            }
+            styleHeaderRow(workbook, header);
+            sheet.createFreezePane(0, 1);
+            applyColumnWidths(sheet);
+            CellStyle sampleStyle = createFillStyle(workbook, IndexedColors.LIGHT_YELLOW);
+            CellStyle sampleAmountStyle = createAmountStyle(workbook, IndexedColors.LIGHT_YELLOW);
+            Row sampleDebit = sheet.createRow(1);
+            for (int i = 0; i < VOUCHER_IO_HEADERS.length; i++) {
+                sampleDebit.createCell(i).setCellStyle(sampleStyle);
+            }
+            sampleDebit.getCell(0).setCellValue("2026-01-15");
+            sampleDebit.getCell(1).setCellValue(DEFAULT_WORD_HEAD);
+            sampleDebit.getCell(2).setCellValue(1);
+            sampleDebit.getCell(3).setCellValue(0);
+            sampleDebit.getCell(4).setCellValue("");
+            sampleDebit.getCell(5).setCellValue("示例摘要");
+            sampleDebit.getCell(6).setCellValue("1001");
+            sampleDebit.getCell(7).setCellValue(100);
+            sampleDebit.getCell(7).setCellStyle(sampleAmountStyle);
+            sampleDebit.getCell(8).setCellValue(0);
+            sampleDebit.getCell(8).setCellStyle(sampleAmountStyle);
+            Row sampleCredit = sheet.createRow(2);
+            for (int i = 0; i < VOUCHER_IO_HEADERS.length; i++) {
+                sampleCredit.createCell(i).setCellStyle(sampleStyle);
+            }
+            sampleCredit.getCell(5).setCellValue("示例摘要");
+            sampleCredit.getCell(6).setCellValue("1002");
+            sampleCredit.getCell(7).setCellValue(0);
+            sampleCredit.getCell(7).setCellStyle(sampleAmountStyle);
+            sampleCredit.getCell(8).setCellValue(100);
+            sampleCredit.getCell(8).setCellStyle(sampleAmountStyle);
+            response.setContentType(ExcelExporter.APPLICATION_MS_EXCEL);
+            response.setHeader("Content-Disposition", "attachment; filename="
+                    + URLEncoder.encode("凭证导入模板.xlsx", StandardCharsets.UTF_8));
+            workbook.write(response.getOutputStream());
+            response.getOutputStream().flush();
+        }
+    }
+
+    public Message<VoucherImportResultVo> importFromExcel(
+            String bookId, ExcelImport excelImportFile, String conflictMode) {
+        VoucherImportResultVo result = new VoucherImportResultVo();
+        if (excelImportFile == null || !excelImportFile.isExcelNotEmpty()) {
+            result.setFailed(1);
+            VoucherImportResultVo.RowError err = new VoucherImportResultVo.RowError();
+            err.setRow(0);
+            err.setMessage("请上传 Excel 文件");
+            result.getErrors().add(err);
+            return new Message<>(Message.FAIL, "导入失败", result);
+        }
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            result.setFailed(1);
+            addImportError(result, 0, "", "账套不存在");
+            return new Message<>(Message.FAIL, "导入失败", result);
+        }
+        Map<String, BookSubject> subjectByCode = new HashMap<>();
+        try {
+            Workbook workbook = excelImportFile.biuldWorkbook();
+            Sheet sheet = workbook.getSheet(SHEET_DATA);
+            if (sheet == null) {
+                sheet = workbook.getSheetAt(0);
+            }
+            if (isLegacyVoucherExportSheet(sheet)) {
+                addImportError(result, 1, "",
+                        "文件列格式不正确（疑似旧版导出）。请使用「下载模板」或重新「导出」后再导入");
+                excelImportFile.closeWorkbook();
+                return new Message<>(Message.FAIL, "导入失败：模板不匹配", result);
+            }
+            List<ImportLine> lines = readImportLines(sheet);
+            List<ImportGroup> groups = groupImportLines(lines);
+            if (groups.isEmpty()) {
+                addImportError(result, 0, "", "未识别到可导入的凭证行，请确认使用最新模板");
+                excelImportFile.closeWorkbook();
+                return new Message<>(Message.FAIL, "导入失败", result);
+            }
+            Map<ImportGroup, Voucher> existingByGroup = new IdentityHashMap<>();
+            boolean hasUnpostedConflict = false;
+            for (ImportGroup group : groups) {
+                Voucher existing = findImportConflict(bookId, group);
+                if (existing == null) {
+                    continue;
+                }
+                existingByGroup.put(group, existing);
+                if (!isPosted(existing)) {
+                    hasUnpostedConflict = true;
+                    result.getConflicts().add(toConflictItem(group, existing));
+                }
+            }
+            if (StringUtils.isBlank(conflictMode) && hasUnpostedConflict) {
+                result.setNeedsConflictDecision(true);
+                excelImportFile.closeWorkbook();
+                return new Message<>(Message.SUCCESS, "存在字号冲突，请选择处理方式。", result);
+            }
+            for (ImportGroup group : groups) {
+                try {
+                    Voucher existing = existingByGroup.get(group);
+                    if (isPosted(existing)) {
+                        addImportError(result, group.firstExcelRow, groupLabel(group),
+                                "字号已过账，不可覆盖。");
+                        continue;
+                    }
+                    if (existing != null && "skip".equalsIgnoreCase(StringUtils.trim(conflictMode))) {
+                        result.setSkipped(result.getSkipped() + 1);
+                        continue;
+                    }
+                    Message<String> saveMsg = saveImportGroup(
+                            book, subjectByCode, group, existing, conflictMode);
+                    if (saveMsg.getCode() != Message.SUCCESS) {
+                        addImportError(result, group.firstExcelRow, groupLabel(group),
+                                StringUtils.defaultIfBlank(saveMsg.getMessage(), "导入失败"));
+                    } else {
+                        result.setSuccess(result.getSuccess() + 1);
+                    }
+                } catch (Exception ex) {
+                    addImportError(result, group.firstExcelRow, groupLabel(group),
+                            StringUtils.defaultIfBlank(ex.getMessage(), "导入失败"));
+                }
+            }
+            excelImportFile.closeWorkbook();
+        } catch (Exception ex) {
+            addImportError(result, 0, "", StringUtils.defaultIfBlank(ex.getMessage(), "解析 Excel 失败"));
+            return new Message<>(Message.FAIL, "导入失败", result);
+        }
+        String msg = "导入完成：成功 " + result.getSuccess() + " 条，失败 " + result.getFailed()
+                + " 条，跳过 " + result.getSkipped() + " 条";
+        return new Message<>(Message.SUCCESS, msg, result);
+    }
+
+    private Voucher findImportConflict(String bookId, ImportGroup group) {
+        if (group.voucherDate == null || group.wordNum == null) {
+            return null;
+        }
+        String wordHead = StringUtils.defaultIfBlank(group.wordHead, DEFAULT_WORD_HEAD);
+        int year = Integer.parseInt(DateUtils.format(group.voucherDate, "yyyy"));
+        int month = Integer.parseInt(DateUtils.format(group.voucherDate, "MM"));
+        return baseMapper.selectOne(Wrappers.<Voucher>lambdaQuery()
+                .eq(Voucher::getBookId, bookId)
+                .eq(Voucher::getWordHead, wordHead)
+                .eq(Voucher::getVoucherYear, year)
+                .eq(Voucher::getVoucherMonth, month)
+                .eq(Voucher::getWordNum, group.wordNum)
+                .last("LIMIT 1"));
+    }
+
+    static boolean isPosted(Voucher voucher) {
+        return voucher != null && StringUtils.isNotBlank(voucher.getSenderId());
+    }
+
+    private static VoucherImportResultVo.ConflictItem toConflictItem(
+            ImportGroup group, Voucher existing) {
+        VoucherImportResultVo.ConflictItem item = new VoucherImportResultVo.ConflictItem();
+        String wordHead = StringUtils.defaultIfBlank(group.wordHead, DEFAULT_WORD_HEAD);
+        item.setRow(group.firstExcelRow);
+        item.setWordHead(wordHead);
+        item.setWordNum(group.wordNum);
+        item.setWordLabel(VoucherUtils.createWord(wordHead, group.wordNum));
+        item.setExistingStatus(existing.getStatus());
+        item.setExistingId(existing.getId());
+        item.setPosted(isPosted(existing));
+        return item;
+    }
+
+    /**
+     * Load all vouchers matching filters (ignores pageNumber/pageSize).
+     */
+    List<VoucherVo> listAllMatching(VoucherPageDto dto) {
+        LambdaQueryWrapper<Voucher> lqw = buildQueryWrapper(dto);
+        lqw.orderByAsc(Voucher::getVoucherDate, Voucher::getWordHead, Voucher::getWordNum, Voucher::getId);
+        List<Voucher> vouchers = baseMapper.selectList(lqw);
+        if (CollUtil.isEmpty(vouchers)) {
+            return List.of();
+        }
+        List<VoucherVo> vos = BeanUtil.copyToList(vouchers, VoucherVo.class);
+        vos.forEach(this::normalizeDisplayWord);
+        List<String> ids = vos.stream().map(VoucherVo::getId).toList();
+        Map<String, VoucherVo> loaded = loadVouchers(ids).vouchers();
+        for (VoucherVo v : vos) {
+            VoucherVo full = loaded.get(v.getId());
+            if (full != null) {
+                v.setItems(full.getItems());
+                v.setCreatedName(full.getCreatedName());
+                v.setWord(full.getWord());
+            } else {
+                v.setItems(List.of());
+            }
+        }
+        return vos;
+    }
+
+    private Message<String> saveImportGroup(Book book, Map<String, BookSubject> subjectByCode, ImportGroup group) {
+        return saveImportGroup(book, subjectByCode, group, null, null);
+    }
+
+    private Message<String> saveImportGroup(
+            Book book,
+            Map<String, BookSubject> subjectByCode,
+            ImportGroup group,
+            Voucher existing,
+            String conflictMode) {
+        if (group.voucherDate == null) {
+            return Message.failed("凭证日期不能为空");
+        }
+        Message<String> periodLock = rejectClosedPeriodWrite(VoucherChangeDto.builder()
+                .bookId(book.getId())
+                .voucherDate(group.voucherDate)
+                .build());
+        if (periodLock != null) {
+            return periodLock;
+        }
+        List<VoucherItemChangeDto> items = new ArrayList<>();
+        for (ImportLine line : group.lines) {
+            String code = StringUtils.trimToEmpty(line.subjectCode);
+            if (StringUtils.isBlank(code)) {
+                return Message.failed("科目编码不能为空");
+            }
+            BookSubject subject = resolveSubject(book.getId(), code, subjectByCode);
+            if (subject == null) {
+                return Message.failed("科目编码不存在：" + code);
+            }
+            items.add(VoucherItemChangeDto.builder()
+                    .summary(line.summary)
+                    .subjectId(subject.getId())
+                    .subjectCode(subject.getCode())
+                    .subjectName(subject.getCode() + "-" + subject.getName())
+                    .debitAmount(nz(line.debitAmount))
+                    .creditAmount(nz(line.creditAmount))
+                    .build());
+        }
+        Message<String> itemValidation = validateItemsForSave(items);
+        if (itemValidation.getCode() != Message.SUCCESS) {
+            return itemValidation;
+        }
+        String wordHead = StringUtils.defaultIfBlank(group.wordHead, DEFAULT_WORD_HEAD);
+        Integer wordNum = group.wordNum;
+        int year = Integer.parseInt(DateUtils.format(group.voucherDate, "yyyy"));
+        int month = Integer.parseInt(DateUtils.format(group.voucherDate, "MM"));
+        if (wordNum == null) {
+            Message<Integer> able = getAbleWordNum(book.getId(), wordHead, year, month);
+            wordNum = able.getData() == null ? 1 : able.getData();
+        }
+        VoucherChangeDto dto = VoucherChangeDto.builder()
+                .bookId(book.getId())
+                .companyName(StringUtils.defaultIfBlank(book.getCompanyName(), book.getName()))
+                .wordHead(wordHead)
+                .wordNum(wordNum)
+                .receiptNum(group.receiptNum == null ? 0 : group.receiptNum)
+                .voucherDate(group.voucherDate)
+                .remark(group.remark)
+                .status(VoucherStatusEnum.DRAFT.getValue())
+                .carryForward(YesNoEnum.n.name())
+                .items(items)
                 .build();
-        ExcelExporter.export(paramsObj);
-        if (templateSource.exists()) templateSource.delete();
+        // Force draft-only path: never carry audit/sender/manager from Excel
+        dto.setId(existing != null && "overwrite".equalsIgnoreCase(StringUtils.trim(conflictMode))
+                ? existing.getId() : null);
+        dto.setAuditMemberId(null);
+        dto.setAuditMemberName(null);
+        dto.setAuditDate(null);
+        dto.setSenderId(null);
+        dto.setSenderName(null);
+        dto.setSenderDate(null);
+        dto.setManagerId(null);
+        dto.setManagerName(null);
+        dto.setManagerDate(null);
+        if (dto.getId() == null) {
+            return save(dto);
+        }
+        Message<String> updateResult = update(dto);
+        if (updateResult.getCode() == Message.SUCCESS) {
+            clearImportWorkflowFields(dto.getId());
+        }
+        return updateResult;
+    }
+
+    private void clearImportWorkflowFields(String voucherId) {
+        baseMapper.update(null, Wrappers.<Voucher>lambdaUpdate()
+                .eq(Voucher::getId, voucherId)
+                .set(Voucher::getStatus, VoucherStatusEnum.DRAFT.getValue())
+                .set(Voucher::getAuditMemberId, null)
+                .set(Voucher::getAuditMemberName, null)
+                .set(Voucher::getAuditDate, null)
+                .set(Voucher::getSenderId, null)
+                .set(Voucher::getSenderName, null)
+                .set(Voucher::getSenderDate, null)
+                .set(Voucher::getManagerId, null)
+                .set(Voucher::getManagerName, null)
+                .set(Voucher::getManagerDate, null));
+    }
+
+    private BookSubject resolveSubject(String bookId, String code, Map<String, BookSubject> cache) {
+        if (cache.containsKey(code)) {
+            return cache.get(code);
+        }
+        BookSubject subject = bookSubjectService.selectSubject(bookId, code);
+        cache.put(code, subject);
+        return subject;
+    }
+
+    private static List<ImportLine> readImportLines(Sheet sheet) {
+        List<ImportLine> lines = new ArrayList<>();
+        int last = sheet.getLastRowNum();
+        for (int r = 0; r <= last; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null || isBlankImportRow(row) || isHeaderLikeRow(row)) {
+                continue;
+            }
+            ImportLine line = new ImportLine();
+            line.excelRow = r + 1;
+            line.dateRaw = StringUtils.trimToEmpty(getDateCellRaw(row, 0));
+            line.wordHead = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 1));
+            line.wordNumRaw = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 2));
+            line.receiptRaw = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 3));
+            line.remark = StringUtils.trimToNull(ExcelUtils.getValue(row, 4));
+            line.summary = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 5));
+            line.subjectCode = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 6));
+            line.debitAmount = parseDecimal(ExcelUtils.getValue(row, 7));
+            line.creditAmount = parseDecimal(ExcelUtils.getValue(row, 8));
+            lines.add(line);
+        }
+        return lines;
+    }
+
+    static boolean isLegacyVoucherExportSheet(Sheet sheet) {
+        int max = Math.min(2, sheet.getLastRowNum());
+        for (int r = 0; r <= max; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                continue;
+            }
+            String c0 = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 0));
+            String c1 = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 1));
+            if ("凭证字".equals(c0) || "账套ID".equals(c1) || "账套Id".equals(c1)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static boolean isHeaderLikeRow(Row row) {
+        String c0 = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 0));
+        String c1 = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 1));
+        if (VOUCHER_IO_HEADERS[0].equals(c0) || VOUCHER_IO_HEADERS[1].equals(c1)) {
+            return true;
+        }
+        return "凭证字".equals(c0) || "账套ID".equals(c1) || "账套Id".equals(c1);
+    }
+
+    static List<ImportGroup> groupImportLines(List<ImportLine> lines) {
+        List<ImportGroup> groups = new ArrayList<>();
+        ImportGroup current = null;
+        for (ImportLine line : lines) {
+            boolean startsGroup = StringUtils.isNotBlank(line.dateRaw)
+                    || StringUtils.isNotBlank(line.wordHead)
+                    || StringUtils.isNotBlank(line.wordNumRaw);
+            if (startsGroup || current == null) {
+                current = new ImportGroup();
+                current.firstExcelRow = line.excelRow;
+                current.voucherDate = parseDate(line.dateRaw);
+                current.wordHead = StringUtils.trimToNull(line.wordHead);
+                current.wordNum = parseInteger(line.wordNumRaw);
+                current.receiptNum = parseInteger(line.receiptRaw);
+                current.remark = line.remark;
+                groups.add(current);
+            }
+            current.lines.add(line);
+        }
+        return groups;
+    }
+
+    private static boolean isBlankImportRow(Row row) {
+        for (int i = 0; i < VOUCHER_IO_HEADERS.length; i++) {
+            if (StringUtils.isNotBlank(ExcelUtils.getValue(row, i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String getDateCellRaw(Row row, int col) {
+        org.apache.poi.ss.usermodel.Cell cell = row.getCell(col);
+        if (cell == null) {
+            return "";
+        }
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC
+                && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+            return new SimpleDateFormat(DateUtils.FORMAT_DATE_DEFAULT).format(cell.getDateCellValue());
+        }
+        Object value = cn.hutool.poi.excel.cell.CellUtil.getCellValue(cell);
+        if (value instanceof Date date) {
+            return new SimpleDateFormat(DateUtils.FORMAT_DATE_DEFAULT).format(date);
+        }
+        return StringUtils.trimToEmpty(cn.hutool.core.convert.Convert.toStr(value, ""));
+    }
+
+    private static void writeExportHeaderCells(Row row, VoucherVo voucher, SimpleDateFormat dateFmt) {
+        if (voucher.getVoucherDate() != null) {
+            row.createCell(0).setCellValue(dateFmt.format(voucher.getVoucherDate()));
+        } else {
+            row.createCell(0).setCellValue("");
+        }
+        row.createCell(1).setCellValue(StringUtils.defaultString(voucher.getWordHead()));
+        if (voucher.getWordNum() != null) {
+            row.createCell(2).setCellValue(voucher.getWordNum());
+        } else {
+            row.createCell(2).setCellValue("");
+        }
+        if (voucher.getReceiptNum() != null) {
+            row.createCell(3).setCellValue(voucher.getReceiptNum());
+        } else {
+            row.createCell(3).setCellValue(0);
+        }
+        row.createCell(4).setCellValue(StringUtils.defaultString(voucher.getRemark()));
+    }
+
+    private static void setAmountCell(Row row, int col, BigDecimal amount) {
+        if (amount == null) {
+            row.createCell(col).setCellValue("");
+        } else {
+            row.createCell(col).setCellValue(amount.doubleValue());
+        }
+    }
+
+    private static void setAmountCell(Row row, int col, BigDecimal amount, CellStyle style) {
+        setAmountCell(row, col, amount);
+        row.getCell(col).setCellStyle(style);
+    }
+
+    private static void styleHeaderRow(Workbook workbook, Row header) {
+        CellStyle style = createFillStyle(workbook, IndexedColors.GREY_25_PERCENT);
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        for (int i = 0; i < VOUCHER_IO_HEADERS.length; i++) {
+            header.getCell(i).setCellStyle(style);
+        }
+    }
+
+    private static void applyColumnWidths(Sheet sheet) {
+        for (int i = 0; i < COLUMN_WIDTHS.length; i++) {
+            sheet.setColumnWidth(i, COLUMN_WIDTHS[i] * 256);
+        }
+    }
+
+    private static void writeInstructionSheet(Workbook workbook) {
+        Sheet sheet = workbook.createSheet(SHEET_INSTRUCTIONS);
+        String[] lines = {
+                "凭证导入填写说明",
+                "• 列含义：凭证日期、凭证字头、凭证字号、附单据数、备注、摘要、科目编码、借方金额、贷方金额。",
+                "• 同一凭证有多条分录时，续行只填写摘要、科目编码及借贷金额，凭证基本信息留空。",
+                "• 凭证日期请使用 yyyy-MM-dd 格式。",
+                "• 科目编码必须是当前账套中已存在的科目编码。",
+                "• 凭证字号冲突时，导入界面可选择覆盖未过账凭证或跳过冲突；已过账凭证不可覆盖。",
+                "• “凭证”页中的黄色示例行可删除后再填写。"
+        };
+        CellStyle titleStyle = workbook.createCellStyle();
+        Font titleFont = workbook.createFont();
+        titleFont.setBold(true);
+        titleStyle.setFont(titleFont);
+        for (int i = 0; i < lines.length; i++) {
+            Row row = sheet.createRow(i);
+            row.createCell(0).setCellValue(lines[i]);
+            if (i == 0) {
+                row.getCell(0).setCellStyle(titleStyle);
+            }
+        }
+        sheet.setColumnWidth(0, 100 * 256);
+    }
+
+    private static CellStyle createFillStyle(Workbook workbook, IndexedColors fillColor) {
+        CellStyle style = workbook.createCellStyle();
+        style.setFillForegroundColor(fillColor.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return style;
+    }
+
+    private static CellStyle createAmountStyle(Workbook workbook, IndexedColors fillColor) {
+        CellStyle style = fillColor == null ? workbook.createCellStyle() : createFillStyle(workbook, fillColor);
+        style.setDataFormat(workbook.createDataFormat().getFormat("0.00"));
+        return style;
+    }
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
+    }
+
+    private static BigDecimal parseDecimal(String raw) {
+        String text = StringUtils.trimToEmpty(raw);
+        if (StringUtils.isBlank(text)) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(text.replace(",", ""));
+        } catch (Exception e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private static Integer parseInteger(String raw) {
+        String text = StringUtils.trimToEmpty(raw);
+        if (StringUtils.isBlank(text)) {
+            return null;
+        }
+        try {
+            return new BigDecimal(text.replace(",", "")).intValue();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static Date parseDate(String raw) {
+        String text = StringUtils.trimToEmpty(raw);
+        if (StringUtils.isBlank(text)) {
+            return null;
+        }
+        // Excel serial date (e.g. 45840 or 45840.0)
+        if (text.matches("\\d{5}(\\.\\d+)?")) {
+            try {
+                double serial = Double.parseDouble(text);
+                if (serial > 20000 && serial < 80000) {
+                    return org.apache.poi.ss.usermodel.DateUtil.getJavaDate(serial);
+                }
+            } catch (Exception ignored) {
+                // fall through
+            }
+        }
+        String[] patterns = {
+                DateUtils.FORMAT_DATE_DEFAULT,
+                "yyyy/MM/dd",
+                "yyyy-M-d",
+                "yyyy/M/d",
+                "yyyy年M月d日",
+                "EEE MMM dd HH:mm:ss zzz yyyy"
+        };
+        for (String pattern : patterns) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(pattern, pattern.startsWith("EEE")
+                        ? Locale.ENGLISH : Locale.CHINA);
+                sdf.setLenient(false);
+                return sdf.parse(text);
+            } catch (ParseException ignored) {
+                // try next
+            }
+        }
+        return null;
+    }
+
+    private static void addImportError(VoucherImportResultVo result, int row, String code, String message) {
+        result.setFailed(result.getFailed() + 1);
+        VoucherImportResultVo.RowError err = new VoucherImportResultVo.RowError();
+        err.setRow(row);
+        err.setCode(code);
+        err.setMessage(message);
+        result.getErrors().add(err);
+    }
+
+    private static String groupLabel(ImportGroup group) {
+        String head = StringUtils.defaultString(group.wordHead, DEFAULT_WORD_HEAD);
+        if (group.wordNum != null) {
+            return head + "-" + group.wordNum;
+        }
+        return head;
+    }
+
+    static final class ImportLine {
+        int excelRow;
+        String dateRaw;
+        String wordHead;
+        String wordNumRaw;
+        String receiptRaw;
+        String remark;
+        String summary;
+        String subjectCode;
+        BigDecimal debitAmount;
+        BigDecimal creditAmount;
+    }
+
+    static final class ImportGroup {
+        int firstExcelRow;
+        Date voucherDate;
+        String wordHead;
+        Integer wordNum;
+        Integer receiptNum;
+        String remark;
+        List<ImportLine> lines = new ArrayList<>();
     }
 
     /**

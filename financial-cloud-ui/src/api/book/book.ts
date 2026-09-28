@@ -62,3 +62,27 @@ export function setupBook(data: any): any {
     })
 }
 
+
+// 导出账套业务备份包（ZIP）
+export function exportBookBackup(bookId: string): any {
+    return request({
+        url: '/book/backup/export',
+        method: 'post',
+        params: {bookId},
+        responseType: 'blob',
+        silentError: true
+    })
+}
+
+// 上传备份包恢复为新账套
+export function restoreBookBackup(file: File): any {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request({
+        url: '/book/backup/restore',
+        method: 'post',
+        data: formData,
+        headers: {'Content-Type': 'multipart/form-data'},
+        timeout: 300000
+    })
+}

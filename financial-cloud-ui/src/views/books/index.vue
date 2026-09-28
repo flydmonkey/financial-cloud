@@ -43,6 +43,14 @@
         >
           {{ t('org.button.deleteBatch') }}
         </el-button>
+        <el-button
+          type="warning"
+          plain
+          icon="Upload"
+          @click="restoreOpen = true"
+        >
+          恢复备份
+        </el-button>
       </div>
       <el-table
         v-loading="loading"
@@ -152,6 +160,16 @@
                   成员
                 </el-button>
               </el-tooltip>
+              <el-tooltip content="导出账套业务备份包（ZIP）">
+                <el-button
+                  link
+                  type="warning"
+                  :loading="backupLoadingId === scope.row.id"
+                  @click="handleBackup(scope.row)"
+                >
+                  备份
+                </el-button>
+              </el-tooltip>
               <el-tooltip content="移除">
                 <el-button
                   link
@@ -189,6 +207,44 @@
       :book-name="membersBookName"
       @close="closeMembers"
     />
+    <el-dialog
+      v-model="restoreOpen"
+      title="恢复账套备份"
+      width="480px"
+      :close-on-click-modal="false"
+    >
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        title="上传账套备份包（ZIP），将恢复为一个新账套，不会影响现有账套数据。"
+      />
+      <div style="margin-top: 16px">
+        <el-upload
+          ref="restoreUploadRef"
+          :auto-upload="false"
+          :limit="1"
+          accept=".zip"
+          :on-change="onRestoreFileChange"
+          :on-remove="onRestoreFileRemove"
+          drag
+        >
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text">拖拽备份 ZIP 到这里，或 <em>点击选择文件</em></div>
+        </el-upload>
+      </div>
+      <template #footer>
+        <el-button @click="restoreOpen = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="!restoreFile"
+          :loading="restoreLoading"
+          @click="handleRestore"
+        >
+          开始恢复
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -199,10 +255,12 @@ import editForm from "./edit.vue";
 import membersDrawer from "./members.vue";
 import modal from "@/plugins/modal";
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
-import {listBooksSets, deleteBatch} from "@/api/book/book";
+import {listBooksSets, deleteBatch, exportBookBackup, restoreBookBackup} from "@/api/book/book";
 import {listStandardsAll} from "@/api/standard/standard";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import booksSetStore from "@/store/modules/bookStore";
+import {downloadData} from "@/utils";
+import {UploadFilled} from "@element-plus/icons-vue";
 
 const {t} = useI18n()
 
@@ -233,6 +291,70 @@ function closeMembers(): any {
   membersOpen.value = false;
   membersBookId.value = "";
   membersBookName.value = "";
+}
+
+// ---------- 账套备份与恢复 ----------
+const backupLoadingId: any = ref("");
+const restoreOpen: any = ref(false);
+const restoreLoading: any = ref(false);
+const restoreFile: any = ref<File | null>(null);
+const restoreUploadRef: any = ref(null);
+
+/** 导出备份包 */
+async function handleBackup(row: any): Promise<void> {
+  if (!isBookAdmin(row)) {
+    modal.msgWarning("仅账套管理员可导出备份");
+    return;
+  }
+  backupLoadingId.value = row.id;
+  try {
+    const blob = await exportBookBackup(row.id);
+    if (blob?.type?.includes("json")) {
+      const text = JSON.parse(await blob.text());
+      modal.msgError(text?.message || "备份导出失败");
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+    downloadData(blob, `账套备份_${row.name || row.id}_${stamp}.zip`);
+    modal.msgSuccess("备份包已导出");
+  } catch (error: any) {
+    modal.msgError(error?.response?.data?.message || error?.message || "备份导出失败");
+  } finally {
+    backupLoadingId.value = "";
+  }
+}
+
+function onRestoreFileChange(file: any): any {
+  restoreFile.value = file?.raw || null;
+}
+
+function onRestoreFileRemove(): any {
+  restoreFile.value = null;
+}
+
+/** 上传备份包并恢复为新账套 */
+async function handleRestore(): Promise<void> {
+  if (!restoreFile.value) {
+    return;
+  }
+  restoreLoading.value = true;
+  try {
+    const res: any = await restoreBookBackup(restoreFile.value);
+    if (res.code === 0) {
+      modal.msgSuccess(`已恢复为新账套「${res.data?.name || ""}」`);
+      restoreOpen.value = false;
+      restoreFile.value = null;
+      restoreUploadRef.value?.clearFiles();
+      getList();
+      booksSetStore().refreshData();
+    } else {
+      modal.msgError(res.message || "备份恢复失败");
+    }
+  } catch (error: any) {
+    modal.msgError(error?.response?.data?.message || error?.message || "备份恢复失败");
+  } finally {
+    restoreLoading.value = false;
+  }
 }
 const data: any = reactive({
   queryParams: {

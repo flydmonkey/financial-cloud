@@ -2,7 +2,6 @@ package com.financial.cloud.domain.journal;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -10,7 +9,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.financial.cloud.common.BaseEntity;
 
 import lombok.AllArgsConstructor;
@@ -19,52 +17,34 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * 银行对账单余额：按账户 + 期间登记银行对账单期末余额，用于余额调节表。
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("journal_entry")
+@TableName("journal_reconciliation")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class JournalEntry  extends BaseEntity implements Serializable {
+public class JournalReconciliation extends BaseEntity implements Serializable {
 
-	private static final long serialVersionUID = 7917671531089586327L;
+    private static final long serialVersionUID = 1L;
 
-	@TableId(type = IdType.ASSIGN_ID)
-    String id;
-	
-	String bookId;
-	String category;
-	
-	String remark;
-	
-	String accId;
-	
-	String accCode;
-	
-	String accName;
-	
-	String subjectId;
-	
-	String voucherId;
-	String direction;
-	
-	BigDecimal income;
-	
-	BigDecimal expenditure;
-	
-	BigDecimal balance;
-	
-	String description;
+    @TableId(type = IdType.ASSIGN_ID)
+    private String id;
 
-	/**
-	 * 银行对账标记：y已对账/n未对账
-	 */
-	String reconciled;
+    private String bookId;
 
-	@TableField(fill = FieldFill.INSERT)
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
-    Date tradeDate;
-	
+    private String accId;
+
+    /** 对账期间 yyyy-MM */
+    private String yearPeriod;
+
+    /** 银行对账单期末余额 */
+    private BigDecimal statementBalance;
+
+    private String remark;
+
     @TableField(fill = FieldFill.INSERT)
     @TableLogic(value = "n", delval = "y")
     private String deleted;

@@ -54,6 +54,8 @@ public final class BackupTableRegistry {
                             FkEdge.soft("subject_id", "book_subject"),
                             FkEdge.soft("voucher_id", "voucher")),
             BackupTableSpec.of("journal_summary"),
+            BackupTableSpec.of("journal_reconciliation")
+                    .fks(FkEdge.of("acc_id", "journal_account")),
             // 固定资产
             BackupTableSpec.of("asset_category")
                     .fks(FkEdge.soft("fixed_asset_subject_id", "book_subject"),

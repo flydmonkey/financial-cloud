@@ -45,7 +45,7 @@
 | # | PRD 要求 | 代码现状 | 结论 | 证据 | 优先级 |
 |---|----------|----------|------|------|--------|
 | 3.1 | 录入、校验、模板、字号 | 工作台 + 模板 + 字号 | **已实现** | `voucher-edit`、OpenSpec workspace | — |
-| 3.2 | 附件上传绑定凭证 | 仅 `receipt_num`；无文件关联 | **部分实现** | `FileStorage` 无 voucher_id | P1 |
+| 3.2 | 附件上传绑定凭证 | `voucher_attachment` 关联表 + 上传/下载/删除，编辑页与列表页均有入口；结账期间禁变更 | **已实现** | `VoucherAttachmentService` | — |
 | 3.3 | 审核 / 批量 / 取消审核 | 已实现 | **已实现** | `audit`/`unaudit` | — |
 | 3.4 | 制单人 ≠ 审核人 | 审核时拒绝自制凭证并计数提示 | **已实现** | `VoucherService.audit` | — |
 | 3.5 | 记账 / 取消记账 | sender/unsender | **已实现** | `VoucherService` | — |

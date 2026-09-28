@@ -281,6 +281,13 @@
                   @click="handlePreview(scope.row)"
                 />
               </el-tooltip>
+              <el-tooltip content="附件">
+                <el-button
+                  link
+                  icon="Paperclip"
+                  @click="openAttachments(scope.row)"
+                />
+              </el-tooltip>
               <el-tooltip
                 v-if="'reviewing' === scope.row.voucher.status"
                 content="撤回"
@@ -512,6 +519,11 @@
         </el-button>
       </template>
     </el-dialog>
+    <voucher-attachments
+      :open="attachmentOpen"
+      :voucher-id="attachmentVoucherId"
+      @close="attachmentOpen = false"
+    />
   </div>
 </template>
 
@@ -527,10 +539,19 @@ import {ArrowDown} from "@element-plus/icons-vue";
 import bookStore from "@/store/modules/bookStore";
 import {downloadData} from "@/utils/index"
 import ImportUpload from "@/components/ImportUpload/index.vue"
+import VoucherAttachments from "./VoucherAttachments.vue"
 import modal from "@/plugins/modal"
 
 const currBookStore = bookStore()
 const router = useRouter();
+
+// 凭证附件对话框
+const attachmentOpen = ref(false);
+const attachmentVoucherId = ref(null);
+function openAttachments(row) {
+  attachmentVoucherId.value = row?.voucher?.id || row?.id || null;
+  attachmentOpen.value = true;
+}
 const {proxy} = getCurrentInstance();
 const {t} = useI18n()
 const booksVoucherList = ref([]);

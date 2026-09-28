@@ -39,6 +39,9 @@ public final class BackupTableRegistry {
                             FkEdge.soft("item_id", "assist_acc")),
             BackupTableSpec.of("voucher_item_cash_flow")
                     .fks(FkEdge.of("voucher_item_id", "voucher_item")),
+            // 附件关联表：file_id 指向 file_storage（全局表，二进制不进备份包；同实例恢复仍可用）
+            BackupTableSpec.of("voucher_attachment")
+                    .fks(FkEdge.of("voucher_id", "voucher")),
             BackupTableSpec.of("approval_record")
                     .viaVoucher()
                     .fks(FkEdge.of("voucher_id", "voucher"))

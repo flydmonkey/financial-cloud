@@ -68,6 +68,12 @@
           <el-button @click="onPrint">
             打印
           </el-button>
+          <el-button
+            v-if="formData.id"
+            @click="attachmentOpen = true"
+          >
+            附件
+          </el-button>
         </div>
       </div>
       <div class="workspace-toolbar-status">
@@ -710,12 +716,18 @@
         删除本项
       </el-button>
     </div>
+    <voucher-attachments
+      :open="attachmentOpen"
+      :voucher-id="formData.id"
+      @close="attachmentOpen = false"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import {computed, nextTick, onBeforeUpdate, onMounted, reactive, ref, watch} from 'vue'
 import SelectAuxiliary from "./SelectAuxiliary/index.vue"
+import VoucherAttachments from "./VoucherAttachments.vue"
 import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'element-plus'
 import {parseTime} from "@/utils/financialCloud";
 import * as subjectApi from "@/api/standard/standard-subject"
@@ -811,6 +823,7 @@ const topMenu = ref(0)
 const currentRow = ref<any>(null)
 const printMe = ref(null)
 const printing = ref(false)
+const attachmentOpen = ref(false)
 const printSheets = ref<RecordingVoucher[][]>([])
 // 会计科目数据
 const subjectList = ref<any>([])

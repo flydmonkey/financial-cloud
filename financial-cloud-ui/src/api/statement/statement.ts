@@ -84,3 +84,13 @@ export function cashFlowExport(query : any): any {
         responseType: 'blob'
     })
 }
+
+export function exportMonthlyBooksPack(query: { yearPeriod: string; includeVoucherList: boolean }): any {
+    return request({
+        url: '/statement/books-pack/export',
+        method: 'get',
+        params: query,
+        responseType: 'blob',
+        silentError: true
+    })
+}

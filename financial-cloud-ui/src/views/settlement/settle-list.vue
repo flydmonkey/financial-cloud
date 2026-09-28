@@ -53,6 +53,13 @@
                 >
                   查询
                 </el-button>
+                <el-button
+                  type="success"
+                  :loading="booksPackLoading"
+                  @click="openBooksPackDialog"
+                >
+                  导出本月账本包
+                </el-button>
               </el-form-item>
             </el-form>
           </div>
@@ -127,6 +134,26 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
+    <el-dialog v-model="booksPackDialogVisible" title="导出本月账本包" width="420px">
+      <el-form label-width="110px">
+        <el-form-item label="交付账期" required>
+          <el-date-picker
+            v-model="booksPackForm.yearPeriod"
+            type="month"
+            value-format="YYYY-MM"
+            :clearable="false"
+            placeholder="选择账期"
+          />
+        </el-form-item>
+        <el-form-item label="交付内容">
+          <el-checkbox v-model="booksPackForm.includeVoucherList">含凭证清单</el-checkbox>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="booksPackDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="booksPackLoading" @click="exportBooksPack">确认导出</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -136,8 +163,10 @@ import type {TabsPaneContext} from 'element-plus'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {useRoute, useRouter} from "vue-router";
 import * as settlementApi from "@/api/book/settlement";
+import {exportMonthlyBooksPack} from "@/api/statement/statement";
 import bookStore from "@/store/modules/bookStore";
 import {parseTime} from "@/utils/financialCloud";
+import {downloadData} from "@/utils";
 
 const {proxy} = getCurrentInstance();
 const currBookStore = bookStore()
@@ -153,6 +182,12 @@ const multiple: any = ref(true);
 const total: any = ref(0);
 const title: any = ref("");
 const uncheckoutLoading = ref(false)
+const booksPackLoading = ref(false)
+const booksPackDialogVisible = ref(false)
+const booksPackForm = reactive({
+  yearPeriod: String(currBookStore.termCurrent || parseTime(new Date(), "{y}-{m}")),
+  includeVoucherList: true,
+})
 
 const activeName = ref('settle-list')
 const router: any = useRouter();
@@ -243,6 +278,33 @@ async function handleUncheckout(row: any) {
     ElMessage.error(e?.message || '反结账失败')
   } finally {
     uncheckoutLoading.value = false
+  }
+}
+
+function openBooksPackDialog() {
+  booksPackForm.yearPeriod = String(currBookStore.termCurrent || currentTerm.value)
+  booksPackForm.includeVoucherList = true
+  booksPackDialogVisible.value = true
+}
+
+async function exportBooksPack() {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(booksPackForm.yearPeriod)) {
+    ElMessage.warning('请选择有效账期')
+    return
+  }
+  booksPackLoading.value = true
+  try {
+    const blob = await exportMonthlyBooksPack({
+      yearPeriod: booksPackForm.yearPeriod,
+      includeVoucherList: booksPackForm.includeVoucherList,
+    })
+    downloadData(blob, `本月账本包_${booksPackForm.yearPeriod}.zip`)
+    booksPackDialogVisible.value = false
+    ElMessage.success('账本包已生成')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || '账本包导出失败')
+  } finally {
+    booksPackLoading.value = false
   }
 }
 

@@ -135,6 +135,13 @@
               class="success"
             /></el-icon></span>
             <span v-if="scope.row.status === 0"><el-icon color="#808080"><CircleCloseFilled /></el-icon></span>
+            <el-tag
+              v-if="scope.row.status === 2"
+              type="info"
+              size="small"
+            >
+              封存
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column
@@ -168,6 +175,15 @@
                   @click="handleBackup(scope.row)"
                 >
                   备份
+                </el-button>
+              </el-tooltip>
+              <el-tooltip :content="scope.row.status === 2 ? '解除封存，恢复可写' : '封存后账套只读，禁止一切业务写操作'">
+                <el-button
+                  link
+                  :type="scope.row.status === 2 ? 'success' : 'info'"
+                  @click="handleSeal(scope.row)"
+                >
+                  {{ scope.row.status === 2 ? '解封' : '封存' }}
                 </el-button>
               </el-tooltip>
               <el-tooltip content="移除">
@@ -255,7 +271,7 @@ import editForm from "./edit.vue";
 import membersDrawer from "./members.vue";
 import modal from "@/plugins/modal";
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
-import {listBooksSets, deleteBatch, exportBookBackup, restoreBookBackup} from "@/api/book/book";
+import {listBooksSets, deleteBatch, exportBookBackup, restoreBookBackup, sealBook, unsealBook} from "@/api/book/book";
 import {listStandardsAll} from "@/api/standard/standard";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import booksSetStore from "@/store/modules/bookStore";
@@ -322,6 +338,27 @@ async function handleBackup(row: any): Promise<void> {
   } finally {
     backupLoadingId.value = "";
   }
+}
+
+// ---------- 账套封存 ----------
+/** 封存 / 解除封存（仅账套管理员） */
+function handleSeal(row: any): void {
+  const sealing = row.status !== 2;
+  const actionText = sealing ? "封存" : "解除封存";
+  const tip = sealing
+    ? `确认封存账套「${row.name}」？封存后该账套为只读，凭证、结账、附件等写操作将被拒绝。`
+    : `确认解除账套「${row.name}」的封存？解除后恢复为启用状态。`;
+  modal.confirm(tip).then(() => {
+    return sealing ? sealBook(row.id) : unsealBook(row.id);
+  }).then((res: any) => {
+    if (res?.code === 0 || res?.code === 200) {
+      modal.msgSuccess(`${actionText}成功`);
+    } else {
+      modal.msgError(res?.message || `${actionText}失败`);
+    }
+    getList();
+  }).catch(() => {
+  });
 }
 
 function onRestoreFileChange(file: any): any {

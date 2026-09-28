@@ -75,6 +75,8 @@ class VoucherServiceTest {
     private EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
     @Mock
     private VoucherMapper voucherMapper;
+    @Mock
+    private com.financial.cloud.service.book.BookSealGuard bookSealGuard;
 
     @Spy
     @InjectMocks

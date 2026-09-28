@@ -86,3 +86,19 @@ export function restoreBookBackup(file: File): any {
         timeout: 300000
     })
 }
+
+// 封存账套（归档只读）
+export function sealBook(id: string): any {
+    return request({
+        url: '/book/seal/' + id,
+        method: 'put'
+    })
+}
+
+// 解除封存
+export function unsealBook(id: string): any {
+    return request({
+        url: '/book/unseal/' + id,
+        method: 'put'
+    })
+}

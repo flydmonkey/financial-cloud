@@ -40,6 +40,7 @@ import com.financial.cloud.enums.voucher.VoucherSuccessiveMethodEnum;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
+import com.financial.cloud.service.book.BookSealGuard;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.util.DateUtils;
 import com.financial.cloud.util.ExcelUtils;
@@ -98,6 +99,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     private final StandardSubjectCashFlowMapper standardSubjectCashFlowMapper;
     private final VoucherItemCashFlowMapper voucherItemCashFlowMapper;
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
+    private final BookSealGuard bookSealGuard;
     public Message<Page<VoucherItemVo>> subLedger(VoucherItemPageDto paramsDto) {
         paramsDto.parse();
         return Message.ok(voucherItemMapper.subLedgerPage(paramsDto.build(), paramsDto));
@@ -490,6 +492,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (ids.isEmpty()) {
             return Message.failed("请选择要提交的凭证");
         }
+        bookSealGuard.assertWritable(bookId);
         Map<String, VoucherVo> voucherMap = queryByIds(ids);
         Book book = bookMapper.selectById(bookId);
         if (book == null) {
@@ -702,6 +705,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<Void> audit(List<String> ids, UserInfo userInfo) {
+        bookSealGuard.assertWritable(userInfo.getBookId());
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         // 会计基础规范：制单人与审核人不得为同一人（createdBy 填充的是用户 ID）
         long selfCreatedCount = vouchers.stream()
@@ -762,6 +766,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (book == null) {
             return Message.failed("账套不存在");
         }
+        bookSealGuard.assertWritable(bookId);
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         List<Voucher> unauditVouchers = new ArrayList<>();
         for (Voucher voucher : vouchers) {
@@ -810,6 +815,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<Void> sender(List<String> ids, UserInfo userInfo) {
+        bookSealGuard.assertWritable(userInfo.getBookId());
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         VoucherBatchLoad batchLoad = loadVouchers(ids);
         List<Voucher> senderVouchers = new ArrayList<>();
@@ -858,6 +864,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<Void> unsender(List<String> ids, String bookId) {
+        bookSealGuard.assertWritable(bookId);
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         VoucherBatchLoad batchLoad = loadVouchers(ids);
         List<Voucher> unsenderVouchers = new ArrayList<>();
@@ -1035,6 +1042,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             addImportError(result, 0, "", "账套不存在");
             return new Message<>(Message.FAIL, "导入失败", result);
         }
+        bookSealGuard.assertWritable(bookId);
         Map<String, BookSubject> subjectByCode = new HashMap<>();
         try {
             Workbook workbook = excelImportFile.biuldWorkbook();
@@ -1638,6 +1646,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return new Message<>(Message.FAIL, "未选择数据对象");
         }
 
+        bookSealGuard.assertWritable(bookId);
+
         // 先查询凭证状态
         LambdaQueryWrapper<Voucher> lqw = Wrappers.lambdaQuery();
         lqw.in(Voucher::getId, ids);
@@ -1993,6 +2003,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (dto == null || StringUtils.isBlank(dto.getBookId())) {
             return null;
         }
+        // 封存账套整体只读（优先于期间锁）
+        bookSealGuard.assertWritable(dto.getBookId());
         String voucherTerm = null;
         if (dto.getVoucherDate() != null) {
             voucherTerm = DateUtils.format(dto.getVoucherDate(), DateUtils.FORMAT_DATE_YYYY_MM);

@@ -10,6 +10,7 @@ import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.voucher.VoucherAttachmentMapper;
 import com.financial.cloud.repository.voucher.VoucherMapper;
 import com.financial.cloud.service.auth.FileStorageService;
+import com.financial.cloud.service.book.BookSealGuard;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.util.DateUtils;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class VoucherAttachmentService extends ServiceImpl<VoucherAttachmentMappe
     private final VoucherMapper voucherMapper;
     private final FileStorageService fileStorageService;
     private final ConfigSysService configSysService;
+    private final BookSealGuard bookSealGuard;
 
     public List<VoucherAttachment> listByVoucher(String voucherId, String bookId) {
         return list(Wrappers.<VoucherAttachment>lambdaQuery()
@@ -61,6 +63,7 @@ public class VoucherAttachmentService extends ServiceImpl<VoucherAttachmentMappe
             throw new BusinessException(400, "仅支持 PDF / 图片（PNG、JPG、WEBP）/ OFD 附件");
         }
         Voucher voucher = requireBookVoucher(voucherId, operator.getBookId());
+        bookSealGuard.assertWritable(operator.getBookId());
         requireOpenPeriod(voucher);
 
         FileStorage storage = new FileStorage();
@@ -109,6 +112,7 @@ public class VoucherAttachmentService extends ServiceImpl<VoucherAttachmentMappe
             throw new BusinessException(404, "附件不存在或无权访问");
         }
         Voucher voucher = requireBookVoucher(attachment.getVoucherId(), bookId);
+        bookSealGuard.assertWritable(bookId);
         requireOpenPeriod(voucher);
         removeById(attachmentId);
         fileStorageService.removeById(attachment.getFileId());

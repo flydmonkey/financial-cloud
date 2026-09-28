@@ -48,7 +48,7 @@
 | 3.2 | 附件上传绑定凭证 | `voucher_attachment` 关联表 + 上传/下载/删除，编辑页与列表页均有入口；结账期间禁变更 | **已实现** | `VoucherAttachmentService` | — |
 | 3.3 | 审核 / 批量 / 取消审核 | 已实现 | **已实现** | `audit`/`unaudit` | — |
 | 3.4 | 制单人 ≠ 审核人 | 审核时拒绝自制凭证并计数提示 | **已实现** | `VoucherService.audit` | — |
-| 3.5 | 记账 / 取消记账 | sender/unsender | **已实现** | `VoucherService` | — |
+| 3.5 | 记账 / 取消记账 | sender/unsender；已过账凭证支持红字冲销（生成全负冲销凭证并关联原凭证） | **已实现** | `VoucherService`（sender/unsender/reverseById） | — |
 | 3.6 | 列表筛选、作废、删除、打印、导出 | 筛选/删/Excel/经典打印（含列表批量打印）可用；作废/恢复已落地（暂存/被拒绝可作废，保留字号不参与账表，可恢复暂存） | **已实现** | `VoucherService.voidById/unvoidById`；`voucher-print-classic.html` | — |
 | 3.7 | 断号整理 | successive 双模式 | **已实现** | `/successive` | — |
 | 3.8 | 期末自动计提/结转 | 结转模板 + 资产折旧 + 薪资凭证 | **部分实现** | 分散在多模块 | — |

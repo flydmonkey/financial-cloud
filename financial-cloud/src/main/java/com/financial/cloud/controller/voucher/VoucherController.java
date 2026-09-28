@@ -199,6 +199,18 @@ public class VoucherController {
         return result;
     }
 
+    /**
+     * 红字冲销：为已过账凭证生成金额全负的冲销凭证（暂存态）。
+     */
+    @PostMapping("/reverse/{id}")
+    public Message<String> reverseVoucher(@PathVariable(name = "id") String id,
+                                          @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
+        Message<String> result = voucherService.reverseById(id, userInfo.getBookId());
+        auditLog("红字冲销", List.of(id), result, userInfo);
+        return result;
+    }
+
     @GetMapping("/successive")
     public Message<List<VoucherSuccessiveDto>> checkSuccessive(@CurrentUser UserInfo userInfo,
                                                                VoucherSuccessiveQueryDto query) {

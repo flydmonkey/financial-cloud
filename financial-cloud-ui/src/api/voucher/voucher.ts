@@ -178,6 +178,16 @@ export function unvoidVoucher(id: any): any {
 }
 
 /**
+ * 红字冲销凭证
+ */
+export function reverseVoucher(id: any): any {
+    return request({
+        url: `/voucher/reverse/` + id,
+        method: 'post'
+    })
+}
+
+/**
  * 凭证连续性验证
  */
 export function getVoucherSuccessiveList(params: any): any {

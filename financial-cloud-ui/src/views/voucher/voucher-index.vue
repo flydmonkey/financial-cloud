@@ -328,6 +328,17 @@
                 />
               </el-tooltip>
               <el-tooltip
+                v-if="canReverse(scope.row.voucher)"
+                content="红字冲销"
+              >
+                <el-button
+                  link
+                  icon="Refresh"
+                  type="danger"
+                  @click="handleReverse(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
                 v-if="isDeletable(scope.row.voucher)"
                 content="删除"
               >
@@ -951,6 +962,26 @@ function handleUnvoid(row) {
     return voucherApis.unvoidVoucher(voucherId);
   }).then((res) => {
     showActionResult(res, "已恢复为暂存");
+    getList()
+  }).catch(() => {
+  });
+}
+
+/** 是否可红字冲销：已过账凭证 */
+function canReverse(voucher) {
+  return voucher?.status === 'completed' && !!voucher?.senderId
+}
+
+/** 红字冲销 */
+function handleReverse(row) {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认对该凭证进行红字冲销？将在当前开放账期生成一张金额全负的冲销凭证（暂存态），审核过账后生效。').then(() => {
+    return voucherApis.reverseVoucher(voucherId);
+  }).then((res) => {
+    showActionResult(res, "冲销凭证已生成");
     getList()
   }).catch(() => {
   });

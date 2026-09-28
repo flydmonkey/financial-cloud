@@ -396,4 +396,82 @@ class VoucherServiceTest {
         assertNotEquals(Message.SUCCESS, result.getCode());
         assertTrue(result.getMessage().contains("已作废"));
     }
+
+    private Voucher postedVoucher() {
+        Voucher voucher = voidableVoucher(VoucherStatusEnum.COMPLETED.getValue());
+        voucher.setId("v-posted");
+        voucher.setWordHead("记");
+        voucher.setSenderId("user-9");
+        return voucher;
+    }
+
+    @Test
+    void reverseById_rejectsUnposted() {
+        Voucher unposted = postedVoucher();
+        unposted.setSenderId(null);
+        when(voucherMapper.selectById("v-posted")).thenReturn(unposted);
+
+        Message<String> result = voucherService.reverseById("v-posted", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("已过账"));
+    }
+
+    @Test
+    void reverseById_rejectsForeignBook() {
+        Voucher other = postedVoucher();
+        other.setBookId("book-other");
+        when(voucherMapper.selectById("v-posted")).thenReturn(other);
+
+        Message<String> result = voucherService.reverseById("v-posted", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+    }
+
+    @Test
+    void reverseById_rejectsDoubleReverse() {
+        when(voucherMapper.selectById("v-posted")).thenReturn(postedVoucher());
+        when(voucherMapper.selectCount(any())).thenReturn(1L);
+
+        Message<String> result = voucherService.reverseById("v-posted", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("重复冲销"));
+    }
+
+    @Test
+    void reverseById_generatesNegativeDraft() {
+        when(voucherMapper.selectById("v-posted")).thenReturn(postedVoucher());
+        when(voucherMapper.selectCount(any())).thenReturn(0L);
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+
+        com.financial.cloud.dto.voucher.VoucherVo vo = new com.financial.cloud.dto.voucher.VoucherVo();
+        vo.setId("v-posted");
+        vo.setWord("记-3");
+        vo.setWordHead("记");
+        vo.setItems(List.of(
+                new com.financial.cloud.dto.voucher.VoucherItemVo(),
+                new com.financial.cloud.dto.voucher.VoucherItemVo()));
+        vo.getItems().get(0).setDebitAmount(new BigDecimal("100"));
+        vo.getItems().get(0).setCreditAmount(BigDecimal.ZERO);
+        vo.getItems().get(0).setSummary("购货");
+        vo.getItems().get(1).setDebitAmount(BigDecimal.ZERO);
+        vo.getItems().get(1).setCreditAmount(new BigDecimal("100"));
+        vo.getItems().get(1).setSummary("购货");
+        doReturn(new Message<>(Message.SUCCESS, vo)).when(voucherService).queryById("v-posted");
+        when(voucherWordMapper.selectPage(any(), any()))
+                .thenReturn(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>());
+        doReturn(new Message<>(Message.SUCCESS, "暂存成功", "v-reversal"))
+                .when(voucherService).save(org.mockito.ArgumentMatchers.<VoucherChangeDto>any());
+
+        Message<String> result = voucherService.reverseById("v-posted", BOOK_ID);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        assertEquals("v-reversal", result.getData());
+        org.mockito.Mockito.verify(voucherService).save(org.mockito.ArgumentMatchers.<VoucherChangeDto>argThat(dto ->
+                dto.getItems().stream().allMatch(i ->
+                        (i.getDebitAmount() == null || i.getDebitAmount().signum() <= 0)
+                                && (i.getCreditAmount() == null || i.getCreditAmount().signum() <= 0))
+                        && dto.getItems().stream().allMatch(i -> i.getSummary().startsWith("冲销："))));
+    }
 }

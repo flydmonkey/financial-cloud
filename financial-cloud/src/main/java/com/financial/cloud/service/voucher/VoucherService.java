@@ -1725,6 +1725,84 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     }
 
     /**
+     * 红字冲销：为已过账凭证生成一张金额全负的冲销凭证（暂存态，走正常审核/过账流程后生效）。
+     * 冲销凭证落在当前开放账期，通过 sourceVoucherId 关联原凭证；一张凭证只允许冲销一次。
+     */
+    @Transactional
+    public Message<String> reverseById(String id, String bookId) {
+        bookSealGuard.assertWritable(bookId);
+        Voucher source = baseMapper.selectById(id);
+        if (source == null || !bookId.equals(source.getBookId())) {
+            return Message.failed("凭证不存在或不属于当前账套");
+        }
+        if (!VoucherStatusEnum.COMPLETED.getValue().equals(source.getStatus())
+                || StringUtils.isBlank(source.getSenderId())) {
+            return Message.failed("仅已过账凭证可以红字冲销（未过账凭证请直接作废或删除）");
+        }
+        Long reversedCount = baseMapper.selectCount(Wrappers.<Voucher>lambdaQuery()
+                .eq(Voucher::getSourceVoucherId, id));
+        if (reversedCount != null && reversedCount > 0) {
+            return Message.failed("该凭证已生成过冲销凭证，请勿重复冲销");
+        }
+        Message<VoucherVo> voResult = queryById(id);
+        if (voResult.getCode() != Message.SUCCESS || voResult.getData() == null) {
+            return Message.failed(voResult.getMessage());
+        }
+        VoucherVo vo = voResult.getData();
+
+        // 冲销凭证落在当前开放账期（今天早于开放账期时取账期首日）
+        String currentTerm = configSysService.getCurrentTerm(bookId);
+        Date reversalDate = new Date();
+        String todayTerm = DateUtils.format(reversalDate, DateUtils.FORMAT_DATE_YYYY_MM);
+        if (StringUtils.isNotBlank(currentTerm) && currentTerm.compareTo(todayTerm) > 0) {
+            int y = Integer.parseInt(currentTerm.substring(0, 4));
+            int m = Integer.parseInt(currentTerm.substring(5, 7));
+            reversalDate = new java.util.GregorianCalendar(y, m - 1, 1).getTime();
+        }
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(reversalDate);
+        int year = cal.get(java.util.Calendar.YEAR);
+        int month = cal.get(java.util.Calendar.MONTH) + 1;
+
+        VoucherChangeDto dto = toChangeDto(vo);
+        dto.setId(null);
+        dto.setBookId(bookId);
+        dto.setWord(null);
+        dto.setWordNum(getAbleWordNum(bookId, source.getWordHead(), year, month).getData());
+        dto.setVoucherDate(reversalDate);
+        dto.setVoucherYear(year);
+        dto.setVoucherMonth(month);
+        dto.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        dto.setRemark("红字冲销「" + StringUtils.defaultString(vo.getWord()) + "」凭证");
+        dto.setAuditMemberId(null);
+        dto.setAuditMemberName(null);
+        dto.setAuditDate(null);
+        dto.setSenderId(null);
+        dto.setSenderName(null);
+        dto.setSenderDate(null);
+        dto.setManagerId(null);
+        dto.setManagerName(null);
+        dto.setManagerDate(null);
+        for (VoucherItemChangeDto item : dto.getItems()) {
+            item.setId(null);
+            item.setVoucherId(null);
+            item.setDebitAmount(item.getDebitAmount() != null ? item.getDebitAmount().negate() : null);
+            item.setCreditAmount(item.getCreditAmount() != null ? item.getCreditAmount().negate() : null);
+            item.setNum(item.getNum() != null ? -item.getNum() : null);
+            item.setSummary("冲销：" + StringUtils.defaultString(item.getSummary()));
+        }
+        Message<String> saveResult = save(dto);
+        if (saveResult.getCode() != Message.SUCCESS) {
+            return saveResult;
+        }
+        Voucher link = new Voucher();
+        link.setId(saveResult.getData());
+        link.setSourceVoucherId(id);
+        baseMapper.updateById(link);
+        return new Message<>(Message.SUCCESS, "红字冲销凭证已生成（暂存），审核过账后生效", saveResult.getData());
+    }
+
+    /**
      * 构建查询条件
      *
      * @param bo 查询参数

@@ -141,7 +141,9 @@
         </el-button>
 
         <div class="btn-form-right">
-          <!--          <el-button type="primary" @click="handlePrint">打印</el-button>-->
+          <el-button @click="handlePrint">
+            打印
+          </el-button>
           <el-button @click="handleExport">
             导出
           </el-button>
@@ -582,6 +584,7 @@ import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
 import StatementDrillDialog from "./components/StatementDrillDialog.vue";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();
@@ -790,6 +793,33 @@ function openDrill(row: any, side: 'asset' | 'liability') {
     periodType: queryParams.value.periodType,
     reportDate: queryParams.value.reportDate,
     reportQuarter: queryParams.value.reportQuarter,
+  })
+}
+
+/** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
+function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const name = (level: any, itemName: any, symbol: any) =>
+    '　'.repeat(Math.max(0, (level || 1) - 1)) + (symbol === '-' ? '减：' : '') + (itemName || '')
+  const body = balanceSheetList.value.map((row: any) => `<tr>
+    <td>${esc(name(row.level, row.itemName, row.symbol))}</td>
+    <td class="c">${esc(row.sortIndex ?? '')}</td>
+    <td class="r">${amt(row.currentBalance)}</td>
+    <td class="r">${amt(row.initialBalance)}</td>
+    <td>${esc(name(row.liabilityLevel, row.liabilityItemName, row.liabilitySymbol))}</td>
+    <td class="c">${esc(row.liabilitySortIndex ?? '')}</td>
+    <td class="r">${amt(row.liabilityCurrentBalance)}</td>
+    <td class="r">${amt(row.liabilityInitialBalance)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem().companyName || ''
+  openTablePrintWindow({
+    title: '资产负债表',
+    subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead><tr>
+      <th>资产</th><th>行次</th><th>期末余额</th><th>年初余额</th>
+      <th>负债和所有者权益</th><th>行次</th><th>期末余额</th><th>年初余额</th>
+    </tr></thead><tbody>${body}</tbody>`,
   })
 }
 

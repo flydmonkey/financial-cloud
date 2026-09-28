@@ -130,6 +130,9 @@
           {{ ableEdit ? '停止编辑' : '启用编辑' }}
         </el-button>
         <div class="btn-form-right">
+          <el-button @click="handlePrint">
+            打印
+          </el-button>
           <el-button @click="handleExport">
             导出
           </el-button>
@@ -494,6 +497,7 @@ import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
 import StatementDrillDialog from "./components/StatementDrillDialog.vue";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();
@@ -576,6 +580,26 @@ function openDrill(row: any) {
     periodType: queryParams.value.periodType,
     reportDate: queryParams.value.reportDate,
     reportQuarter: queryParams.value.reportQuarter,
+  })
+}
+
+/** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
+function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const body = statementIncomeList.value.map((row: any) => `<tr>
+    <td>${esc('　'.repeat(Math.max(0, (row.level || 1) - 1)) + (row.itemName || ''))}</td>
+    <td class="c">${esc(row.sortIndex ?? '')}</td>
+    <td class="r">${amt(row.currentBalance)}</td>
+    <td class="r">${amt(row.cumulativeBalance)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem().companyName || ''
+  openTablePrintWindow({
+    title: '利润表',
+    subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead><tr>
+      <th>项目</th><th>行次</th><th>本月金额</th><th>本年累计金额</th>
+    </tr></thead><tbody>${body}</tbody>`,
   })
 }
 

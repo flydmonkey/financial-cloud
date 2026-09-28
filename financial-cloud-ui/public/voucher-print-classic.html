@@ -528,15 +528,27 @@
     return
   }
 
-  data.items = (data.items || []).filter(function (it) { return !!it.subjectCode })
-  var pages = chunkPages(data.items)
-  var debitTotal = data.items.reduce(function (s, it) { return s + (Number(it.debitAmount) || 0) }, 0)
-  var creditTotal = data.items.reduce(function (s, it) { return s + (Number(it.creditAmount) || 0) }, 0)
+  function renderVoucher(data) {
+    data.items = (data.items || []).filter(function (it) { return !!it.subjectCode })
+    var pages = chunkPages(data.items)
+    var debitTotal = data.items.reduce(function (s, it) { return s + (Number(it.debitAmount) || 0) }, 0)
+    var creditTotal = data.items.reduce(function (s, it) { return s + (Number(it.creditAmount) || 0) }, 0)
+    return pages.map(function (page) {
+      return renderSheet(page, data, debitTotal, creditTotal, toChinese(debitTotal))
+    }).join('')
+  }
 
-  document.title = '凭证打印-' + formatWordNum(data)
-  root.innerHTML = pages.map(function (page) {
-    return renderSheet(page, data, debitTotal, creditTotal, toChinese(debitTotal))
-  }).join('')
+  // 单张为对象；批量打印为数组（每张凭证独立分页）
+  var vouchers = Array.isArray(data) ? data : [data]
+  if (!vouchers.length) {
+    root.innerHTML = '<div class="error">打印数据为空。</div>'
+    return
+  }
+
+  document.title = vouchers.length > 1
+    ? '凭证批量打印-' + vouchers.length + ' 张'
+    : '凭证打印-' + formatWordNum(vouchers[0])
+  root.innerHTML = vouchers.map(renderVoucher).join('')
 
   if (autoprint) setTimeout(function () { window.print() }, 200)
 })()

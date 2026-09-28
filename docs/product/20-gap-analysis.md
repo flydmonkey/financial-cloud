@@ -98,7 +98,7 @@
 | 7.1 | 资产负债表 / 利润表 / 现金流量表 | 均有 | **已实现** | `views/statement/*` | — |
 | 7.2 | 费用统计等经营表 | 费用明细表有 | **已实现** | `expense-detail` | — |
 | 7.3 | 老板极简报表 | 无独立页；首页 8 卡片接近 | **未实现**（独立页）/ **待确认** | `views/index.vue` | P1 |
-| 7.4 | Excel / PDF / 打印 | Excel 有；PDF 基本无 | **部分实现** | — | P2 |
+| 7.4 | Excel / PDF / 打印 | Excel 导出 + 凭证经典打印（含批量）+ 资产负债表/利润表打印（浏览器可另存 PDF） | **已实现** | `voucher-print-classic.html` / `tablePrint.ts` | — |
 | 7.5 | 数据溯源 | 账簿链路 + 资产负债表/利润表行次下钻（科目构成弹窗 → 明细账） | **已实现** | general-ledger / voucher-summary / `StatementDrillService` | — |
 | 7.6 | 本月账本包 ZIP | OpenSpec 已提案未做 | **未实现** | `daizhang-commercial-plan` | **P0**（代账交付） |
 

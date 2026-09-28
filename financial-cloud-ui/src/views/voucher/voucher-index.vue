@@ -91,6 +91,12 @@
                 </el-dropdown-item>
                 <el-dropdown-item
                   :disabled="ids.length === 0"
+                  @click="handleBatchPrint()"
+                >
+                  批量打印
+                </el-dropdown-item>
+                <el-dropdown-item
+                  :disabled="ids.length === 0"
                   @click="handleSubmit()"
                 >
                   提交审核
@@ -784,6 +790,61 @@ function handleSelectionChange(selection) {
   ids.value = [...new Set(selection.map(item => item.voucherId))];
   single.value = ids.value.length !== 1;
   multiple.value = !ids.value.length;
+}
+
+// 批量打印静态页（public/voucher-print-classic.html）的数组 payload key
+const BATCH_PRINT_STORAGE_KEY = 'voucher-print-batch-data'
+
+// 组装单张凭证的打印 payload（字段契约与凭证编辑页一致）
+function buildBatchPrintPayload(voucher) {
+  const items = (voucher.items || []).filter(item =>
+    item.subjectId || item.subjectCode || item.creditAmount || item.debitAmount
+  )
+  return {
+    companyName: voucher.companyName || currBookStore.getBookItem().companyName || '',
+    voucherDate: voucher.voucherDate ? String(voucher.voucherDate).slice(0, 10) : '',
+    wordHead: voucher.wordHead || '记',
+    wordNum: voucher.wordNum,
+    receiptNum: voucher.receiptNum ?? 0,
+    remark: voucher.remark || '',
+    managerName: voucher.managerName || '',
+    senderName: voucher.senderName || '',
+    auditMemberName: voucher.auditMemberName || '',
+    createdName: voucher.createdName || '',
+    items: items.map(item => ({
+      summary: item.summary || '',
+      subjectCode: item.subjectCode || '',
+      subjectName: item.leafName || item.subjectName || '',
+      debitAmount: item.debitAmount ?? null,
+      creditAmount: item.creditAmount ?? null,
+      auxiliary: item.auxiliary || [],
+    })),
+  }
+}
+
+/** 批量打印：逐张取详情后打开经典打印静态页（数组 payload，自动分页） */
+async function handleBatchPrint() {
+  if (!ids.value.length) {
+    return
+  }
+  proxy.$modal.loading("正在准备打印数据…");
+  try {
+    const payloads = []
+    for (const id of ids.value) {
+      const res = await voucherApis.getOneVoucher(id)
+      if (res.data) {
+        payloads.push(buildBatchPrintPayload(res.data))
+      }
+    }
+    if (!payloads.length) {
+      proxy.$modal.msgWarning("未获取到可打印的凭证");
+      return
+    }
+    window.localStorage.setItem(BATCH_PRINT_STORAGE_KEY, JSON.stringify(payloads))
+    window.open(`/voucher-print-classic.html?autoprint=1&storageKey=${BATCH_PRINT_STORAGE_KEY}`, '_blank')
+  } finally {
+    proxy.$modal.closeLoading();
+  }
 }
 
 /** 新增按钮操作 */

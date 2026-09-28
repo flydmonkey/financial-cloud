@@ -94,3 +94,12 @@ export function exportMonthlyBooksPack(query: { yearPeriod: string; includeVouch
         silentError: true
     })
 }
+
+// 资产负债表行次下钻（科目构成）
+export function balanceSheetDrill(query: any): any {
+    return request({
+        url: '/statement/balance-sheet/drill',
+        method: 'get',
+        params: query
+    })
+}

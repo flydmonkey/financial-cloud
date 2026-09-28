@@ -157,7 +157,17 @@
               :style="{'text-indent': scope.row.level + 'em',
                        display: 'inline-block', 'margin-right': '30px'}"
             >
-              {{ scope.row.itemName }}
+              <el-link
+                v-if="!ableEdit && scope.row.itemCode && scope.row.itemCode.length > 1"
+                type="primary"
+                :underline="false"
+                @click="openDrill(scope.row)"
+              >
+                {{ scope.row.itemName }}
+              </el-link>
+              <template v-else>
+                {{ scope.row.itemName }}
+              </template>
             </span>
           </template>
         </el-table-column>
@@ -459,6 +469,8 @@
         </div>
       </template>
     </el-dialog>
+
+    <StatementDrillDialog ref="drillDialogRef" />
   </div>
 </template>
 
@@ -481,6 +493,7 @@ import {getSubjectBalance} from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
+import StatementDrillDialog from "./components/StatementDrillDialog.vue";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();
@@ -550,6 +563,20 @@ const disabledDate = (time: any) => {
 function doConfig() {
   ableEdit.value = !ableEdit.value
   getList();
+}
+
+/** 报表行次下钻：查看科目构成 */
+const drillDialogRef = ref()
+
+function openDrill(row: any) {
+  drillDialogRef.value?.open({
+    type: 'income',
+    itemCode: row.itemCode,
+    itemName: row.itemName,
+    periodType: queryParams.value.periodType,
+    reportDate: queryParams.value.reportDate,
+    reportQuarter: queryParams.value.reportQuarter,
+  })
 }
 
 /** 查询列表 */

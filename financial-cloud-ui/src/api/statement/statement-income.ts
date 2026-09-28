@@ -46,3 +46,12 @@ export function deleteIncome(query : any): any {
         params: query
     })
 }
+
+// 利润表行次下钻（科目构成）
+export function incomeDrill(query: any): any {
+    return request({
+        url: '/statement/income/drill',
+        method: 'get',
+        params: query
+    })
+}

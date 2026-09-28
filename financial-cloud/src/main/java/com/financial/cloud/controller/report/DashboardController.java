@@ -13,6 +13,8 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.report.DashBoardReqDto;
 import com.financial.cloud.dto.report.DashBoardVo;
+import com.financial.cloud.dto.report.DashboardTodoVo;
+import com.financial.cloud.service.report.DashboardTodoService;
 import com.financial.cloud.service.report.ReportService;
 
 @RequiredArgsConstructor
@@ -21,6 +23,14 @@ import com.financial.cloud.service.report.ReportService;
 public class DashboardController {
 
 	private final ReportService reportService;
+
+	private final DashboardTodoService dashboardTodoService;
+
+	/** 首页待办：待审/待过账凭证、本期折旧、逾期往来 */
+	@GetMapping(value={"/api/dashboard/todo"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+	public Message<DashboardTodoVo> todo(@CurrentUser UserInfo currentUser) {
+		return new Message<>(dashboardTodoService.todo(currentUser.getBookId()));
+	}
 
 	@GetMapping(value={"/api/dashboard"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<DashBoardVo> dashboard(@CurrentUser UserInfo currentUser) {

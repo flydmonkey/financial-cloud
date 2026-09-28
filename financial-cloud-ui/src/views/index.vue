@@ -1,6 +1,11 @@
 <template>
   <div class="app-container">
     <el-row :gutter="10">
+      <el-col :span="24">
+        <todo-panel />
+      </el-col>
+    </el-row>
+    <el-row :gutter="10">
       <el-col
         :xs="24"
         :sm="24"
@@ -78,6 +83,7 @@ import {ref, getCurrentInstance} from "vue";
 import {useI18n} from 'vue-i18n'
 import {useRoute, useRouter} from "vue-router";
 import Footer from "@/components/Footer/index.vue"
+import TodoPanel from "@/views/dashboard/accounting/TodoPanel.vue";
 import FundBalance from "@/views/dashboard/accounting/fund_balance.vue";
 import receivable from "@/views/dashboard/accounting/receivable.vue";
 import ExpectedAvailableFunds from "@/views/dashboard/accounting/expected_available_funds.vue";

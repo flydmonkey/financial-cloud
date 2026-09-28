@@ -19,6 +19,7 @@ import com.financial.cloud.domain.permissions.Permission;
 import com.financial.cloud.domain.permissions.Resources;
 import com.financial.cloud.repository.history.HistorySystemLogsMapper;
 import com.financial.cloud.service.history.HistorySystemLogsService;
+import com.financial.cloud.context.WebContext;
 import com.financial.cloud.util.JsonUtils;
 
 import org.springframework.stereotype.Service;
@@ -100,10 +101,22 @@ public class HistorySystemLogsService  extends ServiceImpl<HistorySystemLogsMapp
 		systemLog.setUsername(operator.getUsername());
 		systemLog.setDisplayName(operator.getDisplayName());
 		systemLog.setBookId(operator.getBookId());
+		systemLog.setIp(currentClientIp());
 		systemLog.setJsonCotent(JsonUtils.toString(entity));
 		systemLog.setExecuteTime(new Date());
 		log.trace("System Log {}" ,systemLog);
 		getMapper().insert(systemLog);
+	}
+
+	/**
+	 * 提取当前请求来源 IP；非请求线程（异步/定时）返回 null。
+	 */
+	private String currentClientIp() {
+		try {
+			return WebContext.getRequestIpAddress(WebContext.getRequest());
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public String buildMsg(UserInfo userInfo) {

@@ -46,6 +46,8 @@ public class HistorySystemLogs implements Serializable {
 
     Date executeTime;
 
+    String ip;
+
 	private String bookId;
 
     @TableField(exist = false)

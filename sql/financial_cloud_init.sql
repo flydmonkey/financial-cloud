@@ -773,6 +773,7 @@ CREATE TABLE `history_system_logs` (
   `username` varchar(45) DEFAULT NULL COMMENT '登录名称',
   `display_name` varchar(45) DEFAULT NULL COMMENT '显示名称',
   `execute_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '执行时间',
+  `ip` varchar(45) DEFAULT NULL COMMENT '操作来源 IP',
   `book_id` varchar(45) NOT NULL COMMENT '租户编码',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC COMMENT='系统操作日志表';

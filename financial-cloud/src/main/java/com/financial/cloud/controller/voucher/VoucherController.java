@@ -16,6 +16,7 @@ import com.financial.cloud.dto.voucher.VoucherSuccessiveDto;
 import com.financial.cloud.dto.voucher.VoucherVo;
 import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.enums.voucher.VoucherStatusEnum;
+import com.financial.cloud.service.history.HistorySystemLogsService;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
@@ -36,6 +37,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VoucherController {
     private final VoucherService voucherService;
+    private final HistorySystemLogsService historySystemLogsService;
+
+    /** 凭证关键操作审计：操作人、动作、对象与结果（IP 由日志服务统一提取） */
+    private void auditLog(String action, List<String> ids, Message<?> result, UserInfo operator) {
+        try {
+            boolean success = result != null && result.getCode() == Message.SUCCESS;
+            historySystemLogsService.log("凭证操作", String.join(",", ids),
+                    ids.size() + " 张凭证", null,
+                    result == null ? "" : result.getMessage(),
+                    action, success ? "success" : "fail", operator, null);
+        } catch (Exception e) {
+            log.warn("凭证操作审计日志写入失败：{}", e.getMessage());
+        }
+    }
 
     @GetMapping("/items/fetch")
     public Message<Page<VoucherItemVo>> subLedger(VoucherItemPageDto paramsDto,
@@ -103,7 +118,9 @@ public class VoucherController {
     public Message<String> delete(@PathVariable(name = "ids") List<String> ids,
                                   @CurrentUser UserInfo userInfo) {
         ProductRoles.requireWriteVoucher();
-        return voucherService.delete(ids, userInfo.getBookId());
+        Message<String> result = voucherService.delete(ids, userInfo.getBookId());
+        auditLog("删除", ids, result, userInfo);
+        return result;
     }
 
     @PostMapping("/submit")
@@ -148,28 +165,36 @@ public class VoucherController {
     public Message<Void> audit(@PathVariable(name = "ids") List<String> ids,
                                @CurrentUser UserInfo userInfo) {
         ProductRoles.requireApproveVoucher();
-        return voucherService.audit(ids, userInfo);
+        Message<Void> result = voucherService.audit(ids, userInfo);
+        auditLog("审核", ids, result, userInfo);
+        return result;
     }
 
     @PutMapping("/unaudit/{ids}")
     public Message<Void> unaudit(@PathVariable(name = "ids") List<String> ids,
                                    @CurrentUser UserInfo userInfo) {
         ProductRoles.requireApproveVoucher();
-        return voucherService.unaudit(ids, userInfo.getBookId());
+        Message<Void> result = voucherService.unaudit(ids, userInfo.getBookId());
+        auditLog("反审核", ids, result, userInfo);
+        return result;
     }
 
     @PutMapping("/sender/{ids}")
     public Message<Void> sender(@PathVariable(name = "ids") List<String> ids,
                                 @CurrentUser UserInfo userInfo) {
         ProductRoles.requireWriteVoucher();
-        return voucherService.sender(ids, userInfo);
+        Message<Void> result = voucherService.sender(ids, userInfo);
+        auditLog("过账", ids, result, userInfo);
+        return result;
     }
 
     @PutMapping("/unsender/{ids}")
     public Message<Void> unsender(@PathVariable(name = "ids") List<String> ids,
                                   @CurrentUser UserInfo userInfo) {
         ProductRoles.requireWriteVoucher();
-        return voucherService.unsender(ids, userInfo.getBookId());
+        Message<Void> result = voucherService.unsender(ids, userInfo.getBookId());
+        auditLog("反过账", ids, result, userInfo);
+        return result;
     }
 
     @PutMapping("/manage-audit/{ids}")

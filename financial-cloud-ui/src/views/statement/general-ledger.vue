@@ -133,6 +133,9 @@
             >
               导出
             </el-button>
+            <el-button @click="handlePrint">
+              打印
+            </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -252,6 +255,7 @@ import * as subjectApi from '@/api/standard/standard-subject'
 import booksSetStore from '@/store/modules/bookStore'
 import {downloadData, formatAmount} from '@/utils'
 import {parseTime} from '@/utils/financialCloud'
+import {openTablePrintWindow} from '@/utils/tablePrint'
 
 interface LedgerItem {
   subjectCode: string
@@ -410,6 +414,32 @@ function handleExport() {
     downloadData(data, `总账${range} ${parseTime(new Date())}.xlsx`)
   }).finally(() => {
     exporting.value = false
+  })
+}
+
+/** 打印：新窗口渲染当前查询结果（可另存 PDF） */
+function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const body = recordsList.value.map((row: LedgerItem) => `<tr>
+    <td class="c">${esc(row.subjectCode)}</td>
+    <td>${esc(row.subjectName)}</td>
+    <td class="c">${esc(row.period)}</td>
+    <td>${esc(row.summary)}</td>
+    <td class="r">${amt(row.debit)}</td>
+    <td class="r">${amt(row.credit)}</td>
+    <td class="c">${esc(row.direction)}</td>
+    <td class="r">${amt(row.balance)}</td>
+  </tr>`).join('')
+  const company = bookStore.getBookItem()?.companyName || ''
+  const range = (queryParams.dateRange || []).join(' 至 ')
+  openTablePrintWindow({
+    title: '总账',
+    subtitle: `核算单位：${company}　期间：${range}`,
+    tableHtml: `<thead><tr>
+      <th>科目编码</th><th>科目名称</th><th>期间</th><th>摘要</th>
+      <th>借方</th><th>贷方</th><th>方向</th><th>余额</th>
+    </tr></thead><tbody>${body}</tbody>`,
   })
 }
 

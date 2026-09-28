@@ -98,7 +98,7 @@
 | 7.1 | 资产负债表 / 利润表 / 现金流量表 | 均有 | **已实现** | `views/statement/*` | — |
 | 7.2 | 费用统计等经营表 | 费用明细表有 | **已实现** | `expense-detail` | — |
 | 7.3 | 老板极简报表 | 首页 8 卡片 + 待办面板即老板视图（定位已确认，不做独立页） | **已实现** | `views/index.vue` / `TodoPanel` | — |
-| 7.4 | Excel / PDF / 打印 | Excel 导出 + 凭证经典打印（含批量）+ 资产负债表/利润表打印（浏览器可另存 PDF） | **已实现** | `voucher-print-classic.html` / `tablePrint.ts` | — |
+| 7.4 | Excel / PDF / 打印 | Excel 导出 + 凭证经典打印（含批量）+ 资产负债表/利润表/明细账/总账/科目余额表/多栏账/数量金额账/盘点表打印（浏览器可另存 PDF） | **已实现** | `voucher-print-classic.html` / `tablePrint.ts` | — |
 | 7.5 | 数据溯源 | 账簿链路 + 资产负债表/利润表行次下钻（科目构成弹窗 → 明细账） | **已实现** | general-ledger / voucher-summary / `StatementDrillService` | — |
 | 7.6 | 本月账本包 ZIP | 已落地（月账簿打包导出） | **已实现** | `MonthlyBooksPackService` | — |
 
@@ -165,7 +165,7 @@
 
 1. ~~多栏账 / 数量金额账~~ → **已落地**（`MultiColumnLedgerService`、`QuantityLedgerService`）  
 2. ~~资产盘点~~ → **已落地**（`FixedAssetCheckService`；盘点凭证为后续增强）  
-3. PDF 导出与打印统一（已用浏览器打印另存 PDF 兜底，统一 PDF 通道待做）  
+3. PDF 导出与打印统一（账簿/报表/盘点表均已接入浏览器打印另存 PDF（`tablePrint.ts`），服务端统一 PDF 通道为后续增强）  
 4. ~~作废/拒绝状态机产品化~~ → **已落地**（作废/恢复 + 字号保留 + 期间/封存守卫）  
 5. ~~银行调节~~ → **已落地**（`JournalReconciliationService`：对账单余额登记 + 流水勾对 + 未达账项调节）；费用报销、税务申报（对接 PRD V1.1+；税费测算与税负预警已落地 `TaxEstimateService`，正式申报表待做）
 

@@ -43,6 +43,12 @@
           >
             查询
           </el-button>
+          <el-button
+            :disabled="!ledger"
+            @click="handlePrint"
+          >
+            打印
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -216,6 +222,7 @@ import {quantityLedger} from '@/api/voucher/voucher'
 import * as subjectApi from '@/api/standard/standard-subject'
 import {cascaderSubjectProps} from '@/utils/Subjects'
 import bookStore from '@/store/modules/bookStore'
+import {openTablePrintWindow} from '@/utils/tablePrint'
 
 const router = useRouter()
 const {proxy} = getCurrentInstance() as any
@@ -272,6 +279,45 @@ function goVoucher(row: any) {
     return
   }
   router.push({path: '/voucher/voucher-edit', query: {id: row.voucherId}})
+}
+
+/** 打印：收入/发出/结存九列渲染（可另存 PDF） */
+function handlePrint() {
+  if (!ledger.value) {
+    return
+  }
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const qty = (v: any) => (v ?? '') === '' ? '' : esc(v)
+  const body = (ledger.value.rows || []).map((row: any) => `<tr>
+    <td class="c">${esc(row.voucherDate)}</td>
+    <td class="c">${esc(row.word)}</td>
+    <td>${esc(row.summary)}</td>
+    <td class="r">${qty(row.inQuantity)}</td>
+    <td class="r">${amt(row.inPrice)}</td>
+    <td class="r">${amt(row.inAmount)}</td>
+    <td class="r">${qty(row.outQuantity)}</td>
+    <td class="r">${amt(row.outPrice)}</td>
+    <td class="r">${amt(row.outAmount)}</td>
+    <td class="r">${qty(row.balanceQuantity)}</td>
+    <td class="r">${amt(row.balancePrice)}</td>
+    <td class="r">${amt(row.balanceAmount)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem()?.companyName || ''
+  openTablePrintWindow({
+    title: '数量金额明细账',
+    subtitle: `核算单位：${company}　科目：${ledger.value.subjectCode} ${ledger.value.subjectName}`
+      + `　期间：${queryParams.value.startMonth} 至 ${queryParams.value.endMonth}`
+      + `　期初结存：${ledger.value.openingQuantity ?? 0} 件 / ${amt(ledger.value.openingAmount)}`
+      + `　期末结存：${ledger.value.closingQuantity ?? 0} 件 / ${amt(ledger.value.closingAmount)}`,
+    tableHtml: `<thead>
+      <tr>
+        <th rowspan="2">日期</th><th rowspan="2">凭证字号</th><th rowspan="2">摘要</th>
+        <th colspan="3">收入</th><th colspan="3">发出</th><th colspan="3">结存</th>
+      </tr>
+      <tr><th>数量</th><th>单价</th><th>金额</th><th>数量</th><th>单价</th><th>金额</th><th>数量</th><th>单价</th><th>金额</th></tr>
+    </thead><tbody>${body}</tbody>`,
+  })
 }
 
 getSubjectList()

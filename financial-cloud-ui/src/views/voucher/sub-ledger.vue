@@ -117,7 +117,7 @@
     </el-card>
     <el-card class="common-card">
       <div class="btn-form">
-        <!--        <el-button type="primary" @click="handleExport">导出</el-button>-->
+        <el-button type="primary" @click="handlePrint">打印</el-button>
       </div>
       <div style="display: flex;justify-content: flex-start">
         <div style="width: 300px;display: inline-block">
@@ -235,6 +235,7 @@ import booksSetStore from "@/store/modules/bookStore";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
 import {TableColumnCtx, TreeInstance} from "element-plus";
 import {handleSummaryMethod, subjectMatchesKeyword, SummaryMethodProps} from "@/utils/Subjects";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const router = useRouter();
 const route = useRoute();
@@ -419,6 +420,31 @@ function handleQuery() {
 
 function handleExport() {
 
+}
+
+/** 打印：按当前查询条件拉全量后新窗口渲染（可另存 PDF） */
+async function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const response: any = await apis.listVoucherSubLedger({...queryParams.value, pageNumber: 1, pageSize: 9999})
+  const rows: any[] = response.data?.records || []
+  const body = rows.map((row: any) => `<tr>
+    <td class="c">${esc(row.voucherDate)}</td>
+    <td>${esc(row.word)}</td>
+    <td>${esc(row.summary)}</td>
+    <td class="r">${amt(row.debitAmount)}</td>
+    <td class="r">${amt(row.creditAmount)}</td>
+    <td class="r">${amt(row.subjectBalance)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem().companyName || ''
+  const subject = currentSubjectKey.value || '全部科目'
+  openTablePrintWindow({
+    title: '明细账',
+    subtitle: `核算单位：${company}　科目：${subject}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead><tr>
+      <th>日期</th><th>凭证字号</th><th>摘要</th><th>借方金额</th><th>贷方金额</th><th>余额</th>
+    </tr></thead><tbody>${body}</tbody>`,
+  })
 }
 
 function handleSummaryMethod2(param: SummaryMethodProps) {

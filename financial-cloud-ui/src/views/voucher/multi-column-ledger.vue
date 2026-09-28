@@ -43,6 +43,12 @@
           >
             查询
           </el-button>
+          <el-button
+            :disabled="!ledger"
+            @click="handlePrint"
+          >
+            打印
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -152,6 +158,7 @@ import {multiColumnLedger} from '@/api/voucher/voucher'
 import * as subjectApi from '@/api/standard/standard-subject'
 import {cascaderSubjectProps} from '@/utils/Subjects'
 import bookStore from '@/store/modules/bookStore'
+import {openTablePrintWindow} from '@/utils/tablePrint'
 
 const router = useRouter()
 const {proxy} = getCurrentInstance() as any
@@ -208,6 +215,37 @@ function goVoucher(row: any) {
     return
   }
   router.push({path: '/voucher/voucher-edit', query: {id: row.voucherId}})
+}
+
+/** 打印：动态栏列渲染（可另存 PDF） */
+function handlePrint() {
+  if (!ledger.value) {
+    return
+  }
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const cols: any[] = ledger.value.columns || []
+  const body = (ledger.value.rows || []).map((row: any) => `<tr>
+    <td class="c">${esc(row.voucherDate)}</td>
+    <td class="c">${esc(row.word)}</td>
+    <td>${esc(row.summary)}</td>
+    ${cols.map((col: any) => `<td class="r">${amt(row.amounts?.[col.code])}</td>`).join('')}
+    <td class="r">${amt(row.total)}</td>
+    <td class="r">${amt(row.balance)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem()?.companyName || ''
+  const direction = ledger.value.direction === '2' ? '贷方栏' : '借方栏'
+  openTablePrintWindow({
+    title: '多栏式明细账',
+    subtitle: `核算单位：${company}　科目：${ledger.value.subjectCode} ${ledger.value.subjectName}（${direction}）`
+      + `　期间：${queryParams.value.startMonth} 至 ${queryParams.value.endMonth}`
+      + `　期初余额：${amt(ledger.value.openingBalance)}　期末余额：${amt(ledger.value.closingBalance)}`,
+    tableHtml: `<thead><tr>
+      <th>日期</th><th>凭证字号</th><th>摘要</th>
+      ${cols.map((col: any) => `<th>${esc(col.name)}</th>`).join('')}
+      <th>合计</th><th>余额</th>
+    </tr></thead><tbody>${body}</tbody>`,
+  })
 }
 
 getSubjectList()

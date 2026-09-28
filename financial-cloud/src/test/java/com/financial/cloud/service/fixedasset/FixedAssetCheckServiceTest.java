@@ -23,6 +23,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,6 +42,8 @@ class FixedAssetCheckServiceTest {
     private FixedAssetMapper assetMapper;
     @Mock
     private BookSealGuard bookSealGuard;
+    @Mock
+    private FixedAssetService fixedAssetService;
 
     @InjectMocks
     private FixedAssetCheckService service;
@@ -172,6 +175,61 @@ class FixedAssetCheckServiceTest {
         assertEquals(FixedAssetCheckItem.RESULT_SURPLUS, FixedAssetCheckService.resolveResult(1, 2));
         assertEquals(FixedAssetCheckItem.RESULT_DEFICIT, FixedAssetCheckService.resolveResult(2, 1));
         assertEquals(FixedAssetCheckItem.RESULT_DEFICIT, FixedAssetCheckService.resolveResult(1, null));
+    }
+
+    @Test
+    void disposeDeficit_rejectsDraftCheck() {
+        when(checkMapper.selectById("check-1")).thenReturn(draftCheck());
+        assertThrows(BusinessException.class, () -> service.disposeDeficit("check-1", BOOK_ID));
+    }
+
+    @Test
+    void disposeDeficit_processesFullDeficitSkipsPartialAndSurplus() {
+        FixedAssetCheck check = draftCheck();
+        check.setStatus(FixedAssetCheck.STATUS_COMPLETED);
+        when(checkMapper.selectById("check-1")).thenReturn(check);
+
+        FixedAssetCheckItem fullDeficit = item("item-1", 1);
+        fullDeficit.setActualQuantity(0);
+        fullDeficit.setResult(FixedAssetCheckItem.RESULT_DEFICIT);
+        FixedAssetCheckItem partialDeficit = item("item-2", 2);
+        partialDeficit.setActualQuantity(1);
+        partialDeficit.setResult(FixedAssetCheckItem.RESULT_DEFICIT);
+        FixedAssetCheckItem surplus = item("item-3", 1);
+        surplus.setActualQuantity(2);
+        surplus.setResult(FixedAssetCheckItem.RESULT_SURPLUS);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class)))
+                .thenReturn(List.of(fullDeficit, partialDeficit, surplus));
+        when(fixedAssetService.dispose(eq("asset-x"), eq(BOOK_ID), any()))
+                .thenReturn(new com.financial.cloud.common.Message<>(
+                        com.financial.cloud.common.Message.SUCCESS, "清理成功"));
+
+        FixedAssetCheckDtos.DeficitDisposeVo vo = service.disposeDeficit("check-1", BOOK_ID);
+
+        assertEquals(1, vo.getProcessedCount());
+        assertEquals(1, vo.getSurplusCount());
+        assertEquals(1, vo.getSkipped().size());
+        assertEquals(true, vo.getSkipped().get(0).getReason().contains("部分盘亏"));
+    }
+
+    @Test
+    void disposeDeficit_collectsFailures() {
+        FixedAssetCheck check = draftCheck();
+        check.setStatus(FixedAssetCheck.STATUS_COMPLETED);
+        when(checkMapper.selectById("check-1")).thenReturn(check);
+
+        FixedAssetCheckItem fullDeficit = item("item-1", 1);
+        fullDeficit.setActualQuantity(0);
+        fullDeficit.setResult(FixedAssetCheckItem.RESULT_DEFICIT);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(fullDeficit));
+        when(fixedAssetService.dispose(eq("asset-x"), eq(BOOK_ID), any()))
+                .thenThrow(new BusinessException(400, "该资产已清理"));
+
+        FixedAssetCheckDtos.DeficitDisposeVo vo = service.disposeDeficit("check-1", BOOK_ID);
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals(1, vo.getSkipped().size());
+        assertEquals("该资产已清理", vo.getSkipped().get(0).getReason());
     }
 
     private FixedAssetCheck draftCheck() {

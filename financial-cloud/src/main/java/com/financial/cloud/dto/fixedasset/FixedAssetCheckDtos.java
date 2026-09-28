@@ -53,4 +53,24 @@ public final class FixedAssetCheckDtos {
         private com.financial.cloud.domain.fixedasset.FixedAssetCheck check;
         private List<com.financial.cloud.domain.fixedasset.FixedAssetCheckItem> items;
     }
+
+    /** 盘亏下账结果 */
+    @Data
+    public static class DeficitDisposeVo {
+        /** 成功下账（生成清理凭证）的资产数 */
+        private int processedCount;
+        /** 跳过的明细及原因（部分盘亏、下账失败等） */
+        private List<SkipReason> skipped = new java.util.ArrayList<>();
+        /** 盘盈条数（仅提示，不自动入账） */
+        private int surplusCount;
+    }
+
+    /** 跳过原因 */
+    @Data
+    @lombok.AllArgsConstructor
+    public static class SkipReason {
+        private String assetCode;
+        private String assetName;
+        private String reason;
+    }
 }

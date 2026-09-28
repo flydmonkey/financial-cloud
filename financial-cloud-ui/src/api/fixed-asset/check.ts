@@ -20,6 +20,10 @@ export function completeFixedAssetCheck(id: string) {
   return request({ url: `/fixed-asset/check/complete/${id}`, method: 'put' })
 }
 
+export function disposeDeficitFixedAssetCheck(id: string) {
+  return request({ url: `/fixed-asset/check/dispose-deficit/${id}`, method: 'put' })
+}
+
 export function deleteFixedAssetCheck(id: string) {
   return request({ url: `/fixed-asset/check/${id}`, method: 'delete' })
 }

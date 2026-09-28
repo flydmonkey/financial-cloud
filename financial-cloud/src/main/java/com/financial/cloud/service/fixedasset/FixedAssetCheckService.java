@@ -22,7 +22,8 @@ import java.util.List;
 
 /**
  * 资产盘点：建单快照在册资产 → 实盘录入 → 完成盘点自动判定盘盈/盘亏/正常。
- * 只记录结果与出盘点表；盘盈盘亏的账务处理（凭证）为后续增强。
+ * 盘亏可一键下账（整件盘亏复用资产清理流程生成凭证并下账；部分盘亏需先做资产拆分）。
+ * 盘盈因无卡片与计价依据，仅提示，不自动入账。
  */
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class FixedAssetCheckService {
     private final FixedAssetCheckItemMapper itemMapper;
     private final FixedAssetMapper assetMapper;
     private final BookSealGuard bookSealGuard;
+    private final FixedAssetService fixedAssetService;
 
     public Page<FixedAssetCheck> page(FixedAssetCheckDtos.PageDto dto) {
         return checkMapper.selectPage(dto.build(), Wrappers.<FixedAssetCheck>lambdaQuery()
@@ -173,6 +175,59 @@ public class FixedAssetCheckService {
         itemMapper.delete(Wrappers.<FixedAssetCheckItem>lambdaQuery()
                 .eq(FixedAssetCheckItem::getCheckId, checkId));
         checkMapper.deleteById(checkId);
+    }
+
+    /**
+     * 盘亏一键下账：对已完成盘点单中「整件盘亏」（实盘数=0）的资产，复用资产清理流程
+     * 生成清理凭证并下账；部分盘亏跳过并提示先做资产拆分；盘盈仅计数提示。
+     * 可重复调用：已下账的资产会被清理流程拒绝并记入跳过原因。
+     * 不加类级事务：每项资产清理各自成事务，单项失败不影响其他项。
+     */
+    public FixedAssetCheckDtos.DeficitDisposeVo disposeDeficit(String checkId, String bookId) {
+        bookSealGuard.assertWritable(bookId);
+        FixedAssetCheck check = requireCheck(checkId, bookId);
+        if (!FixedAssetCheck.STATUS_COMPLETED.equals(check.getStatus())) {
+            throw new BusinessException(400, "盘点单未完成，不能执行盘亏下账");
+        }
+
+        List<FixedAssetCheckItem> items = itemMapper.selectList(Wrappers.<FixedAssetCheckItem>lambdaQuery()
+                .eq(FixedAssetCheckItem::getCheckId, checkId)
+                .eq(FixedAssetCheckItem::getBookId, bookId));
+
+        FixedAssetCheckDtos.DeficitDisposeVo vo = new FixedAssetCheckDtos.DeficitDisposeVo();
+        for (FixedAssetCheckItem item : items) {
+            if (FixedAssetCheckItem.RESULT_SURPLUS.equals(item.getResult())) {
+                vo.setSurplusCount(vo.getSurplusCount() + 1);
+                continue;
+            }
+            if (!FixedAssetCheckItem.RESULT_DEFICIT.equals(item.getResult())) {
+                continue;
+            }
+            if (item.getActualQuantity() != null && item.getActualQuantity() > 0) {
+                vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
+                        item.getAssetCode(), item.getAssetName(), "部分盘亏，请先对资产卡片做拆分/变动后再下账"));
+                continue;
+            }
+            try {
+                com.financial.cloud.dto.fixedasset.FixedAssetDisposeDto disposeDto =
+                        new com.financial.cloud.dto.fixedasset.FixedAssetDisposeDto();
+                disposeDto.setSummary("盘亏下账（盘点单：" + check.getTitle() + "）："
+                        + item.getAssetCode() + " " + item.getAssetName());
+                com.financial.cloud.common.Message<?> result =
+                        fixedAssetService.dispose(item.getAssetId(), bookId, disposeDto);
+                if (result != null && result.getCode() == com.financial.cloud.common.Message.SUCCESS) {
+                    vo.setProcessedCount(vo.getProcessedCount() + 1);
+                } else {
+                    vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
+                            item.getAssetCode(), item.getAssetName(),
+                            result != null ? result.getMessage() : "清理失败"));
+                }
+            } catch (Exception e) {
+                vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
+                        item.getAssetCode(), item.getAssetName(), e.getMessage()));
+            }
+        }
+        return vo;
     }
 
     /** 结果判定：实盘 > 账面 盘盈；< 盘亏；= 正常 */

@@ -55,6 +55,16 @@ public class FixedAssetCheckController {
         return Message.ok(fixedAssetCheckService.complete(id, userInfo.getBookId()));
     }
 
+    /**
+     * 盘亏一键下账：整件盘亏资产走清理流程生成凭证；返回处理与跳过明细。
+     */
+    @PutMapping("/dispose-deficit/{id}")
+    public Message<FixedAssetCheckDtos.DeficitDisposeVo> disposeDeficit(@PathVariable("id") String id,
+                                                                        @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteBusiness();
+        return Message.ok(fixedAssetCheckService.disposeDeficit(id, userInfo.getBookId()));
+    }
+
     @DeleteMapping("/{id}")
     public Message<String> delete(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
         ProductRoles.requireWriteBusiness();

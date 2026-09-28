@@ -132,6 +132,14 @@
               完成盘点
             </el-button>
             <el-button
+              v-if="row.status === 'completed' && row.deficitCount > 0"
+              link
+              type="danger"
+              @click="handleDisposeDeficit(row)"
+            >
+              盘亏下账
+            </el-button>
+            <el-button
               v-if="row.status === 'draft'"
               link
               type="danger"
@@ -331,11 +339,13 @@ import {
   createFixedAssetCheck,
   updateFixedAssetCheckItem,
   completeFixedAssetCheck,
+  disposeDeficitFixedAssetCheck,
   deleteFixedAssetCheck
 } from '@/api/fixed-asset/check'
 import bookStore from '@/store/modules/bookStore'
 import modal from '@/plugins/modal'
 import { openTablePrintWindow } from '@/utils/tablePrint'
+import { ElMessageBox } from 'element-plus'
 import { reactive, ref, onMounted } from 'vue'
 
 const curr = bookStore()
@@ -459,6 +469,21 @@ function handleComplete(row: any) {
     return completeFixedAssetCheck(row.id)
   }).then(() => {
     modal.msgSuccess('盘点已完成')
+    getList()
+  })
+}
+
+function handleDisposeDeficit(row: any) {
+  modal.confirm('将对整件盘亏（实盘数=0）的资产执行清理下账并生成凭证，部分盘亏需先做资产拆分。确认继续？').then(() => {
+    return disposeDeficitFixedAssetCheck(row.id)
+  }).then((res: any) => {
+    const vo = res.data || {}
+    const lines = [
+      `成功下账 ${vo.processedCount || 0} 项`,
+      vo.surplusCount ? `盘盈 ${vo.surplusCount} 项（需建卡后另行入账）` : '',
+      ...(vo.skipped || []).map((s: any) => `跳过 ${s.assetCode} ${s.assetName}：${s.reason}`)
+    ].filter(Boolean)
+    ElMessageBox.alert(lines.join('<br/>'), '盘亏下账结果', { dangerouslyUseHTMLString: true })
     getList()
   })
 }

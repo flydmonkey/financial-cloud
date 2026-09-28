@@ -44,4 +44,18 @@ public interface VoucherItemMapper extends BaseMapper<VoucherItem> {
     Page<VoucherItemVo> fetchByCashFlow(Page<VoucherItem> page,@Param("params")  VoucherItemPageDto params);
     
     List<StatementSubjectBalance> voucherSubjectBalanceSummary(StatementParamsDto dto);
+
+    /**
+     * 多栏账分录明细：某科目（含下级）在日期区间内的已过账分录，按日期/字号排序。
+     *
+     * @param bookId      账套
+     * @param subjectCode 栏母科目编码（前缀匹配下级）
+     * @param startDate   起始日期（含），null 表示不限
+     * @param endDate     截止日期（含），null 表示不限
+     */
+    List<VoucherItemVo> multiColumnLedgerItems(
+            @Param("bookId") String bookId,
+            @Param("subjectCode") String subjectCode,
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate);
 }

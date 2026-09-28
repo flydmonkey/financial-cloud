@@ -244,3 +244,12 @@ export function manageBatch(ids: any): any {
         method: 'put'
     })
 }
+
+// 多栏账
+export function multiColumnLedger(query: any): any {
+    return request({
+        url: '/voucher/multi-column-ledger',
+        method: 'get',
+        params: query
+    })
+}

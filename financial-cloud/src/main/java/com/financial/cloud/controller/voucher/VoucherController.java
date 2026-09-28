@@ -6,6 +6,7 @@ import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.voucher.Voucher;
+import com.financial.cloud.dto.voucher.MultiColumnLedgerVo;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherImportResultVo;
 import com.financial.cloud.dto.voucher.VoucherItemPageDto;
@@ -17,6 +18,7 @@ import com.financial.cloud.dto.voucher.VoucherVo;
 import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.service.history.HistorySystemLogsService;
+import com.financial.cloud.service.voucher.MultiColumnLedgerService;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
@@ -38,6 +40,7 @@ import java.util.List;
 public class VoucherController {
     private final VoucherService voucherService;
     private final HistorySystemLogsService historySystemLogsService;
+    private final MultiColumnLedgerService multiColumnLedgerService;
 
     /** 凭证关键操作审计：操作人、动作、对象与结果（IP 由日志服务统一提取） */
     private void auditLog(String action, List<String> ids, Message<?> result, UserInfo operator) {
@@ -64,6 +67,18 @@ public class VoucherController {
                                                         @CurrentUser UserInfo userInfo) {
         paramsDto.setBookId(userInfo.getBookId());
         return voucherService.fetchByCashFlow(paramsDto);
+    }
+
+    /**
+     * 多栏账：栏母科目 + 日期区间，逐凭证展示直接子科目栏位净额与余额
+     */
+    @GetMapping("/multi-column-ledger")
+    public Message<MultiColumnLedgerVo> multiColumnLedger(@RequestParam String subjectCode,
+                                                          @RequestParam(required = false) String startDate,
+                                                          @RequestParam(required = false) String endDate,
+                                                          @CurrentUser UserInfo userInfo) {
+        return Message.ok(multiColumnLedgerService.query(
+                userInfo.getBookId(), subjectCode, startDate, endDate));
     }
 
     @GetMapping(value = {"/fetch"})

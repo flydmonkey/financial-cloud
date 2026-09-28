@@ -3,6 +3,7 @@ package com.financial.cloud.service.voucher;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Book;
+import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
@@ -266,5 +267,45 @@ class VoucherServiceTest {
         Message<String> result = voucherService.submit(dto, false);
 
         assertEquals("凭证已提交，不允许修改", result.getMessage());
+    }
+
+    @Test
+    void auditRejectsSelfCreatedVoucher() {
+        Voucher selfCreated = Voucher.builder()
+                .id("v-self")
+                .status(VoucherStatusEnum.UNDER_REVIEW.getValue())
+                .build();
+        selfCreated.setCreatedBy("user-1");
+        when(voucherMapper.selectByIds(List.of("v-self"))).thenReturn(List.of(selfCreated));
+        UserInfo auditor = new UserInfo();
+        auditor.setId("user-1");
+        auditor.setDisplayName("张三");
+
+        Message<Void> result = voucherService.audit(List.of("v-self"), auditor);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("成功：0"));
+        assertTrue(result.getMessage().contains("制单人与审核人相同被拒：1"));
+        // 自制凭证不允许进入审核通过流程
+        org.mockito.Mockito.verify(voucherMapper, org.mockito.Mockito.never())
+                .updateById(org.mockito.ArgumentMatchers.any(Voucher.class));
+    }
+
+    @Test
+    void auditAllowsDifferentAuditor() {
+        Voucher others = Voucher.builder()
+                .id("v-other")
+                .status(VoucherStatusEnum.UNDER_REVIEW.getValue())
+                .build();
+        others.setCreatedBy("user-2");
+        when(voucherMapper.selectByIds(List.of("v-other"))).thenReturn(List.of(others));
+        UserInfo auditor = new UserInfo();
+        auditor.setId("user-1");
+        auditor.setDisplayName("张三");
+
+        Message<Void> result = voucherService.audit(List.of("v-other"), auditor);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("制单人与审核人相同被拒") == false);
     }
 }

@@ -703,11 +703,18 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     @Transactional
     public Message<Void> audit(List<String> ids, UserInfo userInfo) {
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
+        // 会计基础规范：制单人与审核人不得为同一人（createdBy 填充的是用户 ID）
+        long selfCreatedCount = vouchers.stream()
+                .filter(item -> VoucherStatusEnum.UNDER_REVIEW.getValue().equals(item.getStatus()))
+                .filter(item -> Objects.equals(item.getCreatedBy(), userInfo.getId()))
+                .count();
         List<Voucher> auditVouchers = vouchers.stream()
                 .filter(item -> VoucherStatusEnum.UNDER_REVIEW.getValue().equals(item.getStatus()))
+                .filter(item -> !Objects.equals(item.getCreatedBy(), userInfo.getId()))
                 .toList();
-        Map<String, VoucherVo> voucherMap = queryByIds(
-                auditVouchers.stream().map(Voucher::getId).toList());
+        Map<String, VoucherVo> voucherMap = auditVouchers.isEmpty()
+                ? Map.of()
+                : queryByIds(auditVouchers.stream().map(Voucher::getId).toList());
         for (Voucher auditVoucher : auditVouchers) {
             VoucherVo voucher = voucherMap.get(auditVoucher.getId());
             if (voucher == null) {
@@ -742,6 +749,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                         + "; 成功：" + auditVouchers.size()
                         + "; 失败：" + (vouchers.size() - auditVouchers.size())
                         + "; 不存在项：" + (ids.size() - vouchers.size())
+                        + (selfCreatedCount > 0 ? "; 其中制单人与审核人相同被拒：" + selfCreatedCount : "")
         );
     }
 
@@ -1587,6 +1595,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             }
             if (StringUtils.isNotBlank(voucher.getSenderId())) {
                 return new Message<>(Message.FAIL, "已过账的凭证不能删除");
+            }
+            if (!isVoucherInOpenPeriod(voucher)) {
+                return new Message<>(Message.FAIL, "已结账期间的凭证不允许删除");
             }
         }
 

@@ -47,7 +47,7 @@
 | 3.1 | 录入、校验、模板、字号 | 工作台 + 模板 + 字号 | **已实现** | `voucher-edit`、OpenSpec workspace | — |
 | 3.2 | 附件上传绑定凭证 | 仅 `receipt_num`；无文件关联 | **部分实现** | `FileStorage` 无 voucher_id | P1 |
 | 3.3 | 审核 / 批量 / 取消审核 | 已实现 | **已实现** | `audit`/`unaudit` | — |
-| 3.4 | 制单人 ≠ 审核人 | 无校验 | **未实现** | `VoucherService.audit` | P1 |
+| 3.4 | 制单人 ≠ 审核人 | 审核时拒绝自制凭证并计数提示 | **已实现** | `VoucherService.audit` | — |
 | 3.5 | 记账 / 取消记账 | sender/unsender | **已实现** | `VoucherService` | — |
 | 3.6 | 列表筛选、作废、删除、打印、导出 | 筛选/删/Excel/打印可用；作废态未写入；经典打印未接入 | **部分实现** | status 枚举；`voucherPrintHtml` 未引用 | P1（打印）/ P2（作废态） |
 | 3.7 | 断号整理 | successive 双模式 | **已实现** | `/successive` | — |
@@ -111,7 +111,7 @@
 | 8.1 | 角色与精细权限 | 角色-资源 + 账套授权；按钮指令少用 | **部分实现** | `permission`、`v-hasPermi` | P2 |
 | 8.2 | 操作日志含 IP、业务操作 | 登录有 IP；系统日志无 IP；业务少记 | **部分实现** | `history_*` | P1 |
 | 8.3 | 备份恢复 | 账套级手动备份导出 + 恢复（新账套克隆）已实现 | **已实现**（手动；覆盖式恢复与定时备份未做） | `service/book/backup/*` | — |
-| 8.4 | 已结账锁定 | 有期间校验；新建凭证路径有缺口 | **部分实现** | `isVoucherInOpenPeriod` | P1 |
+| 8.4 | 已结账锁定 | 新增/修改/导入/删除全路径期间校验 | **已实现** | `rejectClosedPeriodWrite` + `delete` 期间守卫 | — |
 
 ---
 

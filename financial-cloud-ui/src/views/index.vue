@@ -2,6 +2,23 @@
   <div class="app-container">
     <el-row :gutter="10">
       <el-col :span="24">
+        <el-card class="quick-entry">
+          <div
+            v-for="entry in quickEntries"
+            :key="entry.path"
+            class="quick-entry-item"
+            @click="router.push(entry.path)"
+          >
+            <el-icon :size="22">
+              <component :is="entry.icon" />
+            </el-icon>
+            <span>{{ entry.label }}</span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-row :gutter="10">
+      <el-col :span="24">
         <todo-panel />
       </el-col>
     </el-row>
@@ -82,6 +99,7 @@
 import {ref, getCurrentInstance} from "vue";
 import {useI18n} from 'vue-i18n'
 import {useRoute, useRouter} from "vue-router";
+import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked} from '@element-plus/icons-vue'
 import Footer from "@/components/Footer/index.vue"
 import TodoPanel from "@/views/dashboard/accounting/TodoPanel.vue";
 import FundBalance from "@/views/dashboard/accounting/fund_balance.vue";
@@ -98,6 +116,16 @@ const route: any = useRoute();
 const router: any = useRouter();
 const proxy: any = getCurrentInstance()!.proxy;
 
+/** 首页快捷入口：覆盖日常做账主路径 */
+const quickEntries = [
+  {label: '录凭证', path: '/voucher/voucher-edit', icon: EditPen},
+  {label: '凭证列表', path: '/voucher/voucher-index', icon: Tickets},
+  {label: '明细账', path: '/voucher/sub-ledger', icon: Notebook},
+  {label: '日记账', path: '/journal/journalentry', icon: Wallet},
+  {label: '资产负债表', path: '/statement/balance-sheet', icon: DataAnalysis},
+  {label: '利润表', path: '/statement/income-statement', icon: TrendCharts},
+  {label: '期末结账', path: '/settlement/settle-list', icon: Checked},
+]
 
 </script>
 <style scoped lang="scss">
@@ -107,5 +135,33 @@ const proxy: any = getCurrentInstance()!.proxy;
 
 .el-col {
   margin-bottom: 20px;
+}
+
+.quick-entry {
+  :deep(.el-card__body) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 18px;
+  }
+}
+
+.quick-entry-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 92px;
+  padding: 10px 0;
+  border-radius: 8px;
+  color: #606266;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: #ecf5ff;
+    color: #409eff;
+  }
 }
 </style>

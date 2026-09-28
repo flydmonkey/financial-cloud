@@ -117,6 +117,13 @@
               明细
             </el-button>
             <el-button
+              link
+              type="primary"
+              @click="printCheck(row)"
+            >
+              打印盘点表
+            </el-button>
+            <el-button
               v-if="row.status === 'draft'"
               link
               type="success"
@@ -328,6 +335,7 @@ import {
 } from '@/api/fixed-asset/check'
 import bookStore from '@/store/modules/bookStore'
 import modal from '@/plugins/modal'
+import { openTablePrintWindow } from '@/utils/tablePrint'
 import { reactive, ref, onMounted } from 'vue'
 
 const curr = bookStore()
@@ -397,6 +405,38 @@ function openDetail(row: any) {
     detail.value = res.data
   }).finally(() => {
     detailLoading.value = false
+  })
+}
+
+function resultLabel(result: string): string {
+  if (result === 'normal') return '正常'
+  if (result === 'surplus') return '盘盈'
+  if (result === 'deficit') return '盘亏'
+  return ''
+}
+
+function printCheck(row: any) {
+  getFixedAssetCheck(row.id).then((res: any) => {
+    const check = res.data?.check
+    const items = res.data?.items || []
+    const body = items.map((item: any) => `<tr>
+      <td class="c">${item.assetCode ?? ''}</td>
+      <td>${item.assetName ?? ''}</td>
+      <td>${item.location ?? ''}</td>
+      <td class="r">${item.bookQuantity ?? ''}</td>
+      <td class="r">${item.actualQuantity ?? ''}</td>
+      <td>${item.actualLocation ?? ''}</td>
+      <td class="c">${resultLabel(item.result)}</td>
+      <td>${item.remark ?? ''}</td>
+    </tr>`).join('')
+    openTablePrintWindow({
+      title: '固定资产盘点表',
+      subtitle: `${check.title}　盘点日期：${check.checkDate}　应盘 ${check.totalCount}　正常 ${check.normalCount}　盘盈 ${check.surplusCount}　盘亏 ${check.deficitCount}`,
+      tableHtml: `<thead><tr>
+        <th>资产编码</th><th>资产名称</th><th>账面地点</th><th>账面数量</th>
+        <th>实盘数量</th><th>实盘地点</th><th>结果</th><th>备注</th>
+      </tr></thead><tbody>${body}</tbody>`
+    })
   })
 }
 

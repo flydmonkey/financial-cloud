@@ -163,7 +163,19 @@
               align="left"
               header-align="center"
               prop="word"
-            />
+            >
+              <template #default="scope">
+                <el-link
+                  v-if="scope.row.voucherId && scope.row.word"
+                  type="primary"
+                  :underline="false"
+                  @click="openVoucher(scope.row)"
+                >
+                  {{ scope.row.word }}
+                </el-link>
+                <span v-else>{{ scope.row.word }}</span>
+              </template>
+            </el-table-column>
             <el-table-column
               label="摘要"
               align="left"
@@ -227,6 +239,14 @@ import {handleSummaryMethod, subjectMatchesKeyword, SummaryMethodProps} from "@/
 const router = useRouter();
 const route = useRoute();
 const currBookStore = booksSetStore()
+
+/** 凭证号溯源：跳转到凭证详情页 */
+function openVoucher(row: any): void {
+  if (!row?.voucherId) {
+    return;
+  }
+  router.push({path: '/voucher/voucher-edit', query: {id: row.voucherId}});
+}
 const loading = ref(true);
 const showSearch = ref(true);
 const total = ref(0);

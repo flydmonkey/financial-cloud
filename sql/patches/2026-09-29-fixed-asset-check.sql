@@ -1,0 +1,43 @@
+-- 固定资产盘点（可重复执行）
+CREATE TABLE IF NOT EXISTS `fixed_asset_check` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `title` varchar(128) COLLATE utf8mb4_bin NOT NULL COMMENT '盘点单标题',
+  `check_date` date NOT NULL COMMENT '盘点日期',
+  `status` varchar(16) COLLATE utf8mb4_bin NOT NULL DEFAULT 'draft' COMMENT 'draft盘点中/completed已完成',
+  `total_count` int DEFAULT 0 COMMENT '应盘数量',
+  `normal_count` int DEFAULT 0 COMMENT '正常数量',
+  `surplus_count` int DEFAULT 0 COMMENT '盘盈数量',
+  `deficit_count` int DEFAULT 0 COMMENT '盘亏数量',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_fa_check_book` (`book_id`,`check_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='固定资产盘点单';
+
+CREATE TABLE IF NOT EXISTS `fixed_asset_check_item` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `check_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `asset_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `asset_code` varchar(64) COLLATE utf8mb4_bin NOT NULL,
+  `asset_name` varchar(128) COLLATE utf8mb4_bin NOT NULL,
+  `location` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '账面存放地点',
+  `book_quantity` int NOT NULL DEFAULT 1 COMMENT '账面数量',
+  `actual_quantity` int DEFAULT NULL COMMENT '实盘数量',
+  `actual_location` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '实盘地点',
+  `result` varchar(16) COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'normal正常/surplus盘盈/deficit盘亏',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_fa_check_item_check` (`check_id`),
+  KEY `idx_fa_check_item_asset` (`book_id`,`asset_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='固定资产盘点明细';

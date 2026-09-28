@@ -74,7 +74,7 @@
 | 5.2 | 新增自动入账凭证 | 有条件生成 | **部分实现** | `FixedAssetPurchaseRules` | P2 |
 | 5.3 | 月末折旧凭证 | accrue | **已实现** | `FixedAssetDepreciationService` | — |
 | 5.4 | 变动与清理凭证 | 有 | **已实现** | `change`、`dispose` | — |
-| 5.5 | 盘点与盘点表 | 无 | **未实现** | — | P2 |
+| 5.5 | 盘点与盘点表 | 盘点单快照在册资产→实盘录入→自动判定盘盈/盘亏并汇总；盘盈盘亏凭证为后续增强 | **已实现** | `FixedAssetCheckService`、`views/fixed-asset/check.vue` | — |
 
 ---
 

@@ -3274,3 +3274,69 @@ INSERT INTO permission (
     1,
     '1'
 );
+-- 固定资产盘点（可重复执行）
+CREATE TABLE IF NOT EXISTS `fixed_asset_check` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `title` varchar(128) COLLATE utf8mb4_bin NOT NULL COMMENT '盘点单标题',
+  `check_date` date NOT NULL COMMENT '盘点日期',
+  `status` varchar(16) COLLATE utf8mb4_bin NOT NULL DEFAULT 'draft' COMMENT 'draft盘点中/completed已完成',
+  `total_count` int DEFAULT 0 COMMENT '应盘数量',
+  `normal_count` int DEFAULT 0 COMMENT '正常数量',
+  `surplus_count` int DEFAULT 0 COMMENT '盘盈数量',
+  `deficit_count` int DEFAULT 0 COMMENT '盘亏数量',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_fa_check_book` (`book_id`,`check_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='固定资产盘点单';
+
+CREATE TABLE IF NOT EXISTS `fixed_asset_check_item` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `check_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `asset_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `asset_code` varchar(64) COLLATE utf8mb4_bin NOT NULL,
+  `asset_name` varchar(128) COLLATE utf8mb4_bin NOT NULL,
+  `location` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '账面存放地点',
+  `book_quantity` int NOT NULL DEFAULT 1 COMMENT '账面数量',
+  `actual_quantity` int DEFAULT NULL COMMENT '实盘数量',
+  `actual_location` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '实盘地点',
+  `result` varchar(16) COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'normal正常/surplus盘盈/deficit盘亏',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_fa_check_item_check` (`check_id`),
+  KEY `idx_fa_check_item_asset` (`book_id`,`asset_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='固定资产盘点明细';
+-- 资产盘点菜单（挂「固定资产」组，可重复执行）
+SET @check_id = '2026092900000000011';
+SET @check_perm = '2026092900000000012';
+
+DELETE FROM permission WHERE id IN (@check_perm) OR resource_id IN (@check_id);
+DELETE FROM resources WHERE id IN (@check_id);
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @check_id, '资产盘点', '资产盘点', 'MENU', @check_id, '/fixed-asset/check', 'GET',
+    NULL, 'r', NULL, NULL, 'aim',
+    'n', 'n', 'n', 'y',
+    '2026082818000000001', '固定资产', 7, NULL,
+    '1', NOW(), '1', NOW(), '1', 'n'
+);
+
+INSERT INTO permission (id, role_id, resource_id, created_by, created_date, status, book_id)
+VALUES (@check_perm, 'ROLE_ADMINISTRATORS', @check_id, '1', NOW(), 1, '1');

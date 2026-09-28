@@ -253,3 +253,12 @@ export function multiColumnLedger(query: any): any {
         params: query
     })
 }
+
+// 数量金额账
+export function quantityLedger(query: any): any {
+    return request({
+        url: '/voucher/quantity-ledger',
+        method: 'get',
+        params: query
+    })
+}

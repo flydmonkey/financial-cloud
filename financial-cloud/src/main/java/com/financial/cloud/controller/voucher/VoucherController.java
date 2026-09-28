@@ -7,6 +7,7 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.dto.voucher.MultiColumnLedgerVo;
+import com.financial.cloud.dto.voucher.QuantityLedgerVo;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherImportResultVo;
 import com.financial.cloud.dto.voucher.VoucherItemPageDto;
@@ -19,6 +20,7 @@ import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.enums.voucher.VoucherStatusEnum;
 import com.financial.cloud.service.history.HistorySystemLogsService;
 import com.financial.cloud.service.voucher.MultiColumnLedgerService;
+import com.financial.cloud.service.voucher.QuantityLedgerService;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
@@ -41,6 +43,7 @@ public class VoucherController {
     private final VoucherService voucherService;
     private final HistorySystemLogsService historySystemLogsService;
     private final MultiColumnLedgerService multiColumnLedgerService;
+    private final QuantityLedgerService quantityLedgerService;
 
     /** 凭证关键操作审计：操作人、动作、对象与结果（IP 由日志服务统一提取） */
     private void auditLog(String action, List<String> ids, Message<?> result, UserInfo operator) {
@@ -78,6 +81,18 @@ public class VoucherController {
                                                           @RequestParam(required = false) String endDate,
                                                           @CurrentUser UserInfo userInfo) {
         return Message.ok(multiColumnLedgerService.query(
+                userInfo.getBookId(), subjectCode, startDate, endDate));
+    }
+
+    /**
+     * 数量金额账：科目 + 日期区间，逐分录展示收入/发出/结存的数量、单价、金额
+     */
+    @GetMapping("/quantity-ledger")
+    public Message<QuantityLedgerVo> quantityLedger(@RequestParam String subjectCode,
+                                                    @RequestParam(required = false) String startDate,
+                                                    @RequestParam(required = false) String endDate,
+                                                    @CurrentUser UserInfo userInfo) {
+        return Message.ok(quantityLedgerService.query(
                 userInfo.getBookId(), subjectCode, startDate, endDate));
     }
 

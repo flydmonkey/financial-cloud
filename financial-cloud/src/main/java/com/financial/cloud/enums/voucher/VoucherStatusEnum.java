@@ -12,7 +12,7 @@ public enum VoucherStatusEnum implements BaseEnum {
     UNDER_REVIEW("reviewing", "审核中"),
     COMPLETED("completed", "已审核"),
     REJECTED("rejected", "被拒绝"),
-    CANCELLED("cancelled", "已取消");
+    CANCELLED("cancelled", "已作废");
 
     private final String value;
     private final String label;

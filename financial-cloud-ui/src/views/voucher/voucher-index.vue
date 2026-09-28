@@ -306,6 +306,28 @@
                 />
               </el-tooltip>
               <el-tooltip
+                v-if="canVoid(scope.row.voucher)"
+                content="作废"
+              >
+                <el-button
+                  link
+                  icon="CircleClose"
+                  type="danger"
+                  @click="handleVoid(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="'cancelled' === scope.row.voucher.status"
+                content="恢复为暂存"
+              >
+                <el-button
+                  link
+                  icon="RefreshLeft"
+                  type="warning"
+                  @click="handleUnvoid(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
                 v-if="isDeletable(scope.row.voucher)"
                 content="删除"
               >
@@ -888,6 +910,47 @@ function handleCancel(row) {
     return voucherApis.cancelVoucherByIds(voucherId);
   }).then(() => {
     proxy.$modal.msgSuccess("已取消");
+    getList()
+  }).catch(() => {
+  });
+}
+
+/** 是否可作废：暂存/被拒绝且未过账、期间未结账 */
+function canVoid(voucher) {
+  if (!voucher?.voucherDate || voucher.senderId) {
+    return false
+  }
+  if (voucher.status !== 'draft' && voucher.status !== 'rejected') {
+    return false
+  }
+  return currBookStore.termCurrent <= voucher.voucherDate.substring(0, 7)
+}
+
+/** 作废凭证 */
+function handleVoid(row) {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认作废该凭证？作废后保留字号、不参与账表，可恢复。').then(() => {
+    return voucherApis.voidVoucher(voucherId);
+  }).then((res) => {
+    showActionResult(res, "已作废");
+    getList()
+  }).catch(() => {
+  });
+}
+
+/** 恢复作废凭证 */
+function handleUnvoid(row) {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认将该凭证恢复为暂存？').then(() => {
+    return voucherApis.unvoidVoucher(voucherId);
+  }).then((res) => {
+    showActionResult(res, "已恢复为暂存");
     getList()
   }).catch(() => {
   });

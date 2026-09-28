@@ -1664,6 +1664,67 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     }
 
     /**
+     * 作废凭证：保留字号、不参与账表与结账检查，可恢复为暂存。
+     * 仅暂存/被拒绝且未过账的凭证可作废；已过账凭证须走红字冲销。
+     */
+    @Transactional
+    public Message<String> voidById(String id, String bookId) {
+        Voucher voucher = baseMapper.selectById(id);
+        if (voucher == null || !bookId.equals(voucher.getBookId())) {
+            return Message.failed("凭证不存在或不属于当前账套");
+        }
+        Message<String> periodLock = rejectClosedPeriodWrite(VoucherChangeDto.builder()
+                .bookId(bookId)
+                .voucherDate(voucher.getVoucherDate())
+                .build());
+        if (periodLock != null) {
+            return periodLock;
+        }
+        if (StringUtils.isNotBlank(voucher.getSenderId())) {
+            return Message.failed("已过账凭证不能作废，请使用红字冲销");
+        }
+        String status = voucher.getStatus();
+        if (VoucherStatusEnum.CANCELLED.getValue().equals(status)) {
+            return Message.failed("凭证已是作废状态");
+        }
+        if (!VoucherStatusEnum.DRAFT.getValue().equals(status)
+                && !VoucherStatusEnum.REJECTED.getValue().equals(status)) {
+            return Message.failed("仅暂存或被拒绝的凭证可作废（审核中请先撤回，已审核请先取消审核）");
+        }
+        Voucher update = new Voucher();
+        update.setId(voucher.getId());
+        update.setStatus(VoucherStatusEnum.CANCELLED.getValue());
+        baseMapper.updateById(update);
+        return Message.ok("作废成功");
+    }
+
+    /**
+     * 恢复作废：已作废凭证恢复为暂存，字号不变。
+     */
+    @Transactional
+    public Message<String> unvoidById(String id, String bookId) {
+        Voucher voucher = baseMapper.selectById(id);
+        if (voucher == null || !bookId.equals(voucher.getBookId())) {
+            return Message.failed("凭证不存在或不属于当前账套");
+        }
+        Message<String> periodLock = rejectClosedPeriodWrite(VoucherChangeDto.builder()
+                .bookId(bookId)
+                .voucherDate(voucher.getVoucherDate())
+                .build());
+        if (periodLock != null) {
+            return periodLock;
+        }
+        if (!VoucherStatusEnum.CANCELLED.getValue().equals(voucher.getStatus())) {
+            return Message.failed("仅已作废的凭证可以恢复");
+        }
+        Voucher update = new Voucher();
+        update.setId(voucher.getId());
+        update.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        baseMapper.updateById(update);
+        return Message.ok("已恢复为暂存");
+    }
+
+    /**
      * 构建查询条件
      *
      * @param bo 查询参数

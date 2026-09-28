@@ -175,6 +175,30 @@ public class VoucherController {
         return voucherService.cancelByIds(ids, userInfo.getBookId());
     }
 
+    /**
+     * 作废凭证：保留字号、不参与账表，可恢复。仅暂存/被拒绝且未过账可作废。
+     */
+    @PutMapping("/void/{id}")
+    public Message<String> voidVoucher(@PathVariable(name = "id") String id,
+                                       @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
+        Message<String> result = voucherService.voidById(id, userInfo.getBookId());
+        auditLog("作废", List.of(id), result, userInfo);
+        return result;
+    }
+
+    /**
+     * 恢复作废：已作废凭证恢复为暂存。
+     */
+    @PutMapping("/unvoid/{id}")
+    public Message<String> unvoidVoucher(@PathVariable(name = "id") String id,
+                                         @CurrentUser UserInfo userInfo) {
+        ProductRoles.requireWriteVoucher();
+        Message<String> result = voucherService.unvoidById(id, userInfo.getBookId());
+        auditLog("恢复作废", List.of(id), result, userInfo);
+        return result;
+    }
+
     @GetMapping("/successive")
     public Message<List<VoucherSuccessiveDto>> checkSuccessive(@CurrentUser UserInfo userInfo,
                                                                VoucherSuccessiveQueryDto query) {

@@ -310,4 +310,90 @@ class VoucherServiceTest {
         assertEquals(Message.SUCCESS, result.getCode());
         assertTrue(result.getMessage().contains("制单人与审核人相同被拒") == false);
     }
+
+    private Voucher voidableVoucher(String status) {
+        return Voucher.builder()
+                .id("v-void")
+                .bookId(BOOK_ID)
+                .status(status)
+                .voucherDate(new GregorianCalendar(2025, Calendar.JANUARY, 15).getTime())
+                .build();
+    }
+
+    @Test
+    void voidById_marksDraftCancelled() {
+        when(voucherMapper.selectById("v-void")).thenReturn(voidableVoucher(VoucherStatusEnum.DRAFT.getValue()));
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+
+        Message<String> result = voucherService.voidById("v-void", BOOK_ID);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+    }
+
+    @Test
+    void voidById_rejectsPosted() {
+        Voucher posted = voidableVoucher(VoucherStatusEnum.COMPLETED.getValue());
+        posted.setSenderId("user-9");
+        when(voucherMapper.selectById("v-void")).thenReturn(posted);
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+
+        Message<String> result = voucherService.voidById("v-void", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("已过账"));
+    }
+
+    @Test
+    void voidById_rejectsReviewing() {
+        when(voucherMapper.selectById("v-void")).thenReturn(voidableVoucher(VoucherStatusEnum.UNDER_REVIEW.getValue()));
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+
+        Message<String> result = voucherService.voidById("v-void", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("暂存或被拒绝"));
+    }
+
+    @Test
+    void voidById_rejectsClosedPeriod() {
+        when(voucherMapper.selectById("v-void")).thenReturn(voidableVoucher(VoucherStatusEnum.DRAFT.getValue()));
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
+
+        Message<String> result = voucherService.voidById("v-void", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("已结账期间"));
+    }
+
+    @Test
+    void voidById_rejectsForeignBook() {
+        Voucher other = voidableVoucher(VoucherStatusEnum.DRAFT.getValue());
+        other.setBookId("book-other");
+        when(voucherMapper.selectById("v-void")).thenReturn(other);
+
+        Message<String> result = voucherService.voidById("v-void", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+    }
+
+    @Test
+    void unvoidById_restoresDraft() {
+        when(voucherMapper.selectById("v-void")).thenReturn(voidableVoucher(VoucherStatusEnum.CANCELLED.getValue()));
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+
+        Message<String> result = voucherService.unvoidById("v-void", BOOK_ID);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+    }
+
+    @Test
+    void unvoidById_rejectsNonCancelled() {
+        when(voucherMapper.selectById("v-void")).thenReturn(voidableVoucher(VoucherStatusEnum.DRAFT.getValue()));
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+
+        Message<String> result = voucherService.unvoidById("v-void", BOOK_ID);
+
+        assertNotEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getMessage().contains("已作废"));
+    }
 }

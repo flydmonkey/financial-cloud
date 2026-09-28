@@ -158,6 +158,26 @@ export function cancelVoucherByIds(ids: any): any {
 }
 
 /**
+ * 作废凭证
+ */
+export function voidVoucher(id: any): any {
+    return request({
+        url: `/voucher/void/` + id,
+        method: 'put'
+    })
+}
+
+/**
+ * 恢复作废凭证
+ */
+export function unvoidVoucher(id: any): any {
+    return request({
+        url: `/voucher/unvoid/` + id,
+        method: 'put'
+    })
+}
+
+/**
  * 凭证连续性验证
  */
 export function getVoucherSuccessiveList(params: any): any {

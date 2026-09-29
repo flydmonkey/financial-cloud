@@ -277,11 +277,21 @@
           label="报销人"
           required
         >
-          <el-input
+          <el-select
             v-model="form.claimant"
             style="width: 180px"
-            placeholder="报销人姓名"
-          />
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入姓名"
+          >
+            <el-option
+              v-for="emp in employeeList"
+              :key="emp.id"
+              :label="emp.departmentName ? emp.displayName + '（' + emp.departmentName + '）' : emp.displayName"
+              :value="emp.displayName"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item
           label="报销日期"
@@ -414,6 +424,7 @@ import {useRouter} from 'vue-router'
 import {formatAmount} from '@/utils'
 import {parseTime} from '@/utils/financialCloud'
 import * as subjectApi from '@/api/standard/standard-subject'
+import {listEmployee} from '@/api/hr/employee'
 import {cascaderSubjectProps} from '@/utils/Subjects'
 import {
   expenseClaimPage,
@@ -448,6 +459,7 @@ const STATUS_TAG: Record<string, string> = {
 }
 
 const subjectList = ref<any>([])
+const employeeList = ref<any>([])
 const recordsList = ref<any[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -492,6 +504,19 @@ function getSubjectList() {
     subjectList.value = res.data
   })
 }
+
+/** 员工档案：报销人下拉（可手输姓名兜底） */
+function getEmployeeList() {
+  listEmployee({pageNumber: 1, pageSize: 200}).then((res: any) => {
+    employeeList.value = res.data?.records || []
+  }).catch(() => {
+    employeeList.value = []
+  })
+}
+
+getSubjectList()
+getEmployeeList()
+getList()
 
 function getList() {
   loading.value = true
@@ -655,9 +680,6 @@ function handleDelete(row: any) {
     })
   })
 }
-
-getSubjectList()
-getList()
 </script>
 
 <style lang="scss" scoped>

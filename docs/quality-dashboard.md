@@ -1,30 +1,30 @@
 # 质量仪表盘
 
-> 最后更新：2026-09-02  
-> 环境：后端 `localhost:2154`，前端 `localhost:3154`
+> 最后更新：2026-09-29  
+> 环境：本机 Cloud Agent（`financial-cloud` + `financial-cloud-ui`）；E2E 未在本轮全量复跑
 
 ## 总览
 
 | 维度 | 结果 |
 |------|------|
-| API 冒烟（`tools/smoke-api.mjs`） | 7 场景 |
-| Playwright E2E | 35 spec 文件 |
-| 后端单测 | 凭证 + 结账 + 报表 + book/journal/hr |
-| TypeScript | **121 error**（原 728 → 251 → 121） |
-| ESLint | **0 error** / ~3864 warning（原宣称 114 error；规则已降为 warning 后仅剩样式债） |
+| 后端单测（`./mvnw test`） | **通过**（BUILD SUCCESS，2026-09-29） |
+| TypeScript（`npm run typecheck`） | **129 error**（较 2026-09-02 记录的 ~121 略升；CI 仍 `continue-on-error`） |
+| ESLint（`npm run lint`） | **36 error** / **915 warning**（规则较严；error 未清零） |
+| Playwright E2E | 约 **40** 个 `e2e/*.spec.ts`（本轮未全量复跑） |
+| API 冒烟（`tools/smoke-api.mjs`） | 未本轮复跑 |
 
-## 分模块
+## 分模块（历史基线，仍适用）
 
 | 模块 | API 冒烟 | E2E | 说明 |
 |------|----------|-----|------|
 | auth | ✓ | smoke | 低 |
-| voucher | ✓ | 3 条 | 中 |
-| statement | ✓ | 4 条 | 报表平衡已修 |
-| settlement | ✓ | 3 条 | 结账年份默认已修 |
-| dashboard | ✓ | 2 条 | statistics API |
-| config | ✓ | 2 条 | 期初/辅助核算 |
-| book / journal / hr | ✓ | API + 页面 | 路由拼接已修 |
-| 其余 | ✓ | — | 低 |
+| voucher | ✓ | 多条 | 中 |
+| statement | ✓ | 多条 | 报表平衡已修 |
+| settlement | ✓ | 多条 | 月结向导已落地 |
+| dashboard | ✓ | 有 | statistics API |
+| config | ✓ | 有 | 期初/辅助核算 |
+| arap / journal / hr | ✓ | 有 | 往来核销、日记账、薪资最小闭环 |
+| 其余 | — | — | 按模块增补 |
 
 ## 复跑
 
@@ -45,7 +45,7 @@ cd financial-cloud-ui && npm run test:e2e
 
 ## 已知后续
 
-- **账套 4103/4104 权益核对（人工）**：在演示/回归账套打开资产负债表，确认「实收资本 / 资本公积 / 盈余公积 / 未分配利润」与科目余额一致；不平则记入报表缺陷，不阻断发版
-- TypeScript 剩余 ~121 error：集中在 `voucher-edit`、audit 页、cash-flow 编辑抽屉等；CI `typecheck` 仍为 `continue-on-error`
-- ESLint：error 已清零；大量 `vue/html-*` / `max-attributes-per-line` warning 可后续 `--fix` 分批消化
-- CI：`.github/workflows/ci.yml`（push 时跑 E2E）
+- TypeScript ~129 error：分散在 voucher-edit、cash-flow 编辑抽屉、idm、settlement 等；**不阻塞**吞吐 V2 功能刀，纳入质量债队列
+- ESLint：36 error + 大量 warning；功能刀不要求一次清零
+- 吞吐 V2 回归门禁见 [throughput-v2-backlog](superpowers/plans/2026-09-29-throughput-v2-backlog.md)
+- 账套权益核对（人工）：资产负债表与科目余额一致检查仍建议发版前抽检

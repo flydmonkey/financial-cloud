@@ -133,6 +133,9 @@
             >
               导出
             </el-button>
+            <el-button @click="handleExportPdf">
+              导出 PDF
+            </el-button>
             <el-button @click="handlePrint">
               打印
             </el-button>
@@ -250,7 +253,7 @@
 import {onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
-import {generalLedgerExport, getGeneralLedger} from '@/api/statement/statement-general-ledger'
+import {generalLedgerExport, generalLedgerExportPdf, getGeneralLedger} from '@/api/statement/statement-general-ledger'
 import * as subjectApi from '@/api/standard/standard-subject'
 import booksSetStore from '@/store/modules/bookStore'
 import {downloadData, formatAmount} from '@/utils'
@@ -414,6 +417,17 @@ function handleExport() {
     downloadData(data, `总账${range} ${parseTime(new Date())}.xlsx`)
   }).finally(() => {
     exporting.value = false
+  })
+}
+
+function handleExportPdf() {
+  if (!queryParams.dateRange || queryParams.dateRange.length !== 2) {
+    ElMessage.warning('请选择期间')
+    return
+  }
+  generalLedgerExportPdf(buildQuery()).then((data: Blob) => {
+    const range = queryParams.dateRange.join('至')
+    downloadData(data, `总账${range}.pdf`)
   })
 }
 

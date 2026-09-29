@@ -118,6 +118,7 @@
     <el-card class="common-card">
       <div class="btn-form">
         <el-button type="primary" @click="handlePrint">打印</el-button>
+        <el-button @click="handleExportPdf">导出 PDF</el-button>
       </div>
       <div style="display: flex;justify-content: flex-start">
         <div style="width: 300px;display: inline-block">
@@ -229,7 +230,7 @@ import * as subjectApi from "@/api/standard/standard-subject"
 import * as apis from "@/api/voucher/voucher";
 import {parseTime, getCurrentQuarter, handleTree} from '@/utils/financialCloud'
 import {h, ref, shallowRef, reactive, toRefs, watch, nextTick, onMounted, onActivated} from 'vue'
-import {formatAmount} from "@/utils"
+import {formatAmount, downloadData} from "@/utils"
 import {useRouter, useRoute} from "vue-router";
 import booksSetStore from "@/store/modules/bookStore";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
@@ -420,6 +421,17 @@ function handleQuery() {
 
 function handleExport() {
 
+}
+
+function handleExportPdf() {
+  if (queryParams.value.periodType === 'quarter') {
+    queryParams.value.reportDate = queryParams.value.date.substring(0, 4) + ' ' + queryParams.value.reportQuarter
+  } else {
+    queryParams.value.reportDate = queryParams.value.date
+  }
+  apis.exportVoucherSubLedgerPdf(queryParams.value).then((data: any) => {
+    downloadData(data, `明细账${queryParams.value.reportDate || ''}.pdf`)
+  })
 }
 
 /** 打印：按当前查询条件拉全量后新窗口渲染（可另存 PDF） */

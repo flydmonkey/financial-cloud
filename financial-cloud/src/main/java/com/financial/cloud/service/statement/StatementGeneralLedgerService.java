@@ -15,6 +15,7 @@ import com.financial.cloud.repository.book.BookSubjectMapper;
 import com.financial.cloud.repository.statement.StatementSubjectBalanceMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
 import com.financial.cloud.util.StatementGeneralLedgerRules;
+import com.financial.cloud.util.pdf.PdfTableExporter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -200,6 +201,41 @@ public class StatementGeneralLedgerService {
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName);
             workbook.write(response.getOutputStream());
         }
+    }
+
+    /**
+     * 总账 PDF 导出
+     */
+    public void exportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        StatementGeneralLedgerReport report = query(dto).getData();
+        Book book = bookMapper.selectById(dto.getBookId());
+        String bookName = book != null ? book.getName() : "";
+        List<String[]> rows = new ArrayList<>();
+        if (report != null && report.getItems() != null) {
+            for (StatementGeneralLedgerItem item : report.getItems()) {
+                rows.add(new String[]{
+                        PdfTableExporter.nz(item.getSubjectCode()),
+                        PdfTableExporter.nz(item.getSubjectName()),
+                        PdfTableExporter.nz(item.getPeriod()),
+                        PdfTableExporter.nz(item.getSummary()),
+                        PdfTableExporter.formatAmount(item.getDebit()),
+                        PdfTableExporter.formatAmount(item.getCredit()),
+                        PdfTableExporter.nz(item.getDirection()),
+                        PdfTableExporter.formatAmount(item.getBalance()),
+                });
+            }
+        }
+        String periodLabel = StringUtils.isNotBlank(dto.getReportDate())
+                ? dto.getReportDate()
+                : String.join("~", dto.getDateRange() == null ? new String[]{"", ""} : dto.getDateRange());
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "总账",
+                "账套：" + bookName + "　期间：" + PdfTableExporter.nz(periodLabel),
+                new String[]{"科目编码", "科目名称", "期间", "摘要", "借方", "贷方", "方向", "余额"},
+                rows,
+                true,
+                "总账" + PdfTableExporter.nz(periodLabel) + ".pdf"
+        ), response);
     }
 
     private List<VoucherItemVo> fetchPostedAmounts(StatementParamsDto base, String start, String end) {

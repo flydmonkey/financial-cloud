@@ -12,6 +12,15 @@ export function listVoucherSubLedger(query: any): any {
     })
 }
 
+export function exportVoucherSubLedgerPdf(query: any): any {
+    return request({
+        url: '/voucher/items/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
 
 /**
  * 现金流量凭证明细

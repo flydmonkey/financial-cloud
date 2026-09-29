@@ -146,6 +146,17 @@ public class StatementReportController {
         statementGeneralLedgerService.export(dto, response);
     }
 
+    @GetMapping("/general-ledger/export-pdf")
+    public void generalLedgerExportPdf(HttpServletResponse response,
+            StatementParamsDto dto, @CurrentUser UserInfo userInfo) throws IOException {
+        dto.setBookId(userInfo.getBookId());
+        if (StringUtils.isBlank(dto.getPeriodType())) {
+            dto.setPeriodType("between");
+        }
+        validParams(dto);
+        statementGeneralLedgerService.exportPdf(dto, response);
+    }
+
     private void validParams(StatementParamsDto dto) {
         if (StringUtils.isEmpty(dto.getPeriodType())) {
             throw new ServiceException(StatementErrorCode.PERIOD_TYPE_EMPTY);

@@ -65,6 +65,14 @@ public class VoucherController {
         return voucherService.subLedger(paramsDto);
     }
 
+    @GetMapping("/items/export-pdf")
+    public void subLedgerExportPdf(HttpServletResponse response,
+                                   VoucherItemPageDto paramsDto,
+                                   @CurrentUser UserInfo userInfo) throws IOException {
+        paramsDto.setBookId(userInfo.getBookId());
+        voucherService.exportSubLedgerPdf(paramsDto, response);
+    }
+
     @GetMapping("/items/fetch-by-cash-flow")
     public Message<Page<VoucherItemVo>> fetchByCashFlow(VoucherItemPageDto paramsDto,
                                                         @CurrentUser UserInfo userInfo) {

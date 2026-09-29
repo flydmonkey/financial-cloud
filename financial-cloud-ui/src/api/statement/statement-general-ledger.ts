@@ -16,3 +16,12 @@ export function generalLedgerExport(query: any): any {
         responseType: 'blob'
     })
 }
+
+export function generalLedgerExportPdf(query: any): any {
+    return request({
+        url: '/statement/general-ledger/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}

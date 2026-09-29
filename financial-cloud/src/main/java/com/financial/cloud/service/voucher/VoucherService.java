@@ -47,6 +47,7 @@ import com.financial.cloud.util.ExcelUtils;
 import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.VoucherUtils;
 import com.financial.cloud.util.excel.ExcelExporter;
+import com.financial.cloud.util.pdf.PdfTableExporter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.*;
 
@@ -104,6 +105,45 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         paramsDto.parse();
         return Message.ok(voucherItemMapper.subLedgerPage(paramsDto.build(), paramsDto));
     }
+
+    /**
+     * 明细账 PDF：按当前筛选条件导出（最多 10000 行）。
+     */
+    public void exportSubLedgerPdf(VoucherItemPageDto paramsDto, HttpServletResponse response) throws IOException {
+        paramsDto.setPageNumber(1);
+        paramsDto.setPageSize(10_000);
+        paramsDto.parse();
+        Page<VoucherItemVo> page = voucherItemMapper.subLedgerPage(paramsDto.build(), paramsDto);
+        List<VoucherItemVo> records = page == null || page.getRecords() == null ? List.of() : page.getRecords();
+        Book book = bookMapper.selectById(paramsDto.getBookId());
+        String company = book != null ? book.getCompanyName() : "";
+        String subject = StringUtils.defaultIfBlank(paramsDto.getSubjectCode(), "全部科目");
+        SimpleDateFormat dateFmt = new SimpleDateFormat(DateUtils.FORMAT_DATE_DEFAULT);
+        List<String[]> rows = new ArrayList<>();
+        for (VoucherItemVo row : records) {
+            String dateText = "";
+            if (row.getVoucherDate() != null) {
+                dateText = dateFmt.format(row.getVoucherDate());
+            }
+            rows.add(new String[]{
+                    dateText,
+                    PdfTableExporter.nz(row.getWord()),
+                    PdfTableExporter.nz(row.getSummary()),
+                    PdfTableExporter.formatAmount(row.getDebitAmount()),
+                    PdfTableExporter.formatAmount(row.getCreditAmount()),
+                    PdfTableExporter.formatAmount(row.getSubjectBalance()),
+            });
+        }
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "明细账",
+                "核算单位：" + company + "　科目：" + subject + "　期间：" + PdfTableExporter.nz(paramsDto.getReportDate()),
+                new String[]{"日期", "凭证字号", "摘要", "借方金额", "贷方金额", "余额"},
+                rows,
+                true,
+                "明细账" + PdfTableExporter.nz(paramsDto.getReportDate()) + ".pdf"
+        ), response);
+    }
+
     public Message<Page<VoucherItemVo>> fetchByCashFlow(VoucherItemPageDto paramsDto) {
         return Message.ok(voucherItemMapper.fetchByCashFlow(paramsDto.build(), paramsDto));
     }

@@ -16,12 +16,13 @@
 | 4 | `server-pdf-channel` | 已归档 | 服务端 PDF：资产负债/利润/科目余额 |
 | 5 | `scheduled-book-backup` | 已归档 | 定时备份落盘 + 保留策略 |
 | 6 | `server-pdf-cash-flow` | 已归档 | 现金流量表服务端 PDF |
+| 7 | `server-pdf-ledgers` | 已归档 | 总账 + 明细账服务端 PDF |
 
 ## 后续候选（按客户声音）
 
 | 项 | 说明 |
 |----|------|
-| 服务端 PDF 扩账簿 | 明细账/总账等 |
+| 多栏/数量金额/费用明细 PDF | 次优交付 |
 | 覆盖式恢复 | 非克隆 |
 | 工资条员工自助 | Non-goal |
 

@@ -62,6 +62,12 @@ public class FixedAssetCheck extends BaseEntity implements Serializable {
     /** 盘亏数（实盘 < 账面） */
     private Integer deficitCount;
 
+    /**
+     * 尚未盘盈入账的明细数（非表字段；列表接口填充，用于隐藏「盘盈入账」按钮）。
+     */
+    @TableField(exist = false)
+    private Integer pendingSurplusCount;
+
     private String remark;
 
     @TableField(fill = FieldFill.INSERT)

@@ -89,6 +89,10 @@ public final class FixedAssetCheckDtos {
         private BigDecimal defaultAmount;
         /** split_card | bump_qty */
         private String strategy;
+        /** 原卡已计提折旧且将走 bump_qty 时为 true */
+        private boolean hasDepreciation;
+        /** 前端提示文案；无则 null */
+        private String warning;
     }
 
     /** 盘盈预览 */

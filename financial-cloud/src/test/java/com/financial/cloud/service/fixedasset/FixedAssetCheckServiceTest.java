@@ -1,6 +1,7 @@
 package com.financial.cloud.service.fixedasset;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.domain.fixedasset.FixedAsset;
 import com.financial.cloud.domain.fixedasset.FixedAssetCheck;
 import com.financial.cloud.domain.fixedasset.FixedAssetCheckItem;
@@ -11,6 +12,7 @@ import com.financial.cloud.repository.fixedasset.FixedAssetCheckItemMapper;
 import com.financial.cloud.repository.fixedasset.FixedAssetCheckMapper;
 import com.financial.cloud.repository.fixedasset.FixedAssetMapper;
 import com.financial.cloud.service.book.BookSealGuard;
+import com.financial.cloud.service.config.ConfigSysService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,7 +26,9 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -282,6 +286,56 @@ class FixedAssetCheckServiceTest {
         FixedAssetCheckDtos.SurplusPreviewRow r2 = vo.getRows().get(1);
         assertEquals("bump_qty", r2.getStrategy());
         assertEquals(new BigDecimal("500.00"), r2.getDefaultAmount());
+        assertFalse(r2.isHasDepreciation());
+        assertEquals(null, r2.getWarning());
+    }
+
+    @Test
+    void surplusPreview_warnsWhenBumpQtyHasDepreciation() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem multi = surplusItem("item-2", "asset-2", 2, 3);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(multi));
+        FixedAsset asset = asset("asset-2", "FA-2", 2, "1000");
+        asset.setAccumDepr(new BigDecimal("100"));
+        asset.setDepreciatedPeriods(3);
+        when(assetMapper.selectById("asset-2")).thenReturn(asset);
+
+        FixedAssetCheckDtos.SurplusPreviewVo vo = service.surplusPreview("check-1", BOOK_ID);
+
+        assertEquals(1, vo.getRows().size());
+        assertTrue(vo.getRows().get(0).isHasDepreciation());
+        assertTrue(vo.getRows().get(0).getWarning() != null && vo.getRows().get(0).getWarning().contains("累计折旧"));
+    }
+
+    @Test
+    void hasExistingDepreciation_trueWhenAccumOrPeriods() {
+        FixedAsset a = new FixedAsset();
+        assertFalse(FixedAssetCheckService.hasExistingDepreciation(a));
+        a.setAccumDepr(new BigDecimal("0.01"));
+        assertTrue(FixedAssetCheckService.hasExistingDepreciation(a));
+        a.setAccumDepr(BigDecimal.ZERO);
+        a.setDepreciatedPeriods(1);
+        assertTrue(FixedAssetCheckService.hasExistingDepreciation(a));
+    }
+
+    @Test
+    void page_fillsPendingSurplusCount() {
+        FixedAssetCheckDtos.PageDto dto = new FixedAssetCheckDtos.PageDto();
+        dto.setBookId(BOOK_ID);
+        dto.setPageNumber(1);
+        dto.setPageSize(10);
+        FixedAssetCheck completed = completedCheck();
+        completed.setSurplusCount(2);
+        Page<FixedAssetCheck> page = new Page<>(1, 10);
+        page.setRecords(List.of(completed));
+        page.setTotal(1);
+        when(checkMapper.selectPage(any(), any())).thenReturn(page);
+        when(itemMapper.selectCount(any())).thenReturn(1L);
+
+        Page<FixedAssetCheck> result = service.page(dto);
+
+        assertEquals(1, result.getRecords().get(0).getPendingSurplusCount());
+        verify(itemMapper).selectCount(any());
     }
 
     @Test

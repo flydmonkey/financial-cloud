@@ -48,11 +48,34 @@ public class FixedAssetCheckService {
     static final String STRATEGY_BUMP_QTY = "bump_qty";
 
     public Page<FixedAssetCheck> page(FixedAssetCheckDtos.PageDto dto) {
-        return checkMapper.selectPage(dto.build(), Wrappers.<FixedAssetCheck>lambdaQuery()
+        Page<FixedAssetCheck> page = checkMapper.selectPage(dto.build(), Wrappers.<FixedAssetCheck>lambdaQuery()
                 .eq(FixedAssetCheck::getBookId, dto.getBookId())
                 .eq(StringUtils.isNotBlank(dto.getStatus()), FixedAssetCheck::getStatus, dto.getStatus())
                 .orderByDesc(FixedAssetCheck::getCheckDate)
                 .orderByDesc(FixedAssetCheck::getCreatedDate));
+        fillPendingSurplusCounts(page.getRecords());
+        return page;
+    }
+
+    /** 列表：统计各盘点单尚未入账的盘盈明细数 */
+    private void fillPendingSurplusCounts(List<FixedAssetCheck> checks) {
+        if (checks == null || checks.isEmpty()) {
+            return;
+        }
+        for (FixedAssetCheck check : checks) {
+            if (!FixedAssetCheck.STATUS_COMPLETED.equals(check.getStatus())
+                    || check.getSurplusCount() == null || check.getSurplusCount() <= 0) {
+                check.setPendingSurplusCount(0);
+                continue;
+            }
+            Long pending = itemMapper.selectCount(Wrappers.<FixedAssetCheckItem>lambdaQuery()
+                    .eq(FixedAssetCheckItem::getCheckId, check.getId())
+                    .eq(FixedAssetCheckItem::getBookId, check.getBookId())
+                    .eq(FixedAssetCheckItem::getResult, FixedAssetCheckItem.RESULT_SURPLUS)
+                    .and(w -> w.isNull(FixedAssetCheckItem::getSurplusVoucherId)
+                            .or().eq(FixedAssetCheckItem::getSurplusVoucherId, "")));
+            check.setPendingSurplusCount(pending == null ? 0 : pending.intValue());
+        }
     }
 
     public FixedAssetCheckDtos.DetailVo detail(String checkId, String bookId) {
@@ -270,7 +293,13 @@ public class FixedAssetCheckService {
             row.setActualQuantity(actual);
             row.setSurplusQuantity(actual - book);
             row.setDefaultAmount(defaultSurplusAmount(asset.getOriginalValue(), book, actual));
-            row.setStrategy(book == 1 ? STRATEGY_SPLIT_CARD : STRATEGY_BUMP_QTY);
+            String strategy = book == 1 ? STRATEGY_SPLIT_CARD : STRATEGY_BUMP_QTY;
+            row.setStrategy(strategy);
+            boolean hasDepr = hasExistingDepreciation(asset);
+            row.setHasDepreciation(hasDepr);
+            if (STRATEGY_BUMP_QTY.equals(strategy) && hasDepr) {
+                row.setWarning("该卡已有累计折旧：加原值后月折旧可能升高，且不调整已提折旧；如需独立折旧建议改拆新卡（将账面数量调为 1）后再盘。");
+            }
             vo.getRows().add(row);
         }
         return vo;
@@ -416,6 +445,16 @@ public class FixedAssetCheckService {
 
     private boolean isDisposed(FixedAsset asset) {
         return FixedAssetStatus.DISPOSED.name().equals(asset.getStatus());
+    }
+
+    static boolean hasExistingDepreciation(FixedAsset asset) {
+        if (asset == null) {
+            return false;
+        }
+        if (asset.getDepreciatedPeriods() != null && asset.getDepreciatedPeriods() > 0) {
+            return true;
+        }
+        return asset.getAccumDepr() != null && asset.getAccumDepr().compareTo(BigDecimal.ZERO) > 0;
     }
 
     /** 结果判定：实盘 > 账面 盘盈；< 盘亏；= 正常 */

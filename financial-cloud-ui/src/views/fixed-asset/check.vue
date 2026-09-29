@@ -140,7 +140,7 @@
               盘亏下账
             </el-button>
             <el-button
-              v-if="row.status === 'completed' && row.surplusCount > 0"
+              v-if="row.status === 'completed' && (row.pendingSurplusCount > 0)"
               link
               type="warning"
               @click="openSurplus(row)"
@@ -222,6 +222,14 @@
       <div class="check-tip surplus-tip">
         账面数量为 1 的资产将新增资产卡片；其余在原卡上增加数量与原值。金额可修改，须大于 0，入账后生成凭证。
       </div>
+      <el-alert
+        v-if="surplusRows.some((r: any) => r.warning)"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="部分原卡已计提折旧：加数量/原值后月折旧可能升高，且不调整已提折旧。详见行内提示。"
+        style="margin-bottom: 12px"
+      />
       <el-table
         v-loading="surplusLoading"
         border
@@ -236,7 +244,7 @@
         <el-table-column
           prop="assetName"
           label="资产名称"
-          min-width="140"
+          min-width="120"
           show-overflow-tooltip
         />
         <el-table-column
@@ -247,16 +255,16 @@
         />
         <el-table-column
           label="入账金额"
-          width="170"
+          width="150"
         >
           <template #default="{ row }">
             <el-input-number
               v-model="row.amount"
-              :min="0"
+              :min="0.01"
               :precision="2"
               :controls="false"
               size="small"
-              style="width: 140px"
+              style="width: 130px"
             />
           </template>
         </el-table-column>
@@ -267,10 +275,23 @@
           <template #default="{ row }">
             <el-tag
               size="small"
-              :type="row.strategy === 'split_card' ? 'success' : 'info'"
+              :type="row.strategy === 'split_card' ? 'success' : (row.hasDepreciation ? 'warning' : 'info')"
             >
               {{ strategyLabel(row.strategy) }}
             </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="提示"
+          min-width="160"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <span
+              v-if="row.warning"
+              class="check-tip"
+            >{{ row.warning }}</span>
+            <span v-else>-</span>
           </template>
         </el-table-column>
       </el-table>

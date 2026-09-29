@@ -2,10 +2,12 @@
 """Remove all books and related data so onboarding can be tested from scratch."""
 from __future__ import annotations
 
+import os
+
 import pymysql
 
-HOST = "127.0.0.1"
-PORT = 3307
+HOST = os.environ.get("FC_DB_HOST", "127.0.0.1")
+PORT = int(os.environ.get("FC_DB_PORT", "3307"))
 DB = "financial_cloud"
 USER = "financial_cloud"
 PASSWORD = "FinancialCloud321!"

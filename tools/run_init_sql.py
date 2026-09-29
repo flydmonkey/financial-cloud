@@ -2,6 +2,7 @@
 """Drop and reinitialize financial_cloud database from sql/financial_cloud_init.sql."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,8 +12,8 @@ from pymysql.constants import CLIENT
 ROOT = Path(__file__).resolve().parents[1]
 INIT_SQL = ROOT / "sql" / "financial_cloud_init.sql"
 
-HOST = "127.0.0.1"
-PORT = 3307
+HOST = os.environ.get("FC_DB_HOST", "127.0.0.1")
+PORT = int(os.environ.get("FC_DB_PORT", "3307"))
 DB = "financial_cloud"
 DB_USER = "financial_cloud"
 DB_PASSWORD = "FinancialCloud321!"
@@ -176,6 +177,12 @@ def main() -> int:
             verify_init(cursor)
     finally:
         conn.close()
+
+    # 四角色 RBAC 种子（做账员/审核员/查看员 + 权限包），幂等；
+    # 缺失时非管理员用户无法过产品权限校验（500014）。
+    import apply_rbac_four_roles
+
+    apply_rbac_four_roles.main()
     return 0
 
 

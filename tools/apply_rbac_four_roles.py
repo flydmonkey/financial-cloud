@@ -1,6 +1,8 @@
 """Generate and optionally apply rbac-four-roles SQL seed."""
 from __future__ import annotations
 
+import os
+
 import pymysql
 
 # Module resource IDs (root + descendants) from DB exploration
@@ -111,8 +113,8 @@ def fetch_all_under(cur, root: str) -> list[str]:
 
 def main() -> None:
     conn = pymysql.connect(
-        host="127.0.0.1",
-        port=3307,
+        host=os.environ.get("FC_DB_HOST", "127.0.0.1"),
+        port=int(os.environ.get("FC_DB_PORT", "3307")),
         user="financial_cloud",
         password="FinancialCloud321!",
         database="financial_cloud",

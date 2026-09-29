@@ -30,6 +30,7 @@ import com.financial.cloud.enums.error.FixedAssetErrorCode;
 import com.financial.cloud.enums.fixedasset.DepreciationMethod;
 import com.financial.cloud.enums.fixedasset.FixedAssetStatus;
 import com.financial.cloud.enums.voucher.VoucherStatusEnum;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.fixedasset.AssetCategoryMapper;
@@ -234,6 +235,77 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
         Message<String> voucherMsg = voucherService.save(voucherDto);
         if (voucherMsg.getCode() != Message.SUCCESS) {
             throw new IllegalStateException(StringUtils.defaultIfBlank(voucherMsg.getMessage(), "购入凭证生成失败"));
+        }
+        return voucherMsg.getData();
+    }
+
+    /**
+     * 盘盈生成草稿凭证：借 固定资产，贷 5301.04（盘盈利得）/5301。无税额行。
+     * 供 {@link FixedAssetCheckService} 调用。
+     *
+     * @return 草稿凭证 ID
+     */
+    public String createSurplusVoucher(FixedAsset asset, BigDecimal amount, String summary) {
+        if (asset == null) {
+            throw new BusinessException(FixedAssetErrorCode.ASSET_NOT_FOUND.getCode(), "盘盈资产不能为空");
+        }
+        BigDecimal value = FixedAssetPurchaseRules.nz(amount).setScale(2, RoundingMode.HALF_UP);
+        if (value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(FixedAssetErrorCode.PURCHASE_SUBJECT_REQUIRED.getCode(), "盘盈金额必须大于0");
+        }
+        String bookId = asset.getBookId();
+        BookSubject faSubject = requireSubjectById(bookId, asset.getFixedAssetSubjectId());
+        if (faSubject == null) {
+            faSubject = resolveSubject(bookId, null, "1601");
+        }
+        BookSubject gainSubject = resolveSubject(bookId, null, "5301.04", "5301");
+        if (faSubject == null || gainSubject == null) {
+            throw new BusinessException(FixedAssetErrorCode.PURCHASE_SUBJECT_REQUIRED.getCode(),
+                    "缺少固定资产科目或盘盈利得科目（5301.04/5301），无法生成盘盈凭证");
+        }
+
+        String period = configSysService.getCurrentTerm(bookId);
+        Date voucherDate = new Date();
+        int year;
+        int month;
+        if (StringUtils.isNotBlank(period) && period.contains("-")) {
+            year = Integer.parseInt(period.split("-")[0]);
+            month = Integer.parseInt(period.split("-")[1]);
+            if (!period.equals(FixedAssetDepreciationRules.periodOf(voucherDate))) {
+                voucherDate = java.sql.Date.valueOf(period + "-01");
+            }
+        } else {
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.setTime(voucherDate);
+            year = cal.get(java.util.Calendar.YEAR);
+            month = cal.get(java.util.Calendar.MONTH) + 1;
+        }
+        String voucherSummary = StringUtils.defaultIfBlank(summary,
+                "固定资产盘盈：" + asset.getCode() + " " + asset.getName());
+        Integer wordNum = voucherService.getAbleWordNum(bookId, DEFAULT_WORD, year, month).getData();
+        Book book = bookMapper.selectById(bookId);
+
+        List<VoucherItemChangeDto> items = new ArrayList<>();
+        items.add(createItem(faSubject, voucherSummary, value, true));
+        items.add(createItem(gainSubject, voucherSummary, value, false));
+
+        VoucherChangeDto voucherDto = new VoucherChangeDto();
+        voucherDto.setWordHead(DEFAULT_WORD);
+        voucherDto.setWordNum(wordNum);
+        voucherDto.setBookId(bookId);
+        voucherDto.setCompanyName(book != null ? book.getCompanyName() : "");
+        voucherDto.setVoucherDate(voucherDate);
+        voucherDto.setVoucherYear(year);
+        voucherDto.setVoucherMonth(month);
+        voucherDto.setDebitAmount(value);
+        voucherDto.setCreditAmount(value);
+        voucherDto.setReceiptNum(0);
+        voucherDto.setRemark(voucherSummary);
+        voucherDto.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        voucherDto.setItems(items);
+        Message<String> voucherMsg = voucherService.save(voucherDto);
+        if (voucherMsg.getCode() != Message.SUCCESS) {
+            throw new IllegalStateException(StringUtils.defaultIfBlank(voucherMsg.getMessage(), "盘盈凭证生成失败"));
         }
         return voucherMsg.getData();
     }

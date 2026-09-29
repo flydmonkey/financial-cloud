@@ -145,6 +145,9 @@
           <el-button @click="handleExport">
             导出
           </el-button>
+          <el-button @click="handleExportPdf">
+            导出 PDF
+          </el-button>
         </div>
       </div>
       <el-table
@@ -516,6 +519,12 @@ function handlePrint() {
 function handleExport() {
   statementApis.cashFlowExport(queryParams.value).then((data: any) => {
     downloadData(data, `现金流量表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+function handleExportPdf() {
+  statementApis.cashFlowExportPdf(queryParams.value).then((data: any) => {
+    downloadData(data, `现金流量表${queryParams.value.reportDate}.pdf`)
   })
 }
 

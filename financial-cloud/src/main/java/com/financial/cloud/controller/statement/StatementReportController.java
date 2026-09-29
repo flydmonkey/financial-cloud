@@ -50,6 +50,15 @@ public class StatementReportController {
         statementReportService.cashFlowExport(dto, response);
     }
 
+    @GetMapping("/cash-flow/export-pdf")
+    public void cashFlowExportPdf(HttpServletResponse response,
+                                  StatementParamsDto dto,
+                                  @CurrentUser UserInfo userInfo) throws IOException {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        statementReportService.cashFlowExportPdf(dto, response);
+    }
+
     @GetMapping(value = {"/subject-balance"})
     public Message<List<StatementSubjectBalance>> subjectBalance(StatementParamsDto dto,
                                                                @CurrentUser UserInfo userInfo) {

@@ -103,6 +103,15 @@ export function cashFlowExport(query : any): any {
     })
 }
 
+export function cashFlowExportPdf(query : any): any {
+    return request({
+        url: '/statement/cash-flow/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
 export function exportMonthlyBooksPack(query: { yearPeriod: string; includeVoucherList: boolean }): any {
     return request({
         url: '/statement/books-pack/export',

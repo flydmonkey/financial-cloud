@@ -13,14 +13,15 @@
 | 1 | `print-delivery-polish` | 已归档 | 打印收口 |
 | 2 | `opening-balance-excel` | 已归档 | 期初 Excel 导出/模板/导入 |
 | 3 | `docs-as-built-sync` | 已归档 | 分册/overview 与已落地能力全面对齐 |
-| 4 | `server-pdf-channel` | 已归档 | 服务端 PDF 首批：资产负债/利润/科目余额 |
+| 4 | `server-pdf-channel` | 已归档 | 服务端 PDF：资产负债/利润/科目余额 |
 | 5 | `scheduled-book-backup` | 已归档 | 定时备份落盘 + 保留策略 |
+| 6 | `server-pdf-cash-flow` | 已归档 | 现金流量表服务端 PDF |
 
 ## 后续候选（按客户声音）
 
 | 项 | 说明 |
 |----|------|
-| 服务端 PDF 扩更多表 | 现金流量/账簿等 |
+| 服务端 PDF 扩账簿 | 明细账/总账等 |
 | 覆盖式恢复 | 非克隆 |
 | 工资条员工自助 | Non-goal |
 

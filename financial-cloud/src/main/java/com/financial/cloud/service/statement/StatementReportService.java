@@ -221,6 +221,35 @@ public class StatementReportService{
     }
 
     /**
+     * 现金流量表 PDF 导出
+     */
+    public void cashFlowExportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        dto.parse();
+        List<StatementCashFlow> cashFlows = cashFlowStatement(dto).getData();
+        Book book = bookMapper.selectById(dto.getBookId());
+        List<String[]> rows = new ArrayList<>();
+        if (cashFlows != null) {
+            for (StatementCashFlow item : cashFlows) {
+                rows.add(new String[]{
+                        PdfTableExporter.nz(item.getItemName()),
+                        PdfTableExporter.nz(item.getSortIndex()),
+                        PdfTableExporter.formatAmount(item.getMonthlyAmount()),
+                        PdfTableExporter.formatAmount(item.getCurrentAmount()),
+                });
+            }
+        }
+        String company = book != null ? book.getCompanyName() : "";
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "现金流量表",
+                "编制单位：" + company + "　期间：" + PdfTableExporter.nz(dto.getReportDate()),
+                new String[]{"项目", "行次", "本月金额", "本年累计金额"},
+                rows,
+                false,
+                "现金流量表" + PdfTableExporter.nz(dto.getReportDate()) + ".pdf"
+        ), response);
+    }
+
+    /**
      * 凭证汇总表导出
      */
     public void voucherSummaryExport(StatementParamsDto dto, HttpServletResponse response) throws IOException {

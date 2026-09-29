@@ -25,7 +25,7 @@
 | 按年/月筛选、刷新 | **已实现** | 各页顶部 |
 | 报表取数规则配置 | **已实现** | `statement_rules`、config API |
 | 资产负债/利润表行配置 | **已实现** | config + 准则模板 |
-| PDF 导出 | **部分实现** | 服务端 PDF：资产负债/利润/科目余额；其余仍可浏览器打印另存 |
+| PDF 导出 | **部分实现** | 服务端 PDF：资产负债/利润/现金流量/科目余额；其余仍可浏览器打印另存 |
 | 打印 | **已实现** | 资产负债表/利润表/现金流量表/科目余额/总账等走 `openTablePrintWindow` |
 | 数字一键溯源到账簿/凭证 | **已实现** | 资产负债/利润表行次下钻科目构成 → 明细账 |
 | 老板极简报表独立页 | **未实现** | 首页看板部分承接，待确认是否单列 |
@@ -62,7 +62,7 @@
 |-------------|------|
 | `/api/statement/balance-sheet` (+ `/export`、`/export-pdf`) | 资产负债表 |
 | `/api/statement/income` (+ `/export`、`/export-pdf`) | 利润表 |
-| `/api/statement/cash-flow`、`/api/statement/cash-flow/*` | 现金流量查询与指定 |
+| `/api/statement/cash-flow`（+ `/export`、`/export-pdf`）、`/api/statement/cash-flow/*` | 现金流量查询与指定 |
 | `/api/statement/expense-detail` | 费用明细 |
 | `/api/statement/subject-balance`（+ `/export-pdf`）、`/voucher-summary`、`/general-ledger` | 余额、汇总、总账 |
 | `/api/statement/config/*` | 资产负债/利润/规则配置 |

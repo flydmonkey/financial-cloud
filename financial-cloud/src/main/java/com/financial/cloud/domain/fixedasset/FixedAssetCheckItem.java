@@ -69,6 +69,10 @@ public class FixedAssetCheckItem extends BaseEntity implements Serializable {
 
     private String remark;
 
+    private java.math.BigDecimal surplusAmount;
+    private String surplusVoucherId;
+    private String surplusAssetId;
+
     @TableField(fill = FieldFill.INSERT)
     @TableLogic(value = "n", delval = "y")
     private String deleted;

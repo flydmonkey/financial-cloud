@@ -28,6 +28,17 @@ SCHEMA_EXTENSION_SQL = [
     SEED / "schema" / "fixed_asset_purchase_alter.sql",
     SEED / "schema" / "fixed_asset_suspend_alter.sql",
     SEED / "schema" / "journal_account_prev_opening.sql",
+    SEED / "schema" / "arap_writeoff_tables.sql",
+    # dated patches (schema 部分，幂等可重复执行)
+    PATCHES / "journal-account-status.sql",
+    PATCHES / "2026-09-29-voucher-reversal.sql",
+    PATCHES / "2026-09-29-system-logs-ip.sql",
+    PATCHES / "2026-09-29-journal-reconciliation.sql",
+    PATCHES / "2026-09-29-expense-claim.sql",
+    PATCHES / "2026-09-29-expense-claim-item.sql",
+    PATCHES / "2026-09-29-expense-claim-attachment.sql",
+    PATCHES / "2026-09-29-fixed-asset-check.sql",
+    PATCHES / "2026-09-29-voucher-attachment.sql",
 ]
 
 MENU_SEED_SQL = [
@@ -35,8 +46,26 @@ MENU_SEED_SQL = [
     SEED / "menus" / "general_ledger_menu.sql",
     SEED / "menus" / "expense_detail_menu.sql",
     SEED / "menus" / "fixed_asset_menu.sql",
+    SEED / "menus" / "arap_menus.sql",
+    SEED / "menus" / "arap_writeoff_menu.sql",
+    PATCHES / "2026-09-29-fixed-asset-check-menu.sql",
+    PATCHES / "2026-09-29-journal-reconciliation-menu.sql",
+    PATCHES / "2026-09-29-multi-column-ledger-menu.sql",
+    PATCHES / "2026-09-29-quantity-ledger-menu.sql",
+    PATCHES / "2026-09-29-tax-estimate-menu.sql",
+    PATCHES / "2026-09-29-tax-declaration-menu.sql",
     SEED / "menus" / "menu_salary_tax_and_rename_config.sql",
     SEED / "menus" / "menu_icons_align.sql",
+]
+
+# 数据补丁：必须在 SEED_TABLES 插入之后执行（按 id 更新种子行）
+DATA_PATCH_SQL = [
+    PATCHES / "2026-09-05-wage-tax-brackets-annual-cumulative.sql",
+]
+
+# 表结构默认值对齐（ALTER MODIFY，幂等）
+POST_SCHEMA_DEFAULTS_SQL = [
+    SEED / "config" / "config_insurance_fund_national_min_defaults.sql",
 ]
 
 BALANCE_SHEET_RULES_SQL = [
@@ -308,6 +337,7 @@ def patch_voucher_template_insert(insert_sql: str) -> str:
 def load_post_schema_sql() -> list[str]:
     chunks: list[str] = []
     append_sql_chunks(chunks, [MENU_CLEANUP_SQL, MENU_RESTRUCTURE_SQL, ASSIST_ACC_SQL])
+    append_sql_chunks(chunks, POST_SCHEMA_DEFAULTS_SQL)
     return chunks
 
 
@@ -422,6 +452,21 @@ def main() -> int:
         lines.append("-- config_cash_flow_balance templates (book_id IS NULL)")
         lines.extend(strip_seed_header(read_text(CASH_FLOW_SEED_SQL)))
         lines.append("")
+
+    data_patches: list[str] = []
+    append_sql_chunks(data_patches, DATA_PATCH_SQL)
+    if data_patches:
+        lines.extend(
+            [
+                "-- ------------------------------------------------------------------",
+                "-- Data patches (post-seed, idempotent)",
+                "-- ------------------------------------------------------------------",
+                "",
+            ]
+        )
+        for chunk in data_patches:
+            lines.append(chunk)
+            lines.append("")
 
     lines.extend(
         [

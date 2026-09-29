@@ -41,8 +41,10 @@ python tools/run_init_sql.py
 2. `general_ledger_menu.sql`
 3. `expense_detail_menu.sql`
 4. `fixed_asset_menu.sql`
-5. `menu_salary_tax_and_rename_config.sql`
-6. `menu_icons_align.sql`
+5. `arap_menus.sql`
+6. `arap_writeoff_menu.sql`
+7. `menu_salary_tax_and_rename_config.sql`
+8. `menu_icons_align.sql`
 
 ## 已有账套
 

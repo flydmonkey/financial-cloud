@@ -87,6 +87,8 @@ class SettlementServiceTest {
     private ArapService arapService;
     @Mock
     private StatementReportService statementReportService;
+    @Mock
+    private BookSealGuard bookSealGuard;
 
     @InjectMocks
     private SettlementService settlementService;

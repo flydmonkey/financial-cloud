@@ -98,7 +98,25 @@
         </if>
     </select>
 
-    <!-- 公共查询条件片段 -->
+    <!-- 多栏账：栏母科目（含下级）在日期区间内的已过账分录 -->
+    <select id="multiColumnLedgerItems" resultType="com.financial.cloud.dto.voucher.VoucherItemVo">
+        SELECT i.*, CONCAT(IFNULL(NULLIF(TRIM(v.word_head), ''), '记'), '-', v.word_num) AS word
+        FROM voucher_item i
+        LEFT JOIN voucher v ON i.voucher_id = v.id
+        WHERE v.book_id = #{bookId}
+        AND i.deleted = 'n'
+        AND v.deleted = 'n'
+        AND v.status = 'completed'
+        AND i.subject_code LIKE CONCAT(#{subjectCode}, '%')
+        <if test="startDate != null and startDate != ''">
+            AND v.voucher_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND v.voucher_date &lt;= #{endDate}
+        </if>
+        ORDER BY v.voucher_date ASC, v.word_num ASC, i.created_date ASC, i.id ASC
+    </select>
+
     <sql id="dynamicQueryConditions">
         <if test="params.belongDateRange != null and params.belongDateRange.length == 2">
             and v.voucher_date between #{params.belongDateRange[0]} and #{params.belongDateRange[1]}

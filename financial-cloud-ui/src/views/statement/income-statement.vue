@@ -130,6 +130,9 @@
           {{ ableEdit ? '停止编辑' : '启用编辑' }}
         </el-button>
         <div class="btn-form-right">
+          <el-button @click="handlePrint">
+            打印
+          </el-button>
           <el-button @click="handleExport">
             导出
           </el-button>
@@ -157,7 +160,17 @@
               :style="{'text-indent': scope.row.level + 'em',
                        display: 'inline-block', 'margin-right': '30px'}"
             >
-              {{ scope.row.itemName }}
+              <el-link
+                v-if="!ableEdit && scope.row.itemCode && scope.row.itemCode.length > 1"
+                type="primary"
+                :underline="false"
+                @click="openDrill(scope.row)"
+              >
+                {{ scope.row.itemName }}
+              </el-link>
+              <template v-else>
+                {{ scope.row.itemName }}
+              </template>
             </span>
           </template>
         </el-table-column>
@@ -459,6 +472,8 @@
         </div>
       </template>
     </el-dialog>
+
+    <StatementDrillDialog ref="drillDialogRef" />
   </div>
 </template>
 
@@ -481,6 +496,8 @@ import {getSubjectBalance} from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
+import StatementDrillDialog from "./components/StatementDrillDialog.vue";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();
@@ -550,6 +567,40 @@ const disabledDate = (time: any) => {
 function doConfig() {
   ableEdit.value = !ableEdit.value
   getList();
+}
+
+/** 报表行次下钻：查看科目构成 */
+const drillDialogRef = ref()
+
+function openDrill(row: any) {
+  drillDialogRef.value?.open({
+    type: 'income',
+    itemCode: row.itemCode,
+    itemName: row.itemName,
+    periodType: queryParams.value.periodType,
+    reportDate: queryParams.value.reportDate,
+    reportQuarter: queryParams.value.reportQuarter,
+  })
+}
+
+/** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
+function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const body = statementIncomeList.value.map((row: any) => `<tr>
+    <td>${esc('　'.repeat(Math.max(0, (row.level || 1) - 1)) + (row.itemName || ''))}</td>
+    <td class="c">${esc(row.sortIndex ?? '')}</td>
+    <td class="r">${amt(row.currentBalance)}</td>
+    <td class="r">${amt(row.cumulativeBalance)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem().companyName || ''
+  openTablePrintWindow({
+    title: '利润表',
+    subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead><tr>
+      <th>项目</th><th>行次</th><th>本月金额</th><th>本年累计金额</th>
+    </tr></thead><tbody>${body}</tbody>`,
+  })
 }
 
 /** 查询列表 */

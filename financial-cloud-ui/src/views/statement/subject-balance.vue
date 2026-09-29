@@ -137,6 +137,9 @@
           <el-button @click="handleExport">
             导出
           </el-button>
+          <el-button @click="handlePrint">
+            打印
+          </el-button>
         </div>
       </div>
       <el-table
@@ -281,6 +284,7 @@ import {h, reactive, ref, shallowRef, toRefs, computed, VNode} from 'vue'
 import {downloadData, formatAmount} from "@/utils"
 import booksSetStore from "@/store/modules/bookStore";
 import Decimal from "decimal.js";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const booksSet = booksSetStore()
 const recordsList = ref([]);
@@ -350,6 +354,48 @@ const handlePeriodType = (value: any) => {
 function handleExport() {
   reportApis.subjectBalanceExport(queryParams.value).then((data: any) => {
     downloadData(data, `科目余额表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+/** 打印：树形结果按层级缩进展开渲染（可另存 PDF） */
+function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const flat: any[] = []
+  const walk = (nodes: any[], depth: number) => {
+    ;(nodes || []).forEach((node: any) => {
+      flat.push({...node, _depth: depth})
+      if (node.children && node.children.length) {
+        walk(node.children, depth + 1)
+      }
+    })
+  }
+  walk(recordsList.value, 0)
+  const body = flat.map((row: any) => `<tr>
+    <td class="c">${esc(row.subjectCode)}</td>
+    <td>${esc('　'.repeat(row._depth) + (row.subjectName || ''))}</td>
+    <td class="r">${amt(row.openingBalanceDebit)}</td>
+    <td class="r">${amt(row.openingBalanceCredit)}</td>
+    <td class="r">${amt(row.currentPeriodDebit)}</td>
+    <td class="r">${amt(row.currentPeriodCredit)}</td>
+    <td class="r">${amt(row.yearToDateDebit)}</td>
+    <td class="r">${amt(row.yearToDateCredit)}</td>
+    <td class="r">${amt(row.closingBalanceDebit)}</td>
+    <td class="r">${amt(row.closingBalanceCredit)}</td>
+  </tr>`).join('')
+  const company = booksSet.getBookItem()?.companyName || ''
+  const openingLabel = queryParams.value.periodType === 'year' ? '年初余额' : '期初余额'
+  openTablePrintWindow({
+    title: '科目余额表',
+    subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead>
+      <tr>
+        <th rowspan="2">科目编码</th><th rowspan="2">科目名称</th>
+        <th colspan="2">${openingLabel}</th><th colspan="2">本期发生额</th>
+        <th colspan="2">本年累计发生额</th><th colspan="2">期末余额</th>
+      </tr>
+      <tr><th>借方</th><th>贷方</th><th>借方</th><th>贷方</th><th>借方</th><th>贷方</th><th>借方</th><th>贷方</th></tr>
+    </thead><tbody>${body}</tbody>`,
   })
 }
 

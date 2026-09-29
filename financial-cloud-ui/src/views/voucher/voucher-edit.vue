@@ -68,6 +68,12 @@
           <el-button @click="onPrint">
             打印
           </el-button>
+          <el-button
+            v-if="formData.id"
+            @click="attachmentOpen = true"
+          >
+            附件
+          </el-button>
         </div>
       </div>
       <div class="workspace-toolbar-status">
@@ -710,12 +716,18 @@
         删除本项
       </el-button>
     </div>
+    <voucher-attachments
+      :open="attachmentOpen"
+      :voucher-id="formData.id"
+      @close="attachmentOpen = false"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import {computed, nextTick, onBeforeUpdate, onMounted, reactive, ref, watch} from 'vue'
 import SelectAuxiliary from "./SelectAuxiliary/index.vue"
+import VoucherAttachments from "./VoucherAttachments.vue"
 import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'element-plus'
 import {parseTime} from "@/utils/financialCloud";
 import * as subjectApi from "@/api/standard/standard-subject"
@@ -811,6 +823,7 @@ const topMenu = ref(0)
 const currentRow = ref<any>(null)
 const printMe = ref(null)
 const printing = ref(false)
+const attachmentOpen = ref(false)
 const printSheets = ref<RecordingVoucher[][]>([])
 // 会计科目数据
 const subjectList = ref<any>([])
@@ -1758,41 +1771,47 @@ function printContentInIframe(onDone: () => void) {
   }, 200)
 }
 
-// 打印
-const onPrint = async () => {
-  closeEditAll()
-  const backupItems = [...formData.value.items]
+// 经典打印静态页（public/voucher-print-classic.html）的数据 key
+const CLASSIC_PRINT_STORAGE_KEY = 'voucher-print-classic-data'
+
+// 组装经典打印页所需 payload（字段契约见 public/voucher-print-classic.html）
+const buildClassicPrintPayload = () => {
   const validItems = pruneOrphanVoucherItems(formData.value.items.filter((item: any) =>
       item.subjectId || item.subjectCode || item.creditAmount || item.debitAmount
   ))
-  formData.value.items = validItems
-  recalculateTotals()
-  printSheets.value = buildPrintSheets(validItems)
-  if (printSheets.value.length === 0) {
-    createTableData()
+  return {
+    companyName: formData.value.companyName || currBookStore.getBookItem().companyName || '',
+    voucherDate: formData.value.voucherDate ? String(formData.value.voucherDate).slice(0, 10) : '',
+    wordHead: formData.value.wordHead || '记',
+    wordNum: formData.value.wordNum,
+    receiptNum: formData.value.receiptNum ?? 0,
+    remark: formData.value.remark || '',
+    managerName: formData.value.managerName || '',
+    senderName: formData.value.senderName || '',
+    auditMemberName: formData.value.auditMemberName || '',
+    createdName: formData.value.createdName || '',
+    items: validItems.map((item: any) => ({
+      summary: item.summary || '',
+      subjectCode: item.subjectCode || '',
+      subjectName: item.leafName || item.subjectName || '',
+      debitAmount: item.debitAmount ?? null,
+      creditAmount: item.creditAmount ?? null,
+      auxiliary: item.auxiliary || [],
+    })),
   }
+}
 
-  printing.value = true
-  await nextTick()
-  await nextTick()
-
-  const originalTitle = document.title
-  document.title = `凭证打印-${formatVoucherWordNum()}`
-
-  let restored = false
-  const restore = () => {
-    if (restored) {
-      return
-    }
-    restored = true
-    printing.value = false
-    printSheets.value = []
-    document.title = originalTitle
-    formData.value.items = backupItems
-    createTableData()
+// 打印：写入 localStorage 后打开经典打印静态页（C5/B5 横向版式）
+const onPrint = async () => {
+  closeEditAll()
+  window.localStorage.setItem(CLASSIC_PRINT_STORAGE_KEY, JSON.stringify(buildClassicPrintPayload()))
+  const url = `/voucher-print-classic.html?autoprint=1&storageKey=${CLASSIC_PRINT_STORAGE_KEY}`
+  if (route.query.mode === 'print') {
+    // 打印模式：当前页直接跳转，避免弹窗被拦截
+    window.location.replace(url)
+    return
   }
-
-  printContentInIframe(restore)
+  window.open(url, '_blank')
 }
 
 function printSpecificDiv(printcontent: any) {

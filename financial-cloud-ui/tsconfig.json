@@ -16,6 +16,8 @@
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "Node",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,

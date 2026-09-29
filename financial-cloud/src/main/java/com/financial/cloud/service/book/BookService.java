@@ -22,6 +22,7 @@ import com.financial.cloud.dto.book.BookPageDto;
 import com.financial.cloud.dto.book.BookVo;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.enums.book.BookStatusEnum;
 import com.financial.cloud.enums.error.UsersBusinessCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
@@ -167,6 +168,14 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
             throw new BusinessException(BookBusinessExceptionEnum.DISABLE_BEFORE_DELETE);
         }
 
+        //封存账套不允许删除（归档留存语义）
+        LambdaQueryWrapper<Book> sealedWrapper = new LambdaQueryWrapper<>();
+        sealedWrapper.eq(Book::getStatus, BookStatusEnum.SEALED.getValue());
+        sealedWrapper.in(Book::getId, bookIds);
+        if (bookMapper.selectCount(sealedWrapper) > 0) {
+            throw new BusinessException(BookBusinessExceptionEnum.SEALED_BOOK_DELETE);
+        }
+
         //删除关联科目
         bookSubjectService.deleteByBookIds(bookIds);
 
@@ -195,6 +204,40 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         boolean result = super.removeByIds(bookIds);
 
         return result ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
+    }
+
+    /**
+     * 封存账套（归档只读）：仅账套管理员可操作；封存后一切业务写操作被 BookSealGuard 拦截。
+     */
+    @Transactional
+    public Message<String> seal(String bookId, UserInfo currentUser) {
+        requireBookAdministrator(currentUser, bookId);
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            return new Message<>(Message.FAIL, "账套不存在");
+        }
+        Book update = new Book();
+        update.setId(bookId);
+        update.setStatus(BookStatusEnum.SEALED.getValue());
+        boolean result = super.updateById(update);
+        return result ? new Message<>(Message.SUCCESS, "封存成功") : new Message<>(Message.FAIL, "封存失败");
+    }
+
+    /**
+     * 解除封存，恢复为启用状态。
+     */
+    @Transactional
+    public Message<String> unseal(String bookId, UserInfo currentUser) {
+        requireBookAdministrator(currentUser, bookId);
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            return new Message<>(Message.FAIL, "账套不存在");
+        }
+        Book update = new Book();
+        update.setId(bookId);
+        update.setStatus(BookStatusEnum.ACTIVE.getValue());
+        boolean result = super.updateById(update);
+        return result ? new Message<>(Message.SUCCESS, "已解除封存") : new Message<>(Message.FAIL, "解除封存失败");
     }
 
     /**

@@ -40,6 +40,7 @@ import com.financial.cloud.enums.voucher.VoucherSuccessiveMethodEnum;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
+import com.financial.cloud.service.book.BookSealGuard;
 import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.util.DateUtils;
 import com.financial.cloud.util.ExcelUtils;
@@ -98,6 +99,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     private final StandardSubjectCashFlowMapper standardSubjectCashFlowMapper;
     private final VoucherItemCashFlowMapper voucherItemCashFlowMapper;
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
+    private final BookSealGuard bookSealGuard;
     public Message<Page<VoucherItemVo>> subLedger(VoucherItemPageDto paramsDto) {
         paramsDto.parse();
         return Message.ok(voucherItemMapper.subLedgerPage(paramsDto.build(), paramsDto));
@@ -490,6 +492,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (ids.isEmpty()) {
             return Message.failed("请选择要提交的凭证");
         }
+        bookSealGuard.assertWritable(bookId);
         Map<String, VoucherVo> voucherMap = queryByIds(ids);
         Book book = bookMapper.selectById(bookId);
         if (book == null) {
@@ -702,12 +705,20 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<Void> audit(List<String> ids, UserInfo userInfo) {
+        bookSealGuard.assertWritable(userInfo.getBookId());
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
+        // 会计基础规范：制单人与审核人不得为同一人（createdBy 填充的是用户 ID）
+        long selfCreatedCount = vouchers.stream()
+                .filter(item -> VoucherStatusEnum.UNDER_REVIEW.getValue().equals(item.getStatus()))
+                .filter(item -> Objects.equals(item.getCreatedBy(), userInfo.getId()))
+                .count();
         List<Voucher> auditVouchers = vouchers.stream()
                 .filter(item -> VoucherStatusEnum.UNDER_REVIEW.getValue().equals(item.getStatus()))
+                .filter(item -> !Objects.equals(item.getCreatedBy(), userInfo.getId()))
                 .toList();
-        Map<String, VoucherVo> voucherMap = queryByIds(
-                auditVouchers.stream().map(Voucher::getId).toList());
+        Map<String, VoucherVo> voucherMap = auditVouchers.isEmpty()
+                ? Map.of()
+                : queryByIds(auditVouchers.stream().map(Voucher::getId).toList());
         for (Voucher auditVoucher : auditVouchers) {
             VoucherVo voucher = voucherMap.get(auditVoucher.getId());
             if (voucher == null) {
@@ -742,6 +753,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                         + "; 成功：" + auditVouchers.size()
                         + "; 失败：" + (vouchers.size() - auditVouchers.size())
                         + "; 不存在项：" + (ids.size() - vouchers.size())
+                        + (selfCreatedCount > 0 ? "; 其中制单人与审核人相同被拒：" + selfCreatedCount : "")
         );
     }
 
@@ -754,6 +766,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (book == null) {
             return Message.failed("账套不存在");
         }
+        bookSealGuard.assertWritable(bookId);
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         List<Voucher> unauditVouchers = new ArrayList<>();
         for (Voucher voucher : vouchers) {
@@ -802,6 +815,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<Void> sender(List<String> ids, UserInfo userInfo) {
+        bookSealGuard.assertWritable(userInfo.getBookId());
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         VoucherBatchLoad batchLoad = loadVouchers(ids);
         List<Voucher> senderVouchers = new ArrayList<>();
@@ -850,6 +864,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<Void> unsender(List<String> ids, String bookId) {
+        bookSealGuard.assertWritable(bookId);
         List<Voucher> vouchers = baseMapper.selectByIds(ids);
         VoucherBatchLoad batchLoad = loadVouchers(ids);
         List<Voucher> unsenderVouchers = new ArrayList<>();
@@ -1027,6 +1042,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             addImportError(result, 0, "", "账套不存在");
             return new Message<>(Message.FAIL, "导入失败", result);
         }
+        bookSealGuard.assertWritable(bookId);
         Map<String, BookSubject> subjectByCode = new HashMap<>();
         try {
             Workbook workbook = excelImportFile.biuldWorkbook();
@@ -1588,6 +1604,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             if (StringUtils.isNotBlank(voucher.getSenderId())) {
                 return new Message<>(Message.FAIL, "已过账的凭证不能删除");
             }
+            if (!isVoucherInOpenPeriod(voucher)) {
+                return new Message<>(Message.FAIL, "已结账期间的凭证不允许删除");
+            }
         }
 
         // 删除凭证项和现金流量的关系
@@ -1627,6 +1646,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return new Message<>(Message.FAIL, "未选择数据对象");
         }
 
+        bookSealGuard.assertWritable(bookId);
+
         // 先查询凭证状态
         LambdaQueryWrapper<Voucher> lqw = Wrappers.lambdaQuery();
         lqw.in(Voucher::getId, ids);
@@ -1640,6 +1661,145 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         // 更新审批记录状态...
         return new Message<>(Message.SUCCESS, booksVouchers.size());
+    }
+
+    /**
+     * 作废凭证：保留字号、不参与账表与结账检查，可恢复为暂存。
+     * 仅暂存/被拒绝且未过账的凭证可作废；已过账凭证须走红字冲销。
+     */
+    @Transactional
+    public Message<String> voidById(String id, String bookId) {
+        Voucher voucher = baseMapper.selectById(id);
+        if (voucher == null || !bookId.equals(voucher.getBookId())) {
+            return Message.failed("凭证不存在或不属于当前账套");
+        }
+        Message<String> periodLock = rejectClosedPeriodWrite(VoucherChangeDto.builder()
+                .bookId(bookId)
+                .voucherDate(voucher.getVoucherDate())
+                .build());
+        if (periodLock != null) {
+            return periodLock;
+        }
+        if (StringUtils.isNotBlank(voucher.getSenderId())) {
+            return Message.failed("已过账凭证不能作废，请使用红字冲销");
+        }
+        String status = voucher.getStatus();
+        if (VoucherStatusEnum.CANCELLED.getValue().equals(status)) {
+            return Message.failed("凭证已是作废状态");
+        }
+        if (!VoucherStatusEnum.DRAFT.getValue().equals(status)
+                && !VoucherStatusEnum.REJECTED.getValue().equals(status)) {
+            return Message.failed("仅暂存或被拒绝的凭证可作废（审核中请先撤回，已审核请先取消审核）");
+        }
+        Voucher update = new Voucher();
+        update.setId(voucher.getId());
+        update.setStatus(VoucherStatusEnum.CANCELLED.getValue());
+        baseMapper.updateById(update);
+        return Message.ok("作废成功");
+    }
+
+    /**
+     * 恢复作废：已作废凭证恢复为暂存，字号不变。
+     */
+    @Transactional
+    public Message<String> unvoidById(String id, String bookId) {
+        Voucher voucher = baseMapper.selectById(id);
+        if (voucher == null || !bookId.equals(voucher.getBookId())) {
+            return Message.failed("凭证不存在或不属于当前账套");
+        }
+        Message<String> periodLock = rejectClosedPeriodWrite(VoucherChangeDto.builder()
+                .bookId(bookId)
+                .voucherDate(voucher.getVoucherDate())
+                .build());
+        if (periodLock != null) {
+            return periodLock;
+        }
+        if (!VoucherStatusEnum.CANCELLED.getValue().equals(voucher.getStatus())) {
+            return Message.failed("仅已作废的凭证可以恢复");
+        }
+        Voucher update = new Voucher();
+        update.setId(voucher.getId());
+        update.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        baseMapper.updateById(update);
+        return Message.ok("已恢复为暂存");
+    }
+
+    /**
+     * 红字冲销：为已过账凭证生成一张金额全负的冲销凭证（暂存态，走正常审核/过账流程后生效）。
+     * 冲销凭证落在当前开放账期，通过 sourceVoucherId 关联原凭证；一张凭证只允许冲销一次。
+     */
+    @Transactional
+    public Message<String> reverseById(String id, String bookId) {
+        bookSealGuard.assertWritable(bookId);
+        Voucher source = baseMapper.selectById(id);
+        if (source == null || !bookId.equals(source.getBookId())) {
+            return Message.failed("凭证不存在或不属于当前账套");
+        }
+        if (!VoucherStatusEnum.COMPLETED.getValue().equals(source.getStatus())
+                || StringUtils.isBlank(source.getSenderId())) {
+            return Message.failed("仅已过账凭证可以红字冲销（未过账凭证请直接作废或删除）");
+        }
+        Long reversedCount = baseMapper.selectCount(Wrappers.<Voucher>lambdaQuery()
+                .eq(Voucher::getSourceVoucherId, id));
+        if (reversedCount != null && reversedCount > 0) {
+            return Message.failed("该凭证已生成过冲销凭证，请勿重复冲销");
+        }
+        Message<VoucherVo> voResult = queryById(id);
+        if (voResult.getCode() != Message.SUCCESS || voResult.getData() == null) {
+            return Message.failed(voResult.getMessage());
+        }
+        VoucherVo vo = voResult.getData();
+
+        // 冲销凭证落在当前开放账期（今天早于开放账期时取账期首日）
+        String currentTerm = configSysService.getCurrentTerm(bookId);
+        Date reversalDate = new Date();
+        String todayTerm = DateUtils.format(reversalDate, DateUtils.FORMAT_DATE_YYYY_MM);
+        if (StringUtils.isNotBlank(currentTerm) && currentTerm.compareTo(todayTerm) > 0) {
+            int y = Integer.parseInt(currentTerm.substring(0, 4));
+            int m = Integer.parseInt(currentTerm.substring(5, 7));
+            reversalDate = new java.util.GregorianCalendar(y, m - 1, 1).getTime();
+        }
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(reversalDate);
+        int year = cal.get(java.util.Calendar.YEAR);
+        int month = cal.get(java.util.Calendar.MONTH) + 1;
+
+        VoucherChangeDto dto = toChangeDto(vo);
+        dto.setId(null);
+        dto.setBookId(bookId);
+        dto.setWord(null);
+        dto.setWordNum(getAbleWordNum(bookId, source.getWordHead(), year, month).getData());
+        dto.setVoucherDate(reversalDate);
+        dto.setVoucherYear(year);
+        dto.setVoucherMonth(month);
+        dto.setStatus(VoucherStatusEnum.DRAFT.getValue());
+        dto.setRemark("红字冲销「" + StringUtils.defaultString(vo.getWord()) + "」凭证");
+        dto.setAuditMemberId(null);
+        dto.setAuditMemberName(null);
+        dto.setAuditDate(null);
+        dto.setSenderId(null);
+        dto.setSenderName(null);
+        dto.setSenderDate(null);
+        dto.setManagerId(null);
+        dto.setManagerName(null);
+        dto.setManagerDate(null);
+        for (VoucherItemChangeDto item : dto.getItems()) {
+            item.setId(null);
+            item.setVoucherId(null);
+            item.setDebitAmount(item.getDebitAmount() != null ? item.getDebitAmount().negate() : null);
+            item.setCreditAmount(item.getCreditAmount() != null ? item.getCreditAmount().negate() : null);
+            item.setNum(item.getNum() != null ? -item.getNum() : null);
+            item.setSummary("冲销：" + StringUtils.defaultString(item.getSummary()));
+        }
+        Message<String> saveResult = save(dto);
+        if (saveResult.getCode() != Message.SUCCESS) {
+            return saveResult;
+        }
+        Voucher link = new Voucher();
+        link.setId(saveResult.getData());
+        link.setSourceVoucherId(id);
+        baseMapper.updateById(link);
+        return new Message<>(Message.SUCCESS, "红字冲销凭证已生成（暂存），审核过账后生效", saveResult.getData());
     }
 
     /**
@@ -1982,6 +2142,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (dto == null || StringUtils.isBlank(dto.getBookId())) {
             return null;
         }
+        // 封存账套整体只读（优先于期间锁）
+        bookSealGuard.assertWritable(dto.getBookId());
         String voucherTerm = null;
         if (dto.getVoucherDate() != null) {
             voucherTerm = DateUtils.format(dto.getVoucherDate(), DateUtils.FORMAT_DATE_YYYY_MM);

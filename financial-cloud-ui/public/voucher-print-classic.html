@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>记账凭证打印</title>
+  <style>
+    /*
+      纸张：C5 / B5 横向（按你的实际用纸，不是 A5）
+      视觉：第一版国标卡片风（米色、双线标题、细表线）
+    */
+    @page {
+      size: 229mm 162mm; /* 默认按 C5；对话框选 B5 时以对话框为准 */
+      margin: 0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 20px 32px;
+      background: #e8e6e1;
+      font-family: "宋体", SimSun, serif;
+      font-weight: 400;
+      font-synthesis: none;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .toolbar {
+      width: 229mm;
+      max-width: 100%;
+      margin: 0 0 14px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .toolbar button {
+      font-family: inherit;
+      border: 1px solid #888;
+      background: #fff;
+      padding: 6px 14px;
+      cursor: pointer;
+    }
+    .sheet {
+      width: 229mm;
+      max-width: 100%;
+      height: 162mm;
+      margin: 0 auto;
+      padding: 0;
+      background: #fff;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+      border: 1px solid #c9c4b8;
+      /* table + fixed：占满纸宽，避免内容收缩贴左 */
+      display: table;
+      table-layout: fixed;
+      overflow: hidden;
+    }
+    .sheet-inner {
+      display: table-cell;
+      vertical-align: middle;
+      padding: 10mm 12mm;
+      width: 100%;
+    }
+    .voucher-head {
+      text-align: center;
+      margin: 0 0 8px;
+    }
+    .title {
+      display: inline-block;
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 0.55em;
+      text-indent: 0.55em; /* 与字距配合，和日期同轴居中 */
+      font-weight: 700;
+      line-height: 1.2;
+      padding-bottom: 5px;
+      border-bottom: 2px double #555;
+      margin: 0 auto 6px;
+      min-width: 48%;
+      color: #222;
+    }
+    .meta-date {
+      text-align: center;
+      font-size: 13px;
+      margin: 0;
+      letter-spacing: 0.08em;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .meta-row .right { display: flex; gap: 22px; }
+    table.voucher {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+    table.voucher th,
+    table.voucher td {
+      border: 0.5pt solid #555;
+      padding: 2px 6px;
+      vertical-align: middle;
+      font-weight: 400;
+      color: #222;
+    }
+    table.voucher thead th {
+      background: #fff;
+      font-weight: 400;
+      text-align: center;
+      height: 7mm;
+      padding: 2px 4px;
+    }
+    table.voucher .col-summary { width: 24%; }
+    table.voucher .col-subject { width: 36%; }
+    table.voucher .col-debit,
+    table.voucher .col-credit {
+      width: 16%;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    table.voucher .col-no { width: 8%; text-align: center; }
+    table.voucher tbody td.subject,
+    table.voucher tbody td.summary { text-align: left; }
+    table.voucher tbody tr td {
+      height: 7.5mm;
+      max-height: 7.5mm;
+    }
+    table.voucher .aux {
+      display: block;
+      margin-top: 1px;
+      font-size: 10px;
+      color: #444;
+      line-height: 1.2;
+    }
+    table.voucher tfoot td {
+      font-weight: 400;
+      background: #fff;
+      height: 7.5mm;
+      padding: 2px 6px;
+    }
+    table.voucher tfoot .label {
+      text-align: center;
+      background: #fff;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+    }
+    table.voucher tfoot .label-cn {
+      text-align: left;
+      padding-left: 10px;
+      font-weight: 400;
+    }
+    table.voucher tfoot .cn-tag {
+      display: inline-block;
+      margin-right: 10px;
+      letter-spacing: 0.05em;
+    }
+    table.voucher tfoot .cn-amount { letter-spacing: 0.12em; }
+    table.voucher tfoot tr.remark-row td {
+      font-weight: 400;
+      background: #fff;
+      height: 8mm;
+    }
+    table.voucher tfoot tr.remark-row .label {
+      font-weight: 400;
+      background: #fff;
+      letter-spacing: 0.2em;
+    }
+    table.voucher tfoot .remark-value {
+      text-align: left;
+      padding: 3px 8px;
+      line-height: 1.3;
+      font-weight: 400;
+    }
+    .signs {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5mm;
+      padding: 0 4px;
+      font-size: 13px;
+    }
+    .signs span { min-width: 18%; }
+    .signs em {
+      font-style: normal;
+      border-bottom: 0.5pt solid #666;
+      display: inline-block;
+      min-width: 4.5em;
+      margin-left: 2px;
+      padding: 0 4px;
+    }
+    .hint {
+      width: 229mm;
+      max-width: 100%;
+      margin: 16px 0 0;
+      text-align: center;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      color: #777;
+      line-height: 1.6;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-synthesis: none !important;
+        text-shadow: none !important;
+        -webkit-text-stroke: 0 !important; /* 禁止描边，避免分录发糊 */
+      }
+      @page {
+        size: 229mm 162mm;
+        margin: 0;
+      }
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        display: block !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        font-family: "宋体", SimSun, serif !important;
+        font-weight: 400 !important;
+        font-synthesis: none !important;
+        color: #222 !important;
+      }
+      #root {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .sheet,
+      .sheet *:not(.title) {
+        font-family: "宋体", SimSun, serif !important;
+        font-weight: 400 !important;
+        font-synthesis: none !important;
+        -webkit-text-stroke: 0 !important;
+        text-shadow: none !important;
+      }
+      /* 仅标题加粗；宋体打印用阴影模拟粗体 */
+      .title {
+        font-weight: 700 !important;
+        font-synthesis: weight !important;
+        text-shadow: 0.3px 0 0 currentColor, -0.3px 0 0 currentColor !important;
+      }
+      table.voucher {
+        width: 100% !important;
+      }
+      table.voucher th,
+      table.voucher td {
+        border: 0.5pt solid #555 !important;
+        color: #222 !important;
+        font-size: 13px !important;
+      }
+      .toolbar, .hint { display: none !important; }
+      .sheet {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        display: table !important;
+        table-layout: fixed !important;
+        page-break-after: always;
+        page-break-inside: avoid !important;
+      }
+      .sheet-inner {
+        display: table-cell !important;
+        vertical-align: middle !important;
+        width: 100% !important;
+        padding: 10mm 12mm !important;
+      }
+      .sheet:last-child {
+        page-break-after: auto;
+      }
+    }
+  
+    #root { width: 100%; }
+    .error {
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 16px 18px;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      color: #a33;
+      background: #fff;
+      border: 1px solid #e0b4b4;
+      line-height: 1.6;
+    }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>记账凭证打印（C5/B5）</strong>
+    <button type="button" onclick="window.print()">打印</button>
+  </div>
+  <div id="root"></div>
+  <p class="hint">
+    纸张请用 <b>信封 C5</b> 或 <b>B5</b>，方向 <b>横向</b>。<br/>
+    边距务必选 <b>无</b>（选「默认」会变成 2 页）。缩放 100，建议勾选背景图形。
+  </p>
+
+  <script>
+(function () {
+  var PAGE_SIZE = 6
+  var params = new URLSearchParams(location.search)
+  var storageKey = params.get('storageKey') || 'voucher-print-data'
+  var autoprint = params.get('autoprint') === '1'
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+  }
+
+  function formatAmount(value) {
+    if (value === null || value === undefined || value === '') return ''
+    var n = Number(value)
+    if (isNaN(n)) return ''
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return ''
+    var parts = String(dateStr).split('-')
+    if (parts.length < 3) return String(dateStr)
+    return parts[0] + ' 年 ' + parts[1] + ' 月 ' + parts[2] + ' 日'
+  }
+
+  function formatWordNum(data) {
+    var head = data.wordHead || '记'
+    var num = data.wordNum == null || data.wordNum === '' ? '' : String(data.wordNum)
+    return head + ' ' + num + ' 号'
+  }
+
+  function buildSubjectLabel(item) {
+    var code = (item.subjectCode || '').trim()
+    var name = (item.subjectName || item.displayName || '').trim()
+    return (code + ' ' + name).trim()
+  }
+
+  function buildAuxLabel(item) {
+    var aux = item.auxiliary
+    if (!aux || !aux.length) return ''
+    var parts = aux.map(function (a) {
+      if (typeof a === 'string') return a
+      if (Array.isArray(a.value)) {
+        var values = a.value.map(function (v) {
+          return typeof v === 'string' ? v : (v.label || v.value || '')
+        }).filter(Boolean)
+        if (!values.length) return ''
+        var groupLabel = a.label || a.itemName || a.name || ''
+        return groupLabel ? groupLabel + ':' + values.join(',') : values.join(',')
+      }
+      return a.itemName || a.name || a.label || a.value || ''
+    }).filter(Boolean)
+    return parts.length ? '辅助：' + parts.join('；') : ''
+  }
+
+  function emptyRow() {
+    return { summary: '', subjectLabel: '', auxLabel: '', debitAmount: null, creditAmount: null, lineNo: null, isEmpty: true }
+  }
+
+  function chunkPages(items) {
+    var printable = (items || []).filter(function (it) { return !!it.subjectCode })
+    var pageCount = Math.max(1, Math.ceil(printable.length / PAGE_SIZE))
+    var pages = []
+    for (var p = 0; p < pageCount; p++) {
+      var slice = printable.slice(p * PAGE_SIZE, (p + 1) * PAGE_SIZE)
+      var rows = slice.map(function (item, i) {
+        return {
+          summary: item.summary || '',
+          subjectLabel: buildSubjectLabel(item),
+          auxLabel: buildAuxLabel(item),
+          debitAmount: item.debitAmount == null ? null : item.debitAmount,
+          creditAmount: item.creditAmount == null ? null : item.creditAmount,
+          lineNo: p * PAGE_SIZE + i + 1,
+          isEmpty: false
+        }
+      })
+      while (rows.length < PAGE_SIZE) {
+        var pad = emptyRow()
+        pad.lineNo = p * PAGE_SIZE + rows.length + 1
+        rows.push(pad)
+      }
+      var pageIndex = p + 1
+      pages.push({
+        pageIndex: pageIndex,
+        pageCount: pageCount,
+        isLast: pageIndex === pageCount,
+        isContinuation: pageIndex > 1,
+        rows: rows
+      })
+    }
+    return pages
+  }
+
+  function toChinese(num) {
+    var CN_NUM = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖']
+    var CN_UNIT = ['', '拾', '佰', '仟', '万', '亿', '兆']
+    var CN_DECIMAL_UNIT = ['角', '分']
+    if (num < 0) return '负' + toChinese(-num)
+    var integerPart = Math.floor(num)
+    var decimalPart = Math.round((num - integerPart) * 100)
+    var integerStr = ''
+    var decimalStr = ''
+    if (integerPart === 0) {
+      integerStr = CN_NUM[0]
+    } else {
+      var unitPos = 0
+      var zeroFlag = false
+      while (integerPart > 0) {
+        var digit = integerPart % 10
+        if (digit === 0) {
+          if (!zeroFlag) {
+            zeroFlag = true
+            integerStr = CN_NUM[digit] + integerStr
+          }
+        } else {
+          zeroFlag = false
+          integerStr = CN_NUM[digit] + CN_UNIT[unitPos] + integerStr
+        }
+        integerPart = Math.floor(integerPart / 10)
+        unitPos++
+      }
+    }
+    if (decimalPart > 0) {
+      for (var i = 0; i < CN_DECIMAL_UNIT.length; i++) {
+        var d = Math.floor(decimalPart / Math.pow(10, 1 - i)) % 10
+        if (d > 0) decimalStr += CN_NUM[d] + CN_DECIMAL_UNIT[i]
+      }
+    }
+    var result = integerStr + '圆' + decimalStr
+    if (decimalStr === '') result = result.replace(/圆$/, '圆整')
+    return result
+  }
+
+  function renderSheet(page, data, debitTotal, creditTotal, amountChinese) {
+    var title = page.isContinuation ? '记账凭证（续）' : '记账凭证'
+    var pageLabel = page.pageCount > 1
+      ? '<span>第 ' + page.pageIndex + ' / 共 ' + page.pageCount + ' 页</span>'
+      : ''
+    var rowsHtml = page.rows.map(function (row) {
+      var aux = row.auxLabel ? '<span class="aux">' + escapeHtml(row.auxLabel) + '</span>' : ''
+      var subjectInner = row.isEmpty ? '&nbsp;' : (escapeHtml(row.subjectLabel) + aux)
+      var summary = row.isEmpty ? '&nbsp;' : (escapeHtml(row.summary) || '&nbsp;')
+      var debit = row.isEmpty ? '' : formatAmount(row.debitAmount)
+      var credit = row.isEmpty ? '' : formatAmount(row.creditAmount)
+      var lineNo = row.lineNo == null ? '' : String(row.lineNo)
+      return '<tr>' +
+        '<td class="summary">' + summary + '</td>' +
+        '<td class="subject">' + subjectInner + '</td>' +
+        '<td class="col-debit">' + debit + '</td>' +
+        '<td class="col-credit">' + credit + '</td>' +
+        '<td class="col-no">' + lineNo + '</td>' +
+        '</tr>'
+    }).join('')
+
+    var tfoot = ''
+    var signs = ''
+    if (page.isLast) {
+      tfoot =
+        '<tfoot><tr>' +
+        '<td class="label">合　计</td>' +
+        '<td class="label-cn"><span class="cn-tag">人民币（大写）</span><span class="cn-amount">' +
+        escapeHtml(amountChinese) + '</span></td>' +
+        '<td class="col-debit">' + formatAmount(debitTotal) + '</td>' +
+        '<td class="col-credit">' + formatAmount(creditTotal) + '</td>' +
+        '<td></td></tr>' +
+        '<tr class="remark-row">' +
+        '<td class="label">备　注</td>' +
+        '<td colspan="4" class="remark-value">' + escapeHtml(data.remark || '') + '</td>' +
+        '</tr></tfoot>'
+      signs =
+        '<div class="signs">' +
+        '<span>会计主管：<em>' + escapeHtml(data.managerName || '') + '</em></span>' +
+        '<span>过账：<em>' + escapeHtml(data.senderName || '') + '</em></span>' +
+        '<span>复核：<em>' + escapeHtml(data.auditMemberName || '') + '</em></span>' +
+        '<span>制单：<em>' + escapeHtml(data.createdName || '') + '</em></span>' +
+        '</div>'
+    }
+
+    return '<div class="sheet"><div class="sheet-inner">' +
+      '<div class="voucher-head">' +
+      '<div class="title">' + title + '</div>' +
+      '<div class="meta-date">' + escapeHtml(formatDate(data.voucherDate)) + '</div>' +
+      '</div>' +
+      '<div class="meta-row"><div>核算单位：' + escapeHtml(data.companyName || '') + '</div>' +
+      '<div class="right">' + pageLabel +
+      '<span>' + escapeHtml(formatWordNum(data)) + '</span>' +
+      '<span>附件 ' + escapeHtml(data.receiptNum == null ? 0 : data.receiptNum) + ' 张</span>' +
+      '</div></div>' +
+      '<table class="voucher"><thead><tr>' +
+      '<th class="col-summary">摘要</th><th class="col-subject">会计科目</th>' +
+      '<th class="col-debit">借方金额</th><th class="col-credit">贷方金额</th><th class="col-no">行次</th>' +
+      '</tr></thead><tbody>' + rowsHtml + '</tbody>' + tfoot + '</table>' + signs + '</div></div>'
+  }
+
+  var root = document.getElementById('root')
+  var raw = null
+  try { raw = window.localStorage.getItem(storageKey) } catch (e) {}
+
+  if (!raw) {
+    root.innerHTML = '<div class="error">未找到打印数据。请从凭证页点「打印」打开。<br/>也可先打开 docs 里的第一版静态样张看样式。</div>'
+    return
+  }
+
+  var data
+  try { data = JSON.parse(raw) } catch (e) {
+    root.innerHTML = '<div class="error">打印数据解析失败。</div>'
+    return
+  }
+
+  function renderVoucher(data) {
+    data.items = (data.items || []).filter(function (it) { return !!it.subjectCode })
+    var pages = chunkPages(data.items)
+    var debitTotal = data.items.reduce(function (s, it) { return s + (Number(it.debitAmount) || 0) }, 0)
+    var creditTotal = data.items.reduce(function (s, it) { return s + (Number(it.creditAmount) || 0) }, 0)
+    return pages.map(function (page) {
+      return renderSheet(page, data, debitTotal, creditTotal, toChinese(debitTotal))
+    }).join('')
+  }
+
+  // 单张为对象；批量打印为数组（每张凭证独立分页）
+  var vouchers = Array.isArray(data) ? data : [data]
+  if (!vouchers.length) {
+    root.innerHTML = '<div class="error">打印数据为空。</div>'
+    return
+  }
+
+  document.title = vouchers.length > 1
+    ? '凭证批量打印-' + vouchers.length + ' 张'
+    : '凭证打印-' + formatWordNum(vouchers[0])
+  root.innerHTML = vouchers.map(renderVoucher).join('')
+
+  if (autoprint) setTimeout(function () { window.print() }, 200)
+})()
+  </script>
+</body>
+</html>

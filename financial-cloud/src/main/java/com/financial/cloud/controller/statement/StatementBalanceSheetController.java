@@ -4,10 +4,12 @@ import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.statement.StatementBalanceSheet;
+import com.financial.cloud.dto.statement.StatementDrillVo;
 import com.financial.cloud.dto.statement.StatementParamsDto;
 import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
+import com.financial.cloud.service.statement.StatementDrillService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.io.IOException;
 public class StatementBalanceSheetController {
     //资产负债表
     private final StatementBalanceSheetService statementBalanceSheetService;
+    private final StatementDrillService statementDrillService;
 
     /**
      * 报表-资产负债表
@@ -48,6 +51,18 @@ public class StatementBalanceSheetController {
         dto.setBookId(userInfo.getBookId());
         validParams(dto);
         statementBalanceSheetService.export(dto, response);
+    }
+
+    /**
+     * 资产负债表行次下钻：列出构成该行数字的科目及金额
+     */
+    @GetMapping("/balance-sheet/drill")
+    public Message<StatementDrillVo> drillBalanceSheet(StatementParamsDto dto,
+                                                       @RequestParam String itemCode,
+                                                       @CurrentUser UserInfo userInfo) {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        return Message.ok(statementDrillService.drillBalanceSheet(dto, itemCode));
     }
 
     private void validParams(StatementParamsDto dto) {

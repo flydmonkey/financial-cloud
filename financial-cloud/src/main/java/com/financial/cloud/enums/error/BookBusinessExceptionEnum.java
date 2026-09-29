@@ -40,7 +40,11 @@ public enum BookBusinessExceptionEnum implements ErrorCode {
 
     ASSIST_ACC_HAS_CHILDREN(510016, MessageKeys.Book.ASSIST_ACC_HAS_CHILDREN),
 
-    ASSIST_ACC_PARENT_HAS_ASSIST(510017, MessageKeys.Book.ASSIST_ACC_PARENT_HAS_ASSIST);
+    ASSIST_ACC_PARENT_HAS_ASSIST(510017, MessageKeys.Book.ASSIST_ACC_PARENT_HAS_ASSIST),
+
+    BOOK_SEALED(510018, MessageKeys.Book.BOOK_SEALED),
+
+    SEALED_BOOK_DELETE(510019, MessageKeys.Book.SEALED_BOOK_DELETE);
 
     private final int code;
     private final String messageKey;

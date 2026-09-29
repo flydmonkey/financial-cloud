@@ -158,6 +158,36 @@ export function cancelVoucherByIds(ids: any): any {
 }
 
 /**
+ * 作废凭证
+ */
+export function voidVoucher(id: any): any {
+    return request({
+        url: `/voucher/void/` + id,
+        method: 'put'
+    })
+}
+
+/**
+ * 恢复作废凭证
+ */
+export function unvoidVoucher(id: any): any {
+    return request({
+        url: `/voucher/unvoid/` + id,
+        method: 'put'
+    })
+}
+
+/**
+ * 红字冲销凭证
+ */
+export function reverseVoucher(id: any): any {
+    return request({
+        url: `/voucher/reverse/` + id,
+        method: 'post'
+    })
+}
+
+/**
  * 凭证连续性验证
  */
 export function getVoucherSuccessiveList(params: any): any {
@@ -242,5 +272,23 @@ export function manageBatch(ids: any): any {
     return request({
         url: '/voucher/manage-audit/' + ids,
         method: 'put'
+    })
+}
+
+// 多栏账
+export function multiColumnLedger(query: any): any {
+    return request({
+        url: '/voucher/multi-column-ledger',
+        method: 'get',
+        params: query
+    })
+}
+
+// 数量金额账
+export function quantityLedger(query: any): any {
+    return request({
+        url: '/voucher/quantity-ledger',
+        method: 'get',
+        params: query
     })
 }

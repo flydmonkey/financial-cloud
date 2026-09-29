@@ -65,6 +65,8 @@ public final class MessageKeys {
         public static final String BOOK_DUPLICATE_SUBJECT_CODE_EXIST = "book.error.book_duplicate_subject_code_exist";
         public static final String ASSIST_ACC_HAS_CHILDREN = "book.error.assist_acc_has_children";
         public static final String ASSIST_ACC_PARENT_HAS_ASSIST = "book.error.assist_acc_parent_has_assist";
+        public static final String BOOK_SEALED = "book.error.book_sealed";
+        public static final String SEALED_BOOK_DELETE = "book.error.sealed_book_delete";
 
         private Book() {
         }

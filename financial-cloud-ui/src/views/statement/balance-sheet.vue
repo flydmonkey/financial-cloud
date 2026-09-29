@@ -141,7 +141,9 @@
         </el-button>
 
         <div class="btn-form-right">
-          <!--          <el-button type="primary" @click="handlePrint">打印</el-button>-->
+          <el-button @click="handlePrint">
+            打印
+          </el-button>
           <el-button @click="handleExport">
             导出
           </el-button>
@@ -170,7 +172,18 @@
                 :style="{'text-indent': scope.row.level + 'em',
                          display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.level === 1 ? 'bold' : ''}"
               >
-                {{ scope.row.symbol === '-' ? '减：' : '' }}{{ scope.row.itemName }}
+                {{ scope.row.symbol === '-' ? '减：' : '' }}
+                <el-link
+                  v-if="!ableEdit && scope.row.level > 1 && scope.row.itemCode"
+                  type="primary"
+                  :underline="false"
+                  @click="openDrill(scope.row, 'asset')"
+                >
+                  {{ scope.row.itemName }}
+                </el-link>
+                <template v-else>
+                  {{ scope.row.itemName }}
+                </template>
               </span>
             </template>
           </el-table-column>
@@ -235,7 +248,18 @@
                 :style="{'text-indent': scope.row.liabilityLevel + 'em',
                          display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.liabilityLevel === 1 ? 'bold' : ''}"
               >
-                {{ scope.row.liabilitySymbol === '-' ? '减：' : '' }}{{ scope.row.liabilityItemName }}
+                {{ scope.row.liabilitySymbol === '-' ? '减：' : '' }}
+                <el-link
+                  v-if="!ableEdit && scope.row.liabilityLevel > 1 && scope.row.liabilityItemCode"
+                  type="primary"
+                  :underline="false"
+                  @click="openDrill(scope.row, 'liability')"
+                >
+                  {{ scope.row.liabilityItemName }}
+                </el-link>
+                <template v-else>
+                  {{ scope.row.liabilityItemName }}
+                </template>
               </span>
             </template>
           </el-table-column>
@@ -535,6 +559,8 @@
         </div>
       </template>
     </el-dialog>
+
+    <StatementDrillDialog ref="drillDialogRef" />
   </div>
 </template>
 
@@ -557,6 +583,8 @@ import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
 import Template from "@/views/hr/salary-voucher-rules/template.vue";
+import StatementDrillDialog from "./components/StatementDrillDialog.vue";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const {t} = useI18n()
 const {proxy} = getCurrentInstance();
@@ -750,6 +778,48 @@ const handlePeriodType = (value: string) => {
 function handleExport() {
   reportApis.balanceSheetExport(queryParams.value).then((data: any) => {
     downloadData(data, `资产负载表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+/** 报表行次下钻：查看科目构成 */
+const drillDialogRef = ref()
+
+function openDrill(row: any, side: 'asset' | 'liability') {
+  const isAsset = side === 'asset'
+  drillDialogRef.value?.open({
+    type: 'balance-sheet',
+    itemCode: isAsset ? row.itemCode : row.liabilityItemCode,
+    itemName: isAsset ? row.itemName : row.liabilityItemName,
+    periodType: queryParams.value.periodType,
+    reportDate: queryParams.value.reportDate,
+    reportQuarter: queryParams.value.reportQuarter,
+  })
+}
+
+/** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
+function handlePrint() {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (v: any) => formatAmount(v, '')
+  const name = (level: any, itemName: any, symbol: any) =>
+    '　'.repeat(Math.max(0, (level || 1) - 1)) + (symbol === '-' ? '减：' : '') + (itemName || '')
+  const body = balanceSheetList.value.map((row: any) => `<tr>
+    <td>${esc(name(row.level, row.itemName, row.symbol))}</td>
+    <td class="c">${esc(row.sortIndex ?? '')}</td>
+    <td class="r">${amt(row.currentBalance)}</td>
+    <td class="r">${amt(row.initialBalance)}</td>
+    <td>${esc(name(row.liabilityLevel, row.liabilityItemName, row.liabilitySymbol))}</td>
+    <td class="c">${esc(row.liabilitySortIndex ?? '')}</td>
+    <td class="r">${amt(row.liabilityCurrentBalance)}</td>
+    <td class="r">${amt(row.liabilityInitialBalance)}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem().companyName || ''
+  openTablePrintWindow({
+    title: '资产负债表',
+    subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead><tr>
+      <th>资产</th><th>行次</th><th>期末余额</th><th>年初余额</th>
+      <th>负债和所有者权益</th><th>行次</th><th>期末余额</th><th>年初余额</th>
+    </tr></thead><tbody>${body}</tbody>`,
   })
 }
 

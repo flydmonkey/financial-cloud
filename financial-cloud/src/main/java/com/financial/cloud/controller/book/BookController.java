@@ -66,6 +66,26 @@ public class BookController {
         return bookService.delete(dto, currentUser);
     }
 
+    /**
+     * 封存账套（归档只读）
+     */
+    @PutMapping("/seal/{id}")
+    public Message<String> seal(@PathVariable(name = "id") String id,
+                                @CurrentUser UserInfo currentUser) {
+        log.debug("seal {} by user {}", id, currentUser.getId());
+        return bookService.seal(id, currentUser);
+    }
+
+    /**
+     * 解除封存
+     */
+    @PutMapping("/unseal/{id}")
+    public Message<String> unseal(@PathVariable(name = "id") String id,
+                                  @CurrentUser UserInfo currentUser) {
+        log.debug("unseal {} by user {}", id, currentUser.getId());
+        return bookService.unseal(id, currentUser);
+    }
+
     @GetMapping("/fetchAll")
     public Message<List<BookVo>> listStore(@CurrentUser UserInfo currentUser) {
         return Message.ok(bookService.listBooks(currentUser.getId()));

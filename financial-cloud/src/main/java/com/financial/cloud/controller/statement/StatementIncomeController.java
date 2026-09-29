@@ -4,9 +4,11 @@ import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.statement.StatementIncome;
+import com.financial.cloud.dto.statement.StatementDrillVo;
 import com.financial.cloud.dto.statement.StatementParamsDto;
 import com.financial.cloud.enums.error.StatementErrorCode;
 import com.financial.cloud.exception.ServiceException;
+import com.financial.cloud.service.statement.StatementDrillService;
 import com.financial.cloud.service.statement.StatementIncomeService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.io.IOException;
 public class StatementIncomeController {
 
     private final StatementIncomeService statementIncomeService;
+    private final StatementDrillService statementDrillService;
 
     @GetMapping(value = {"/income"})
     public Message<StatementIncome> income(StatementParamsDto dto,
@@ -41,6 +44,18 @@ public class StatementIncomeController {
         dto.setBookId(userInfo.getBookId());
         validParams(dto);
         statementIncomeService.export(dto, response);
+    }
+
+    /**
+     * 利润表行次下钻：列出构成该行数字的科目及本期发生额
+     */
+    @GetMapping("/income/drill")
+    public Message<StatementDrillVo> drillIncome(StatementParamsDto dto,
+                                                 @RequestParam String itemCode,
+                                                 @CurrentUser UserInfo userInfo) {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        return Message.ok(statementDrillService.drillIncome(dto, itemCode));
     }
 
     private void validParams(StatementParamsDto dto) {

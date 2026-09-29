@@ -773,6 +773,7 @@ CREATE TABLE `history_system_logs` (
   `username` varchar(45) DEFAULT NULL COMMENT '登录名称',
   `display_name` varchar(45) DEFAULT NULL COMMENT '显示名称',
   `execute_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '执行时间',
+  `ip` varchar(45) DEFAULT NULL COMMENT '操作来源 IP',
   `book_id` varchar(45) NOT NULL COMMENT '租户编码',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=DYNAMIC COMMENT='系统操作日志表';
@@ -3193,6 +3194,508 @@ WHERE s.type = 'balance_sheet'
   AND s.subject_code = '1141'
   AND b.standard_id = '1';
 
+-- ----------------------------
+-- 凭证附件（影像）：file_id 指向 file_storage（同实例恢复时附件仍可用；备份包不含二进制）
+-- ----------------------------
+DROP TABLE IF EXISTS `voucher_attachment`;
+CREATE TABLE `voucher_attachment` (
+  `id` varchar(50) NOT NULL COMMENT 'ID',
+  `book_id` varchar(45) NOT NULL COMMENT '账套ID',
+  `voucher_id` varchar(50) NOT NULL COMMENT '凭证ID',
+  `file_id` varchar(100) NOT NULL COMMENT '文件存储ID（file_storage.id）',
+  `file_name` varchar(400) DEFAULT NULL COMMENT '文件名称',
+  `content_size` int DEFAULT NULL COMMENT '内容大小（字节）',
+  `content_type` varchar(100) DEFAULT NULL COMMENT '内容类型',
+  `sort_index` int DEFAULT 0 COMMENT '排序',
+  `created_by` varchar(45) DEFAULT NULL COMMENT '创建人',
+  `created_date` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `modified_by` varchar(45) DEFAULT NULL COMMENT '修改人',
+  `modified_date` datetime DEFAULT NULL COMMENT '修改时间',
+  `deleted` varchar(1) DEFAULT 'n' COMMENT '删除标记',
+  PRIMARY KEY (`id`),
+  KEY `idx_voucher_attachment_voucher` (`voucher_id`),
+  KEY `idx_voucher_attachment_book` (`book_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='凭证附件表';
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Default admin: username=admin password=changeme (change after first login)
+-- 多栏账菜单（挂「账簿」组，幂等可重复执行）
+SET @ledger_id = '2026082817000000001';
+SET @mcl_id = '2026092900000000001';
+SET @mcl_perm_id = '2026092900000000002';
+
+DELETE FROM permission WHERE id = @mcl_perm_id OR resource_id = @mcl_id;
+DELETE FROM resources WHERE id = @mcl_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @mcl_id,
+    '多栏账',
+    '多栏账',
+    'MENU',
+    @mcl_id,
+    '/voucher/multi-column-ledger',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'menus-wanglaimingxizhang',
+    'n',
+    'n',
+    'n',
+    'y',
+    @ledger_id,
+    '账簿',
+    4,
+    NULL,
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
+);
+
+INSERT INTO permission (
+    id, role_id, resource_id, created_by, created_date, status, book_id
+) VALUES (
+    @mcl_perm_id,
+    'ROLE_ADMINISTRATORS',
+    @mcl_id,
+    '1',
+    NOW(),
+    1,
+    '1'
+);
+-- 固定资产盘点（可重复执行）
+CREATE TABLE IF NOT EXISTS `fixed_asset_check` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `title` varchar(128) COLLATE utf8mb4_bin NOT NULL COMMENT '盘点单标题',
+  `check_date` date NOT NULL COMMENT '盘点日期',
+  `status` varchar(16) COLLATE utf8mb4_bin NOT NULL DEFAULT 'draft' COMMENT 'draft盘点中/completed已完成',
+  `total_count` int DEFAULT 0 COMMENT '应盘数量',
+  `normal_count` int DEFAULT 0 COMMENT '正常数量',
+  `surplus_count` int DEFAULT 0 COMMENT '盘盈数量',
+  `deficit_count` int DEFAULT 0 COMMENT '盘亏数量',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_fa_check_book` (`book_id`,`check_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='固定资产盘点单';
+
+CREATE TABLE IF NOT EXISTS `fixed_asset_check_item` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `check_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `asset_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `asset_code` varchar(64) COLLATE utf8mb4_bin NOT NULL,
+  `asset_name` varchar(128) COLLATE utf8mb4_bin NOT NULL,
+  `location` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '账面存放地点',
+  `book_quantity` int NOT NULL DEFAULT 1 COMMENT '账面数量',
+  `actual_quantity` int DEFAULT NULL COMMENT '实盘数量',
+  `actual_location` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '实盘地点',
+  `result` varchar(16) COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'normal正常/surplus盘盈/deficit盘亏',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_fa_check_item_check` (`check_id`),
+  KEY `idx_fa_check_item_asset` (`book_id`,`asset_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='固定资产盘点明细';
+-- 资产盘点菜单（挂「固定资产」组，可重复执行）
+SET @check_id = '2026092900000000011';
+SET @check_perm = '2026092900000000012';
+
+DELETE FROM permission WHERE id IN (@check_perm) OR resource_id IN (@check_id);
+DELETE FROM resources WHERE id IN (@check_id);
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @check_id, '资产盘点', '资产盘点', 'MENU', @check_id, '/fixed-asset/check', 'GET',
+    NULL, 'r', NULL, NULL, 'aim',
+    'n', 'n', 'n', 'y',
+    '2026082818000000001', '固定资产', 7, NULL,
+    '1', NOW(), '1', NOW(), '1', 'n'
+);
+
+INSERT INTO permission (id, role_id, resource_id, created_by, created_date, status, book_id)
+VALUES (@check_perm, 'ROLE_ADMINISTRATORS', @check_id, '1', NOW(), 1, '1');
+-- 数量金额账菜单（挂「账簿」组，幂等可重复执行）
+SET @ledger_id = '2026082817000000001';
+SET @qal_id = '2026092900000000021';
+SET @qal_perm_id = '2026092900000000022';
+
+DELETE FROM permission WHERE id = @qal_perm_id OR resource_id = @qal_id;
+DELETE FROM resources WHERE id = @qal_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @qal_id,
+    '数量金额账',
+    '数量金额账',
+    'MENU',
+    @qal_id,
+    '/voucher/quantity-ledger',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'menus-wanglaimingxizhang',
+    'n',
+    'n',
+    'n',
+    'y',
+    @ledger_id,
+    '账簿',
+    5,
+    NULL,
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
+);
+
+INSERT INTO permission (
+    id, role_id, resource_id, created_by, created_date, status, book_id
+) VALUES (
+    @qal_perm_id,
+    'ROLE_ADMINISTRATORS',
+    @qal_id,
+    '1',
+    NOW(),
+    1,
+    '1'
+);
+-- 税费测算菜单（挂「报表」组，幂等可重复执行）
+SET @report_id = '1886357455563137026';
+SET @tax_id = '2026092900000000031';
+SET @tax_perm_id = '2026092900000000032';
+
+DELETE FROM permission WHERE id = @tax_perm_id OR resource_id = @tax_id;
+DELETE FROM resources WHERE id = @tax_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @tax_id,
+    '税费测算',
+    '税费测算',
+    'MENU',
+    @tax_id,
+    '/statement/tax-estimate',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'calculator',
+    'n',
+    'n',
+    'n',
+    'y',
+    @report_id,
+    '报表',
+    20,
+    NULL,
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
+);
+
+INSERT INTO permission (
+    id, role_id, resource_id, created_by, created_date, status, book_id
+) VALUES (
+    @tax_perm_id,
+    'ROLE_ADMINISTRATORS',
+    @tax_id,
+    '1',
+    NOW(),
+    1,
+    '1'
+);
+-- 凭证红字冲销：记录冲销凭证的来源凭证
+ALTER TABLE `voucher`
+  ADD COLUMN `source_voucher_id` varchar(45) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '红字冲销来源凭证ID' AFTER `remark`;
+
+ALTER TABLE `voucher`
+  ADD KEY `idx_voucher_source` (`source_voucher_id`);
+-- 银行对账：流水对账标记 + 对账单余额表（可重复执行）
+ALTER TABLE `journal_entry`
+  ADD COLUMN `reconciled` varchar(1) COLLATE utf8mb4_bin DEFAULT 'n' COMMENT '银行对账标记：y已对账/n未对账' AFTER `description`;
+
+CREATE TABLE IF NOT EXISTS `journal_reconciliation` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `acc_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `year_period` varchar(7) COLLATE utf8mb4_bin NOT NULL COMMENT '对账期间yyyy-MM',
+  `statement_balance` decimal(18,2) DEFAULT NULL COMMENT '银行对账单期末余额',
+  `remark` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_journal_recon` (`book_id`,`acc_id`,`year_period`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='银行对账单余额';
+-- 银行对账菜单（挂「出纳」组，幂等可重复执行）
+SET @journal_id = '1881534934875557889';
+SET @recon_id = '2026092900000000041';
+SET @recon_perm_id = '2026092900000000042';
+
+DELETE FROM permission WHERE id = @recon_perm_id OR resource_id = @recon_id;
+DELETE FROM resources WHERE id = @recon_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @recon_id,
+    '银行对账',
+    '银行对账',
+    'MENU',
+    @recon_id,
+    '/journal/reconciliation',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'menus-yinhangduizhang',
+    'n',
+    'n',
+    'n',
+    'y',
+    @journal_id,
+    '出纳',
+    4,
+    NULL,
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
+);
+
+INSERT INTO permission (
+    id, role_id, resource_id, created_by, created_date, status, book_id
+) VALUES (
+    @recon_perm_id,
+    'ROLE_ADMINISTRATORS',
+    @recon_id,
+    '1',
+    NOW(),
+    1,
+    '1'
+);
+-- 增值税申报表菜单（挂「报表」组，幂等可重复执行）
+SET @report_id = '1886357455563137026';
+SET @taxd_id = '2026092900000000051';
+SET @taxd_perm_id = '2026092900000000052';
+
+DELETE FROM permission WHERE id = @taxd_perm_id OR resource_id = @taxd_id;
+DELETE FROM resources WHERE id = @taxd_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @taxd_id,
+    '增值税申报表',
+    '增值税申报表',
+    'MENU',
+    @taxd_id,
+    '/statement/tax-declaration',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'document',
+    'n',
+    'n',
+    'n',
+    'y',
+    @report_id,
+    '报表',
+    21,
+    NULL,
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
+);
+
+INSERT INTO permission (
+    id, role_id, resource_id, created_by, created_date, status, book_id
+) VALUES (
+    @taxd_perm_id,
+    'ROLE_ADMINISTRATORS',
+    @taxd_id,
+    '1',
+    NOW(),
+    '1',
+    '1'
+);
+-- 费用报销：报销单表 + 菜单（挂「凭证」组，幂等可重复执行）
+CREATE TABLE IF NOT EXISTS `expense_claim` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `claim_no` varchar(40) COLLATE utf8mb4_bin NOT NULL COMMENT '报销单号 BXyyyyMM-序号',
+  `claimant` varchar(64) COLLATE utf8mb4_bin NOT NULL COMMENT '报销人',
+  `claim_date` date NOT NULL COMMENT '报销日期',
+  `expense_subject_code` varchar(32) COLLATE utf8mb4_bin NOT NULL COMMENT '费用科目编码',
+  `expense_subject_name` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '费用科目名称（冗余）',
+  `fund_subject_code` varchar(32) COLLATE utf8mb4_bin NOT NULL COMMENT '付款科目编码（库存现金/银行存款）',
+  `fund_subject_name` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '付款科目名称（冗余）',
+  `amount` decimal(18,2) NOT NULL COMMENT '报销金额',
+  `summary` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '报销事由',
+  `claim_status` varchar(16) COLLATE utf8mb4_bin NOT NULL DEFAULT 'draft' COMMENT 'draft/submitted/approved/rejected',
+  `voucher_id` varchar(45) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '生成的凭证ID',
+  `audit_by` varchar(64) COLLATE utf8mb4_bin DEFAULT NULL,
+  `audit_time` datetime DEFAULT NULL,
+  `reject_reason` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_expense_claim_no` (`book_id`,`claim_no`),
+  KEY `idx_expense_claim_status` (`book_id`,`claim_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='费用报销单';
+
+SET @voucher_grp_id = '1869692874272862209';
+SET @exp_id = '2026092900000000061';
+SET @exp_perm_id = '2026092900000000062';
+
+DELETE FROM permission WHERE id = @exp_perm_id OR resource_id = @exp_id;
+DELETE FROM resources WHERE id = @exp_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @exp_id,
+    '费用报销',
+    '费用报销',
+    'MENU',
+    @exp_id,
+    '/expense/claim',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'tickets',
+    'n',
+    'n',
+    'n',
+    'y',
+    @voucher_grp_id,
+    '凭证',
+    20,
+    NULL,
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
+);
+
+INSERT INTO permission (
+    id, role_id, resource_id, created_by, created_date, status, book_id
+) VALUES (
+    @exp_perm_id,
+    'ROLE_ADMINISTRATORS',
+    @exp_id,
+    '1',
+    NOW(),
+    '1',
+    '1'
+);
+-- 费用报销单明细行（多笔费用一张单，幂等可重复执行）
+CREATE TABLE IF NOT EXISTS `expense_claim_item` (
+  `id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `claim_id` varchar(45) COLLATE utf8mb4_bin NOT NULL COMMENT '报销单ID',
+  `expense_subject_code` varchar(32) COLLATE utf8mb4_bin NOT NULL COMMENT '费用科目编码',
+  `expense_subject_name` varchar(128) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '费用科目名称（冗余）',
+  `amount` decimal(18,2) NOT NULL COMMENT '金额',
+  `summary` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '费用说明',
+  `sort_index` int DEFAULT 0 COMMENT '行序',
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_expense_claim_item_claim` (`claim_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='费用报销单明细';
+-- 报销单票据附件表（幂等可重复执行）
+CREATE TABLE IF NOT EXISTS `expense_claim_attachment` (
+  `id` varchar(50) COLLATE utf8mb4_bin NOT NULL,
+  `book_id` varchar(45) COLLATE utf8mb4_bin NOT NULL,
+  `claim_id` varchar(50) COLLATE utf8mb4_bin NOT NULL COMMENT '报销单ID',
+  `file_id` varchar(100) COLLATE utf8mb4_bin NOT NULL COMMENT '文件存储ID（file_storage.id）',
+  `file_name` varchar(400) COLLATE utf8mb4_bin DEFAULT NULL,
+  `content_size` int DEFAULT NULL COMMENT '内容大小（字节）',
+  `content_type` varchar(100) COLLATE utf8mb4_bin DEFAULT NULL,
+  `sort_index` int DEFAULT 0,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_date` datetime DEFAULT CURRENT_TIMESTAMP,
+  `modified_by` varchar(45) DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `deleted` varchar(1) DEFAULT 'n',
+  PRIMARY KEY (`id`),
+  KEY `idx_expense_claim_attachment_claim` (`claim_id`),
+  KEY `idx_expense_claim_attachment_book` (`book_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='报销单票据附件表';

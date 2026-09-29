@@ -62,3 +62,43 @@ export function setupBook(data: any): any {
     })
 }
 
+
+// 导出账套业务备份包（ZIP）
+export function exportBookBackup(bookId: string): any {
+    return request({
+        url: '/book/backup/export',
+        method: 'post',
+        params: {bookId},
+        responseType: 'blob',
+        silentError: true
+    })
+}
+
+// 上传备份包恢复为新账套
+export function restoreBookBackup(file: File): any {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request({
+        url: '/book/backup/restore',
+        method: 'post',
+        data: formData,
+        headers: {'Content-Type': 'multipart/form-data'},
+        timeout: 300000
+    })
+}
+
+// 封存账套（归档只读）
+export function sealBook(id: string): any {
+    return request({
+        url: '/book/seal/' + id,
+        method: 'put'
+    })
+}
+
+// 解除封存
+export function unsealBook(id: string): any {
+    return request({
+        url: '/book/unseal/' + id,
+        method: 'put'
+    })
+}

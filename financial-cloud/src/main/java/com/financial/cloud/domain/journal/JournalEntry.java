@@ -55,7 +55,12 @@ public class JournalEntry  extends BaseEntity implements Serializable {
 	BigDecimal balance;
 	
 	String description;
-	
+
+	/**
+	 * 银行对账标记：y已对账/n未对账
+	 */
+	String reconciled;
+
 	@TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     Date tradeDate;

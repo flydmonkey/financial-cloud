@@ -96,6 +96,12 @@
           min-width="120"
         />
         <el-table-column
+          prop="ip"
+          label="IP"
+          align="center"
+          min-width="110"
+        />
+        <el-table-column
           prop="executeTime"
           :label="$t('jbx.synchronizers.resumeTime')"
           align="center"

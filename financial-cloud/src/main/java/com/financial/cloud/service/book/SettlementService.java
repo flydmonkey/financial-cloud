@@ -99,6 +99,9 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 
 	@Lazy
 	private final StatementReportService statementReportService;
+
+	private final BookSealGuard bookSealGuard;
+
 	public Message<Page<Settlement>> pageList(SettlementPageDto dto) {
 		String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
 		String termStart = configSysService.getTermStart(dto.getBookId());
@@ -158,6 +161,7 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	 */
 	@Transactional
 	public Message<Settlement> checkout(Settlement dto) {
+		bookSealGuard.assertWritable(dto.getBookId());
 		configSysService.ensureBookConfigsComplete(dto.getBookId());
 		//结账逻辑检测
 		String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
@@ -221,6 +225,7 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 	 */
 	@Transactional
 	public Message<String> uncheckout(String bookId, String yearPeriod, String userId) {
+		bookSealGuard.assertWritable(bookId);
 		String currentTerm = configSysService.getCurrentTerm(bookId);
 		YearMonth currentYm = YearMonth.parse(currentTerm);
 		String targetTerm = currentYm.minusMonths(1).toString();

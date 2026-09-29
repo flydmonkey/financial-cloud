@@ -159,6 +159,11 @@ public class Voucher extends BaseEntity implements Serializable {
     private String remark;
 
     /**
+     * 红字冲销来源凭证ID（本凭证为冲销凭证时指向原凭证）
+     */
+    private String sourceVoucherId;
+
+    /**
      * 删除标记
      */
     @TableField(fill = FieldFill.INSERT)

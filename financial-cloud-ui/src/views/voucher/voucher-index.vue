@@ -91,6 +91,12 @@
                 </el-dropdown-item>
                 <el-dropdown-item
                   :disabled="ids.length === 0"
+                  @click="handleBatchPrint()"
+                >
+                  批量打印
+                </el-dropdown-item>
+                <el-dropdown-item
+                  :disabled="ids.length === 0"
                   @click="handleSubmit()"
                 >
                   提交审核
@@ -281,6 +287,13 @@
                   @click="handlePreview(scope.row)"
                 />
               </el-tooltip>
+              <el-tooltip content="附件">
+                <el-button
+                  link
+                  icon="Paperclip"
+                  @click="openAttachments(scope.row)"
+                />
+              </el-tooltip>
               <el-tooltip
                 v-if="'reviewing' === scope.row.voucher.status"
                 content="撤回"
@@ -290,6 +303,39 @@
                   icon="RemoveFilled"
                   type="danger"
                   @click="handleCancel(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="canVoid(scope.row.voucher)"
+                content="作废"
+              >
+                <el-button
+                  link
+                  icon="CircleClose"
+                  type="danger"
+                  @click="handleVoid(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="'cancelled' === scope.row.voucher.status"
+                content="恢复为暂存"
+              >
+                <el-button
+                  link
+                  icon="RefreshLeft"
+                  type="warning"
+                  @click="handleUnvoid(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                v-if="canReverse(scope.row.voucher)"
+                content="红字冲销"
+              >
+                <el-button
+                  link
+                  icon="Refresh"
+                  type="danger"
+                  @click="handleReverse(scope.row)"
                 />
               </el-tooltip>
               <el-tooltip
@@ -512,6 +558,11 @@
         </el-button>
       </template>
     </el-dialog>
+    <voucher-attachments
+      :open="attachmentOpen"
+      :voucher-id="attachmentVoucherId"
+      @close="attachmentOpen = false"
+    />
   </div>
 </template>
 
@@ -527,10 +578,19 @@ import {ArrowDown} from "@element-plus/icons-vue";
 import bookStore from "@/store/modules/bookStore";
 import {downloadData} from "@/utils/index"
 import ImportUpload from "@/components/ImportUpload/index.vue"
+import VoucherAttachments from "./VoucherAttachments.vue"
 import modal from "@/plugins/modal"
 
 const currBookStore = bookStore()
 const router = useRouter();
+
+// 凭证附件对话框
+const attachmentOpen = ref(false);
+const attachmentVoucherId = ref(null);
+function openAttachments(row) {
+  attachmentVoucherId.value = row?.voucher?.id || row?.id || null;
+  attachmentOpen.value = true;
+}
 const {proxy} = getCurrentInstance();
 const {t} = useI18n()
 const booksVoucherList = ref([]);
@@ -765,6 +825,61 @@ function handleSelectionChange(selection) {
   multiple.value = !ids.value.length;
 }
 
+// 批量打印静态页（public/voucher-print-classic.html）的数组 payload key
+const BATCH_PRINT_STORAGE_KEY = 'voucher-print-batch-data'
+
+// 组装单张凭证的打印 payload（字段契约与凭证编辑页一致）
+function buildBatchPrintPayload(voucher) {
+  const items = (voucher.items || []).filter(item =>
+    item.subjectId || item.subjectCode || item.creditAmount || item.debitAmount
+  )
+  return {
+    companyName: voucher.companyName || currBookStore.getBookItem().companyName || '',
+    voucherDate: voucher.voucherDate ? String(voucher.voucherDate).slice(0, 10) : '',
+    wordHead: voucher.wordHead || '记',
+    wordNum: voucher.wordNum,
+    receiptNum: voucher.receiptNum ?? 0,
+    remark: voucher.remark || '',
+    managerName: voucher.managerName || '',
+    senderName: voucher.senderName || '',
+    auditMemberName: voucher.auditMemberName || '',
+    createdName: voucher.createdName || '',
+    items: items.map(item => ({
+      summary: item.summary || '',
+      subjectCode: item.subjectCode || '',
+      subjectName: item.leafName || item.subjectName || '',
+      debitAmount: item.debitAmount ?? null,
+      creditAmount: item.creditAmount ?? null,
+      auxiliary: item.auxiliary || [],
+    })),
+  }
+}
+
+/** 批量打印：逐张取详情后打开经典打印静态页（数组 payload，自动分页） */
+async function handleBatchPrint() {
+  if (!ids.value.length) {
+    return
+  }
+  proxy.$modal.loading("正在准备打印数据…");
+  try {
+    const payloads = []
+    for (const id of ids.value) {
+      const res = await voucherApis.getOneVoucher(id)
+      if (res.data) {
+        payloads.push(buildBatchPrintPayload(res.data))
+      }
+    }
+    if (!payloads.length) {
+      proxy.$modal.msgWarning("未获取到可打印的凭证");
+      return
+    }
+    window.localStorage.setItem(BATCH_PRINT_STORAGE_KEY, JSON.stringify(payloads))
+    window.open(`/voucher-print-classic.html?autoprint=1&storageKey=${BATCH_PRINT_STORAGE_KEY}`, '_blank')
+  } finally {
+    proxy.$modal.closeLoading();
+  }
+}
+
 /** 新增按钮操作 */
 function handleAdd() {
   router.push({
@@ -806,6 +921,67 @@ function handleCancel(row) {
     return voucherApis.cancelVoucherByIds(voucherId);
   }).then(() => {
     proxy.$modal.msgSuccess("已取消");
+    getList()
+  }).catch(() => {
+  });
+}
+
+/** 是否可作废：暂存/被拒绝且未过账、期间未结账 */
+function canVoid(voucher) {
+  if (!voucher?.voucherDate || voucher.senderId) {
+    return false
+  }
+  if (voucher.status !== 'draft' && voucher.status !== 'rejected') {
+    return false
+  }
+  return currBookStore.termCurrent <= voucher.voucherDate.substring(0, 7)
+}
+
+/** 作废凭证 */
+function handleVoid(row) {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认作废该凭证？作废后保留字号、不参与账表，可恢复。').then(() => {
+    return voucherApis.voidVoucher(voucherId);
+  }).then((res) => {
+    showActionResult(res, "已作废");
+    getList()
+  }).catch(() => {
+  });
+}
+
+/** 恢复作废凭证 */
+function handleUnvoid(row) {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认将该凭证恢复为暂存？').then(() => {
+    return voucherApis.unvoidVoucher(voucherId);
+  }).then((res) => {
+    showActionResult(res, "已恢复为暂存");
+    getList()
+  }).catch(() => {
+  });
+}
+
+/** 是否可红字冲销：已过账凭证 */
+function canReverse(voucher) {
+  return voucher?.status === 'completed' && !!voucher?.senderId
+}
+
+/** 红字冲销 */
+function handleReverse(row) {
+  const voucherId = row?.voucherId || row?.voucher?.id || row?.id
+  if (!voucherId) {
+    return
+  }
+  proxy.$modal.confirm('确认对该凭证进行红字冲销？将在当前开放账期生成一张金额全负的冲销凭证（暂存态），审核过账后生效。').then(() => {
+    return voucherApis.reverseVoucher(voucherId);
+  }).then((res) => {
+    showActionResult(res, "冲销凭证已生成");
     getList()
   }).catch(() => {
   });

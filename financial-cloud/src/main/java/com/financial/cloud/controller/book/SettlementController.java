@@ -13,6 +13,7 @@ import com.financial.cloud.dto.book.SettlementPageDto;
 import com.financial.cloud.dto.book.SettlementVerifyVo;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.service.book.SettlementService;
+import com.financial.cloud.service.history.HistorySystemLogsService;
 
 import java.util.List;
 
@@ -25,6 +26,19 @@ import org.springframework.web.bind.annotation.*;
 public class SettlementController {
 
     private final SettlementService settlementService;
+    private final HistorySystemLogsService historySystemLogsService;
+
+    /** 结账/反结账审计（IP 由日志服务统一提取） */
+    private void auditLog(String action, Message<?> result, UserInfo operator) {
+        try {
+            boolean success = result != null && result.getCode() == Message.SUCCESS;
+            historySystemLogsService.log("月末结账", operator.getBookId(), "账期操作", null,
+                    result == null ? "" : result.getMessage(),
+                    action, success ? "success" : "fail", operator, null);
+        } catch (Exception e) {
+            log.warn("结账审计日志写入失败：{}", e.getMessage());
+        }
+    }
 
     @GetMapping(value = { "/fetch" })
     public Message<Page<Settlement>> fetch(SettlementPageDto dto,@CurrentUser UserInfo userInfo) {
@@ -38,7 +52,9 @@ public class SettlementController {
     public Message<Settlement> checkout(Settlement dto,@CurrentUser UserInfo userInfo) {
         ProductRoles.requireClosePeriod();
     	dto.setBookId(userInfo.getBookId());
-    	return settlementService.checkout(dto);
+    	Message<Settlement> result = settlementService.checkout(dto);
+    	auditLog("结账", result, userInfo);
+    	return result;
     }
 
     /**
@@ -53,7 +69,9 @@ public class SettlementController {
         if (dto != null && org.apache.commons.lang3.StringUtils.isNotBlank(dto.getYearPeriod())) {
             period = dto.getYearPeriod();
         }
-        return settlementService.uncheckout(userInfo.getBookId(), period, userInfo.getId());
+        Message<String> result = settlementService.uncheckout(userInfo.getBookId(), period, userInfo.getId());
+        auditLog("反结账", result, userInfo);
+        return result;
     }
     
     @GetMapping(value = { "/verify" })

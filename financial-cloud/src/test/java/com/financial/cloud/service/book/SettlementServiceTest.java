@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Settlement;
 import com.financial.cloud.domain.voucher.VoucherTemplate;
+import com.financial.cloud.constants.system.ConstsSysConfig;
 import com.financial.cloud.dto.arap.ArapMonthEndSummaryVo;
 import com.financial.cloud.dto.book.SettlementPageDto;
 import com.financial.cloud.dto.book.SettlementVerifyVo;
@@ -328,6 +329,47 @@ class SettlementServiceTest {
                 .orElseThrow();
         assertTrue(arap.isResult());
         assertTrue(arap.isWarning());
+    }
+
+    @Test
+    void verify_skipsArapCheckWhenConfigDisabled() {
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
+        when(configSysService.selectConfigByKey(eq(BOOK_ID), eq(ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY)))
+                .thenReturn("false");
+        when(voucherService.count(any(LambdaQueryWrapper.class))).thenReturn(0L);
+        when(voucherService.checkSuccessiveAll(BOOK_ID)).thenReturn(Message.ok(Collections.emptyList()));
+        when(voucherItemMapper.selectSubjectAmount(any())).thenReturn(Collections.emptyList());
+        VoucherTemplate sr = new VoucherTemplate();
+        sr.setId("t-sr");
+        sr.setCode(MonthEndCloseRules.CODE_CARRY_INCOME);
+        VoucherTemplate cbfy = new VoucherTemplate();
+        cbfy.setId("t-cbfy");
+        cbfy.setCode(MonthEndCloseRules.CODE_CARRY_COST);
+        when(voucherTemplateMapper.selectList(any())).thenReturn(List.of(sr, cbfy));
+        com.financial.cloud.domain.book.SettlementCarryforward carrySr =
+                new com.financial.cloud.domain.book.SettlementCarryforward();
+        carrySr.setVoucherTemplateId("t-sr");
+        carrySr.setVoucherId("v1");
+        com.financial.cloud.domain.book.SettlementCarryforward carryCbfy =
+                new com.financial.cloud.domain.book.SettlementCarryforward();
+        carryCbfy.setVoucherTemplateId("t-cbfy");
+        carryCbfy.setVoucherId("v2");
+        when(settlementCarryforwardMapper.selectList(any())).thenReturn(List.of(carrySr, carryCbfy));
+        when(fixedAssetDepreciationService.needsDepreciationAccrual(BOOK_ID, "2025-03")).thenReturn(false);
+
+        Message<List<SettlementVerifyVo>> result = settlementService.verify(BOOK_ID);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        assertTrue(result.getData().stream().noneMatch(v -> v.getItem().contains("往来")));
+        verify(arapService, never()).monthEndSummary(anyString(), anyString());
+    }
+
+    @Test
+    void arapVerifyEnabledFromConfig_blankDefaultsToTrue() {
+        assertTrue(SettlementService.arapVerifyEnabledFromConfig(null));
+        assertTrue(SettlementService.arapVerifyEnabledFromConfig(" "));
+        assertTrue(SettlementService.arapVerifyEnabledFromConfig("true"));
+        assertFalse(SettlementService.arapVerifyEnabledFromConfig("false"));
     }
 
     @Test

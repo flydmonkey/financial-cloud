@@ -27,7 +27,7 @@
 | 文档 | 模块 |
 |------|------|
 | [01-account-book.md](01-account-book.md) | 账套管理与初始化向导 |
-| [02-basic-settings.md](02-basic-settings.md) | 科目、辅助核算、期初余额、准则模板、系统参数 |
+| [02-basic-settings.md](02-basic-settings.md) | 科目、辅助核算、期初余额、准则模板、系统参数、凭证与结账参数 |
 | [03-voucher.md](03-voucher.md) | 凭证录入、审核、过账、模板、打印 |
 | [04-ledger.md](04-ledger.md) | 总账、明细账、科目余额表、凭证汇总 |
 | [05-statement.md](05-statement.md) | 资产负债表、利润表、现金流量表、费用明细 |

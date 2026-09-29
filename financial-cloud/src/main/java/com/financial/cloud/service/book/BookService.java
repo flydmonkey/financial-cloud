@@ -268,6 +268,17 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
             throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
         }
     }
+
+    public boolean isBookAdministrator(UserInfo currentUser, String bookId) {
+        if (currentUser == null || currentUser.getId() == null || currentUser.getId().isBlank()
+                || bookId == null || bookId.isBlank()) {
+            return false;
+        }
+        return roleMemberService.count(new LambdaQueryWrapper<RoleMember>()
+                .eq(RoleMember::getMemberId, currentUser.getId())
+                .eq(RoleMember::getBookId, bookId)
+                .eq(RoleMember::getRoleId, ProductRoles.ADMINISTRATORS)) > 0;
+    }
     public List<BookVo> listBooks(String userId) {
         return bookMapper.listBooks(userId);
     }

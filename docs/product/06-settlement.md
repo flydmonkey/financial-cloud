@@ -1,6 +1,6 @@
 # 06 · 期末结转与月结
 
-> 状态：专业月结**五步引导向导**已落地（人工确认 → 凭证整理 → 计提结转 → 系统校验 → 结账；步骤内过账/断号/结转/校验，静默 verify UX）。往来 L1+L2+L3 已接入系统校验（逾期仅警告，不阻断结账）。
+> 状态：专业月结**五步引导向导**已落地（人工确认 → 凭证整理 → 计提结转 → 系统校验 → 结账；步骤内过账/断号/结转/校验，静默 verify UX）。往来摘要可在「凭证与结账参数」关闭；逾期仅警告，不阻断结账。
 
 ## 1. 模块定位
 
@@ -32,7 +32,7 @@
 | 结账 checkout | **已实现** | 服务端再次硬检；报表快照、余额结转、推进账期 |
 | 反结账 uncheckout | **已实现** | OpenSpec `settlement-uncheckout`；含日记账期初恢复 |
 | 往期数据锁定 | **已实现** | 含凭证新建 `save`/`update` 拒绝早于开放账期 |
-| 往来应收应付 / 账龄摘要 | **已实现** | verify 项「往来款项」；逾期 `warning=true` 且 `result=true`，不硬阻断 |
+| 往来应收应付 / 账龄摘要 | **已实现** | verify 项「往来款项」；逾期 `warning=true` 且 `result=true`；可经 `settlement.verify.arap.enabled` 关闭该项 |
 | 往来核销 L3 | **已实现** | 开项匹配；逾期仍不硬阻断 |
 | 独立年结入口 | **不做** | 对齐金蝶仅月结 |
 
@@ -65,9 +65,11 @@
 | GET | `/api/settlementcarry/fetchcarry` | 结转项 |
 | POST | `/api/settlementcarry/generate-voucher` | 生成结转凭证 |
 | DELETE | `/api/settlementcarry/delete/{voucherId}` | 删除结转凭证 |
+| GET | `/api/config/voucher-settlement` | 凭证审核与往来软提示（只读对非管理员） |
+| PUT | `/api/config/voucher-settlement` | 账套管理员保存；封存账套拒绝 |
 
 服务：`SettlementService`、`SettlementCarryService`、`MonthEndCloseRules`、`ArapService.monthEndSummary`。  
-前端：`src/api/book/settlement.ts`。
+前端：`src/api/book/settlement.ts`、`src/api/config/voucher-settlement.ts`。
 
 ## 7. 业务规则与约束
 
@@ -83,7 +85,7 @@
 
 ### 系统往来摘要（不硬阻断）
 
-应收/应付期末合计与账龄逾期金额写入 verify「往来款项」说明；有逾期时打警告标，`result` 仍为通过，结账不被阻断。账龄为按凭证日期 FIFO 估算，**非核销账龄**。
+应收/应付期末合计与账龄逾期金额写入 verify「往来款项」说明；有逾期时打警告标，`result` 仍为通过，结账不被阻断。账龄为按凭证日期 FIFO 估算，**非核销账龄**。账套 config `settlement.verify.arap.enabled` 为 `false` 时跳过该项（缺省/空视为开启）。开关在基础设置「凭证与结账参数」。
 
 ### 人工确认（不阻断系统 verify）
 
@@ -105,7 +107,7 @@
 
 ## 9. 证据索引
 
-- `SettlementController`、`SettlementCarryController`
+- `SettlementController`、`SettlementCarryController`、`VoucherSettlementParamsController`
 - `SettlementService.checkout/uncheckout/verify`、`MonthEndCloseRules`、`SubjectCodeCompat`
 - `financial-cloud-ui/src/views/settlement/settle-period.vue`、`wizard/*`
 - `openspec/changes/month-end-guided-wizard/`、`openspec/specs/month-end-close/spec.md`

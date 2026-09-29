@@ -58,7 +58,8 @@ public class ConfigSysService{
             ConstsSysConfig.SYS_DEFAULT_SELLING_EXPENSES,
             ConstsSysConfig.SYS_DEFAULT_FINANCIAL_EXPENSES,
             ConstsSysConfig.SYS_DEFAULT_ADDED_TAX,
-            ConstsSysConfig.SYS_DEFAULT_INCOME_TAX_EXPENSES
+            ConstsSysConfig.SYS_DEFAULT_INCOME_TAX_EXPENSES,
+            ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY
     );
     public static final List<String> BOOKS_SHOW_KEYS = Arrays.asList(
             ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT,
@@ -266,6 +267,9 @@ public class ConfigSysService{
         if (ConstsSysConfig.SYS_ASSIST_ACC_ENABLED.equals(configKey)) {
             return "false";
         }
+        if (ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY.equals(configKey)) {
+            return "true";
+        }
         return null;
     }
 
@@ -303,6 +307,22 @@ public class ConfigSysService{
         if (row > 0) {
             return Message.ok(config.getConfigValue());
         }
+        if (ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY.equals(config.getConfigKey())
+                && StringUtils.isNotBlank(config.getBookId())) {
+            ConfigSys existing = baseMapper.selectOne(new LambdaQueryWrapper<ConfigSys>()
+                    .eq(ConfigSys::getBookId, config.getBookId())
+                    .eq(ConfigSys::getConfigKey, config.getConfigKey()));
+            if (existing == null) {
+                ConfigSys insert = new ConfigSys();
+                insert.setBookId(config.getBookId());
+                insert.setConfigKey(config.getConfigKey());
+                insert.setConfigName("结账往来校验");
+                insert.setConfigValue(config.getConfigValue());
+                insert.setConfigType("y");
+                baseMapper.insert(insert);
+                return Message.ok(config.getConfigValue());
+            }
+        }
         throw new ServiceException(CommonErrorCode.OPERATION_FAILED);
     }
 
@@ -334,6 +354,7 @@ public class ConfigSysService{
         return !ObjectUtil.isNotNull(info) || info.getConfigId().equals(configId);
     }
     public Message<List<ConfigSys>> getBookConfigList(String bookId) {
+        ensureBookConfigsComplete(bookId);
         List<ConfigSys> data = baseMapper.selectList(new LambdaQueryWrapper<ConfigSys>()
                 .in(ConfigSys::getConfigKey, BOOKS_KEYS)
                 .eq(ConfigSys::getBookId, bookId)

@@ -1901,6 +1901,20 @@ WHERE b.deleted = 'n'
     SELECT 1 FROM `config` c WHERE c.book_id = b.id AND c.config_key = 'sys.assist.acc.enabled'
 );
 
+INSERT INTO `config` (`config_id`, `book_id`, `config_name`, `config_key`, `config_value`, `config_type`, `remark`, `created_by`, `created_date`)
+SELECT REPLACE(UUID(), '-', ''), 'template', '结账往来校验', 'settlement.verify.arap.enabled', 'true', 'y', '月结是否展示往来账龄软提示', '1', NOW()
+WHERE NOT EXISTS (
+    SELECT 1 FROM `config` WHERE `book_id` = 'template' AND `config_key` = 'settlement.verify.arap.enabled'
+);
+
+INSERT INTO `config` (`config_id`, `book_id`, `config_name`, `config_key`, `config_value`, `config_type`, `remark`, `created_by`, `created_date`)
+SELECT REPLACE(UUID(), '-', ''), b.id, '结账往来校验', 'settlement.verify.arap.enabled', 'true', 'y', '月结是否展示往来账龄软提示', '1', NOW()
+FROM `book` b
+WHERE b.deleted = 'n'
+  AND NOT EXISTS (
+    SELECT 1 FROM `config` c WHERE c.book_id = b.id AND c.config_key = 'settlement.verify.arap.enabled'
+);
+
 -- 社保公积金：全国最低比例默认值（缴费基数 2500）
 -- 用途：已有库表结构默认值对齐；不强制覆盖已有账套业务数据。
 -- 新建账套 / 首次打开配置页会由后端 InsuranceFundDefaults 自动写入。
@@ -3477,6 +3491,35 @@ INSERT INTO resources (
 
 INSERT INTO permission (id, role_id, resource_id, created_by, created_date, status, book_id)
 VALUES (@check_perm, 'ROLE_ADMINISTRATORS', @check_id, '1', NOW(), 1, '1');
+
+-- 凭证与结账参数（基础设置）
+SET @vsp_id = '2026092900000000071';
+SET @vsp_admin = '2026092900000000072';
+SET @vsp_bk = '2026092900000000073';
+SET @vsp_rv = '2026092900000000074';
+
+DELETE FROM permission WHERE id IN (@vsp_admin, @vsp_bk, @vsp_rv) OR resource_id IN (@vsp_id);
+DELETE FROM resources WHERE id IN (@vsp_id);
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @vsp_id, '凭证与结账参数', '凭证与结账参数', 'MENU', @vsp_id, '/config/voucher-settlement', 'GET',
+    NULL, 'r', NULL, NULL, 'setting',
+    'n', 'n', 'n', 'y',
+    '1915219176348123138', '基础设置', 10, NULL,
+    '1', NOW(), '1', NOW(), '1', 'n'
+);
+
+INSERT INTO permission (id, role_id, resource_id, created_by, created_date, status, book_id)
+VALUES
+    (@vsp_admin, 'ROLE_ADMINISTRATORS', @vsp_id, '1', NOW(), 1, '1'),
+    (@vsp_bk, 'ROLE_BOOKKEEPER', @vsp_id, '1', NOW(), 1, '1'),
+    (@vsp_rv, 'ROLE_REVIEWER', @vsp_id, '1', NOW(), 1, '1');
 
 -- 银行对账菜单（挂「出纳」组，幂等可重复执行）
 SET @journal_id = '1881534934875557889';

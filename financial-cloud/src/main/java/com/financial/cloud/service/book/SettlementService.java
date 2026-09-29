@@ -22,6 +22,7 @@ import com.financial.cloud.domain.book.SettlementCarryforward;
 import com.financial.cloud.domain.journal.JournalEntry;
 import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.domain.voucher.VoucherTemplate;
+import com.financial.cloud.constants.system.ConstsSysConfig;
 import com.financial.cloud.dto.arap.ArapMonthEndSummaryVo;
 import com.financial.cloud.dto.book.SettlementPageDto;
 import com.financial.cloud.dto.book.SettlementVerifyVo;
@@ -482,6 +483,9 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 
 	private void appendArapSummaryCheck(List<SettlementVerifyVo> list, int checkIndex,
 			String bookId, String currentTerm) {
+		if (!isArapVerifyEnabled(bookId)) {
+			return;
+		}
 		try {
 			ArapMonthEndSummaryVo summary = arapService.monthEndSummary(bookId, currentTerm);
 			String reason = String.format(
@@ -500,6 +504,18 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 			list.add(SettlementVerifyVo.hardPassWarning(checkIndex, "往来款项（应收应付/账龄）",
 					"往来汇总查询异常，请人工核对：" + ex.getMessage()));
 		}
+	}
+
+	public static boolean arapVerifyEnabledFromConfig(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return true;
+		}
+		return "true".equalsIgnoreCase(raw.trim());
+	}
+
+	private boolean isArapVerifyEnabled(String bookId) {
+		return arapVerifyEnabledFromConfig(
+				configSysService.selectConfigByKey(bookId, ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY));
 	}
 
 }

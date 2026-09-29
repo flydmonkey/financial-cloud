@@ -27,7 +27,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -102,6 +104,24 @@ class BookServiceTest {
         user.setId("user-1");
         when(roleMemberService.count(any())).thenReturn(1L);
         bookService.requireBookAdministrator(user, "book-1");
+    }
+
+    @Test
+    void isBookAdministrator_falseWhenUserOrBookMissing() {
+        assertFalse(bookService.isBookAdministrator(null, "book-1"));
+        UserInfo blank = new UserInfo();
+        assertFalse(bookService.isBookAdministrator(blank, "book-1"));
+        UserInfo user = new UserInfo();
+        user.setId("user-1");
+        assertFalse(bookService.isBookAdministrator(user, " "));
+    }
+
+    @Test
+    void isBookAdministrator_trueWhenAdminMembershipExists() {
+        UserInfo user = new UserInfo();
+        user.setId("user-1");
+        when(roleMemberService.count(any())).thenReturn(1L);
+        assertTrue(bookService.isBookAdministrator(user, "book-1"));
     }
 
     @Test

@@ -31,6 +31,7 @@
 | 附单据张数 | **已实现** | `receipt_num` 数字 |
 | 附件文件上传绑定凭证 | **已实现** | 影像绑定（见差距清单） |
 | 制单人 ≠ 审核人 | **已实现** | 审核拒绝制单人同人 |
+| 凭证审核开关 | **已实现** | `book.voucher_reviewed`；账套编辑与基础设置「凭证与结账参数」双入口 |
 | 作废状态 `cancelled` / 拒绝 `rejected` | **已实现** | 作废/恢复产品化（见差距清单） |
 | 邻证导航、留页保存、脏数据守卫 | **已实现** | OpenSpec `voucher-entry-workspace` 已落地 |
 
@@ -120,7 +121,7 @@ manage-audit：写入主管字段，不改 status
 
 ## 10. 证据索引
 
-- `VoucherController`、`VoucherService`、`VoucherStatusEnum`
+- `VoucherController`、`VoucherService`、`VoucherStatusEnum`、`VoucherSettlementParamsService`
 - `views/voucher/voucher-edit.vue`、`voucher-index.vue`
 - OpenSpec：`openspec/changes/voucher-entry-workspace/`
 - E2E：`e2e/voucher-*.spec.ts`、`voucher-entry-workspace.spec.ts`

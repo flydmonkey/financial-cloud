@@ -36,7 +36,7 @@
 | 2.1 | 标准科目 + 自定义明细 | 准则双套 + 账套科目树 | **已实现** | `standard_subject`、`book_subject` | — |
 | 2.2 | 辅助：往来/部门/员工/项目 | 六类含客户供应商存货 | **已实现**（超出） | `assist_type` 1–6 | — |
 | 2.3 | 往来单位档案关联核算 | 辅助档案 + 往来查询 + 核销 | **已实现（L1+L2+L3）** | `assistAcc`；`views/arap` | — |
-| 2.4 | 凭证参数 / 结账参数配置中心 | 逻辑分散；无独立参数产品页 | **部分实现** | `config`、结账 verify | P2 |
+| 2.4 | 凭证参数 / 结账参数配置中心 | 独立页：审核开关 + 往来软提示；硬闸只读 | **已实现** | `VoucherSettlementParamsController`、`views/config/voucher-settlement.vue` | — |
 
 ---
 
@@ -170,7 +170,7 @@
 5. ~~银行调节~~ → **已落地**；~~税务申报底稿~~ → **已落地**（税局直连 Non-goal）；~~费用报销~~ → **已落地**  
 6. ~~首页固定资产规模卡 / 凭证↔日记账回写~~ → **已落地**（`dashboard-asset-count`、`journal-voucher-reverse-sync`）
 
-**代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：参数配置独立页、按钮级权限铺开、盘盈自动入账。
+**代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：按钮级权限铺开、盘盈自动入账。
 
 ---
 
@@ -179,7 +179,7 @@
 | 模块 | 粗估覆盖 |
 |------|----------|
 | 账套 | ~90% |
-| 基础设置 | ~85% |
+| 基础设置 | ~90% |
 | 凭证 | ~90% |
 | 账簿 | ~90% |
 | 固定资产 | ~90% |

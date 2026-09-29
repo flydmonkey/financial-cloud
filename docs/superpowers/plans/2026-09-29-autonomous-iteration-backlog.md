@@ -38,7 +38,7 @@
 | 税局直连 | Non-goal | 申报底稿已有；直连不做 |
 | 移动端 / AI | Non-goal | — |
 | 盘盈自动入账 | Post-V1 | 需计价与卡片创建依据 |
-| 凭证/结账参数独立配置中心 | Post-V1 | 逻辑已散落可用 |
+| 凭证/结账参数独立配置中心 | 已落地 | `voucher-settlement` 页 + `settlement.verify.arap.enabled` |
 | 按钮级精细权限铺开 | Post-V1 | 角色-资源 + 账套授权已够用 |
 
 ## 决策原则（历史）

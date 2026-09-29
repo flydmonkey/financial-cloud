@@ -1,6 +1,6 @@
 # 02 · 基础设置
 
-> 状态：已实现（科目、辅助核算、期初、准则模板、参数均有闭环；部分高级校验与 PRD「凭证参数/结账参数」粒度不同）
+> 状态：已实现（科目、辅助核算、期初、准则模板、系统参数、凭证与结账参数页均有闭环）
 
 ## 1. 模块定位
 
@@ -27,7 +27,7 @@
 | 会计准则模板（2 套） | **已实现** | 小企业会计准则、企业会计制度 |
 | 准则科目 / 资产负债/利润表模板 / 取数规则 | **已实现** | `standard_*` 表族 |
 | 系统参数（账期、编码规则等） | **已实现** | `config` / `ConfigSysController` |
-| PRD 级「凭证断号规则开关」独立页 | **部分实现** | 断号整理在凭证模块，非独立参数中心 |
+| 凭证与结账参数独立页 | **已实现** | 审核开关 + 往来软提示；硬闸只读；断号仍走凭证列表/月结向导 |
 | 部门/员工组织档案 | **部分实现** | 组织在 IDM；辅助核算可建部门/员工档案 |
 
 ## 4. 页面与路由
@@ -44,6 +44,7 @@
 | 资产负债表模板 | `views/config/standard-balance-sheet.vue` | 模板行 |
 | 利润表模板 | `views/config/standard-income-statement.vue` | 模板行 |
 | 系统参数 | `views/config/sys.vue` | 键值配置 |
+| 凭证与结账参数 | `views/config/voucher-settlement.vue` | 审核开关、往来校验软提示、硬闸说明 |
 | 机构管理 | `views/config/institutions.vue` | 见系统管理 |
 
 > 注意：菜单 URL `/books/subjects` 对应文件名为 `subject.vue`（非 `subjects.vue`）。
@@ -85,6 +86,7 @@
 | `/api/base/assist-acc` | 辅助档案 CRUD |
 | `/api/base/init-balance` | 期初 list/save |
 | `/api/config/sys` | 系统参数 |
+| `/api/config/voucher-settlement` | GET/PUT 凭证审核与往来软提示（PUT 仅账套管理员） |
 | `/api/config/cash-flow-balance` | 现金流量期初 |
 | `/api/config/subject-cash-flow` | 科目 CF 映射 |
 | `/api/standard`、`/api/standardsubject` | 准则与准则科目 |
@@ -96,16 +98,17 @@
 2. **辅助核算录入**：凭证分录选择科目后，按科目配置弹出辅助维度（见 [03-voucher.md](03-voucher.md)）；按往来单位查询余额/明细见 [11-arap.md](11-arap.md)。
 3. **期初**：影响科目余额表与首期报表；与结账推进后的期间逻辑配合使用。
 4. **准则变更**：主要影响**新建**账套；已建账套科目不自动全量同步（需人工维护）。
+5. **凭证审核**：`book.voucher_reviewed` 可在账套编辑与本页同时改，为同一字段。
+6. **往来软提示**：`config.settlement.verify.arap.enabled` 缺省/空视为开启；关闭后月结 verify 不再附加往来摘要。未过账、断号、借贷、必做结转、折旧硬闸不可配置。
 
 ## 8. 已知缺口
 
 - 往来核销 L3 已落地（见 [11-arap.md](11-arap.md)）；收款/付款独立业务单据仍未做。
-- PRD「结账参数/异常拦截规则」配置页未单独产品化（逻辑散落在结账校验中）。
 - 无独立「往来单位分类并强绑定科目」的主数据改造（仍用辅助档案类型 客户=2 / 供应商=3）。
 
 ## 9. 证据索引
 
-- `AssistAccController`、`BookSubjectController`、`BookInitBalanceController`
+- `AssistAccController`、`BookSubjectController`、`BookInitBalanceController`、`VoucherSettlementParamsController`
 - `StandardController`、`StandardSubjectService`
 - `views/config/assistAcc/index.vue`、`DistData.ts`（`subjects_auxiliary`）
 - `docs/subject-import-compatibility.md`

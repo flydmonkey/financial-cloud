@@ -36,7 +36,7 @@
 | 页面 | 路径 / 组件 | 用途 |
 |------|-------------|------|
 | 账套列表 | `/books/index` → `views/books/index.vue` | CRUD、进入账套 |
-| 账套编辑 | `views/books/edit.vue` | 表单（含 vatType、industry、standardId） |
+| 账套编辑 | `views/books/edit.vue` | 表单（含 vatType、industry、standardId、凭证审核开关） |
 | 初始化向导 | `/onboarding` → `views/onboarding/index.vue` | 无账套时强制引导 |
 | 账套授权 | 账套管理「成员授权」`books/members.vue` | 账套管理员邀请注册用户并选择产品角色 |
 | 角色管理 | 系统设置「角色管理」 | 角色-资源授权 |
@@ -56,7 +56,7 @@
 | `enable_date` | 做账起始年月 |
 | `standard_id` | 会计准则模板 ID |
 | `current_account_date` | 当前记账年月 |
-| `voucher_reviewed` | 是否开启凭证审核 |
+| `voucher_reviewed` | 是否开启凭证审核（账套编辑与「凭证与结账参数」页共用） |
 | `status` | 1 启用 / 0 禁用 / 2 封存（归档只读=作废留存） |
 | `deleted` | 逻辑删除标记 |
 

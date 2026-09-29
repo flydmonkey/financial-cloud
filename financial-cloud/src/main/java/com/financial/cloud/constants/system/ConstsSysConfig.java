@@ -24,6 +24,11 @@ public class ConstsSysConfig {
      */
     public static final String SYS_ASSIST_ACC_ENABLED = "sys.assist.acc.enabled";
 
+    /**
+     * 月结校验是否展示往来账龄软提示（不阻断结账）。缺省视为 true。
+     */
+    public static final String SYS_SETTLEMENT_ARAP_VERIFY = "settlement.verify.arap.enabled";
+
     //*************************************科目参数**************************************//
 
     /**

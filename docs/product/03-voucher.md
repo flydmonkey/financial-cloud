@@ -1,6 +1,6 @@
 # 03 · 凭证管理
 
-> 状态：部分实现（录入→审核→过账主路径可用；附件文件、同人审核校验、经典打印模板接入、rejected/cancelled 写入未完成）
+> 状态：核心闭环可用（录入→审核→过账；经典打印单张/批量已接入；附件/作废等见差距清单最新行）
 
 ## 1. 模块定位
 
@@ -27,11 +27,11 @@
 | 主管复核字段 | **已实现** | `manage-audit`（不改变 status） |
 | 断号检测与整理 | **已实现** | GET/PUT `/successive` |
 | Excel 导出 | **已实现** | `/export` |
-| 打印 | **部分实现** | 页面内 iframe 打印可用；经典 HTML 模板未接入生产入口 |
+| 打印 | **已实现** | 编辑页 + 列表批量 → `public/voucher-print-classic.html`（经典国标版式） |
 | 附单据张数 | **已实现** | `receipt_num` 数字 |
-| 附件文件上传绑定凭证 | **未实现** | `file_storage` 无 voucher 关联 |
-| 制单人 ≠ 审核人 | **未实现** | `audit()` 无同人校验 |
-| 作废状态 `cancelled` / 拒绝 `rejected` | **未实现** | 枚举存在，后端不写入 |
+| 附件文件上传绑定凭证 | **已实现** | 影像绑定（见差距清单） |
+| 制单人 ≠ 审核人 | **已实现** | 审核拒绝制单人同人 |
+| 作废状态 `cancelled` / 拒绝 `rejected` | **已实现** | 作废/恢复产品化（见差距清单） |
 | 邻证导航、留页保存、脏数据守卫 | **已实现** | OpenSpec `voucher-entry-workspace` 已落地 |
 
 ## 4. 页面与路由
@@ -111,14 +111,11 @@ manage-audit：写入主管字段，不改 status
 1. **开放期间**：多数变更依赖 `isVoucherInOpenPeriod()`（凭证期间 ≥ 当前账期）；详见 [06-settlement.md](06-settlement.md)。
 2. **过账**：仅已审核且未过账；过账更新 `statement_subject_balance` 等。
 3. **结转凭证**：`carry_forward` 标记；期末模块生成，见结算分册。
-4. **打印**：当前 `onPrint()` → `printContentInIframe()`；`voucherPrintHtml.ts`、`public/voucher-print-classic.html` **未被生产 import**。
+4. **打印**：`onPrint()` / 列表批量打印写入 localStorage 后打开 `public/voucher-print-classic.html`；编辑页 iframe 打印路径已移除。
 
 ## 9. 已知缺口
 
-- 凭证-附件文件绑定、PDF 导出。
-- 制单人与审核人分离校验。
-- `rejected` / `cancelled` 产品化。
-- 经典国标打印模板正式接入（设计见 `docs/superpowers/specs/2026-09-02-voucher-print-classic-design.md`）。
+- 服务端统一 PDF 通道（当前靠浏览器另存 PDF）。
 - 明细账侧凭证号超链回跳：见账簿分册。
 
 ## 10. 证据索引

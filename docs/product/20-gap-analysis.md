@@ -62,7 +62,7 @@
 | 4.1 | 总账 / 明细账 / 余额表 | 均有 | **已实现** | 对应 views | — |
 | 4.2 | 多栏账、数量金额账 | 多栏账已实现（栏母科目 + 子科目栏位 + 期初/余额滚动）；数量金额账已实现（收入/发出/结存的数量单价金额） | **已实现** | `MultiColumnLedgerService`、`QuantityLedgerService` | — |
 | 4.3 | 凭证号跳转详情 | 明细账凭证字号超链 → 凭证详情；总账→明细账有 | **已实现** | `sub-ledger.vue` | — |
-| 4.4 | 打印 / Excel / PDF | Excel 为主；PDF 无 | **部分实现** | export APIs | P2（PDF） |
+| 4.4 | 打印 / Excel / PDF | Excel + 浏览器打印另存 PDF（`tablePrint`）；服务端 PDF 未做 | **部分实现** | `tablePrint.ts` / export APIs | P2（服务端 PDF） |
 
 ---
 
@@ -98,7 +98,7 @@
 | 7.1 | 资产负债表 / 利润表 / 现金流量表 | 均有 | **已实现** | `views/statement/*` | — |
 | 7.2 | 费用统计等经营表 | 费用明细表有 | **已实现** | `expense-detail` | — |
 | 7.3 | 老板极简报表 | 首页 8 卡片 + 待办面板 + 快捷入口条（录凭证/凭证列表/明细账/日记账/资产负债表/利润表/费用报销/增值税申报表/期末结账）即老板视图 | **已实现** | `views/index.vue` / `TodoPanel` | — |
-| 7.4 | Excel / PDF / 打印 | Excel 导出 + 凭证经典打印（含批量）+ 资产负债表/利润表/明细账/总账/科目余额表/多栏账/数量金额账/盘点表/税费测算/增值税申报表/费用报销单打印（浏览器可另存 PDF） | **已实现** | `voucher-print-classic.html` / `tablePrint.ts` | — |
+| 7.4 | Excel / PDF / 打印 | Excel 导出 + 凭证经典打印（含批量）+ 资产负债/利润/现金流量/明细账/总账/科目余额/多栏/数量金额/盘点/税费测算/申报表/报销单打印（浏览器可另存 PDF） | **已实现** | `voucher-print-classic.html` / `tablePrint.ts` | — |
 | 7.5 | 数据溯源 | 账簿链路 + 资产负债表/利润表行次下钻（科目构成弹窗 → 明细账） | **已实现** | general-ledger / voucher-summary / `StatementDrillService` | — |
 | 7.6 | 本月账本包 ZIP | 已落地（月账簿打包导出） | **已实现** | `MonthlyBooksPackService` | — |
 

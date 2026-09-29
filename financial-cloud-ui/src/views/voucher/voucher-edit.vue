@@ -822,9 +822,7 @@ const leftMenu = ref(0)
 const topMenu = ref(0)
 const currentRow = ref<any>(null)
 const printMe = ref(null)
-const printing = ref(false)
 const attachmentOpen = ref(false)
-const printSheets = ref<RecordingVoucher[][]>([])
 // 会计科目数据
 const subjectList = ref<any>([])
 const subjectKeyItem = ref<any>({})
@@ -959,9 +957,6 @@ const tableSumData = ref<RecordingVoucher[]>([]);
 const rvTableRef = ref()
 
 const tableSheets = computed(() => {
-  if (printing.value && printSheets.value.length > 0) {
-    return printSheets.value
-  }
   return [tableSumData.value]
 })
 
@@ -980,7 +975,7 @@ const countRow = ref<RecordingVoucher>({
 });
 const formData = ref<any>({...props.modelValue})
 const isPrintMode = computed(() => {
-  return route.query.mode === 'print' || printing.value
+  return route.query.mode === 'print'
 })
 const isWorkspaceReadonly = computed(() => route.query.readonly === '1' || route.query.readonly === 'true')
 const canEditWorkspace = computed(() => props.edit && !isWorkspaceReadonly.value && !isPrintMode.value)
@@ -1320,9 +1315,6 @@ const getValidVoucherEntryItems = () => {
 }
 
 const voucherPageTotal = computed(() => {
-  if (printing.value && printSheets.value.length > 0) {
-    return printSheets.value.length
-  }
   const sheets = buildPrintSheets(getValidVoucherEntryItems())
   return sheets.length > 0 ? sheets.length : 1
 })
@@ -1558,219 +1550,6 @@ function isCurrentOrFutureMonth(date: Date) {
   return parseTime(date, "{y}-{m}-{d}") < parseTime(now, "{y}-{m}-{d}")
 }
 
-function buildPrintFrameHtml(contentHtml: string) {
-  return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8"/>
-  <title>凭证打印</title>
-  <style>
-    @page { size: A4 landscape; margin: 8mm 10mm; }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      background: #fff;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    .voucher-print-sheet {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: stretch;
-      width: 100%;
-      min-height: 100vh;
-      height: 100vh;
-      padding: 0 2mm;
-      page-break-inside: avoid;
-      break-inside: avoid-page;
-      page-break-after: always;
-      break-after: page;
-    }
-    .voucher-print-sheet:last-child {
-      page-break-after: auto;
-      break-after: auto;
-    }
-    .header-title { margin-bottom: 4px; text-align: center; }
-    .header-title-text {
-      display: inline-block;
-      font-size: 28px;
-      font-weight: bold;
-      color: #983400;
-      border-bottom: 3px double #800100;
-    }
-    .header-title-time {
-      display: block;
-      padding-top: 6px;
-      color: #983400;
-      font-size: 16px;
-    }
-    .company-info {
-      margin: 0 0 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: #983400;
-      font-size: 16px;
-    }
-    .company-info-right {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .company-info-item { white-space: nowrap; }
-    .apply-info {
-      margin: 8px 20px 0;
-      display: flex;
-      justify-content: space-between;
-      color: #983400;
-      font-size: 16px;
-    }
-    .rv-print-table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      border: 1px solid #800100;
-      font-size: 16px;
-    }
-    .rv-print-table th,
-    .rv-print-table td {
-      border: 1px dashed #800100;
-      color: #983400;
-      padding: 2px 4px;
-      font-weight: normal;
-      vertical-align: middle;
-      word-break: break-word;
-      white-space: normal;
-      line-height: 1.35;
-    }
-    .rv-print-table thead th {
-      height: 30px;
-      text-align: center;
-    }
-    .rv-print-table tbody .rv-table-entry-row td,
-    .rv-print-table tbody .rv-table-carry-row td {
-      height: 42px;
-      font-size: 14px;
-    }
-    .rv-print-table tbody .rv-table-count-row td {
-      height: 32px;
-    }
-    .rv-print-table tbody .rv-table-count-row .rv-col-summary,
-    .rv-print-table tbody .rv-table-carry-row .rv-col-summary {
-      text-align: center;
-    }
-    .rv-print-table tr > :first-child { border-left: none; }
-    .rv-print-table tr > :last-child { border-right: none; }
-    .rv-print-table thead tr:first-child th { border-top: none; }
-    .rv-print-table tbody tr:last-child td { border-bottom: none; }
-    .rv-print-table thead th.rv-col-amount { text-align: center; }
-    .rv-print-table tbody td.rv-col-amount { text-align: right; }
-    .voucher-grand-total-label {
-      display: flex;
-      align-items: flex-start;
-      width: 100%;
-      color: #983400;
-      font-size: var(--el-font-size-large);
-      line-height: 1.4;
-      text-align: left;
-      padding-left: 0.5em;
-      gap: 0.15em;
-    }
-    .voucher-grand-total-fixed {
-      flex: 0 0 auto;
-      text-align: left;
-    }
-    .voucher-grand-total-amount {
-      flex: 1 1 auto;
-      text-align: left;
-      word-break: break-word;
-    }
-    .voucher-footer-label {
-      display: block;
-      width: 100%;
-      text-align: center;
-      color: #983400;
-      font-size: var(--el-font-size-large);
-      line-height: 1.4;
-    }
-    .voucher-cell-amount-text {
-      display: block;
-      width: 100%;
-      text-align: right;
-      padding-right: 6px;
-      line-height: 1.4;
-      white-space: nowrap;
-    }
-    .amount-chinese-text { font-size: 14px; line-height: 1.3; }
-    .voucher-cell-text {
-      display: block;
-      word-break: break-word;
-      line-height: 1.35;
-    }
-    .redWord { color: red; }
-    @media print {
-      .voucher-print-sheet {
-        min-height: 194mm;
-        height: 194mm;
-      }
-    }
-  </style>
-</head>
-<body>${contentHtml}</body>
-</html>`
-}
-
-function printContentInIframe(onDone: () => void) {
-  const source = printMe.value as HTMLElement | null
-  if (!source) {
-    window.print()
-    onDone()
-    return
-  }
-
-  const iframe = document.createElement('iframe')
-  iframe.setAttribute('style', 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;')
-  document.body.appendChild(iframe)
-
-  const win = iframe.contentWindow
-  const doc = iframe.contentDocument
-  if (!win || !doc) {
-    document.body.removeChild(iframe)
-    window.print()
-    onDone()
-    return
-  }
-
-  doc.open()
-  doc.write(buildPrintFrameHtml(source.innerHTML))
-  doc.close()
-
-  let finished = false
-  const finish = () => {
-    if (finished) {
-      return
-    }
-    finished = true
-    if (iframe.parentNode) {
-      document.body.removeChild(iframe)
-    }
-    onDone()
-  }
-
-  win.onafterprint = finish
-  setTimeout(finish, 120000)
-
-  setTimeout(() => {
-    win.focus()
-    win.print()
-  }, 200)
-}
-
 // 经典打印静态页（public/voucher-print-classic.html）的数据 key
 const CLASSIC_PRINT_STORAGE_KEY = 'voucher-print-classic-data'
 
@@ -1812,14 +1591,6 @@ const onPrint = async () => {
     return
   }
   window.open(url, '_blank')
-}
-
-function printSpecificDiv(printcontent: any) {
-  const restorepage = document.body.innerHTML; // 保存当前页面的HTML结构
-  document.body.innerHTML = printcontent   // 将body的内容替换为要打印的div内容
-  window.print(); // 打印当前页面（即现在的body内容）
-  document.body.innerHTML = restorepage; // 恢复页面内容
-  window.close();
 }
 
 function resetList() {
@@ -3128,28 +2899,6 @@ onBeforeUpdate(() => {
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
-  }
-
-  body.voucher-printing .top-funs,
-  body.voucher-printing .contextmenu {
-    display: none !important;
-  }
-
-  body.voucher-printing * {
-    visibility: hidden;
-  }
-
-  body.voucher-printing #printable-content,
-  body.voucher-printing #printable-content * {
-    visibility: visible;
-  }
-
-  body.voucher-printing .app-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    background: #fff !important;
   }
 
   #printable-content {

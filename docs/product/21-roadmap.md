@@ -22,26 +22,25 @@ flowchart LR
   S2 --> S3["S3 周边卫生"]
 ```
 
-### S0 · 交付包（当前 OpenSpec 首期）
+### S0 · 交付包（已落地）
 
-**权威提案**：[openspec/changes/daizhang-commercial-plan](../../openspec/changes/daizhang-commercial-plan/proposal.md)
+**权威提案**：[openspec/changes/archive/2026-09-29-daizhang-commercial-plan](../../openspec/changes/archive/2026-09-29-daizhang-commercial-plan/proposal.md)
 
 | 交付物 | 说明 |
 |--------|------|
-| 本月账本包 ZIP | 账套+账期：余额表、明细账、三表 ± 凭证清单 |
+| ~~本月账本包 ZIP~~ | **已落地**：账套+账期余额表、明细账、三表 ± 凭证清单 |
 | 入口 | 结账/报表区「导出本月账本包」 |
 | 非目标 | 多账期批量、自定义模板市场、税局直连 |
 
-**产品文档动作**：实现后更新 [05-statement.md](05-statement.md) 与差距清单 7.6。
+### S1 · 打印与吞吐（已收口）
 
-### S1 · 打印与吞吐
-
-| 项 | 说明 | 对接缺口 |
-|----|------|----------|
-| 经典凭证打印接入 | 将 `voucherPrintHtml` / classic HTML 接到 `onPrint` | [03](03-voucher.md) |
-| 凭证批量专业打印 | 列表多选打印吞吐 | PRD 凭证打印 |
-| 报表 PDF / 打印 | 三表与账簿 | 差距 7.4 |
-| （可选）建账/期初录入提速 | 代账接手吞吐 | commercial-plan S2 |
+| 项 | 说明 | 状态 |
+|----|------|------|
+| ~~经典凭证打印接入~~ | 编辑页 + 列表批量 → classic HTML | **已落地**（`print-delivery-polish`） |
+| ~~凭证批量专业打印~~ | 列表多选打印 | **已落地** |
+| ~~报表打印 / 浏览器另存 PDF~~ | 三表（含现金流量）与账簿 `tablePrint` | **已落地** |
+| （可选）建账/期初录入提速 | 代账接手吞吐 | 后续 |
+| 服务端统一 PDF | 真正 `.pdf` 下载 | P2 增强，非本切片 |
 
 ### S2 · 资金往来（对齐 PRD 最大缺口 + commercial-plan S3 前半）
 
@@ -91,7 +90,7 @@ flowchart LR
 
 改为：
 
-> 「代账可用的 Web 记账闭环（凭证·账簿·结账·三表·资产·日记账·薪资·往来查询），正在补齐**交账包、核销、备份**」
+> 「代账可用的 Web 记账闭环（凭证·账簿·结账·三表·资产·日记账·薪资·往来·账本包·备份），打印交付已收口；增强项按客户声音排期」
 
 并在销售材料中**显式列出**已有的日记账与薪资（PRD 未强调的卖点）。
 
@@ -101,7 +100,7 @@ flowchart LR
 |------|------|----------|
 | 老板极简报表 | A. 首页看板即是 / B. 另做独立简报页 | [00](00-overview.md)、[05](05-statement.md)、差距 7.3 |
 | 机构 institutions | A. 仅品牌域名配置 / B. 正式 SaaS 多租户 | [00](00-overview.md) §5、[10](10-system-admin.md) |
-| 备份形态 | A. 库级 dump / B. 账套级业务包 / C. 与账本包合一 | S3 范围与 P0 定义 |
+| 备份形态 | ~~A/B/C 待决~~ → **已拍板 B** 账套级业务包（克隆式恢复） | S3 已落地；定时/覆盖为后续 |
 
 ## 6. 文档维护节奏
 

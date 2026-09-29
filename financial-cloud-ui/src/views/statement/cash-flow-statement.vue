@@ -139,7 +139,9 @@
           查看详情
         </el-button>
         <div class="btn-form-right">
-          <!--          <el-button type="primary" @click="handlePrint">打印</el-button>-->
+          <el-button @click="handlePrint">
+            打印
+          </el-button>
           <el-button @click="handleExport">
             导出
           </el-button>
@@ -365,6 +367,7 @@ import {saveCashFlowItem} from "@/api/statement/statement-cash-flow";
 import modal from "@/plugins/modal";
 import booksSetStore from "@/store/modules/bookStore";
 import {downloadData} from "@/utils";
+import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const router = useRouter();
 const currBookStore = booksSetStore()
@@ -477,6 +480,37 @@ function handleQuery() {
     queryParams.value.reportDate = queryParams.value.date
   }
   getList();
+}
+
+/** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
+function handlePrint() {
+  const blankAmountCodes = [
+    '1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
+    '40-xj-xjll', '58-xj-tzhd', '62-xj-xjqk',
+  ]
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const amt = (row: any, field: 'monthlyAmount' | 'currentAmount') => {
+    if (blankAmountCodes.includes(row.itemCode)) return ''
+    return formatBalance(row[field])
+  }
+  const name = (row: any) => {
+    const indent = row.isTitle === 1 ? '' : '　'
+    return esc(indent + (row.itemName || ''))
+  }
+  const body = cashFlowStatementList.value.map((row: any) => `<tr>
+    <td>${name(row)}</td>
+    <td class="c">${esc(row.sortIndex ?? '')}</td>
+    <td class="r">${amt(row, 'monthlyAmount')}</td>
+    <td class="r">${amt(row, 'currentAmount')}</td>
+  </tr>`).join('')
+  const company = currBookStore.getBookItem().companyName || ''
+  openTablePrintWindow({
+    title: '现金流量表',
+    subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    tableHtml: `<thead><tr>
+      <th>项目</th><th>行次</th><th>${esc(monthlyAmountLabel.value)}</th><th>本年累计金额</th>
+    </tr></thead><tbody>${body}</tbody>`,
+  })
 }
 
 function handleExport() {

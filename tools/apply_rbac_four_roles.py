@@ -7,6 +7,8 @@ import pymysql
 
 # Module resource IDs (root + descendants) from DB exploration
 DASHBOARD = ["981331493802475520"]
+# 代账工作台（多账套月末看板）— 顶级菜单，需进四角色权限包
+BOOKS_BOARD = ["2026092900000000081"]
 VOUCHER = [
     "1869692874272862209",
     "1879553833064067074",
@@ -136,6 +138,7 @@ def main() -> None:
     bookkeeper = sorted(
         set(
             DASHBOARD
+            + BOOKS_BOARD
             + voucher
             + ledger
             + report
@@ -149,6 +152,7 @@ def main() -> None:
     reviewer = sorted(
         set(
             DASHBOARD
+            + BOOKS_BOARD
             + voucher
             + ledger
             + report
@@ -161,7 +165,7 @@ def main() -> None:
             + AUDIT_P
         )
     )
-    viewer = sorted(set(DASHBOARD + voucher + ledger + report + arap))
+    viewer = sorted(set(DASHBOARD + BOOKS_BOARD + voucher + ledger + report + arap))
 
     # 1) Ensure product roles
     cur.execute(

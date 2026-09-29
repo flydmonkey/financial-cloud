@@ -13,6 +13,7 @@ import com.financial.cloud.repository.fixedasset.FixedAssetMapper;
 import com.financial.cloud.service.book.BookSealGuard;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,6 +47,8 @@ class FixedAssetCheckServiceTest {
     private BookSealGuard bookSealGuard;
     @Mock
     private FixedAssetService fixedAssetService;
+    @Mock
+    private com.financial.cloud.service.config.ConfigSysService configSysService;
 
     @InjectMocks
     private FixedAssetCheckService service;
@@ -242,6 +246,194 @@ class FixedAssetCheckServiceTest {
     @Test
     void defaultSurplusAmount_zeroWhenNoIncrease() {
         assertEquals(0, FixedAssetCheckService.defaultSurplusAmount(new BigDecimal("1000"), 1, 1).compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void surplusPreview_rejectsDraftCheck() {
+        when(checkMapper.selectById("check-1")).thenReturn(draftCheck());
+        assertThrows(BusinessException.class, () -> service.surplusPreview("check-1", BOOK_ID));
+    }
+
+    @Test
+    void surplusPreview_listsUnbookedSurplusWithStrategy() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem single = surplusItem("item-1", "asset-1", 1, 2);
+        FixedAssetCheckItem multi = surplusItem("item-2", "asset-2", 2, 3);
+        FixedAssetCheckItem booked = surplusItem("item-3", "asset-3", 1, 2);
+        booked.setSurplusVoucherId("v-1");
+        FixedAssetCheckItem normal = item("item-4", 1);
+        normal.setActualQuantity(1);
+        normal.setResult(FixedAssetCheckItem.RESULT_NORMAL);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(single, multi, booked, normal));
+        when(assetMapper.selectById("asset-1")).thenReturn(asset("asset-1", "FA-1", 1, "1000"));
+        when(assetMapper.selectById("asset-2")).thenReturn(asset("asset-2", "FA-2", 2, "1000"));
+
+        FixedAssetCheckDtos.SurplusPreviewVo vo = service.surplusPreview("check-1", BOOK_ID);
+
+        assertEquals(2, vo.getRows().size());
+        FixedAssetCheckDtos.SurplusPreviewRow r1 = vo.getRows().get(0);
+        assertEquals("split_card", r1.getStrategy());
+        assertEquals(1, r1.getSurplusQuantity());
+        assertEquals(new BigDecimal("1000.00"), r1.getDefaultAmount());
+        FixedAssetCheckDtos.SurplusPreviewRow r2 = vo.getRows().get(1);
+        assertEquals("bump_qty", r2.getStrategy());
+        assertEquals(new BigDecimal("500.00"), r2.getDefaultAmount());
+    }
+
+    @Test
+    void bookSurplus_skipsAlreadyBooked() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem booked = surplusItem("item-1", "asset-1", 1, 2);
+        booked.setSurplusVoucherId("v-1");
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(booked));
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "800")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals(1, vo.getSkipped().size());
+        verify(fixedAssetService, never()).createSurplusVoucher(any(), any(), any());
+    }
+
+    @Test
+    void bookSurplus_rejectsNonPositiveAmount() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 2);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "0")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals(1, vo.getSkipped().size());
+        verify(fixedAssetService, never()).createSurplusVoucher(any(), any(), any());
+    }
+
+    @Test
+    void bookSurplus_skipsDisposedAsset() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 2);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        FixedAsset disposed = asset("asset-1", "FA-1", 1, "1000");
+        disposed.setStatus(FixedAssetStatus.DISPOSED.name());
+        when(assetMapper.selectById("asset-1")).thenReturn(disposed);
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "800")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals(1, vo.getSkipped().size());
+        verify(fixedAssetService, never()).createSurplusVoucher(any(), any(), any());
+    }
+
+    @Test
+    void bookSurplus_splitsCardWhenBookQuantityIsOne() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 3);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        FixedAsset src = asset("asset-1", "FA-1", 1, "1000");
+        src.setAccumDepr(new BigDecimal("100"));
+        when(assetMapper.selectById("asset-1")).thenReturn(src);
+        doAnswer(inv -> {
+            FixedAsset a = inv.getArgument(0);
+            a.setId("asset-new");
+            return 1;
+        }).when(assetMapper).insert(any(FixedAsset.class));
+        when(fixedAssetService.createSurplusVoucher(any(FixedAsset.class), eq(new BigDecimal("800.00")), any()))
+                .thenReturn("voucher-1");
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "800")));
+
+        assertEquals(1, vo.getProcessedCount());
+        ArgumentCaptor<FixedAsset> inserted = ArgumentCaptor.forClass(FixedAsset.class);
+        verify(assetMapper).insert(inserted.capture());
+        FixedAsset clone = inserted.getValue();
+        assertEquals("FA-1-副本", clone.getCode());
+        assertEquals(2, clone.getQuantity());
+        assertEquals(new BigDecimal("800.00"), clone.getOriginalValue());
+        assertEquals(0, clone.getAccumDepr().compareTo(BigDecimal.ZERO));
+        ArgumentCaptor<String> summary = ArgumentCaptor.forClass(String.class);
+        verify(fixedAssetService).createSurplusVoucher(any(FixedAsset.class), eq(new BigDecimal("800.00")), summary.capture());
+        assertEquals(true, summary.getValue().contains("盘盈") && summary.getValue().contains("盘点单"));
+        assertEquals("voucher-1", it.getSurplusVoucherId());
+        assertEquals("asset-new", it.getSurplusAssetId());
+        assertEquals(new BigDecimal("800.00"), it.getSurplusAmount());
+        verify(itemMapper).updateById(it);
+    }
+
+    @Test
+    void bookSurplus_bumpsQuantityWhenBookQuantityAboveOne() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-2", 2, 3);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        FixedAsset src = asset("asset-2", "FA-2", 2, "1000");
+        when(assetMapper.selectById("asset-2")).thenReturn(src);
+        when(fixedAssetService.createSurplusVoucher(any(FixedAsset.class), eq(new BigDecimal("500.00")), any()))
+                .thenReturn("voucher-2");
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "500")));
+
+        assertEquals(1, vo.getProcessedCount());
+        verify(assetMapper, never()).insert(any(FixedAsset.class));
+        assertEquals(3, src.getQuantity());
+        assertEquals(0, src.getOriginalValue().compareTo(new BigDecimal("1500")));
+        verify(assetMapper).updateById(src);
+        assertEquals("voucher-2", it.getSurplusVoucherId());
+        assertEquals(null, it.getSurplusAssetId());
+    }
+
+    @Test
+    void bookSurplus_voucherFailureIsSkippedAndDoesNotTouchCards() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 2);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(assetMapper.selectById("asset-1")).thenReturn(asset("asset-1", "FA-1", 1, "1000"));
+        when(fixedAssetService.createSurplusVoucher(any(), any(), any()))
+                .thenThrow(new BusinessException(400, "缺少科目"));
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "800")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals("缺少科目", vo.getSkipped().get(0).getReason());
+        verify(assetMapper, never()).insert(any(FixedAsset.class));
+        verify(itemMapper, never()).updateById(any(FixedAssetCheckItem.class));
+    }
+
+    private FixedAssetCheck completedCheck() {
+        FixedAssetCheck check = draftCheck();
+        check.setStatus(FixedAssetCheck.STATUS_COMPLETED);
+        return check;
+    }
+
+    private FixedAssetCheckItem surplusItem(String id, String assetId, int book, int actual) {
+        FixedAssetCheckItem it = item(id, book);
+        it.setAssetId(assetId);
+        it.setAssetCode("C-" + assetId);
+        it.setActualQuantity(actual);
+        it.setResult(FixedAssetCheckItem.RESULT_SURPLUS);
+        return it;
+    }
+
+    private FixedAsset asset(String id, String code, int qty, String originalValue) {
+        FixedAsset a = new FixedAsset();
+        a.setId(id);
+        a.setBookId(BOOK_ID);
+        a.setCode(code);
+        a.setName("资产" + code);
+        a.setQuantity(qty);
+        a.setOriginalValue(new BigDecimal(originalValue));
+        a.setStatus(FixedAssetStatus.IN_USE.name());
+        return a;
+    }
+
+    private FixedAssetCheckDtos.SurplusBookItemDto bookDto(String itemId, String amount) {
+        FixedAssetCheckDtos.SurplusBookItemDto dto = new FixedAssetCheckDtos.SurplusBookItemDto();
+        dto.setItemId(itemId);
+        dto.setAmount(new BigDecimal(amount));
+        return dto;
     }
 
     private FixedAssetCheck draftCheck() {

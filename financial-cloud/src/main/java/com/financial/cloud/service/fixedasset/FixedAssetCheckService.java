@@ -12,6 +12,8 @@ import com.financial.cloud.repository.fixedasset.FixedAssetCheckItemMapper;
 import com.financial.cloud.repository.fixedasset.FixedAssetCheckMapper;
 import com.financial.cloud.repository.fixedasset.FixedAssetMapper;
 import com.financial.cloud.service.book.BookSealGuard;
+import com.financial.cloud.service.config.ConfigSysService;
+import com.financial.cloud.util.FixedAssetCopyRules;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -25,7 +27,7 @@ import java.util.List;
 /**
  * 资产盘点：建单快照在册资产 → 实盘录入 → 完成盘点自动判定盘盈/盘亏/正常。
  * 盘亏可一键下账（整件盘亏复用资产清理流程生成凭证并下账；部分盘亏需先做资产拆分）。
- * 盘盈因无卡片与计价依据，仅提示，不自动入账。
+ * 盘盈可预览并入账：账面数量为 1 拆出新卡，否则原卡加数量/原值，并生成盘盈草稿凭证。
  */
 @Service
 @RequiredArgsConstructor
@@ -36,6 +38,10 @@ public class FixedAssetCheckService {
     private final FixedAssetMapper assetMapper;
     private final BookSealGuard bookSealGuard;
     private final FixedAssetService fixedAssetService;
+    private final ConfigSysService configSysService;
+
+    static final String STRATEGY_SPLIT_CARD = "split_card";
+    static final String STRATEGY_BUMP_QTY = "bump_qty";
 
     public Page<FixedAssetCheck> page(FixedAssetCheckDtos.PageDto dto) {
         return checkMapper.selectPage(dto.build(), Wrappers.<FixedAssetCheck>lambdaQuery()
@@ -230,6 +236,171 @@ public class FixedAssetCheckService {
             }
         }
         return vo;
+    }
+
+    /**
+     * 盘盈入账预览：已完成盘点单中尚未入账的盘盈明细，给出默认金额与入账方式（拆卡/加数量）。
+     */
+    public FixedAssetCheckDtos.SurplusPreviewVo surplusPreview(String checkId, String bookId) {
+        bookSealGuard.assertWritable(bookId);
+        requireCompleted(requireCheck(checkId, bookId), "盘盈入账预览");
+
+        FixedAssetCheckDtos.SurplusPreviewVo vo = new FixedAssetCheckDtos.SurplusPreviewVo();
+        for (FixedAssetCheckItem item : listItems(checkId, bookId)) {
+            if (!FixedAssetCheckItem.RESULT_SURPLUS.equals(item.getResult())
+                    || StringUtils.isNotBlank(item.getSurplusVoucherId())) {
+                continue;
+            }
+            FixedAsset asset = assetMapper.selectById(item.getAssetId());
+            if (asset == null || isDisposed(asset)) {
+                continue;
+            }
+            int book = item.getBookQuantity() != null ? item.getBookQuantity() : 0;
+            int actual = item.getActualQuantity() != null ? item.getActualQuantity() : 0;
+            FixedAssetCheckDtos.SurplusPreviewRow row = new FixedAssetCheckDtos.SurplusPreviewRow();
+            row.setItemId(item.getId());
+            row.setAssetId(item.getAssetId());
+            row.setAssetCode(item.getAssetCode());
+            row.setAssetName(item.getAssetName());
+            row.setBookQuantity(book);
+            row.setActualQuantity(actual);
+            row.setSurplusQuantity(actual - book);
+            row.setDefaultAmount(defaultSurplusAmount(asset.getOriginalValue(), book, actual));
+            row.setStrategy(book == 1 ? STRATEGY_SPLIT_CARD : STRATEGY_BUMP_QTY);
+            vo.getRows().add(row);
+        }
+        return vo;
+    }
+
+    /**
+     * 盘盈入账：按传入金额逐项生成盘盈草稿凭证；账面数量为 1 时新增卡片，否则在原卡上加数量与原值。
+     * 不加类级事务：单项失败记入跳过原因，不影响其他项。已入账/已清理/金额非正的项跳过。
+     */
+    public FixedAssetCheckDtos.SurplusBookVo bookSurplus(String checkId, String bookId,
+                                                         List<FixedAssetCheckDtos.SurplusBookItemDto> dtos) {
+        bookSealGuard.assertWritable(bookId);
+        FixedAssetCheck check = requireCheck(checkId, bookId);
+        requireCompleted(check, "盘盈入账");
+
+        FixedAssetCheckDtos.SurplusBookVo vo = new FixedAssetCheckDtos.SurplusBookVo();
+        if (dtos == null || dtos.isEmpty()) {
+            return vo;
+        }
+        java.util.Map<String, FixedAssetCheckItem> itemById = new java.util.HashMap<>();
+        for (FixedAssetCheckItem item : listItems(checkId, bookId)) {
+            itemById.put(item.getId(), item);
+        }
+        for (FixedAssetCheckDtos.SurplusBookItemDto dto : dtos) {
+            FixedAssetCheckItem item = dto == null ? null : itemById.get(dto.getItemId());
+            if (item == null) {
+                vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(null, null, "盘点明细不存在"));
+                continue;
+            }
+            try {
+                String skip = bookOneSurplus(check, item, dto.getAmount());
+                if (skip != null) {
+                    vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
+                            item.getAssetCode(), item.getAssetName(), skip));
+                } else {
+                    vo.setProcessedCount(vo.getProcessedCount() + 1);
+                }
+            } catch (Exception e) {
+                vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
+                        item.getAssetCode(), item.getAssetName(), e.getMessage()));
+            }
+        }
+        return vo;
+    }
+
+    /** @return 跳过原因；null 表示已入账 */
+    private String bookOneSurplus(FixedAssetCheck check, FixedAssetCheckItem item, BigDecimal rawAmount) {
+        if (!FixedAssetCheckItem.RESULT_SURPLUS.equals(item.getResult())) {
+            return "该明细不是盘盈";
+        }
+        if (StringUtils.isNotBlank(item.getSurplusVoucherId())) {
+            return "已入账，不能重复入账";
+        }
+        if (rawAmount == null || rawAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return "盘盈入账金额必须大于0";
+        }
+        BigDecimal amount = rawAmount.setScale(2, RoundingMode.HALF_UP);
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return "盘盈入账金额必须大于0";
+        }
+        FixedAsset asset = assetMapper.selectById(item.getAssetId());
+        if (asset == null) {
+            return "资产卡片不存在";
+        }
+        if (isDisposed(asset)) {
+            return "资产已清理，不能盘盈入账";
+        }
+        int book = item.getBookQuantity() != null ? item.getBookQuantity() : 0;
+        int actual = item.getActualQuantity() != null ? item.getActualQuantity() : 0;
+        int delta = actual - book;
+        if (delta <= 0) {
+            return "无盘盈数量";
+        }
+        String summary = "盘盈入账（盘点单：" + check.getTitle() + "）：" + item.getAssetCode() + " " + item.getAssetName();
+
+        String voucherId;
+        String newAssetId = null;
+        if (book == 1) {
+            FixedAsset clone = cn.hutool.core.bean.BeanUtil.copyProperties(asset, FixedAsset.class);
+            clone.setId(null);
+            clone.setCode(FixedAssetCopyRules.nextCopyCode(asset.getCode(), code -> {
+                Long count = assetMapper.selectCount(Wrappers.<FixedAsset>lambdaQuery()
+                        .eq(FixedAsset::getBookId, asset.getBookId())
+                        .eq(FixedAsset::getCode, code));
+                return count != null && count > 0;
+            }));
+            clone.setStatus(FixedAssetStatus.IN_USE.name());
+            clone.setQuantity(delta);
+            clone.setOriginalValue(amount);
+            clone.setDisposedPeriod(null);
+            clone.setDisposeVoucherId(null);
+            clone.setPurchaseVoucherId(null);
+            clone.setSuspendedPeriod(null);
+            clone.setDepreciatedPeriods(0);
+            clone.setOpeningAccumDepr(BigDecimal.ZERO);
+            clone.setAccumDepr(BigDecimal.ZERO);
+            clone.setYearDepr(BigDecimal.ZERO);
+            String term = configSysService.getCurrentTerm(asset.getBookId());
+            if (StringUtils.isNotBlank(term) && term.contains("-")) {
+                clone.setEntryPeriod(term);
+                clone.setStartUseDate(java.sql.Date.valueOf(term + "-01"));
+            }
+            // 先生成凭证再落卡：凭证失败时不产生孤儿卡片
+            voucherId = fixedAssetService.createSurplusVoucher(clone, amount, summary);
+            assetMapper.insert(clone);
+            newAssetId = clone.getId();
+        } else {
+            voucherId = fixedAssetService.createSurplusVoucher(asset, amount, summary);
+            asset.setQuantity((asset.getQuantity() != null ? asset.getQuantity() : book) + delta);
+            asset.setOriginalValue((asset.getOriginalValue() != null ? asset.getOriginalValue() : BigDecimal.ZERO)
+                    .add(amount));
+            assetMapper.updateById(asset);
+        }
+        item.setSurplusAmount(amount);
+        item.setSurplusVoucherId(voucherId);
+        item.setSurplusAssetId(newAssetId);
+        itemMapper.updateById(item);
+        return null;
+    }
+
+    private List<FixedAssetCheckItem> listItems(String checkId, String bookId) {
+        return itemMapper.selectList(Wrappers.<FixedAssetCheckItem>lambdaQuery()
+                .eq(FixedAssetCheckItem::getCheckId, checkId)
+                .eq(FixedAssetCheckItem::getBookId, bookId));
+    }
+
+    private void requireCompleted(FixedAssetCheck check, String action) {
+        if (!FixedAssetCheck.STATUS_COMPLETED.equals(check.getStatus())) {
+            throw new BusinessException(400, "盘点单未完成，不能执行" + action);
+        }
+    }
+
+    private boolean isDisposed(FixedAsset asset) {
+        return FixedAssetStatus.DISPOSED.name().equals(asset.getStatus());
     }
 
     /** 结果判定：实盘 > 账面 盘盈；< 盘亏；= 正常 */

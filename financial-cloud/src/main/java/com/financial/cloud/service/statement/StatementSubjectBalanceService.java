@@ -414,35 +414,46 @@ public class StatementSubjectBalanceService{
         }
 
         for (StatementSubjectBalance statementSubjectBalance : subjectBalanceList) {
-            statementSubjectBalance.setId(null);
-            statementSubjectBalance.setYearPeriod(dto.getNextTerm());
-            // 期初余额
-            statementSubjectBalance.setOpeningBalanceDebit(statementSubjectBalance.getClosingBalanceDebit());
-            statementSubjectBalance.setOpeningBalanceCredit(statementSubjectBalance.getClosingBalanceCredit());
-            // 当前
-            statementSubjectBalance.setCurrentPeriodDebit(BigDecimal.ZERO);
-            statementSubjectBalance.setCurrentPeriodCredit(BigDecimal.ZERO);
-            //本年累计 01月清除本年累计
-            if (dto.getNextTerm().endsWith("01")) {
-                statementSubjectBalance.setYearToDateDebit(BigDecimal.ZERO);
-                statementSubjectBalance.setYearToDateCredit(BigDecimal.ZERO);
-            }
-            //上月期末余额
-            statementSubjectBalance.setPrevBalance(statementSubjectBalance.getBalance());
-            //上月期末借贷余额
-            statementSubjectBalance.setPrevClosingBalanceDebit(statementSubjectBalance.getPrevClosingBalanceDebit());
-            statementSubjectBalance.setPrevClosingBalanceCredit(statementSubjectBalance.getPrevClosingBalanceCredit());
-            //上月期末年度累计
-            statementSubjectBalance.setPrevYearToDateDebit(statementSubjectBalance.getYearToDateDebit());
-            statementSubjectBalance.setPrevYearToDateCredit(statementSubjectBalance.getYearToDateCredit());
-            //状态
-            statementSubjectBalance.setIsVoucher(YesNoEnum.n.name());
+            rolloverToNextTerm(statementSubjectBalance, dto.getNextTerm());
             String currentId = identifierGenerator.nextId(statementSubjectBalance).toString();
             statementSubjectBalance.setId(currentId);
         }
         Db.saveBatch(subjectBalanceList);
 
         return true;
+    }
+
+    /**
+     * 结账滚存：把本月余额行复制为下期期初。
+     * 跨年时（下期为一月）年初余额滚存为上年期末、本年累计清零；
+     * 「上月期末」列取自本月期末（此前误取自自身上月值，永不更新）。
+     */
+    static void rolloverToNextTerm(StatementSubjectBalance row, String nextTerm) {
+        row.setId(null);
+        row.setYearPeriod(nextTerm);
+        // 期初余额
+        row.setOpeningBalanceDebit(row.getClosingBalanceDebit());
+        row.setOpeningBalanceCredit(row.getClosingBalanceCredit());
+        // 当前
+        row.setCurrentPeriodDebit(BigDecimal.ZERO);
+        row.setCurrentPeriodCredit(BigDecimal.ZERO);
+        //本年累计与年初余额：01月清零累计，年初余额滚存为上年期末
+        if (nextTerm != null && nextTerm.endsWith("01")) {
+            row.setYearToDateDebit(BigDecimal.ZERO);
+            row.setYearToDateCredit(BigDecimal.ZERO);
+            row.setOpeningYearBalanceDebit(row.getClosingBalanceDebit());
+            row.setOpeningYearBalanceCredit(row.getClosingBalanceCredit());
+        }
+        //上月期末余额
+        row.setPrevBalance(row.getBalance());
+        //上月期末借贷余额
+        row.setPrevClosingBalanceDebit(row.getClosingBalanceDebit());
+        row.setPrevClosingBalanceCredit(row.getClosingBalanceCredit());
+        //上月期末年度累计
+        row.setPrevYearToDateDebit(row.getYearToDateDebit());
+        row.setPrevYearToDateCredit(row.getYearToDateCredit());
+        //状态
+        row.setIsVoucher(YesNoEnum.n.name());
     }
 
     /**

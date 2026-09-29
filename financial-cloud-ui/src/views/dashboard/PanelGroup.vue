@@ -132,7 +132,7 @@ export default {
     CountTo
   },
   methods: {
-    handleSetLineChartData(type) {
+    handleSetLineChartData(type: string) {
       this.$emit('handleSetLineChartData', type)
     }
   }

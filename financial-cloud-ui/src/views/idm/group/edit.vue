@@ -107,8 +107,8 @@ const props: any = defineProps({
     default: [],
   },
   group_category_options: {
-    type: Array,
-    default: [],
+    type: Array as () => { value: string; label: string }[],
+    default: () => [],
   }
 })
 

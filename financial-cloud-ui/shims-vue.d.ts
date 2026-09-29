@@ -69,4 +69,10 @@ declare module '*.json' {
     export default value
 }
 
+declare module 'vue-count-to' {
+    import type {DefineComponent} from 'vue'
+    const component: DefineComponent<object, object, unknown>
+    export default component
+}
+
 export {}

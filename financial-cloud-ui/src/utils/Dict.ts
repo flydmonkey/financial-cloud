@@ -1,17 +1,12 @@
 import useDictStore from '@/store/modules/dict'
 import distData from '@/utils/DistData'
-import {Ref, ref, toRefs} from "vue";
-import type {DictItem} from '@/types/dict'
+import {ref, toRefs} from "vue";
 
 /**
  * 获取字典数据
  */
-interface DictRefs {
-    [key: string]: Ref<DictItem[]>;
-}
-
-
-export function useDict(...args: string[]): DictRefs {
+/** 返回 any：调用方常从 proxy?.useDict 解构，具体键无法用固定接口表达 */
+export function useDict(...args: string[]): any {
     const res: any = ref({});
     return (() => {
         args.forEach((dictType: string) => {

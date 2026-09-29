@@ -168,7 +168,7 @@ import bookStore from "@/store/modules/bookStore";
 import {parseTime} from "@/utils/financialCloud";
 import {downloadData} from "@/utils";
 
-const {proxy} = getCurrentInstance();
+const {proxy} = getCurrentInstance()!;
 const currBookStore = bookStore()
 const currentTerm = ref(currBookStore.termCurrent || parseTime(new Date(), "{y}-{m}"));
 
@@ -193,7 +193,7 @@ const activeName = ref('settle-list')
 const router: any = useRouter();
 
 const data = reactive({
-  //form: {...initFormData},
+  form: {} as Record<string, any>,
   queryParams: {
     periodType: 'year',
     date: currentTerm,

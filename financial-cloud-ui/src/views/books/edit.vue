@@ -194,8 +194,8 @@ const props: any = defineProps({
     default: () => [],
   },
   books_industry: {
-    type: Array,
-    default: [],
+    type: Array as PropType<{ label: string; options: { value: string; label: string }[] }[]>,
+    default: () => [],
   }
 })
 

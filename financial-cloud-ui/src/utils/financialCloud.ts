@@ -73,9 +73,9 @@ export function getCurrentQuarter() {
     }
 }
 
-// 表单重置
-export function resetForm(refName: any): any {
-    if (this.$refs[refName]) {
+// 表单重置（历史 Options API 通过 .call(this, name) 使用）
+export function resetForm(this: any, refName: any): any {
+    if (this?.$refs?.[refName]) {
         this.$refs[refName].resetFields();
     }
 }

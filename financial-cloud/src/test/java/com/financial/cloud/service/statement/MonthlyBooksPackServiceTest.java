@@ -128,6 +128,37 @@ class MonthlyBooksPackServiceTest {
     }
 
     @Test
+    void buildBatchPacksGrantedBooksAndErrors() throws Exception {
+        Book book2 = new Book();
+        book2.setId("book-2");
+        book2.setName("第二账套");
+        when(bookMapper.selectById("book-2")).thenReturn(book2);
+
+        MonthlyBooksPackService.BooksPack pack = service.buildBatch(
+                List.of("book-1", "book-2", "denied"),
+                "2026-08",
+                false,
+                "user-1",
+                id -> "book-1".equals(id) || "book-2".equals(id));
+
+        assertThat(pack.fileName()).isEqualTo("批量账本包_2026-08.zip");
+        assertThat(MonthlyBooksPackService.entryNames(pack.content()))
+                .contains("示例账套/示例账套_本月账本包_2026-08.zip",
+                        "第二账套/第二账套_本月账本包_2026-08.zip",
+                        "errors.txt");
+        String errors = new String(unzip(pack.content()).get("errors.txt"), StandardCharsets.UTF_8);
+        assertThat(errors).contains("denied");
+    }
+
+    @Test
+    void buildBatchAllDeniedStillReturnsErrorsZip() throws Exception {
+        MonthlyBooksPackService.BooksPack pack = service.buildBatch(
+                List.of("x"), "2026-08", true, "user-1", id -> false);
+
+        assertThat(MonthlyBooksPackService.entryNames(pack.content())).containsExactly("errors.txt");
+    }
+
+    @Test
     void memberFailureReturnsNoPartialPack() throws Exception {
         doAnswer(invocation -> { throw new java.io.IOException("boom"); })
                 .when(incomeService).export(any(), any());

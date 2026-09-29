@@ -58,6 +58,7 @@ MENU_SEED_SQL = [
     PATCHES / "2026-09-29-tax-estimate-menu.sql",
     PATCHES / "2026-09-29-tax-declaration-menu.sql",
     PATCHES / "2026-09-29-voucher-settlement-params.sql",
+    PATCHES / "2026-09-29-books-board-menu.sql",
     SEED / "menus" / "menu_salary_tax_and_rename_config.sql",
     SEED / "menus" / "menu_icons_align.sql",
 ]

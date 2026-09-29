@@ -93,6 +93,9 @@ public final class BackupTableRegistry {
             BackupTableSpec.of("fixed_asset_check_item")
                     .fks(FkEdge.of("check_id", "fixed_asset_check"),
                             FkEdge.of("asset_id", "fixed_asset")),
+            // 费用报销
+            BackupTableSpec.of("expense_claim")
+                    .fks(FkEdge.soft("voucher_id", "voucher")),
             // 薪资（employee.department_id / manager_id 指向实例级组织与用户，置空）
             BackupTableSpec.of("employee")
                     .nulls("department_id", "manager_id"),

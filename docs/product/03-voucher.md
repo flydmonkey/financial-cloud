@@ -68,7 +68,7 @@
 
 | 表 | 用途 |
 |----|------|
-| `voucher_item` | 分录行（含 num/price，UI 未做数量金额账） |
+| `voucher_item` | 分录行（含 num/price；数量金额账见账簿分册） |
 | `voucher_auxiliary` | 分录辅助核算 |
 | `voucher_item_cash_flow` | 分录现金流量指定 |
 | `voucher_word` | 字号序列 |

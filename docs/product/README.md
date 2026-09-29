@@ -36,7 +36,7 @@
 | [08-cashier-journal.md](08-cashier-journal.md) | 出纳日记账：账户、流水、汇总 |
 | [09-payroll.md](09-payroll.md) | 薪资、个税、社保公积金、工资凭证 |
 | [10-system-admin.md](10-system-admin.md) | 用户、权限、审计、安全策略、机构 |
-| [11-arap.md](11-arap.md) | 往来 L1+L2：余额、明细、对账单、账龄（核销未做） |
+| [11-arap.md](11-arap.md) | 往来 L1+L2+L3：余额、明细、对账单、账龄、核销 |
 
 ### 差距与路线
 

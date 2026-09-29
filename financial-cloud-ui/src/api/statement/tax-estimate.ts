@@ -8,3 +8,12 @@ export function taxEstimate(query: any): any {
         params: query
     })
 }
+
+// 增值税申报表（简版主表）
+export function taxDeclaration(query: any): any {
+    return request({
+        url: '/tax-estimate/declaration',
+        method: 'get',
+        params: query
+    })
+}

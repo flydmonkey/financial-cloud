@@ -3,7 +3,9 @@ package com.financial.cloud.controller.statement;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.dto.statement.TaxDeclarationVo;
 import com.financial.cloud.dto.statement.TaxEstimateVo;
+import com.financial.cloud.service.statement.TaxDeclarationService;
 import com.financial.cloud.service.statement.TaxEstimateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +24,7 @@ import java.math.BigDecimal;
 public class TaxEstimateController {
 
     private final TaxEstimateService taxEstimateService;
+    private final TaxDeclarationService taxDeclarationService;
 
     @GetMapping
     public Message<TaxEstimateVo> estimate(@RequestParam String yearMonth,
@@ -33,5 +36,17 @@ public class TaxEstimateController {
                                            @CurrentUser UserInfo userInfo) {
         return Message.ok(taxEstimateService.estimate(userInfo.getBookId(), yearMonth,
                 urbanRate, eduRate, localEduRate, incomeTaxRate, burdenThreshold));
+    }
+
+    /** 增值税申报表（简版主表）：按官方行次格式化的申报底稿，可打印 */
+    @GetMapping("/declaration")
+    public Message<TaxDeclarationVo> declaration(@RequestParam String yearMonth,
+                                                 @RequestParam(defaultValue = "0.07") BigDecimal urbanRate,
+                                                 @RequestParam(defaultValue = "0.03") BigDecimal eduRate,
+                                                 @RequestParam(defaultValue = "0.02") BigDecimal localEduRate,
+                                                 @RequestParam(defaultValue = "0.25") BigDecimal incomeTaxRate,
+                                                 @CurrentUser UserInfo userInfo) {
+        return Message.ok(taxDeclarationService.declaration(userInfo.getBookId(), yearMonth,
+                urbanRate, eduRate, localEduRate, incomeTaxRate));
     }
 }

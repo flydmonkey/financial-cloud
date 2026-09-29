@@ -1,16 +1,20 @@
 package com.financial.cloud.service.book.backup;
 
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
+import com.financial.cloud.configuration.BookBackupScheduleProperties;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.enums.book.BookStatusEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
+import com.financial.cloud.service.book.BookService;
 import com.financial.cloud.service.history.HistorySystemLogsService;
 import com.financial.cloud.service.idm.RoleMemberService;
 import com.financial.cloud.service.permissions.PermissionBookService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -36,10 +41,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -51,16 +59,25 @@ class BookRestoreServiceTest {
     @Mock private PermissionBookService permissionBookService;
     @Mock private RoleMemberService roleMemberService;
     @Mock private HistorySystemLogsService historyService;
+    @Mock private BookService bookService;
+    @Mock private BookBackupService bookBackupService;
+
+    @TempDir Path tempDir;
 
     private BookRestoreService service;
     private final AtomicLong idSeq = new AtomicLong(1000);
 
     @BeforeEach
     void setUp() {
+        BookBackupScheduleProperties props = new BookBackupScheduleProperties();
+        props.setDirectory(tempDir.toString());
         service = new BookRestoreService(jdbcTemplate, bookMapper, identifierGenerator,
-                permissionBookService, roleMemberService, historyService);
+                permissionBookService, roleMemberService, historyService,
+                bookService, bookBackupService, props);
         lenient().when(identifierGenerator.nextId(any())).thenAnswer(inv -> idSeq.incrementAndGet());
         lenient().when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+        lenient().when(jdbcTemplate.update(anyString(), any(), any())).thenReturn(1);
+        lenient().when(jdbcTemplate.update(anyString(), anyString())).thenReturn(1);
     }
 
     @Test
@@ -101,6 +118,64 @@ class BookRestoreServiceTest {
         assertThat(item.get("voucher_id")).isEqualTo(voucher.get("id"));
         assertThat(item.get("subject_id")).isEqualTo(child.get("id"));
         assertThat(item.get("book_id")).isEqualTo(newBookId);
+    }
+
+    @Test
+    void overwriteRejectsWrongConfirmPhrase() {
+        assertThatThrownBy(() -> service.overwrite("book-1",
+                new ByteArrayInputStream(new byte[0]), "确认", operator()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("确认短语");
+        verify(bookMapper, never()).selectById(anyString());
+    }
+
+    @Test
+    void overwriteRejectsSealedBook() {
+        Book sealed = new Book();
+        sealed.setId("book-1");
+        sealed.setName("已封存");
+        sealed.setStatus(BookStatusEnum.SEALED.getValue());
+        when(bookMapper.selectById("book-1")).thenReturn(sealed);
+        doNothing().when(bookService).requireBookAdministrator(any(), eq("book-1"));
+
+        Map<String, List<Map<String, Object>>> tableData = new LinkedHashMap<>();
+        addRow(tableData, "book_subject", orderedMap("id", "sub-0", "book_id", "b-old"));
+
+        assertThatThrownBy(() -> service.overwrite("book-1",
+                new ByteArrayInputStream(buildZip(tableData, Map.of(), null)),
+                BookRestoreService.OVERWRITE_CONFIRM_PHRASE, operator()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("封存");
+    }
+
+    @Test
+    void overwriteWipesAndKeepsTargetBookId() {
+        Book target = new Book();
+        target.setId("book-target");
+        target.setName("旧名");
+        target.setStatus(BookStatusEnum.ACTIVE.getValue());
+        when(bookMapper.selectById("book-target")).thenReturn(target);
+        doNothing().when(bookService).requireBookAdministrator(any(), eq("book-target"));
+        when(bookBackupService.export(eq("book-target"), any()))
+                .thenReturn(new BookBackupService.BackupPackage(new byte[]{1, 2, 3}, "pre.zip"));
+
+        Map<String, List<Map<String, Object>>> tableData = new LinkedHashMap<>();
+        addRow(tableData, "book_subject", orderedMap("id", "sub-0", "book_id", "b-old", "name", "现金"));
+        addRow(tableData, "voucher", orderedMap("id", "v-1", "book_id", "b-old"));
+
+        BookRestoreService.OverwriteResult result = service.overwrite(
+                "book-target",
+                new ByteArrayInputStream(buildZip(tableData, Map.of(), null)),
+                BookRestoreService.OVERWRITE_CONFIRM_PHRASE,
+                operator());
+
+        assertThat(result.bookId()).isEqualTo("book-target");
+        assertThat(result.preBackupFile()).contains("pre-overwrite-book-target-");
+        assertThat(result.name()).isEqualTo("示例账套");
+        verify(jdbcTemplate, atLeastOnce()).update(org.mockito.ArgumentMatchers.contains("DELETE"), eq("book-target"));
+        Map<String, List<Map<String, Object>>> inserted = captureInserts();
+        assertThat(inserted.get("book_subject").get(0).get("book_id")).isEqualTo("book-target");
+        assertThat(inserted.get("voucher").get(0).get("book_id")).isEqualTo("book-target");
     }
 
     @Test
@@ -163,7 +238,7 @@ class BookRestoreServiceTest {
 
         assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(zip), operator()))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("校验和");
+                .hasMessageContaining("校验失败");
         verify(bookMapper, never()).insert(any(Book.class));
         verify(jdbcTemplate, never()).update(anyString(), any(Object[].class));
     }
@@ -268,6 +343,9 @@ class BookRestoreServiceTest {
         List<Object[]> argValues = argsCaptor.getAllValues();
         for (int i = 0; i < sqls.size(); i++) {
             String sql = sqls.get(i);
+            if (!sql.regionMatches(true, 0, "INSERT", 0, 6)) {
+                continue;
+            }
             String table = sql.substring(sql.indexOf('`') + 1, sql.indexOf('`', sql.indexOf('`') + 1));
             String columnsPart = sql.substring(sql.indexOf('(') + 1, sql.indexOf(')'));
             String[] columns = columnsPart.replace("`", "").split(",");

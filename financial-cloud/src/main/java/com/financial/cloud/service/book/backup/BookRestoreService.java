@@ -3,14 +3,17 @@ package com.financial.cloud.service.book.backup;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import com.financial.cloud.configuration.BookBackupScheduleProperties;
 import com.financial.cloud.constants.auth.ProductRoles;
 import com.financial.cloud.context.WebContext;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.idm.RoleMember;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.permissions.PermissionBook;
+import com.financial.cloud.enums.book.BookStatusEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
+import com.financial.cloud.service.book.BookService;
 import com.financial.cloud.service.history.HistorySystemLogsService;
 import com.financial.cloud.service.idm.RoleMemberService;
 import com.financial.cloud.service.permissions.PermissionBookService;
@@ -23,8 +26,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,16 +42,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * 账套备份恢复：克隆式恢复——校验通过后恢复为一个新账套，绝不覆盖现有账套。
- * 所有主键重新分配，FK 边按 BackupTableRegistry 声明重映射，单事务，失败整体回滚。
- * 对应 openspec/changes/book-backup-restore/design.md §4。
+ * 账套备份恢复：克隆式恢复 + 覆盖式恢复（强确认 + 预备份）。
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookRestoreService {
 
+    public static final String OVERWRITE_CONFIRM_PHRASE = "覆盖恢复";
+
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
+    private static final DateTimeFormatter FILE_TS = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private final JdbcTemplate jdbcTemplate;
     private final BookMapper bookMapper;
@@ -50,15 +60,21 @@ public class BookRestoreService {
     private final PermissionBookService permissionBookService;
     private final RoleMemberService roleMemberService;
     private final HistorySystemLogsService historySystemLogsService;
+    private final BookService bookService;
+    private final BookBackupService bookBackupService;
+    private final BookBackupScheduleProperties scheduleProperties;
 
     public record RestoreResult(String bookId, String name, int tables, long rows) {
+    }
+
+    public record OverwriteResult(String bookId, String name, int tables, long rows, String preBackupFile) {
     }
 
     private record ParsedBackup(JsonNode bookMeta, Map<String, List<Map<String, Object>>> tableRows) {
     }
 
     /**
-     * 恢复备份包。任何校验或写入失败都抛出异常并整体回滚，不产生残留数据。
+     * 克隆式恢复：校验通过后恢复为一个新账套，绝不覆盖现有账套。
      */
     @Transactional
     public RestoreResult restore(InputStream zipStream, UserInfo operator) {
@@ -68,12 +84,55 @@ public class BookRestoreService {
         String newBookId = book.getId();
         grantOperatorAccess(book, operator);
 
+        long totalRows = insertRemappedTables(backup, newBookId);
+
+        audit(book, operator, "restore", "success",
+                "恢复账套备份：" + BackupTableRegistry.SPECS.size() + " 表，" + totalRows + " 行");
+        return new RestoreResult(newBookId, book.getName(),
+                BackupTableRegistry.SPECS.size(), totalRows);
+    }
+
+    /**
+     * 覆盖式恢复：清空目标账套业务表后灌入备份（保留 book_id 与成员授权）。
+     * 必须先通过确认短语；覆盖前落盘预备份。
+     */
+    @Transactional
+    public OverwriteResult overwrite(String targetBookId, InputStream zipStream,
+                                     String confirmPhrase, UserInfo operator) {
+        if (!OVERWRITE_CONFIRM_PHRASE.equals(confirmPhrase == null ? "" : confirmPhrase.trim())) {
+            throw new BusinessException(400, "请输入确认短语「" + OVERWRITE_CONFIRM_PHRASE + "」以继续覆盖恢复");
+        }
+        bookService.requireBookAdministrator(operator, targetBookId);
+        Book target = bookMapper.selectById(targetBookId);
+        if (target == null) {
+            throw new BusinessException(400, "目标账套不存在或不可访问");
+        }
+        if (BookStatusEnum.isSealed(target.getStatus())) {
+            throw new BusinessException(400, "封存账套不可覆盖恢复，请先解除封存");
+        }
+
+        ParsedBackup backup = parseAndValidate(zipStream);
+        String preBackupFile = writePreOverwriteBackup(targetBookId, operator);
+
+        wipeBookBusinessData(targetBookId);
+        applyBookMeta(target, backup.bookMeta(), true);
+        bookMapper.updateById(target);
+
+        long totalRows = insertRemappedTables(backup, targetBookId);
+
+        audit(target, operator, "overwrite-restore", "success",
+                "覆盖恢复账套：" + BackupTableRegistry.SPECS.size() + " 表，" + totalRows
+                        + " 行；预备份=" + preBackupFile);
+        return new OverwriteResult(targetBookId, target.getName(),
+                BackupTableRegistry.SPECS.size(), totalRows, preBackupFile);
+    }
+
+    private long insertRemappedTables(ParsedBackup backup, String bookId) {
         Map<String, Map<String, String>> idMaps = new HashMap<>();
         long totalRows = 0;
         for (BackupTableSpec spec : BackupTableRegistry.SPECS) {
             List<Map<String, Object>> rows = backup.tableRows().getOrDefault(spec.table(), List.of());
             Map<String, String> idMap = idMaps.computeIfAbsent(spec.table(), k -> new HashMap<>());
-            // 第一遍：整表统一分配新主键（自引用表如 book_subject 的父行可能排在子行之后）
             for (Map<String, Object> row : rows) {
                 Object oldPk = row.get(spec.pk());
                 String newPk = identifierGenerator.nextId(spec.table()).toString();
@@ -82,21 +141,47 @@ public class BookRestoreService {
                 }
                 row.put(spec.pk(), newPk);
             }
-            // 第二遍：改写 book_id / 外键 / 置空列后插入
             for (Map<String, Object> row : rows) {
-                rewriteRow(spec, row, newBookId, idMaps);
+                rewriteRow(spec, row, bookId, idMaps);
                 insertRow(spec.table(), row);
                 totalRows++;
             }
         }
-
-        audit(book, operator, "restore", "success",
-                "恢复账套备份：" + BackupTableRegistry.SPECS.size() + " 表，" + totalRows + " 行");
-        return new RestoreResult(newBookId, book.getName(),
-                BackupTableRegistry.SPECS.size(), totalRows);
+        return totalRows;
     }
 
-    // ---------- 解析与校验（零写入） ----------
+    private String writePreOverwriteBackup(String bookId, UserInfo operator) {
+        try {
+            BookBackupService.BackupPackage pack = bookBackupService.export(bookId, operator);
+            Path dir = Paths.get(scheduleProperties.getDirectory()).toAbsolutePath().normalize();
+            Files.createDirectories(dir);
+            String fileName = "pre-overwrite-" + bookId + "-" + FILE_TS.format(LocalDateTime.now()) + ".zip";
+            Path target = dir.resolve(fileName);
+            Files.write(target, pack.content());
+            log.info("覆盖恢复预备份已写入 {}", target);
+            return target.toString();
+        } catch (IOException e) {
+            throw new BusinessException(500, "覆盖前自动备份失败，已中止覆盖：" + e.getMessage());
+        }
+    }
+
+    void wipeBookBusinessData(String bookId) {
+        List<BackupTableSpec> reverse = new ArrayList<>(BackupTableRegistry.SPECS);
+        Collections.reverse(reverse);
+        for (BackupTableSpec spec : reverse) {
+            switch (spec.scope()) {
+                case BOOK_ID -> jdbcTemplate.update(
+                        "DELETE FROM `" + spec.table() + "` WHERE book_id = ?", bookId);
+                case VIA_VOUCHER -> jdbcTemplate.update(
+                        "DELETE t FROM `" + spec.table() + "` t "
+                                + "INNER JOIN voucher v ON t.voucher_id = v.id WHERE v.book_id = ?",
+                        bookId);
+                case BOOK_ROW -> {
+                    // 账套主表不删除
+                }
+            }
+        }
+    }
 
     private ParsedBackup parseAndValidate(InputStream zipStream) {
         Map<String, byte[]> entries = readZip(zipStream);
@@ -121,28 +206,27 @@ public class BookRestoreService {
         for (JsonNode tableNode : manifest.path("tables")) {
             declared.put(tableNode.path("name").asText(), tableNode);
         }
-
         Map<String, List<Map<String, Object>>> tableRows = new LinkedHashMap<>();
         for (BackupTableSpec spec : BackupTableRegistry.SPECS) {
             JsonNode tableNode = declared.get(spec.table());
             if (tableNode == null) {
-                throw new BusinessException(400, "备份包缺少数据表：" + spec.table());
+                throw new BusinessException(400, "备份包缺少表声明：" + spec.table());
             }
             byte[] jsonl = entries.get("data/" + spec.table() + ".jsonl");
             if (jsonl == null) {
-                throw new BusinessException(400, "备份包缺少数据文件：" + spec.table() + ".jsonl");
+                throw new BusinessException(400, "备份包缺少数据文件：" + spec.table());
             }
             if (!BookBackupService.sha256(jsonl).equals(tableNode.path("sha256").asText())) {
-                throw new BusinessException(400, "备份包数据校验和不符（可能被篡改）：" + spec.table());
+                throw new BusinessException(400, "备份包校验失败：" + spec.table() + " 内容与清单不符");
             }
             List<Map<String, Object>> rows;
             try {
                 rows = BackupJsonCodec.decodeRows(jsonl);
-            } catch (IllegalArgumentException e) {
-                throw new BusinessException(400, "备份包数据损坏：" + spec.table() + "，" + e.getMessage());
+            } catch (RuntimeException e) {
+                throw new BusinessException(400, "备份包解析失败：" + spec.table() + " — " + e.getMessage());
             }
             if (rows.size() != tableNode.path("rows").asInt(-1)) {
-                throw new BusinessException(400, "备份包行数与清单不符：" + spec.table());
+                throw new BusinessException(400, "备份包行数不符：" + spec.table());
             }
             tableRows.put(spec.table(), rows);
         }
@@ -172,12 +256,20 @@ public class BookRestoreService {
         return entries;
     }
 
-    // ---------- 建壳与授权 ----------
-
     private Book createBookShell(JsonNode meta) {
         Book book = new Book();
         book.setId(identifierGenerator.nextId(book).toString());
         book.setName(meta.path("name").asText() + "（备份恢复）");
+        applyBookMeta(book, meta, false);
+        book.setStatus(1);
+        bookMapper.insert(book);
+        return book;
+    }
+
+    private void applyBookMeta(Book book, JsonNode meta, boolean overwriteName) {
+        if (overwriteName) {
+            book.setName(meta.path("name").asText());
+        }
         book.setCompanyName(textOrNull(meta, "companyName"));
         book.setCreditCode(textOrNull(meta, "creditCode"));
         book.setAddress(textOrNull(meta, "address"));
@@ -187,9 +279,6 @@ public class BookRestoreService {
         book.setStandardId(textOrNull(meta, "standardId"));
         book.setEnableDate(parseYearMonth(textOrNull(meta, "enableDate")));
         book.setCurrentAccountDate(parseYearMonth(textOrNull(meta, "currentAccountDate")));
-        book.setStatus(1);
-        bookMapper.insert(book);
-        return book;
     }
 
     private void grantOperatorAccess(Book book, UserInfo operator) {
@@ -201,8 +290,6 @@ public class BookRestoreService {
         adminMember.setId(WebContext.genId());
         roleMemberService.save(adminMember);
     }
-
-    // ---------- 行重写与插入 ----------
 
     private void rewriteRow(BackupTableSpec spec, Map<String, Object> row, String newBookId,
                             Map<String, Map<String, String>> idMaps) {
@@ -223,7 +310,7 @@ public class BookRestoreService {
             String mapped = refMap.get(String.valueOf(value));
             if (mapped == null) {
                 if (edge.keepOnMiss()) {
-                    // 哨兵值（如 'template'）无对应表头行，保留原值
+                    // 哨兵值保留
                 } else if (edge.soft()) {
                     row.put(edge.column(), null);
                 } else {

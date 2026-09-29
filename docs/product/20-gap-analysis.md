@@ -25,7 +25,7 @@
 | 1.2 | 账套列表、搜索、切换、多账套 | 列表 + `permission_book` + 顶栏切换 | **已实现** | `books/index.vue`、`switchBook` | — |
 | 1.3 | 账套封存（往期禁止改） | 封存态已落地：status=2 归档只读，凭证/结账/附件写操作由 BookSealGuard 拦截，封存账套禁删；另有期间锁 | **已实现** | `BookSealGuard`、`/api/book/seal|unseal` | — |
 | 1.4 | 作废留存 / 空账套删除 | 禁用后删除；无「作废」态 | **未实现** | `BookService.delete` | P2 |
-| 1.5 | 手动备份、定时备份、恢复、导出备份文件 | 手动导出 + 克隆式恢复 + **定时落盘**（配置 cron/目录/保留 N） | **已实现**（覆盖式恢复未做） | `BookBackupService`、`ScheduledBookBackupService`、`/api/book/backup/*` | — |
+| 1.5 | 手动备份、定时备份、恢复、导出备份文件 | 手动导出 + 克隆式恢复 + 覆盖式恢复（强确认+预备份）+ **定时落盘** | **已实现** | `BookBackupService`、`BookRestoreService`、`ScheduledBookBackupService`、`/api/book/backup/*` | — |
 
 ---
 
@@ -110,7 +110,7 @@
 |---|----------|----------|------|------|--------|
 | 8.1 | 角色与精细权限 | 角色-资源 + 账套授权；按钮指令少用 | **部分实现** | `permission`、`v-hasPermi` | P2 |
 | 8.2 | 操作日志含 IP、业务操作 | 系统日志含 IP；凭证审核/过账/删除与结账/反结账/备份恢复已记业务审计 | **已实现**（其余业务面按需扩） | `HistorySystemLogsService.log` + `ip` 列 | — |
-| 8.3 | 备份恢复 | 手动导出 + 克隆式恢复 + 定时落盘已实现 | **已实现**（覆盖式恢复未做） | `service/book/backup/*` | — |
+| 8.3 | 备份恢复 | 手动导出 + 克隆式/覆盖式恢复 + 定时落盘已实现 | **已实现** | `service/book/backup/*` | — |
 | 8.4 | 已结账锁定 | 新增/修改/导入/删除全路径期间校验 | **已实现** | `rejectClosedPeriodWrite` + `delete` 期间守卫 | — |
 
 ---
@@ -146,7 +146,7 @@
 ### P0（代账合规与交付刚需）——已全部清零
 
 1. ~~往来管理最小闭环（余额/明细/对账/账龄）~~ → **已落地 L1+L2**；剩余 **核销 L3** 见 P1  
-2. ~~**账套/数据备份与恢复**~~ → **已落地**（手动导出 + 克隆式恢复 + `scheduled-book-backup` 定时落盘；覆盖式恢复仍不做）  
+2. ~~**账套/数据备份与恢复**~~ → **已落地**（手动导出 + 克隆式恢复 + 覆盖式恢复 + `scheduled-book-backup` 定时落盘）  
 3. ~~**本月账本包 ZIP**~~ → **已落地**（`openspec/changes/daizhang-commercial-plan`）
 
 ### P1（体验与合规打磨）

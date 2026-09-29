@@ -87,6 +87,21 @@ export function restoreBookBackup(file: File): any {
     })
 }
 
+/** 覆盖式恢复到指定账套（confirmPhrase 须为「覆盖恢复」） */
+export function restoreBookBackupOverwrite(file: File, bookId: string, confirmPhrase: string): any {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('bookId', bookId)
+    formData.append('confirmPhrase', confirmPhrase)
+    return request({
+        url: '/book/backup/restore-overwrite',
+        method: 'post',
+        data: formData,
+        headers: {'Content-Type': 'multipart/form-data'},
+        timeout: 600000
+    })
+}
+
 /** 定时备份状态 */
 export function fetchBackupScheduleStatus(): any {
     return request({

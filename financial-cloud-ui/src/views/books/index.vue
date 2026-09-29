@@ -47,7 +47,7 @@
           type="warning"
           plain
           icon="Upload"
-          @click="restoreOpen = true"
+          @click="openRestoreDialog"
         >
           恢复备份
         </el-button>
@@ -242,15 +242,60 @@
     <el-dialog
       v-model="restoreOpen"
       title="恢复账套备份"
-      width="480px"
+      width="520px"
       :close-on-click-modal="false"
     >
+      <el-radio-group
+        v-model="restoreMode"
+        style="margin-bottom: 12px"
+      >
+        <el-radio-button value="clone">
+          克隆为新账套
+        </el-radio-button>
+        <el-radio-button value="overwrite">
+          覆盖到现有账套
+        </el-radio-button>
+      </el-radio-group>
       <el-alert
-        type="info"
+        :type="restoreMode === 'overwrite' ? 'error' : 'info'"
         :closable="false"
         show-icon
-        title="上传账套备份包（ZIP），将恢复为一个新账套，不会影响现有账套数据。"
+        :title="restoreMode === 'overwrite'
+          ? '危险操作：将清空所选账套全部业务数据后灌入备份。覆盖前会自动落盘预备份。封存账套不可覆盖。'
+          : '上传账套备份包（ZIP），将恢复为一个新账套，不会影响现有账套数据。'"
       />
+      <div
+        v-if="restoreMode === 'overwrite'"
+        style="margin-top: 12px"
+      >
+        <el-form
+          label-width="100px"
+          @submit.prevent
+        >
+          <el-form-item label="目标账套">
+            <el-select
+              v-model="overwriteBookId"
+              filterable
+              placeholder="选择要覆盖的账套"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="row in adminBooks"
+                :key="row.id"
+                :label="`${row.name || row.companyName}（${row.id}）`"
+                :value="row.id"
+                :disabled="row.status === 2"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="确认短语">
+            <el-input
+              v-model="overwriteConfirm"
+              placeholder="请输入：覆盖恢复"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
       <div style="margin-top: 16px">
         <el-upload
           ref="restoreUploadRef"
@@ -268,12 +313,12 @@
       <template #footer>
         <el-button @click="restoreOpen = false">取消</el-button>
         <el-button
-          type="primary"
-          :disabled="!restoreFile"
+          :type="restoreMode === 'overwrite' ? 'danger' : 'primary'"
+          :disabled="!canSubmitRestore"
           :loading="restoreLoading"
           @click="handleRestore"
         >
-          开始恢复
+          {{ restoreMode === 'overwrite' ? '确认覆盖恢复' : '开始恢复' }}
         </el-button>
       </template>
     </el-dialog>
@@ -292,6 +337,7 @@ import {
   deleteBatch,
   exportBookBackup,
   restoreBookBackup,
+  restoreBookBackupOverwrite,
   sealBook,
   unsealBook,
   fetchBackupScheduleStatus,
@@ -340,8 +386,25 @@ const restoreOpen: any = ref(false);
 const restoreLoading: any = ref(false);
 const restoreFile: any = ref<File | null>(null);
 const restoreUploadRef: any = ref(null);
+const restoreMode: any = ref<"clone" | "overwrite">("clone");
+const overwriteBookId: any = ref("");
+const overwriteConfirm: any = ref("");
 const scheduleStatus: any = ref<any>(null);
 const scheduleRunning: any = ref(false);
+
+const adminBooks = computed(() =>
+  (setsList.value || []).filter((row: any) => isBookAdmin(row))
+);
+
+const canSubmitRestore = computed(() => {
+  if (!restoreFile.value) {
+    return false;
+  }
+  if (restoreMode.value === "clone") {
+    return true;
+  }
+  return !!overwriteBookId.value && overwriteConfirm.value === "覆盖恢复";
+});
 
 const scheduleSummary = computed(() => {
   const st = scheduleStatus.value;
@@ -432,6 +495,15 @@ function handleSeal(row: any): void {
   });
 }
 
+function openRestoreDialog(): void {
+  restoreMode.value = "clone";
+  overwriteBookId.value = "";
+  overwriteConfirm.value = "";
+  restoreFile.value = null;
+  restoreUploadRef.value?.clearFiles();
+  restoreOpen.value = true;
+}
+
 function onRestoreFileChange(file: any): any {
   restoreFile.value = file?.raw || null;
 }
@@ -440,18 +512,35 @@ function onRestoreFileRemove(): any {
   restoreFile.value = null;
 }
 
-/** 上传备份包并恢复为新账套 */
+/** 克隆式恢复为新账套，或覆盖式灌入指定账套 */
 async function handleRestore(): Promise<void> {
-  if (!restoreFile.value) {
+  if (!canSubmitRestore.value || !restoreFile.value) {
     return;
   }
   restoreLoading.value = true;
   try {
-    const res: any = await restoreBookBackup(restoreFile.value);
+    let res: any;
+    if (restoreMode.value === "overwrite") {
+      res = await restoreBookBackupOverwrite(
+        restoreFile.value,
+        overwriteBookId.value,
+        overwriteConfirm.value
+      );
+    } else {
+      res = await restoreBookBackup(restoreFile.value);
+    }
     if (res.code === 0) {
-      modal.msgSuccess(`已恢复为新账套「${res.data?.name || ""}」`);
+      if (restoreMode.value === "overwrite") {
+        modal.msgSuccess(
+          `覆盖恢复成功；预备份：${res.data?.preBackupFile || "已落盘"}`
+        );
+      } else {
+        modal.msgSuccess(`已恢复为新账套「${res.data?.name || ""}」`);
+      }
       restoreOpen.value = false;
       restoreFile.value = null;
+      overwriteBookId.value = "";
+      overwriteConfirm.value = "";
       restoreUploadRef.value?.clearFiles();
       getList();
       booksSetStore().refreshData();

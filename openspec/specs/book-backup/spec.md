@@ -36,7 +36,7 @@ The system SHALL validate an uploaded backup before writing anything: format ide
 - **THEN** the restore SHALL be rejected with a version error
 
 ### Requirement: Clone-style restore with ID remapping
-The system SHALL restore a validated backup as a NEW book (new `book_id`), never overwriting an existing book. All primary keys SHALL be reassigned and every foreign-key edge enumerated in the design's table specification SHALL be remapped to the new IDs within a single transaction. Personnel and department references (auditor, poster, manager, department) SHALL be nulled on restore.
+The system SHALL restore a validated backup as a NEW book (new `book_id`) for the default clone restore path. All primary keys SHALL be reassigned and every foreign-key edge enumerated in the design's table specification SHALL be remapped to the new IDs within a single transaction. Personnel and department references (auditor, poster, manager, department) SHALL be nulled on restore.
 
 #### Scenario: Round-trip fidelity
 - **WHEN** a book is exported and then restored
@@ -48,8 +48,29 @@ The system SHALL restore a validated backup as a NEW book (new `book_id`), never
 - **THEN** the whole transaction SHALL roll back including the new book shell
 
 #### Scenario: Existing books untouched
-- **WHEN** a restore completes
+- **WHEN** a clone restore completes
 - **THEN** no pre-existing book's rows SHALL have been modified or deleted
+
+### Requirement: Overwrite restore with confirmation and pre-backup
+The system SHALL allow an authorized book administrator to restore a validated backup package into an existing target book, replacing that book's business data, only when an explicit confirmation phrase is provided. Before any destructive write, the system SHALL persist a pre-overwrite backup ZIP of the target book to the configured backup directory. The overwrite SHALL keep the target `book_id` and existing membership grants, remap all other primary keys like clone restore, run in a single transaction, and reject sealed books.
+
+#### Scenario: Confirmation phrase required
+- **WHEN** an overwrite restore is requested without the exact confirmation phrase
+- **THEN** the system SHALL reject the request with zero writes
+
+#### Scenario: Pre-backup then overwrite
+- **WHEN** an authorized administrator requests overwrite restore with a valid package and confirmation phrase
+- **THEN** the system SHALL first write a pre-overwrite backup ZIP of the target book to disk
+- **AND** SHALL wipe and replace book-scoped business rows while keeping the target book id and memberships
+
+#### Scenario: Sealed book rejected
+- **WHEN** overwrite restore targets a sealed book
+- **THEN** the overwrite restore SHALL be rejected
+
+#### Scenario: Failure after wipe rolls back DB
+- **WHEN** any insert fails during overwrite restore after wipe has begun
+- **THEN** the database transaction SHALL roll back
+- **AND** the pre-overwrite ZIP file on disk MAY remain for manual recovery
 
 ### Requirement: Audit and authorization
 Backup export and restore SHALL require authorization on the book and SHALL write audit events recording operator, book, table count, row count, and outcome.

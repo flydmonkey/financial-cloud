@@ -37,6 +37,8 @@ SCHEMA_EXTENSION_SQL = [
     PATCHES / "2026-09-29-expense-claim.sql",
     PATCHES / "2026-09-29-expense-claim-item.sql",
     PATCHES / "2026-09-29-expense-claim-attachment.sql",
+    # 盘盈入账三列已并入 fixed-asset-check 的 CREATE TABLE；
+    # 2026-09-29-fixed-asset-surplus-booking.sql 仅供已有库升级，不在此注册
     PATCHES / "2026-09-29-fixed-asset-check.sql",
     PATCHES / "2026-09-29-voucher-attachment.sql",
     PATCHES / "2026-09-29-statement-subject-balance-source-nullable.sql",
@@ -55,6 +57,7 @@ MENU_SEED_SQL = [
     PATCHES / "2026-09-29-quantity-ledger-menu.sql",
     PATCHES / "2026-09-29-tax-estimate-menu.sql",
     PATCHES / "2026-09-29-tax-declaration-menu.sql",
+    PATCHES / "2026-09-29-voucher-settlement-params.sql",
     SEED / "menus" / "menu_salary_tax_and_rename_config.sql",
     SEED / "menus" / "menu_icons_align.sql",
 ]

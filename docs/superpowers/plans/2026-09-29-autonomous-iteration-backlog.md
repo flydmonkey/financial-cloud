@@ -4,7 +4,7 @@
 >
 > **状态：已完成（队列关闭）** — 2026-09-29。
 >
-> **后续主轴**：专业可用收口后的下一程序见 [代账吞吐第二曲线设计规格](../specs/2026-09-29-daizhang-throughput-v2-design.md)（Path B：吞吐 + 薄质量门禁）。
+> **后续主轴**：吞吐 V2（Path B）已完成，见 [设计规格](../specs/2026-09-29-daizhang-throughput-v2-design.md) / [backlog](2026-09-29-throughput-v2-backlog.md)；剩余项见 Post-V2。
 
 ## 专业可用验收条（本仓库口径）
 

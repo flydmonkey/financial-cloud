@@ -22,7 +22,7 @@
 | 资产卡片 CRUD / 复制 | **已实现** | `card.vue` |
 | 导入 / 导出卡片 Excel | **已实现** | import/export API |
 | 暂停 / 恢复折旧 | **已实现** | `suspend` / `resume` |
-| 购入自动生成入账凭证 | **部分实现** | `FixedAssetPurchaseRules.shouldCreateVoucher`；原值与税额均为 0 时不生成 |
+| 购入自动生成入账凭证 | **已实现** | `FixedAssetPurchaseRules`：原值+税额贷方合计 >0 才生成；否则成功消息说明未生成原因 |
 | 折旧参数与工作量录入 | **已实现** | `depreciation.vue` |
 | 一键计提折旧生成凭证 | **已实现** | `POST .../accrue` |
 | 折旧明细表 / 汇总表及导出 | **已实现** | report 页 |
@@ -66,9 +66,10 @@
 
 ## 7. 业务规则与约束
 
-1. 购入凭证规则由 `FixedAssetPurchaseRules` 决定是否创建。
+1. 购入凭证：`FixedAssetPurchaseRules.shouldCreateVoucher`；零原值且零税额时不生成，接口消息返回 `skipVoucherReason`。
 2. 清理走 `dispose`，生成清理凭证并更新资产状态。
 3. 折旧与结账期间配合：通常在开放账期计提。
+4. 盘盈 `bump_qty`（账面数量 >1）：仅允许**未计提折旧**的原卡累加数量/原值；已有累计折旧或已提期数时预览警告且入账跳过，须将账面数量改为 1 后拆新卡。
 
 ## 8. 已知缺口
 
@@ -76,7 +77,6 @@
 - 变动后折旧重算的产品说明可再加强（以服务实现为准）。
 - **升级说明**：已有数据库必须先执行 `sql/patches/2026-09-29-fixed-asset-surplus-booking.sql`（幂等，为 `fixed_asset_check_item` 补盘盈入账三列）；新库由 init 脚本自带。
 - **盘盈列表按钮**：仅当仍有未入账盘盈明细（`pendingSurplusCount`）时显示「盘盈入账」；全部入账后按钮隐藏。
-- **已知限制（盘盈 `bump_qty`）**：账面数量 >1 的盘盈在原卡上累加数量与原值，不改动累计折旧（`accumDepr`），也不经过 `CALC_FIELDS_LOCKED` 的折旧字段锁定校验；已计提过折旧的卡片，原值增加后需人工核对后续折旧。预览行会对已折旧原卡给出警告提示。
 
 ## 9. 证据索引
 

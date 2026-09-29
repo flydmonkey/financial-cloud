@@ -59,7 +59,8 @@ public class ConfigSysService{
             ConstsSysConfig.SYS_DEFAULT_FINANCIAL_EXPENSES,
             ConstsSysConfig.SYS_DEFAULT_ADDED_TAX,
             ConstsSysConfig.SYS_DEFAULT_INCOME_TAX_EXPENSES,
-            ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY
+            ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY,
+            ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD
     );
     public static final List<String> BOOKS_SHOW_KEYS = Arrays.asList(
             ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT,
@@ -270,6 +271,9 @@ public class ConfigSysService{
         if (ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY.equals(configKey)) {
             return "true";
         }
+        if (ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD.equals(configKey)) {
+            return "false";
+        }
         return null;
     }
 
@@ -307,7 +311,8 @@ public class ConfigSysService{
         if (row > 0) {
             return Message.ok(config.getConfigValue());
         }
-        if (ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY.equals(config.getConfigKey())
+        if ((ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY.equals(config.getConfigKey())
+                || ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD.equals(config.getConfigKey()))
                 && StringUtils.isNotBlank(config.getBookId())) {
             ConfigSys existing = baseMapper.selectOne(new LambdaQueryWrapper<ConfigSys>()
                     .eq(ConfigSys::getBookId, config.getBookId())
@@ -316,7 +321,9 @@ public class ConfigSysService{
                 ConfigSys insert = new ConfigSys();
                 insert.setBookId(config.getBookId());
                 insert.setConfigKey(config.getConfigKey());
-                insert.setConfigName("结账往来校验");
+                insert.setConfigName(ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD.equals(config.getConfigKey())
+                        ? "结账往来逾期硬阻断"
+                        : "结账往来校验");
                 insert.setConfigValue(config.getConfigValue());
                 insert.setConfigType("y");
                 baseMapper.insert(insert);

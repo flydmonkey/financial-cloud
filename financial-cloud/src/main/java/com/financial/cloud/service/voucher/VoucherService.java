@@ -1817,6 +1817,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             int m = Integer.parseInt(currentTerm.substring(5, 7));
             reversalDate = new java.util.GregorianCalendar(y, m - 1, 1).getTime();
         }
+        final Date journalTradeDate = reversalDate;
         java.util.Calendar cal = java.util.Calendar.getInstance();
         cal.setTime(reversalDate);
         int year = cal.get(java.util.Calendar.YEAR);
@@ -1853,11 +1854,14 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (saveResult.getCode() != Message.SUCCESS) {
             return saveResult;
         }
+        final String reverseId = saveResult.getData();
         Voucher link = new Voucher();
-        link.setId(saveResult.getData());
+        link.setId(reverseId);
         link.setSourceVoucherId(id);
         baseMapper.updateById(link);
-        return new Message<>(Message.SUCCESS, "红字冲销凭证已生成（暂存），审核过账后生效", saveResult.getData());
+        journalEntryServiceProvider.ifAvailable(journal ->
+                journal.createReversalEntriesForVoucher(id, reverseId, bookId, journalTradeDate));
+        return new Message<>(Message.SUCCESS, "红字冲销凭证已生成（暂存），审核过账后生效", reverseId);
     }
 
     /**

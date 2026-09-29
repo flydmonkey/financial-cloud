@@ -157,7 +157,7 @@ Items that the product still cannot system-check—including bank reconciliation
 - **AND** the UI SHALL show those rows as manual / not system-checked
 
 ### Requirement: Month-end verify includes AR/AP and aging summary
-Month-end verification SHALL include a system-computed summary for the current open term that reports accounts-receivable and accounts-payable totals (and overdue aging totals when aging data exists) using the same data sources as `arap-assist` / `arap-writeoff` open-item aging when write-offs exist. The summary item MUST be marked as a system check (not a placeholder). Overdue aging alone MUST NOT cause a hard-gate checkout failure; it MAY set warning on the verify item. Absence of any AR/AP activity SHALL pass as applicable with zero totals (or N/A only when the book has no receivable/payable subjects configured—prefer zero totals).
+Month-end verification SHALL include a system-computed summary for the current open term that reports accounts-receivable and accounts-payable totals (and overdue aging totals when aging data exists) using the same data sources as `arap-assist` / `arap-writeoff` open-item aging when write-offs exist. The summary item MUST be marked as a system check (not a placeholder). By default (`settlement.verify.arap.overdue.hard` unset or `false`), overdue aging alone MUST NOT cause a hard-gate checkout failure; it MAY set warning on the verify item. When the book config `settlement.verify.arap.overdue.hard` is `true` and overdue amounts exist, the AR/AP verify item SHALL hard-fail. Absence of any AR/AP activity SHALL pass as applicable with zero totals (or N/A only when the book has no receivable/payable subjects configured—prefer zero totals).
 
 #### Scenario: Verify surfaces AR/AP totals from real queries
 - **WHEN** the user runs month-end verify for the current open term
@@ -165,11 +165,18 @@ Month-end verification SHALL include a system-computed summary for the current o
 - **AND** that item’s reason or payload SHALL reflect queried balance totals (including zero)
 - **AND** the UI MUST NOT label that item as “系统暂无核销/账龄” or “本期不系统检”
 
-#### Scenario: Overdue aging warns without hard fail
+#### Scenario: Overdue aging warns without hard fail (default)
 - **WHEN** aging shows overdue AR or AP amounts as of the term end
+- **AND** overdue hard-block config is off (default)
 - **AND** all hard gates otherwise pass
 - **THEN** the AR/AP verify item MAY be marked warning
 - **AND** checkout MUST still be allowed with respect to this item alone
+
+#### Scenario: Overdue hard-fails when configured
+- **WHEN** aging shows overdue AR or AP amounts as of the term end
+- **AND** book config `settlement.verify.arap.overdue.hard` is `true`
+- **THEN** the AR/AP verify item SHALL fail as a hard gate
+- **AND** checkout MUST be blocked until overdue is cleared or the switch is turned off
 
 #### Scenario: No counterparts still allows verify success
 - **WHEN** the book has no customer/supplier AR/AP auxiliary balances
@@ -180,7 +187,7 @@ Month-end verification SHALL include a system-computed summary for the current o
 - **WHEN** write-off data exists for the book
 - **AND** month-end verify computes overdue totals
 - **THEN** overdue amounts SHALL be consistent with open-item aging for the term end
-- **AND** overdue alone still MUST NOT hard-fail checkout
+- **AND** with default config, overdue alone still MUST NOT hard-fail checkout
 
 ### Requirement: Checkout still snapshots and advances the term
 On successful checkout, the system SHALL retain existing close side effects: persist settlement for the closed term, write period statement/balance snapshots as today, run journal-account checkout balance rollover, and advance the book's current open term to the next month. Uncheckout behavior and guards from the existing settlement-uncheckout capability SHALL remain in force.

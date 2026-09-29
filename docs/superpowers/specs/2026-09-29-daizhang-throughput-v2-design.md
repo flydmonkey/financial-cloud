@@ -1,7 +1,7 @@
 # 代账吞吐第二曲线 · 产品设计规格
 
 > Date: 2026-09-29  
-> Status: approved; W0+W1 delivered on branch (W2–W4 pending separate plans)  
+> Status: **completed** (W0–W4 delivered 2026-09-29)  
 > Owner: product (autonomous iteration under user full authorization)  
 > Related: [docs/product/20-gap-analysis.md](../../product/20-gap-analysis.md)、[docs/product/21-roadmap.md](../../product/21-roadmap.md)、[docs/superpowers/plans/2026-09-29-autonomous-iteration-backlog.md](../plans/2026-09-29-autonomous-iteration-backlog.md)
 
@@ -170,4 +170,5 @@ flowchart LR
 | 主轴 | 路径 B + 薄质量门禁 |
 | 红冲×日记账 | 实现时在「解绑流水并重算」vs「生成对冲流水」中择与现 `journal-voucher-reverse-sync` 一致的一方，写入该刀 design，不双轨 |
 | 逾期硬阻断 | 默认 off；W4-1 做开关 |
-| 盘盈 bump | W3-2 优先「强提示+审计」；若实现中发现余额必歪则升级为禁止 bump 已折旧卡 |
+| 盘盈 bump | W3-2：**禁止**对已折旧卡 bump（预览警告 + 入账跳过） |
+| 红冲×日记账（落地） | 生成对冲流水挂冲销凭证，保留原流水关联 |

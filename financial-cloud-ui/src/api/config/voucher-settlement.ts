@@ -10,6 +10,7 @@ export function getVoucherSettlementParams() {
 export function saveVoucherSettlementParams(data: {
   voucherReviewed: number
   arapVerifyEnabled: boolean
+  arapOverdueHard: boolean
 }) {
   return request({
     url: '/config/voucher-settlement',

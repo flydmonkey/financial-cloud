@@ -486,13 +486,18 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 		if (!isArapVerifyEnabled(bookId)) {
 			return;
 		}
+		boolean overdueHard = isArapOverdueHard(bookId);
 		try {
 			ArapMonthEndSummaryVo summary = arapService.monthEndSummary(bookId, currentTerm);
+			String policyHint = overdueHard ? "逾期将阻断结账" : "逾期不阻断结账";
 			String reason = String.format(
-					"应收合计 %s，应付合计 %s；逾期应收 %s，逾期应付 %s（账龄按凭证日期FIFO估算，逾期不阻断结账）",
+					"应收合计 %s，应付合计 %s；逾期应收 %s，逾期应付 %s（账龄按凭证日期FIFO估算，%s）",
 					summary.getReceivableTotal(), summary.getPayableTotal(),
-					summary.getOverdueReceivable(), summary.getOverduePayable());
-			if (summary.isHasOverdue()) {
+					summary.getOverdueReceivable(), summary.getOverduePayable(),
+					policyHint);
+			if (summary.isHasOverdue() && overdueHard) {
+				list.add(SettlementVerifyVo.hardFail(checkIndex, "往来款项（应收应付/账龄）", reason));
+			} else if (summary.isHasOverdue()) {
 				list.add(SettlementVerifyVo.hardPassWarning(checkIndex, "往来款项（应收应付/账龄）", reason));
 			} else {
 				SettlementVerifyVo pass = SettlementVerifyVo.hardPass(checkIndex, "往来款项（应收应付/账龄）");
@@ -513,9 +518,22 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 		return "true".equalsIgnoreCase(raw.trim());
 	}
 
+	/** 逾期硬阻断：缺省/空为 false（仅警告）。 */
+	public static boolean arapOverdueHardFromConfig(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return false;
+		}
+		return "true".equalsIgnoreCase(raw.trim());
+	}
+
 	private boolean isArapVerifyEnabled(String bookId) {
 		return arapVerifyEnabledFromConfig(
 				configSysService.selectConfigByKey(bookId, ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY));
+	}
+
+	private boolean isArapOverdueHard(String bookId) {
+		return arapOverdueHardFromConfig(
+				configSysService.selectConfigByKey(bookId, ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD));
 	}
 
 }

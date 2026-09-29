@@ -66,9 +66,24 @@ class VoucherSettlementParamsServiceTest {
 
         assertEquals(1, vo.getVoucherReviewed());
         assertTrue(vo.isArapVerifyEnabled());
+        assertFalse(vo.isArapOverdueHard());
         assertFalse(vo.isCanEdit());
         assertEquals(5, vo.getHardGateLabels().size());
         verify(configSysService).ensureBookConfigsComplete("book-1");
+    }
+
+    @Test
+    void save_updatesOverdueHard() {
+        VoucherSettlementParamsSaveDto dto = new VoucherSettlementParamsSaveDto();
+        dto.setArapOverdueHard(true);
+
+        Message<String> result = service.save(dto, user());
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        ArgumentCaptor<ConfigSys> cfgCaptor = ArgumentCaptor.forClass(ConfigSys.class);
+        verify(configSysService).update(cfgCaptor.capture());
+        assertEquals(ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD, cfgCaptor.getValue().getConfigKey());
+        assertEquals("true", cfgCaptor.getValue().getConfigValue());
     }
 
     @Test

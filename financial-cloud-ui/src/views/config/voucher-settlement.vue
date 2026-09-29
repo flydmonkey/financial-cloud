@@ -11,7 +11,7 @@
         type="info"
         :closable="false"
         show-icon
-        title="仅影响当前账套。凭证审核与账套编辑为同一字段；往来校验为软提示，关闭后月结向导不再展示该项。"
+        title="仅影响当前账套。凭证审核与账套编辑为同一字段；往来校验默认软提示，可按需开启逾期硬阻断。"
         style="margin-bottom: 16px"
       />
       <el-form
@@ -49,7 +49,14 @@
             v-model="arapVerifyEnabled"
             :disabled="!canEdit"
           />
-          <span class="hint">关闭后月结系统校验不再列出往来汇总；逾期仍不阻断结账。</span>
+          <span class="hint">关闭后月结系统校验不再列出往来汇总。</span>
+        </el-form-item>
+        <el-form-item label="逾期硬阻断">
+          <el-switch
+            v-model="arapOverdueHard"
+            :disabled="!canEdit || !arapVerifyEnabled"
+          />
+          <span class="hint">默认关闭（仅警告仍可结账）。开启后存在逾期应收/应付时结账硬失败。</span>
         </el-form-item>
         <el-alert
           v-if="!canEdit"
@@ -75,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {getVoucherSettlementParams, saveVoucherSettlementParams} from "@/api/config/voucher-settlement";
 import booksSetStore from "@/store/modules/bookStore";
@@ -87,19 +94,29 @@ const saving = ref(false);
 const canEdit = ref(false);
 const voucherReviewedOn = ref(false);
 const arapVerifyEnabled = ref(true);
+const arapOverdueHard = ref(false);
 const loadedVoucherReviewed = ref(false);
 const loadedArap = ref(true);
+const loadedOverdueHard = ref(false);
 const hardGateLabels = ref<string[]>([]);
 
 const dirty = computed(
   () =>
     voucherReviewedOn.value !== loadedVoucherReviewed.value
     || arapVerifyEnabled.value !== loadedArap.value
+    || arapOverdueHard.value !== loadedOverdueHard.value
 );
 
-function applyLoaded(voucherReviewed: boolean, arap: boolean): void {
+watch(arapVerifyEnabled, (on) => {
+  if (!on) {
+    arapOverdueHard.value = false;
+  }
+});
+
+function applyLoaded(voucherReviewed: boolean, arap: boolean, overdueHard: boolean): void {
   loadedVoucherReviewed.value = voucherReviewed;
   loadedArap.value = arap;
+  loadedOverdueHard.value = overdueHard;
 }
 
 function load(): void {
@@ -108,9 +125,11 @@ function load(): void {
     if (res.code === 0 && res.data) {
       const reviewed = res.data.voucherReviewed === 1;
       const arap = !!res.data.arapVerifyEnabled;
+      const overdueHard = !!res.data.arapOverdueHard;
       voucherReviewedOn.value = reviewed;
       arapVerifyEnabled.value = arap;
-      applyLoaded(reviewed, arap);
+      arapOverdueHard.value = overdueHard;
+      applyLoaded(reviewed, arap, overdueHard);
       canEdit.value = !!res.data.canEdit;
       hardGateLabels.value = res.data.hardGateLabels || [];
     }
@@ -121,13 +140,16 @@ function load(): void {
 
 function save(): void {
   saving.value = true;
+  const overdueHard = arapVerifyEnabled.value && arapOverdueHard.value;
   saveVoucherSettlementParams({
     voucherReviewed: voucherReviewedOn.value ? 1 : 0,
-    arapVerifyEnabled: arapVerifyEnabled.value
+    arapVerifyEnabled: arapVerifyEnabled.value,
+    arapOverdueHard: overdueHard
   }).then((res: any) => {
     if (res.code === 0) {
       modal.msgSuccess(res.message || "保存成功");
-      applyLoaded(voucherReviewedOn.value, arapVerifyEnabled.value);
+      arapOverdueHard.value = overdueHard;
+      applyLoaded(voucherReviewedOn.value, arapVerifyEnabled.value, overdueHard);
       booksSetStore().refreshData();
     } else {
       modal.msgError(res.message || "保存失败");

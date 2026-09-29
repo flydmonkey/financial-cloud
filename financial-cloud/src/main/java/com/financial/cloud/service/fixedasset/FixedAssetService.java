@@ -152,7 +152,8 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
             result.setPurchaseVoucherId(voucherId);
             return new Message<>(Message.SUCCESS, "新增成功，已生成购入凭证", result);
         }
-        return new Message<>(Message.SUCCESS, "新增成功", result);
+        String skip = FixedAssetPurchaseRules.skipVoucherReason(entity.getOriginalValue(), entity.getTaxAmount());
+        return new Message<>(Message.SUCCESS, "新增成功（" + skip + "）", result);
     }
 
     private String createPurchaseVoucher(FixedAsset entity) {

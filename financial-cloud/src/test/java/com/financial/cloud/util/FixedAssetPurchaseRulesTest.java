@@ -19,4 +19,11 @@ class FixedAssetPurchaseRulesTest {
         assertFalse(FixedAssetPurchaseRules.shouldCreateVoucher(BigDecimal.ZERO, null));
         assertTrue(FixedAssetPurchaseRules.shouldCreateVoucher(new BigDecimal("1"), BigDecimal.ZERO));
     }
+
+    @Test
+    void skipVoucherReason_whenZeroCredit() {
+        assertEquals("原值与税额合计为0，未生成购入凭证",
+                FixedAssetPurchaseRules.skipVoucherReason(BigDecimal.ZERO, null));
+        assertNull(FixedAssetPurchaseRules.skipVoucherReason(new BigDecimal("1"), BigDecimal.ZERO));
+    }
 }

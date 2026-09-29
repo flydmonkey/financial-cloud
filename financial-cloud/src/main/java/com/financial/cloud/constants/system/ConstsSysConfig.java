@@ -29,6 +29,11 @@ public class ConstsSysConfig {
      */
     public static final String SYS_SETTLEMENT_ARAP_VERIFY = "settlement.verify.arap.enabled";
 
+    /**
+     * 往来逾期是否硬阻断结账。缺省 false（仅警告）。
+     */
+    public static final String SYS_SETTLEMENT_ARAP_OVERDUE_HARD = "settlement.verify.arap.overdue.hard";
+
     //*************************************科目参数**************************************//
 
     /**

@@ -337,6 +337,76 @@ public class JournalEntryService extends ServiceImpl<JournalEntryMapper, Journal
 	}
 
 	/**
+	 * 红字冲销：为原凭证关联的日记账流水生成方向相反的对冲流水，挂到冲销凭证上并重算账户余额。
+	 * 原流水与原凭证关联保留，便于追溯。
+	 *
+	 * @return 生成的对冲流水条数
+	 */
+	@Transactional
+	public int createReversalEntriesForVoucher(String sourceVoucherId, String reverseVoucherId,
+											   String bookId, Date tradeDate) {
+		if (StringUtils.isBlank(sourceVoucherId) || StringUtils.isBlank(reverseVoucherId)
+				|| StringUtils.isBlank(bookId)) {
+			return 0;
+		}
+		List<JournalEntry> linked = list(new LambdaQueryWrapper<JournalEntry>()
+				.eq(JournalEntry::getVoucherId, sourceVoucherId)
+				.eq(JournalEntry::getBookId, bookId));
+		if (linked.isEmpty()) {
+			return 0;
+		}
+		Date when = tradeDate != null ? tradeDate : new Date();
+		Set<String> affectedAccounts = new LinkedHashSet<>();
+		int created = 0;
+		for (JournalEntry src : linked) {
+			if ("o".equalsIgnoreCase(src.getDirection())) {
+				continue;
+			}
+			JournalEntry rev = new JournalEntry();
+			rev.setBookId(bookId);
+			rev.setCategory(src.getCategory());
+			rev.setAccId(src.getAccId());
+			rev.setAccCode(src.getAccCode());
+			rev.setAccName(src.getAccName());
+			rev.setSubjectId(src.getSubjectId());
+			rev.setVoucherId(reverseVoucherId);
+			rev.setTradeDate(when);
+			rev.setDescription(src.getDescription());
+			rev.setReconciled("n");
+			String baseRemark = src.getRemark() == null ? "" : src.getRemark();
+			rev.setRemark(baseRemark.isBlank() ? "冲销流水" : "冲销：" + baseRemark);
+			if ("i".equalsIgnoreCase(src.getDirection())) {
+				BigDecimal amt = nullToZero(src.getIncome());
+				if (amt.compareTo(BigDecimal.ZERO) <= 0) {
+					continue;
+				}
+				rev.setDirection("e");
+				rev.setExpenditure(amt);
+				rev.setIncome(null);
+			} else if ("e".equalsIgnoreCase(src.getDirection())) {
+				BigDecimal amt = nullToZero(src.getExpenditure());
+				if (amt.compareTo(BigDecimal.ZERO) <= 0) {
+					continue;
+				}
+				rev.setDirection("i");
+				rev.setIncome(amt);
+				rev.setExpenditure(null);
+			} else {
+				continue;
+			}
+			if (!super.save(rev)) {
+				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
+			}
+			affectedAccounts.add(rev.getAccId());
+			created++;
+		}
+		for (String accId : affectedAccounts) {
+			recalculateAccountBalances(accId);
+		}
+		return created;
+	}
+
+	/**
 	 * 凭证删除/作废后解绑流水，保留出纳记录以便再生成。
 	 */
 	@Transactional

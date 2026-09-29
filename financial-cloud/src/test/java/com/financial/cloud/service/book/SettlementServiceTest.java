@@ -332,6 +332,53 @@ class SettlementServiceTest {
     }
 
     @Test
+    void verify_arapOverdueHardFailsWhenEnabled() {
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
+        when(configSysService.selectConfigByKey(eq(BOOK_ID), eq(ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY)))
+                .thenReturn("true");
+        when(configSysService.selectConfigByKey(eq(BOOK_ID), eq(ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD)))
+                .thenReturn("true");
+        when(voucherService.count(any(LambdaQueryWrapper.class))).thenReturn(0L);
+        when(voucherService.checkSuccessiveAll(BOOK_ID)).thenReturn(Message.ok(Collections.emptyList()));
+        when(voucherItemMapper.selectSubjectAmount(any())).thenReturn(Collections.emptyList());
+        VoucherTemplate sr = new VoucherTemplate();
+        sr.setId("t-sr");
+        sr.setCode(MonthEndCloseRules.CODE_CARRY_INCOME);
+        VoucherTemplate cbfy = new VoucherTemplate();
+        cbfy.setId("t-cbfy");
+        cbfy.setCode(MonthEndCloseRules.CODE_CARRY_COST);
+        when(voucherTemplateMapper.selectList(any())).thenReturn(List.of(sr, cbfy));
+        com.financial.cloud.domain.book.SettlementCarryforward carrySr =
+                new com.financial.cloud.domain.book.SettlementCarryforward();
+        carrySr.setVoucherTemplateId("t-sr");
+        carrySr.setVoucherId("v1");
+        com.financial.cloud.domain.book.SettlementCarryforward carryCbfy =
+                new com.financial.cloud.domain.book.SettlementCarryforward();
+        carryCbfy.setVoucherTemplateId("t-cbfy");
+        carryCbfy.setVoucherId("v2");
+        when(settlementCarryforwardMapper.selectList(any())).thenReturn(List.of(carrySr, carryCbfy));
+        when(fixedAssetDepreciationService.needsDepreciationAccrual(BOOK_ID, "2025-03")).thenReturn(false);
+        when(arapService.monthEndSummary(BOOK_ID, "2025-03")).thenReturn(
+                ArapMonthEndSummaryVo.builder()
+                        .receivableTotal(new java.math.BigDecimal("100"))
+                        .payableTotal(java.math.BigDecimal.ZERO)
+                        .overdueReceivable(new java.math.BigDecimal("40"))
+                        .overduePayable(java.math.BigDecimal.ZERO)
+                        .hasOverdue(true)
+                        .build());
+
+        Message<List<SettlementVerifyVo>> result = settlementService.verify(BOOK_ID);
+
+        assertEquals(Message.FAIL, result.getCode());
+        SettlementVerifyVo arap = result.getData().stream()
+                .filter(v -> v.getItem().contains("往来"))
+                .findFirst()
+                .orElseThrow();
+        assertFalse(arap.isResult());
+        assertTrue(arap.getReason().contains("逾期将阻断结账"));
+    }
+
+    @Test
     void verify_skipsArapCheckWhenConfigDisabled() {
         when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
         when(configSysService.selectConfigByKey(eq(BOOK_ID), eq(ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY)))
@@ -370,6 +417,14 @@ class SettlementServiceTest {
         assertTrue(SettlementService.arapVerifyEnabledFromConfig(" "));
         assertTrue(SettlementService.arapVerifyEnabledFromConfig("true"));
         assertFalse(SettlementService.arapVerifyEnabledFromConfig("false"));
+    }
+
+    @Test
+    void arapOverdueHardFromConfig_blankDefaultsToFalse() {
+        assertFalse(SettlementService.arapOverdueHardFromConfig(null));
+        assertFalse(SettlementService.arapOverdueHardFromConfig(" "));
+        assertFalse(SettlementService.arapOverdueHardFromConfig("false"));
+        assertTrue(SettlementService.arapOverdueHardFromConfig("true"));
     }
 
     @Test

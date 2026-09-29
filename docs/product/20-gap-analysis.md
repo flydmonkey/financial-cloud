@@ -172,7 +172,7 @@
 
 **代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：按钮级权限铺开。
 
-**吞吐 V2**：已完成 — [设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [backlog](../superpowers/plans/2026-09-29-throughput-v2-backlog.md)。后续见 backlog Post-V2。
+**吞吐 V2 + Post-V2**：均已完成 — [V2 设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2 设计](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md) / [backlog](../superpowers/plans/2026-09-29-throughput-v2-backlog.md)。TypeScript 存量 error 已清零；近端功能主轴关闭。
 
 ---
 

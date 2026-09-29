@@ -4,7 +4,7 @@
 >
 > **状态：已完成（队列关闭）** — 2026-09-29。
 >
-> **后续主轴**：吞吐 V2（Path B）已完成，见 [设计规格](../specs/2026-09-29-daizhang-throughput-v2-design.md) / [backlog](2026-09-29-throughput-v2-backlog.md)；剩余项见 Post-V2。
+> **后续主轴**：吞吐 V2 + Post-V2 + TS 清零均已完成，见 [V2](../specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2](../specs/2026-09-29-daizhang-post-v2-design.md) / [backlog](2026-09-29-throughput-v2-backlog.md)。近端功能队列关闭。
 
 ## 专业可用验收条（本仓库口径）
 

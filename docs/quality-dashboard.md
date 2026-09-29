@@ -1,6 +1,6 @@
 # 质量仪表盘
 
-> 最后更新：2026-09-29（TS 清零）  
+> 最后更新：2026-09-29（V2+Post-V2+TS 程序收口；CI 绿）  
 > 环境：本机 Cloud Agent（`financial-cloud` + `financial-cloud-ui`）；E2E 未在本轮全量复跑
 
 ## 总览
@@ -9,7 +9,8 @@
 |------|------|
 | 后端单测（`./mvnw test`） | **通过**（BUILD SUCCESS，2026-09-29） |
 | TypeScript（`npm run typecheck`） | **0 error**（由 ~129 清零） |
-| ESLint（`npm run lint`） | **0 error** / **~913 warning** |
+| ESLint（`npm run lint`） | **0 error** / **~905 warning** |
+| GitHub CI（[#5](https://github.com/flydmonkey/financial-cloud/pull/5) `841410b`） | **backend-test / frontend-check 绿**（e2e skipped） |
 | Playwright E2E | 约 **40** 个 `e2e/*.spec.ts`（本轮未全量复跑） |
 | API 冒烟（`tools/smoke-api.mjs`） | 未本轮复跑 |
 
@@ -50,5 +51,6 @@ cd financial-cloud-ui && npm run test:e2e
 
 - TypeScript **已清零**；新增代码请保持 `npm run typecheck` 绿
 - ESLint：0 error，大量 warning；功能刀不要求清零 warning
-- 吞吐 V2 / Post-V2 见 [throughput-v2-backlog](superpowers/plans/2026-09-29-throughput-v2-backlog.md)
+- 吞吐 V2 / Post-V2 / TS：**程序已关闭** — [throughput-v2-backlog](superpowers/plans/2026-09-29-throughput-v2-backlog.md)
 - 账套权益核对（人工）：资产负债表与科目余额一致检查仍建议发版前抽检
+- 近端不以银行余额调节增强 / 税费向导 / 移动端 / AI / 税局直连扩容

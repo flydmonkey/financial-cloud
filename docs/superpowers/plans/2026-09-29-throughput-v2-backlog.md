@@ -29,10 +29,12 @@
 
 ## Post-V2
 
-> 状态：**Post-V2 改证路径程序已完成**（2026-09-29）— 见 [设计](../specs/2026-09-29-daizhang-post-v2-design.md)
+> 状态：**Post-V2 + TS 清零均已完成**（2026-09-29）— 见 [设计](../specs/2026-09-29-daizhang-post-v2-design.md)；交付 [#5](https://github.com/flydmonkey/financial-cloud/pull/5)（#4 已关闭为 superseded）
 
 | 项 | 说明 | 状态 |
 |----|------|------|
 | W2-2 / P1–P6 凭证改证路径 | 过账/审核/审核中只读引导 + 后端文案 + 仪表盘 | **已完成** |
+| TypeScript 存量 error 清零 | 质量债；129→0（`vue-cropper` / `vue-count-to` path stub） | **已完成** |
 | 银行余额调节 / 税费向导 | 既有 Non-goal / 后续模块 | 未开（非本程序） |
-| TypeScript 存量 error 清零 | 质量债；129→0 | **已完成** |
+
+**程序结论**：吞吐 V2 → Post-V2 → TS 清零链路关闭；近端不以新业务域扩容，增强项另开规格。

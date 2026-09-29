@@ -17,7 +17,10 @@ import com.financial.cloud.util.FixedAssetCopyRules;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,6 +42,7 @@ public class FixedAssetCheckService {
     private final BookSealGuard bookSealGuard;
     private final FixedAssetService fixedAssetService;
     private final ConfigSysService configSysService;
+    private final PlatformTransactionManager transactionManager;
 
     static final String STRATEGY_SPLIT_CARD = "split_card";
     static final String STRATEGY_BUMP_QTY = "bump_qty";
@@ -286,6 +290,8 @@ public class FixedAssetCheckService {
         if (dtos == null || dtos.isEmpty()) {
             return vo;
         }
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         java.util.Map<String, FixedAssetCheckItem> itemById = new java.util.HashMap<>();
         for (FixedAssetCheckItem item : listItems(checkId, bookId)) {
             itemById.put(item.getId(), item);
@@ -297,7 +303,8 @@ public class FixedAssetCheckService {
                 continue;
             }
             try {
-                String skip = bookOneSurplus(check, item, dto.getAmount());
+                // 每项入账（凭证 + 卡片 + 明细）同一事务，失败整体回滚，避免孤儿凭证；异常在事务外捕获，不影响其他项
+                String skip = txTemplate.execute(status -> bookOneSurplus(check, item, dto.getAmount()));
                 if (skip != null) {
                     vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
                             item.getAssetCode(), item.getAssetName(), skip));
@@ -306,7 +313,8 @@ public class FixedAssetCheckService {
                 }
             } catch (Exception e) {
                 vo.getSkipped().add(new FixedAssetCheckDtos.SkipReason(
-                        item.getAssetCode(), item.getAssetName(), e.getMessage()));
+                        item.getAssetCode(), item.getAssetName(),
+                        e.getMessage() != null ? e.getMessage() : "入账失败"));
             }
         }
         return vo;
@@ -359,6 +367,8 @@ public class FixedAssetCheckService {
             clone.setDisposedPeriod(null);
             clone.setDisposeVoucherId(null);
             clone.setPurchaseVoucherId(null);
+            clone.setImpairment(BigDecimal.ZERO);
+            clone.setTaxAmount(BigDecimal.ZERO);
             clone.setSuspendedPeriod(null);
             clone.setDepreciatedPeriods(0);
             clone.setOpeningAccumDepr(BigDecimal.ZERO);

@@ -17,7 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -49,6 +50,9 @@ class FixedAssetCheckServiceTest {
     private FixedAssetService fixedAssetService;
     @Mock
     private com.financial.cloud.service.config.ConfigSysService configSysService;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private FixedAssetCheckService service;
@@ -333,6 +337,9 @@ class FixedAssetCheckServiceTest {
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
         FixedAsset src = asset("asset-1", "FA-1", 1, "1000");
         src.setAccumDepr(new BigDecimal("100"));
+        src.setImpairment(new BigDecimal("50"));
+        src.setTaxAmount(new BigDecimal("30"));
+        src.setPurchaseVoucherId("pv-old");
         when(assetMapper.selectById("asset-1")).thenReturn(src);
         doAnswer(inv -> {
             FixedAsset a = inv.getArgument(0);
@@ -353,6 +360,11 @@ class FixedAssetCheckServiceTest {
         assertEquals(2, clone.getQuantity());
         assertEquals(new BigDecimal("800.00"), clone.getOriginalValue());
         assertEquals(0, clone.getAccumDepr().compareTo(BigDecimal.ZERO));
+        assertEquals(0, clone.getImpairment().compareTo(BigDecimal.ZERO));
+        assertEquals(0, clone.getTaxAmount().compareTo(BigDecimal.ZERO));
+        assertEquals(null, clone.getPurchaseVoucherId());
+        verify(transactionManager).commit(any());
+        verify(transactionManager, never()).rollback(any());
         ArgumentCaptor<String> summary = ArgumentCaptor.forClass(String.class);
         verify(fixedAssetService).createSurplusVoucher(any(FixedAsset.class), eq(new BigDecimal("800.00")), summary.capture());
         assertEquals(true, summary.getValue().contains("盘盈") && summary.getValue().contains("盘点单"));
@@ -400,6 +412,29 @@ class FixedAssetCheckServiceTest {
         assertEquals("缺少科目", vo.getSkipped().get(0).getReason());
         verify(assetMapper, never()).insert(any(FixedAsset.class));
         verify(itemMapper, never()).updateById(any(FixedAssetCheckItem.class));
+    }
+
+    @Test
+    void bookSurplus_failureAfterVoucherRollsBackTransactionAndIsSkipped() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-2", 2, 3);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(assetMapper.selectById("asset-2")).thenReturn(asset("asset-2", "FA-2", 2, "1000"));
+        when(fixedAssetService.createSurplusVoucher(any(FixedAsset.class), any(), any())).thenReturn("voucher-x");
+        doAnswer(inv -> {
+            throw new RuntimeException();
+        }).when(itemMapper).updateById(any(FixedAssetCheckItem.class));
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "500")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals("入账失败", vo.getSkipped().get(0).getReason());
+        ArgumentCaptor<TransactionDefinition> def = ArgumentCaptor.forClass(TransactionDefinition.class);
+        verify(transactionManager).getTransaction(def.capture());
+        assertEquals(TransactionDefinition.PROPAGATION_REQUIRED, def.getValue().getPropagationBehavior());
+        verify(transactionManager).rollback(any());
+        verify(transactionManager, never()).commit(any());
     }
 
     private FixedAssetCheck completedCheck() {

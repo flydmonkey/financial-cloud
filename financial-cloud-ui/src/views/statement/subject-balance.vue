@@ -162,7 +162,17 @@
           prop="subjectCode"
           width="250"
           show-overflow-tooltip
-        />
+        >
+          <template #default="scope">
+            <el-link
+              type="primary"
+              :underline="false"
+              @click="goSubLedger(scope.row)"
+            >
+              {{ scope.row.subjectCode }}
+            </el-link>
+          </template>
+        </el-table-column>
         <el-table-column
           label="科目名称"
           align="left"
@@ -284,11 +294,13 @@ import * as reportApis from "@/api/statement/statement";
 import {getCurrentQuarter, handleTree, parseTime} from '@/utils/financialCloud'
 import {getSubjectIndent, getSubjectAllNodeIds, handleSummaryMethod, SummaryMethodProps} from '@/utils/Subjects'
 import {h, reactive, ref, shallowRef, toRefs, computed, VNode} from 'vue'
+import { useRouter } from 'vue-router'
 import {downloadData, formatAmount} from "@/utils"
 import booksSetStore from "@/store/modules/bookStore";
 import Decimal from "decimal.js";
 import {openTablePrintWindow} from "@/utils/tablePrint";
 
+const router = useRouter()
 const booksSet = booksSetStore()
 const recordsList = ref([]);
 const recordsAllList = ref<any>([]);
@@ -345,6 +357,25 @@ function handleQuery() {
     queryParams.value.reportDate = queryParams.value.date
   }
   getList();
+}
+
+/** 辅助核算行编码形如 1122_KH001，明细账按科目编码查询时取下划线前段 */
+function baseSubjectCode(code: string | undefined): string {
+  if (!code) return ''
+  const i = code.indexOf('_')
+  return i > 0 ? code.slice(0, i) : code
+}
+
+function goSubLedger(row: { subjectCode?: string }) {
+  const code = baseSubjectCode(row.subjectCode)
+  if (!code) return
+  router.push({
+    path: '/voucher/sub-ledger',
+    query: {
+      subjectCode: code,
+      date: queryParams.value.reportDate,
+    },
+  })
 }
 
 const handlePeriodType = (value: any) => {

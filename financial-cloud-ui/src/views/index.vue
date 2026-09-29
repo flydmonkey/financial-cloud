@@ -57,6 +57,15 @@
         :lg="6"
         :xl="6"
       >
+        <asset-count style="height: 350px" />
+      </el-col>
+      <el-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="6"
+        :xl="6"
+      >
         <net-profit style="height: 450px" />
       </el-col>
       <el-col
@@ -99,12 +108,13 @@
 import {ref, getCurrentInstance} from "vue";
 import {useI18n} from 'vue-i18n'
 import {useRoute, useRouter} from "vue-router";
-import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked, Ticket, Document} from '@element-plus/icons-vue'
+import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked, Ticket, Document, OfficeBuilding} from '@element-plus/icons-vue'
 import Footer from "@/components/Footer/index.vue"
 import TodoPanel from "@/views/dashboard/accounting/TodoPanel.vue";
 import FundBalance from "@/views/dashboard/accounting/fund_balance.vue";
 import receivable from "@/views/dashboard/accounting/receivable.vue";
 import ExpectedAvailableFunds from "@/views/dashboard/accounting/expected_available_funds.vue";
+import AssetCount from "@/views/dashboard/accounting/asset_count.vue";
 import NetProfit from "@/views/dashboard/accounting/net_profit.vue";
 import RevenueCost from "@/views/dashboard/accounting/revenue_cost.vue";
 import Cost from "@/views/dashboard/accounting/cost.vue";
@@ -122,6 +132,7 @@ const quickEntries = [
   {label: '凭证列表', path: '/voucher/voucher-index', icon: Tickets},
   {label: '明细账', path: '/voucher/sub-ledger', icon: Notebook},
   {label: '日记账', path: '/journal/journalentry', icon: Wallet},
+  {label: '固定资产', path: '/fixed-asset/card', icon: OfficeBuilding},
   {label: '资产负债表', path: '/statement/balance-sheet', icon: DataAnalysis},
   {label: '利润表', path: '/statement/income-statement', icon: TrendCharts},
   {label: '费用报销', path: '/expense/claim', icon: Ticket},

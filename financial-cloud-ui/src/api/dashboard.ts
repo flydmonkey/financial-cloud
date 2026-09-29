@@ -72,3 +72,11 @@ export function statisticsAddedTax(params: any) {
         params: params
     })
 }
+
+/** 首页固定资产规模（在册张数 / 原值 / 净值） */
+export function statisticsFixedAssetCount() {
+    return request({
+        url: '/statistics/fixed-asset-count',
+        method: 'get'
+    })
+}

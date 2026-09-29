@@ -6,6 +6,7 @@ import com.financial.cloud.dto.report.*;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.statement.StatementParamsDto;
 import com.financial.cloud.service.report.FundDashboardService;
+import com.financial.cloud.service.report.FixedAssetDashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import java.util.List;
 @Slf4j
 public class FundDashboardController {
     private final FundDashboardService fundDashboardService;
+    private final FixedAssetDashboardService fixedAssetDashboardService;
 
     private static void bindBookContext(StatementParamsDto params, UserInfo currentUser) {
         params.setBookId(currentUser.getBookId());
@@ -96,6 +98,13 @@ public class FundDashboardController {
                                                         StatementParamsDto params) {
         bindBookContext(params, currentUser);
         AddTaxVo data = fundDashboardService.statisticsAddedTax(params);
+        return Message.ok(data);
+    }
+
+    /** 首页固定资产规模（在册张数 / 原值 / 净值）。 */
+    @GetMapping(value = {"/fixed-asset-count"})
+    public Message<FixedAssetCountVo> statisticsFixedAssetCount(@CurrentUser UserInfo currentUser) {
+        FixedAssetCountVo data = fixedAssetDashboardService.statisticsAssetCount(currentUser.getBookId());
         return Message.ok(data);
     }
 

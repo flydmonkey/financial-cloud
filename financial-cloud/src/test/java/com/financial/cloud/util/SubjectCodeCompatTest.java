@@ -53,6 +53,21 @@ class SubjectCodeCompatTest {
     }
 
     @Test
+    void incomeRuleMatchesVoucherSubject_rollsUpDotAndLegacyChildSubjects() {
+        // 薪资计提等自动新增的子科目（5602.07 管理费用-工资）必须归集到利润表规则 5602
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("5602", "5602.07"));
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("5602", "560207"));
+        // 企业准则别名规则的子科目同样归集
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("6602", "5602.07"));
+        assertTrue(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("6001", "5001.01"));
+        // 不同科目不误判：5602.07 不得命中 5601 / 5603
+        assertFalse(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("5601", "5602.07"));
+        assertFalse(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("5603", "5602.07"));
+        // 同级科目互不命中
+        assertFalse(SubjectCodeCompat.incomeRuleMatchesVoucherSubject("5602", "5601.01"));
+    }
+
+    @Test
     void carryForwardSubjectCodes_includesXiaorenCostAlias() {
         assertTrue(SubjectCodeCompat.carryForwardSubjectCodes("6401").contains("5401"));
         assertTrue(SubjectCodeCompat.lookupCandidates("6401").contains("5401"));

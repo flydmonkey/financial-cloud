@@ -158,6 +158,16 @@ public final class SubjectCodeCompat {
         if (matchesViaLookupCandidates(voucherSubjectCode, ruleSubjectCode)) {
             return true;
         }
+        // 点分/定长子科目向上归集：凭证 5602.07（或旧定长 560207）应命中规则 5602 及其准则别名
+        String voucherDotCode = voucherSubjectCode.contains(".")
+                ? voucherSubjectCode : deriveDotCode(voucherSubjectCode);
+        if (voucherDotCode != null) {
+            for (String candidate : lookupCandidates(ruleSubjectCode)) {
+                if (voucherDotCode.startsWith(candidate + ".")) {
+                    return true;
+                }
+            }
+        }
         return StringUtils.equalsIgnoreCase(
                 mapIncomeRuleSubject(ruleSubjectCode), voucherSubjectCode);
     }

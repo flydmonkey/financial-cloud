@@ -100,6 +100,13 @@ public final class BackupTableRegistry {
                     .fks(FkEdge.of("claim_id", "expense_claim")),
             BackupTableSpec.of("expense_claim_attachment")
                     .fks(FkEdge.of("claim_id", "expense_claim")),
+            // 往来核销（无 deleted 列；counterpart_id 指向 assist_acc 软引用）
+            BackupTableSpec.of("arap_writeoff").noDeleted()
+                    .fks(FkEdge.soft("counterpart_id", "assist_acc")),
+            BackupTableSpec.of("arap_writeoff_line").noDeleted()
+                    .fks(FkEdge.of("writeoff_id", "arap_writeoff"),
+                            FkEdge.of("voucher_item_id", "voucher_item"),
+                            FkEdge.soft("voucher_id", "voucher")),
             // 薪资（employee.department_id / manager_id 指向实例级组织与用户，置空）
             BackupTableSpec.of("employee")
                     .nulls("department_id", "manager_id"),

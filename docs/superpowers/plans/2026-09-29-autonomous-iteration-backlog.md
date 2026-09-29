@@ -37,7 +37,7 @@
 | 工资条员工自助 | Non-goal | 本期明确不做 |
 | 税局直连 | Non-goal | 申报底稿已有；直连不做 |
 | 移动端 / AI | Non-goal | — |
-| 盘盈自动入账 | Post-V1 | 需计价与卡片创建依据 |
+| 盘盈自动入账 | **已落地** | `surplusPreview` / `bookSurplus` + `check.vue` 盘盈入账（2026-09-29） |
 | 凭证/结账参数独立配置中心 | 已落地 | `voucher-settlement` 页 + `settlement.verify.arap.enabled` |
 | 按钮级精细权限铺开 | Post-V1 | 角色-资源 + 账套授权已够用 |
 

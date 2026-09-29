@@ -74,7 +74,7 @@
 | 5.2 | 新增自动入账凭证 | 有条件生成 | **部分实现** | `FixedAssetPurchaseRules` | P2 |
 | 5.3 | 月末折旧凭证 | accrue | **已实现** | `FixedAssetDepreciationService` | — |
 | 5.4 | 变动与清理凭证 | 有 | **已实现** | `change`、`dispose` | — |
-| 5.5 | 盘点与盘点表 | 盘点单快照在册资产→实盘录入→自动判定盘盈/盘亏并汇总；盘点表可打印；整件盘亏可一键下账（复用清理流程生成凭证） | **已实现** | `FixedAssetCheckService`、`views/fixed-asset/check.vue` | — |
+| 5.5 | 盘点与盘点表 | 盘点单快照在册资产→实盘录入→自动判定盘盈/盘亏并汇总；盘点表可打印；整件盘亏可一键下账；**盘盈入账**（可编辑均摊金额、草稿凭证、拆卡/累加） | **已实现** | `FixedAssetCheckService`（`surplusPreview` / `bookSurplus`）、`views/fixed-asset/check.vue` | — |
 
 ---
 
@@ -164,13 +164,13 @@
 ### P2（增强）
 
 1. ~~多栏账 / 数量金额账~~ → **已落地**（`MultiColumnLedgerService`、`QuantityLedgerService`）  
-2. ~~资产盘点~~ → **已落地**（`FixedAssetCheckService`；盘亏可下账生成凭证；盘盈无计价不自动入账 → Post-V1）  
+2. ~~资产盘点~~ → **已落地**（`FixedAssetCheckService`；盘亏可下账；**盘盈入账** 已落地）  
 3. PDF 导出与打印统一（~~服务端通道未做~~ → **已落地**：报表与账簿主表均有 `export-pdf`）  
 4. ~~作废/拒绝状态机产品化~~ → **已落地**（作废/恢复 + 字号保留 + 期间/封存守卫）  
 5. ~~银行调节~~ → **已落地**；~~税务申报底稿~~ → **已落地**（税局直连 Non-goal）；~~费用报销~~ → **已落地**  
 6. ~~首页固定资产规模卡 / 凭证↔日记账回写~~ → **已落地**（`dashboard-asset-count`、`journal-voucher-reverse-sync`）
 
-**代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：按钮级权限铺开、盘盈自动入账。
+**代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：按钮级权限铺开。
 
 ---
 

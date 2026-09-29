@@ -290,6 +290,24 @@ class FixedAssetCheckServiceTest {
         FixedAssetCheckItem booked = surplusItem("item-1", "asset-1", 1, 2);
         booked.setSurplusVoucherId("v-1");
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(booked));
+        when(itemMapper.selectById("item-1")).thenReturn(booked);
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "800")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertEquals(1, vo.getSkipped().size());
+        verify(fixedAssetService, never()).createSurplusVoucher(any(), any(), any());
+    }
+
+    @Test
+    void bookSurplus_skipsWhenItemBookedConcurrentlyAfterListing() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem stale = surplusItem("item-1", "asset-1", 1, 2);
+        FixedAssetCheckItem fresh = surplusItem("item-1", "asset-1", 1, 2);
+        fresh.setSurplusVoucherId("v-other");
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(stale));
+        when(itemMapper.selectById("item-1")).thenReturn(fresh);
 
         FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
                 List.of(bookDto("item-1", "800")));
@@ -304,6 +322,7 @@ class FixedAssetCheckServiceTest {
         when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
         FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 2);
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
 
         FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
                 List.of(bookDto("item-1", "0")));
@@ -318,6 +337,7 @@ class FixedAssetCheckServiceTest {
         when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
         FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 2);
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
         FixedAsset disposed = asset("asset-1", "FA-1", 1, "1000");
         disposed.setStatus(FixedAssetStatus.DISPOSED.name());
         when(assetMapper.selectById("asset-1")).thenReturn(disposed);
@@ -335,6 +355,7 @@ class FixedAssetCheckServiceTest {
         when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
         FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 3);
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
         FixedAsset src = asset("asset-1", "FA-1", 1, "1000");
         src.setAccumDepr(new BigDecimal("100"));
         src.setImpairment(new BigDecimal("50"));
@@ -379,6 +400,7 @@ class FixedAssetCheckServiceTest {
         when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
         FixedAssetCheckItem it = surplusItem("item-1", "asset-2", 2, 3);
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
         FixedAsset src = asset("asset-2", "FA-2", 2, "1000");
         when(assetMapper.selectById("asset-2")).thenReturn(src);
         when(fixedAssetService.createSurplusVoucher(any(FixedAsset.class), eq(new BigDecimal("500.00")), any()))
@@ -401,6 +423,7 @@ class FixedAssetCheckServiceTest {
         when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
         FixedAssetCheckItem it = surplusItem("item-1", "asset-1", 1, 2);
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
         when(assetMapper.selectById("asset-1")).thenReturn(asset("asset-1", "FA-1", 1, "1000"));
         when(fixedAssetService.createSurplusVoucher(any(), any(), any()))
                 .thenThrow(new BusinessException(400, "缺少科目"));
@@ -419,6 +442,7 @@ class FixedAssetCheckServiceTest {
         when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
         FixedAssetCheckItem it = surplusItem("item-1", "asset-2", 2, 3);
         when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
         when(assetMapper.selectById("asset-2")).thenReturn(asset("asset-2", "FA-2", 2, "1000"));
         when(fixedAssetService.createSurplusVoucher(any(FixedAsset.class), any(), any())).thenReturn("voucher-x");
         doAnswer(inv -> {

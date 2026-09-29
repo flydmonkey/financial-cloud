@@ -593,6 +593,8 @@ function openSurplus(row: any) {
   surplusPreviewFixedAssetCheck(row.id).then((res: any) => {
     surplusRows.value = (res.data?.rows || []).map((r: any) => ({ ...r, amount: r.defaultAmount }))
     if (!surplusRows.value.length) {
+      // 无待入账明细：直接关闭弹窗，仅提示，避免留下空表格
+      surplusVisible.value = false
       modal.msgWarning('没有待入账的盘盈明细')
     }
   }).catch(() => {

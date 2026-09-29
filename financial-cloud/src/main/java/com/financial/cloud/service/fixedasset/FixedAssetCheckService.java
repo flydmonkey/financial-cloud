@@ -321,7 +321,12 @@ public class FixedAssetCheckService {
     }
 
     /** @return 跳过原因；null 表示已入账 */
-    private String bookOneSurplus(FixedAssetCheck check, FixedAssetCheckItem item, BigDecimal rawAmount) {
+    private String bookOneSurplus(FixedAssetCheck check, FixedAssetCheckItem staleItem, BigDecimal rawAmount) {
+        // 事务内重新读取，缩小并发重复入账窗口（非行锁，仅降低概率）
+        FixedAssetCheckItem item = itemMapper.selectById(staleItem.getId());
+        if (item == null) {
+            return "盘点明细不存在";
+        }
         if (!FixedAssetCheckItem.RESULT_SURPLUS.equals(item.getResult())) {
             return "该明细不是盘盈";
         }

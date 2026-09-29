@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -72,5 +74,40 @@ public final class FixedAssetCheckDtos {
         private String assetCode;
         private String assetName;
         private String reason;
+    }
+
+    /** 盘盈预览明细行 */
+    @Data
+    public static class SurplusPreviewRow {
+        private String itemId;
+        private String assetId;
+        private String assetCode;
+        private String assetName;
+        private int bookQuantity;
+        private int actualQuantity;
+        private int surplusQuantity;
+        private BigDecimal defaultAmount;
+        /** split_card | bump_qty */
+        private String strategy;
+    }
+
+    /** 盘盈预览 */
+    @Data
+    public static class SurplusPreviewVo {
+        private List<SurplusPreviewRow> rows = new ArrayList<>();
+    }
+
+    /** 盘盈入账单行金额 */
+    @Data
+    public static class SurplusBookItemDto {
+        private String itemId;
+        private BigDecimal amount;
+    }
+
+    /** 盘盈入账结果 */
+    @Data
+    public static class SurplusBookVo {
+        private int processedCount;
+        private List<SkipReason> skipped = new ArrayList<>();
     }
 }

@@ -17,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 
@@ -241,6 +243,21 @@ public class FixedAssetCheckService {
             return FixedAssetCheckItem.RESULT_DEFICIT;
         }
         return FixedAssetCheckItem.RESULT_NORMAL;
+    }
+
+    /** 盘盈默认入账金额：按原值在账面数量上均摊至盘盈数量 */
+    static BigDecimal defaultSurplusAmount(BigDecimal originalValue, Integer bookQty, Integer actualQty) {
+        int book = bookQty != null ? bookQty : 0;
+        int actual = actualQty != null ? actualQty : 0;
+        int delta = actual - book;
+        if (delta <= 0 || book <= 0 || originalValue == null
+                || originalValue.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return originalValue
+                .divide(BigDecimal.valueOf(book), 8, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(delta))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private FixedAssetCheck requireCheck(String checkId, String bookId) {

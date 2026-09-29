@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -230,6 +231,17 @@ class FixedAssetCheckServiceTest {
         assertEquals(0, vo.getProcessedCount());
         assertEquals(1, vo.getSkipped().size());
         assertEquals("该资产已清理", vo.getSkipped().get(0).getReason());
+    }
+
+    @Test
+    void defaultSurplusAmount_proratesOriginalValue() {
+        assertEquals(new BigDecimal("500.00"),
+                FixedAssetCheckService.defaultSurplusAmount(new BigDecimal("1000"), 2, 3));
+    }
+
+    @Test
+    void defaultSurplusAmount_zeroWhenNoIncrease() {
+        assertEquals(0, FixedAssetCheckService.defaultSurplusAmount(new BigDecimal("1000"), 1, 1).compareTo(BigDecimal.ZERO));
     }
 
     private FixedAssetCheck draftCheck() {

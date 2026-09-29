@@ -123,6 +123,9 @@
           <el-button @click="handleExport">
             导出
           </el-button>
+          <el-button @click="handleExportPdf">
+            导出 PDF
+          </el-button>
         </div>
       </div>
 
@@ -267,6 +270,12 @@ function handleQuery() {
 function handleExport() {
   reportApis.voucherSummaryExport(queryParams.value).then((data: any) => {
     downloadData(data, `凭证汇总表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+function handleExportPdf() {
+  reportApis.voucherSummaryExportPdf(queryParams.value).then((data: any) => {
+    downloadData(data, `凭证汇总表${queryParams.value.reportDate}.pdf`)
   })
 }
 

@@ -250,6 +250,35 @@ public class StatementReportService{
     }
 
     /**
+     * 凭证汇总表 PDF 导出
+     */
+    public void voucherSummaryExportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        dto.parse();
+        List<StatementSubjectBalance> subjectBalances = voucherSummary(dto).getData();
+        Book book = bookMapper.selectById(dto.getBookId());
+        List<String[]> rows = new ArrayList<>();
+        if (subjectBalances != null) {
+            for (StatementSubjectBalance b : subjectBalances) {
+                rows.add(new String[]{
+                        PdfTableExporter.nz(b.getSubjectCode()),
+                        PdfTableExporter.nz(b.getSubjectName()),
+                        PdfTableExporter.formatAmount(b.getCurrentPeriodDebit()),
+                        PdfTableExporter.formatAmount(b.getCurrentPeriodCredit()),
+                });
+            }
+        }
+        String bookName = book != null ? book.getName() : "";
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "凭证汇总表",
+                "账套：" + bookName + "　期间：" + PdfTableExporter.nz(dto.getReportDate()),
+                new String[]{"科目编码", "科目名称", "借方金额", "贷方金额"},
+                rows,
+                false,
+                "凭证汇总表" + PdfTableExporter.nz(dto.getReportDate()) + ".pdf"
+        ), response);
+    }
+
+    /**
      * 凭证汇总表导出
      */
     public void voucherSummaryExport(StatementParamsDto dto, HttpServletResponse response) throws IOException {

@@ -102,6 +102,15 @@ public class StatementReportController {
         statementReportService.voucherSummaryExport(dto, response);
     }
 
+    @GetMapping("/voucher-summary/export-pdf")
+    public void voucherSummaryExportPdf(HttpServletResponse response,
+                                        StatementParamsDto dto,
+                                        @CurrentUser UserInfo userInfo) throws IOException {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        statementReportService.voucherSummaryExportPdf(dto, response);
+    }
+
     @GetMapping("/expense-detail")
     public Message<StatementExpenseDetailReport> expenseDetail(
             StatementParamsDto dto, @CurrentUser UserInfo userInfo) {

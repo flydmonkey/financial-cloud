@@ -165,7 +165,7 @@
 
 1. ~~多栏账 / 数量金额账~~ → **已落地**（`MultiColumnLedgerService`、`QuantityLedgerService`）  
 2. ~~资产盘点~~ → **已落地**（`FixedAssetCheckService`；盘点凭证为后续增强）  
-3. PDF 导出与打印统一（~~服务端通道未做~~ → **已落地**：报表主表 + 主账簿 + 多栏/数量金额 `export-pdf`；凭证汇总仍可浏览器另存）  
+3. PDF 导出与打印统一（~~服务端通道未做~~ → **已落地**：报表与账簿主表均有 `export-pdf`）  
 4. ~~作废/拒绝状态机产品化~~ → **已落地**（作废/恢复 + 字号保留 + 期间/封存守卫）  
 5. ~~银行调节~~ → **已落地**（`JournalReconciliationService`：对账单余额登记 + 流水勾对 + 未达账项调节）；~~税务申报~~ → **申报底稿已落地**（`TaxDeclarationService`：增值税及附加税费申报表简版主表，按官方行次 + 可打印，正式税局直连仍为 Non-goal）；~~费用报销~~ → **已落地**（`ExpenseClaimService`：报销单（单头+多行费用明细）暂存→提交→审核/拒绝→一键生成报销凭证（逐行借方+合计贷方），票据附件影像（`ExpenseClaimAttachmentService`，复用 file_storage，暂存/已拒绝可增删、下载不限），挂「凭证」组）
 

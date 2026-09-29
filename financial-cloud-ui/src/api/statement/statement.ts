@@ -19,6 +19,15 @@ export function voucherSummaryExport(query : any): any {
     })
 }
 
+export function voucherSummaryExportPdf(query : any): any {
+    return request({
+        url: '/statement/voucher-summary/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
 // 科目余额查询
 export function getSubjectBalance(query : any): any {
     return request({

@@ -137,7 +137,9 @@ flowchart LR
 ### 未实现 / 增强（相对 PRD）— 不阻塞专业可用
 
 - ~~独立「老板极简报表」页~~ → **已由首页看板承接**（不做第二页）
-- Post-V1 / Non-goal：工资条员工自助、税局直连、移动端/AI、盘盈无计价自动入账、参数配置独立页（见 [backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）
+- ~~盘盈入账~~ → **已落地**（`surplusPreview` / `bookSurplus`，见 [07](07-fixed-asset.md)、[20](20-gap-analysis.md) §5.5）
+- ~~参数配置独立页~~ → **已落地**（`views/config/voucher-settlement.vue`，见 [20](20-gap-analysis.md) §2.4）
+- Post-V1 / Non-goal：工资条员工自助、税局直连、移动端/AI（见 [backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）
 
 ## 8. 实现总览（对照 PRD 八大模块）
 
@@ -147,7 +149,7 @@ flowchart LR
 | 基础设置 | **已实现**（含准则模板，超出 PRD） | [02](02-basic-settings.md) |
 | 凭证管理 | **已实现**（核心闭环 + 经典打印单张/批量） | [03](03-voucher.md) |
 | 账簿管理 | **已实现**（含多栏/数量金额账；服务端 PDF 全覆盖主账簿） | [04](04-ledger.md) |
-| 固定资产 | **已实现**（含盘点、首页规模卡；购入凭证有条件；盘盈不自动入账） | [07](07-fixed-asset.md) |
+| 固定资产 | **已实现**（含盘点含盘盈入账、首页规模卡；购入凭证有条件） | [07](07-fixed-asset.md) |
 | 往来管理 | **已实现 L1+L2+L3** | [11](11-arap.md) / [20](20-gap-analysis.md) |
 | 报表管理 | **已实现**（三表+下钻+打印；服务端 PDF 主表齐全；老板视图=首页） | [05](05-statement.md) |
 | 系统管理 | **已实现**（含业务操作审计） | [10](10-system-admin.md) |

@@ -717,8 +717,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         booksVoucher.setWord(word);
 
-        if (!canModifyUnpostedVoucher(currentVoucher)) {
-            return new Message<>(Message.FAIL, "当前不允许修改");
+        String modifyBlock = modifyBlockedReason(currentVoucher, isVoucherInOpenPeriod(currentVoucher));
+        if (modifyBlock != null) {
+            return new Message<>(Message.FAIL, modifyBlock);
         }
 
         // 删除以前的明细数据
@@ -2169,19 +2170,22 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
 
     /**
-     * 未过账凭证是否允许修改（未过账、未作废、所在期间未结账）
+     * @return null 表示可改；否则为用户可见拒绝原因
      */
-    private boolean canModifyUnpostedVoucher(Voucher voucher) {
+    static String modifyBlockedReason(Voucher voucher, boolean inOpenPeriod) {
         if (voucher == null) {
-            return false;
+            return "凭证不存在";
         }
         if (StringUtils.isNotBlank(voucher.getSenderId())) {
-            return false;
+            return "已过账凭证不能直接修改，请先反过账后再改，或使用红字冲销";
         }
         if (VoucherStatusEnum.CANCELLED.getValue().equals(voucher.getStatus())) {
-            return false;
+            return "已作废凭证不能修改";
         }
-        return isVoucherInOpenPeriod(voucher);
+        if (!inOpenPeriod) {
+            return "已结账期间的凭证不能修改";
+        }
+        return null;
     }
 
     /**

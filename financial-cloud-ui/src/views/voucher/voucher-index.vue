@@ -893,9 +893,15 @@ function handleUpdate(row) {
   if (!_id) {
     return
   }
+  const voucher = row?.voucher || row
+  // 已过账：只读打开并展示反过账/红冲引导，避免进入可点格却不能保存的假编辑态
+  const query: Record<string, string> = {id: String(_id)}
+  if (voucher?.senderId) {
+    query.readonly = '1'
+  }
   router.push({
     path: "/voucher/voucher-edit",
-    query: { id: String(_id) },
+    query,
   })
 }
 

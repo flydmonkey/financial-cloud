@@ -113,9 +113,25 @@ export function formatVoucherStatusLabel(status: string | null | undefined, send
       return '审核中'
     case 'completed':
       return '已审核'
+    case 'cancelled':
+      return '已作废'
+    case 'rejected':
+      return '被拒绝'
     default:
       return status ? String(status) : '新建'
   }
+}
+
+/** 是否已过账（有过账人） */
+export function isVoucherPosted(senderId?: any): boolean {
+  return !!senderId
+}
+
+/**
+ * 已过账不可直接改时的引导文案（编辑页横幅 / tooltip）。
+ */
+export function postedVoucherEditGuidance(): string {
+  return '已过账凭证不可直接修改。请先反过账后再改，或使用红字冲销生成冲销凭证。'
 }
 
 /** 新建或草稿（未过账）才允许暂存 / 提交保存 */
@@ -124,7 +140,7 @@ export function isDraftEditableStatus(
   senderId?: any,
 ): boolean {
   if (senderId) return false
-  return !status || status === 'draft'
+  return !status || status === 'draft' || status === 'rejected'
 }
 
 function parseEntryAmount(value: any): number {

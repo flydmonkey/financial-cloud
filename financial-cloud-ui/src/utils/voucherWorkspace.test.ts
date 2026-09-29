@@ -6,6 +6,9 @@ import {
   findNeighborVoucherIds,
   formatShortVoucherWord,
   formatVoucherStatusLabel,
+  isDraftEditableStatus,
+  isVoucherPosted,
+  postedVoucherEditGuidance,
   resolveLeafSubjectCode,
   sortVouchersForNavigation,
   snapshotVoucherEditable,
@@ -74,6 +77,7 @@ describe('voucherWorkspace display helpers', () => {
   it('gates draft/save by status and period', () => {
     assert.equal(canClickVoucherDraft(null), true)
     assert.equal(canClickVoucherDraft('draft'), true)
+    assert.equal(canClickVoucherDraft('rejected'), true)
     assert.equal(canClickVoucherDraft('completed'), false)
     assert.equal(canClickVoucherDraft('reviewing'), false)
     assert.equal(canClickVoucherDraft('draft', 'u1'), false)
@@ -83,6 +87,15 @@ describe('voucherWorkspace display helpers', () => {
     assert.equal(canClickVoucherSave('draft', null, '2026-08-01', '2026-09'), false)
     assert.equal(canClickVoucherSave('completed', null, '2026-09-01', '2026-09'), false)
     assert.equal(canClickVoucherSave('draft', 'u1', '2026-09-01', '2026-09'), false)
+  })
+
+  it('posted edit guidance and helpers', () => {
+    assert.equal(isVoucherPosted('u1'), true)
+    assert.equal(isVoucherPosted(null), false)
+    assert.equal(isDraftEditableStatus('draft', 'u1'), false)
+    assert.equal(isDraftEditableStatus('rejected', null), true)
+    assert.match(postedVoucherEditGuidance(), /反过账/)
+    assert.match(postedVoucherEditGuidance(), /红字冲销/)
   })
 
   it('gates draft/save by empty entries and loan balance', () => {

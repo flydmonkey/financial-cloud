@@ -29,7 +29,7 @@
             </el-button>
           </el-button-group>
           <el-button
-            v-if="canEditWorkspace"
+            v-if="showMutableActions"
             @click="onNewVoucher"
           >
             新建凭证
@@ -37,7 +37,7 @@
         </div>
         <div class="workspace-toolbar-actions">
           <el-tooltip
-            v-if="canEditWorkspace"
+            v-if="showMutableActions"
             :content="draftButtonTip"
           >
             <span class="workspace-action-wrap">
@@ -51,7 +51,7 @@
             </span>
           </el-tooltip>
           <el-tooltip
-            v-if="canEditWorkspace"
+            v-if="showMutableActions"
             :content="saveButtonTip"
           >
             <span class="workspace-action-wrap">
@@ -90,6 +90,39 @@
         </span>
       </div>
     </div>
+    <el-alert
+      v-if="!isPrintMode && isPostedVoucher"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="posted-edit-alert"
+      :title="postedEditGuidance"
+    >
+      <template #default>
+        <div class="posted-edit-actions">
+          <el-button
+            type="primary"
+            size="small"
+            :loading="postedActionLoading"
+            :disabled="!canUnsenderPosted"
+            @click="onUnsenderPosted"
+          >
+            反过账后修改
+          </el-button>
+          <el-button
+            size="small"
+            :loading="postedActionLoading"
+            @click="onReversePosted"
+          >
+            红字冲销
+          </el-button>
+          <span
+            v-if="!canUnsenderPosted"
+            class="posted-edit-hint"
+          >当前期间不可反过账时，请使用红字冲销。</span>
+        </div>
+      </template>
+    </el-alert>
     <div
       id="printable-content"
       ref="printMe"
@@ -731,7 +764,15 @@ import VoucherAttachments from "./VoucherAttachments.vue"
 import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'element-plus'
 import {parseTime} from "@/utils/financialCloud";
 import * as subjectApi from "@/api/standard/standard-subject"
-import {draftVoucher, getOneVoucher, getVoucherAbleWordNum, listVouchers, submitVoucher} from "@/api/voucher/voucher";
+import {
+  draftVoucher,
+  getOneVoucher,
+  getVoucherAbleWordNum,
+  listVouchers,
+  reverseVoucher,
+  submitVoucher,
+  unsenderBatch,
+} from "@/api/voucher/voucher";
 import {
   canClickVoucherDraft,
   canClickVoucherSave,
@@ -739,6 +780,9 @@ import {
   findNeighborVoucherIds,
   formatShortVoucherWord,
   formatVoucherStatusLabel,
+  isDraftEditableStatus,
+  isVoucherPosted,
+  postedVoucherEditGuidance,
   snapshotVoucherEditable,
   type VoucherNavItem,
 } from "@/utils/voucherWorkspace";
@@ -840,7 +884,13 @@ const isGrandTotalRow = (row: RecordingVoucher) => {
 const isCarryForwardRow = (row: RecordingVoucher) => row.id === -2
 
 const isCellEditable = (row: RecordingVoucher) => {
-  return props.edit && !isPrintMode.value && !isTotalRow(row) && row.id > 0
+  if (!props.edit || isPrintMode.value || isTotalRow(row) || row.id <= 0) {
+    return false
+  }
+  if (isWorkspaceReadonly.value) {
+    return false
+  }
+  return isDraftEditableStatus(formData.value.status, formData.value.senderId)
 }
 
 const showCellInput = (row: RecordingVoucher) => {
@@ -979,8 +1029,25 @@ const isPrintMode = computed(() => {
 })
 const isWorkspaceReadonly = computed(() => route.query.readonly === '1' || route.query.readonly === 'true')
 const canEditWorkspace = computed(() => props.edit && !isWorkspaceReadonly.value && !isPrintMode.value)
+const isPostedVoucher = computed(() => isVoucherPosted(formData.value.senderId))
+const postedEditGuidance = computed(() => postedVoucherEditGuidance())
+const canUnsenderPosted = computed(() => {
+  if (!isPostedVoucher.value || !formData.value.voucherDate) {
+    return false
+  }
+  const term = String(currBookStore.termCurrent || '')
+  return !!term && String(formData.value.voucherDate).startsWith(term)
+})
+const postedActionLoading = ref(false)
+const showMutableActions = computed(() =>
+  canEditWorkspace.value
+  && isDraftEditableStatus(formData.value.status, formData.value.senderId),
+)
 const isReadonlyDisplay = computed(() => {
-  return !canEditWorkspace.value
+  if (!canEditWorkspace.value) {
+    return true
+  }
+  return !isDraftEditableStatus(formData.value.status, formData.value.senderId)
 })
 const shortWordLabel = computed(() => formatShortVoucherWord(formData.value.wordHead, formData.value.wordNum))
 const voucherStatusLabel = computed(() =>
@@ -1008,8 +1075,11 @@ const draftButtonTip = computed(() => {
   if (canClickDraft.value) {
     return '确保总账科目对应的金额已正确录入！'
   }
+  if (isPostedVoucher.value) {
+    return postedVoucherEditGuidance()
+  }
   if (!canClickVoucherDraft(formData.value.status, formData.value.senderId)) {
-    return '仅新建或草稿状态可暂存'
+    return '仅新建、草稿或被拒绝状态可暂存'
   }
   return '请先录入分录后再暂存'
 })
@@ -1017,8 +1087,11 @@ const saveButtonTip = computed(() => {
   if (canClickSave.value) {
     return '确保总账科目对应的金额已正确录入！'
   }
+  if (isPostedVoucher.value) {
+    return postedVoucherEditGuidance()
+  }
   if (!canClickVoucherDraft(formData.value.status, formData.value.senderId)) {
-    return '仅新建或草稿状态可保存'
+    return '仅新建、草稿或被拒绝状态可保存'
   }
   if (!formData.value.voucherDate
     || !String(formData.value.voucherDate).startsWith(String(currBookStore.termCurrent || ''))) {
@@ -1032,6 +1105,66 @@ const saveButtonTip = computed(() => {
   }
   return '借贷不平衡，不能保存'
 })
+
+async function onUnsenderPosted(): Promise<void> {
+  if (!formData.value.id || !canUnsenderPosted.value) {
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确认反过账？反过账后可直接修改本凭证。', '反过账', {type: 'warning'})
+  } catch {
+    return
+  }
+  postedActionLoading.value = true
+  try {
+    const res: any = await unsenderBatch(String(formData.value.id))
+    if (res?.code === 0) {
+      ElMessage.success(res.message || '反过账成功')
+      const id = formData.value.id
+      await loadVoucherById(id)
+      // 反过账后去掉只读 query，进入可编辑
+      await router.replace({path: route.path, query: {id: String(id)}})
+    } else {
+      ElMessage.error(res?.message || '反过账失败')
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || '反过账失败')
+  } finally {
+    postedActionLoading.value = false
+  }
+}
+
+async function onReversePosted(): Promise<void> {
+  if (!formData.value.id) {
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      '确认红字冲销？将在当前开放账期生成金额全负的冲销凭证（暂存），审核过账后生效。',
+      '红字冲销',
+      {type: 'warning'},
+    )
+  } catch {
+    return
+  }
+  postedActionLoading.value = true
+  try {
+    const res: any = await reverseVoucher(formData.value.id)
+    if (res?.code === 0) {
+      ElMessage.success(res.message || '冲销凭证已生成')
+      const reverseId = res.data
+      if (reverseId) {
+        router.push({path: '/voucher/voucher-edit', query: {id: String(reverseId)}})
+      }
+    } else {
+      ElMessage.error(res?.message || '红字冲销失败')
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || '红字冲销失败')
+  } finally {
+    postedActionLoading.value = false
+  }
+}
 const cleanSnapshot = ref('')
 const neighborIds = ref<{ prevId: string | number | null; nextId: string | number | null }>({ prevId: null, nextId: null })
 const navCache = ref<VoucherNavItem[]>([])
@@ -2430,6 +2563,23 @@ onBeforeUpdate(() => {
     flex-wrap: wrap;
     padding: 8px 0 12px;
     background: #fff;
+  }
+
+  .posted-edit-alert {
+    margin: 0 0 12px;
+  }
+
+  .posted-edit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .posted-edit-hint {
+    color: #909399;
+    font-size: 13px;
   }
 
   .workspace-toolbar-spacer,

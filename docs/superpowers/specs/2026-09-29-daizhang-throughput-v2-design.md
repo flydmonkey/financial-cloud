@@ -1,7 +1,7 @@
 # 代账吞吐第二曲线 · 产品设计规格
 
 > Date: 2026-09-29  
-> Status: approved direction (Path B + thin quality gate); awaiting written-spec rubber-stamp then implementation plan  
+> Status: approved; implementation W0+W1 in progress  
 > Owner: product (autonomous iteration under user full authorization)  
 > Related: [docs/product/20-gap-analysis.md](../../product/20-gap-analysis.md)、[docs/product/21-roadmap.md](../../product/21-roadmap.md)、[docs/superpowers/plans/2026-09-29-autonomous-iteration-backlog.md](../plans/2026-09-29-autonomous-iteration-backlog.md)
 

@@ -15,6 +15,8 @@
 
 ## 2. 近端路线（建议 3～4 个切片）
 
+> **现行近端主轴（2026-09-29）**：吞吐 V2（W0–W4），不以 PRD 新模块扩容为主。见 [设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [backlog](../superpowers/plans/2026-09-29-throughput-v2-backlog.md)。下列 S0–S3 为专业可用阶段历史切片（已收口）。
+
 ```mermaid
 flowchart LR
   S0["S0 交付包"] --> S1["S1 打印吞吐"]
@@ -51,7 +53,7 @@ flowchart LR
 3. **账龄**分段（30/60/90/180+，FIFO 估算）  
 4. 结账校验接入真实应收应付/逾期警告（不硬阻断）  
 
-后续再做：核销 L3、银行调节、辅助余额穿透查询。
+**L3 核销、银行调节已落地。** 近端主轴改为 [吞吐 V2](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md)（辅助穿透、对账单核销状态、红冲×日记账等）。
 
 ### S3 · 周边卫生
 

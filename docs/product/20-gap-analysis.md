@@ -172,6 +172,8 @@
 
 **代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：按钮级权限铺开。
 
+**下一程序**：代账吞吐第二曲线 — [设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [backlog](../superpowers/plans/2026-09-29-throughput-v2-backlog.md)。
+
 ---
 
 ## 12. 覆盖率粗估（相对 PRD V1.0 八大模块）

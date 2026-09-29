@@ -134,12 +134,13 @@ flowchart LR
 | `added_tax` | 增值税相关 |
 | `other_subjects` | 其他科目 |
 
-### 未实现 / 增强（相对 PRD）— 不阻塞专业可用
+### 下一阶段（专业可用已收口）
 
 - ~~独立「老板极简报表」页~~ → **已由首页看板承接**（不做第二页）
 - ~~盘盈入账~~ → **已落地**（`surplusPreview` / `bookSurplus`，见 [07](07-fixed-asset.md)、[20](20-gap-analysis.md) §5.5）
 - ~~参数配置独立页~~ → **已落地**（`views/config/voucher-settlement.vue`，见 [20](20-gap-analysis.md) §2.4）
-- Post-V1 / Non-goal：工资条员工自助、税局直连、移动端/AI（见 [backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）
+- 主轴：**代账吞吐第二曲线** — 见 [吞吐 V2 设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) 与 [backlog](../superpowers/plans/2026-09-29-throughput-v2-backlog.md)
+- Non-goal 不变：工资条员工自助、税局直连、移动端/AI
 
 ## 8. 实现总览（对照 PRD 八大模块）
 

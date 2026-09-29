@@ -105,7 +105,7 @@
         />
         <el-table-column
           label="操作"
-          width="220"
+          width="290"
           fixed="right"
         >
           <template #default="{ row }">
@@ -138,6 +138,14 @@
               @click="handleDisposeDeficit(row)"
             >
               盘亏下账
+            </el-button>
+            <el-button
+              v-if="row.status === 'completed' && row.surplusCount > 0"
+              link
+              type="warning"
+              @click="openSurplus(row)"
+            >
+              盘盈入账
             </el-button>
             <el-button
               v-if="row.status === 'draft'"
@@ -202,6 +210,81 @@
           @click="submitCreate"
         >
           创建（自动快照在册资产）
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="surplusVisible"
+      title="盘盈入账"
+      width="820px"
+    >
+      <div class="check-tip surplus-tip">
+        账面数量为 1 的资产将新增资产卡片；其余在原卡上增加数量与原值。金额可修改，须大于 0，入账后生成凭证。
+      </div>
+      <el-table
+        v-loading="surplusLoading"
+        border
+        :data="surplusRows"
+        max-height="420px"
+      >
+        <el-table-column
+          prop="assetCode"
+          label="资产编码"
+          width="110"
+        />
+        <el-table-column
+          prop="assetName"
+          label="资产名称"
+          min-width="140"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="surplusQuantity"
+          label="盘盈数量"
+          width="90"
+          align="right"
+        />
+        <el-table-column
+          label="入账金额"
+          width="170"
+        >
+          <template #default="{ row }">
+            <el-input-number
+              v-model="row.amount"
+              :min="0"
+              :precision="2"
+              :controls="false"
+              size="small"
+              style="width: 140px"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="入账方式"
+          width="110"
+        >
+          <template #default="{ row }">
+            <el-tag
+              size="small"
+              :type="row.strategy === 'split_card' ? 'success' : 'info'"
+            >
+              {{ strategyLabel(row.strategy) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="surplusVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="surplusSubmitting"
+          :disabled="!surplusRows.length"
+          @click="submitSurplus"
+        >
+          确认入账
         </el-button>
       </template>
     </el-dialog>
@@ -340,6 +423,8 @@ import {
   updateFixedAssetCheckItem,
   completeFixedAssetCheck,
   disposeDeficitFixedAssetCheck,
+  surplusPreviewFixedAssetCheck,
+  bookSurplusFixedAssetCheck,
   deleteFixedAssetCheck
 } from '@/api/fixed-asset/check'
 import bookStore from '@/store/modules/bookStore'
@@ -366,6 +451,12 @@ const createForm = reactive({
   checkDate: '',
   remark: ''
 })
+
+const surplusVisible = ref(false)
+const surplusLoading = ref(false)
+const surplusSubmitting = ref(false)
+const surplusCheckId = ref('')
+const surplusRows = ref<any[]>([])
 
 const detailVisible = ref(false)
 const detailLoading = ref(false)
@@ -480,11 +571,56 @@ function handleDisposeDeficit(row: any) {
     const vo = res.data || {}
     const lines = [
       `成功下账 ${vo.processedCount || 0} 项`,
-      vo.surplusCount ? `盘盈 ${vo.surplusCount} 项（需建卡后另行入账）` : '',
+      vo.surplusCount ? `盘盈 ${vo.surplusCount} 项，请使用「盘盈入账」处理` : '',
       ...(vo.skipped || []).map((s: any) => `跳过 ${s.assetCode} ${s.assetName}：${s.reason}`)
     ].filter(Boolean)
     ElMessageBox.alert(lines.join('<br/>'), '盘亏下账结果', { dangerouslyUseHTMLString: true })
     getList()
+  })
+}
+
+function strategyLabel(strategy: string): string {
+  if (strategy === 'split_card') return '新增卡片'
+  if (strategy === 'bump_qty') return '原卡加数量'
+  return strategy || '-'
+}
+
+function openSurplus(row: any) {
+  surplusCheckId.value = row.id
+  surplusRows.value = []
+  surplusVisible.value = true
+  surplusLoading.value = true
+  surplusPreviewFixedAssetCheck(row.id).then((res: any) => {
+    surplusRows.value = (res.data?.rows || []).map((r: any) => ({ ...r, amount: r.defaultAmount }))
+    if (!surplusRows.value.length) {
+      modal.msgWarning('没有待入账的盘盈明细')
+    }
+  }).catch(() => {
+    surplusVisible.value = false
+  }).finally(() => {
+    surplusLoading.value = false
+  })
+}
+
+function submitSurplus() {
+  const invalid = surplusRows.value.find((r: any) => !(Number(r.amount) > 0))
+  if (invalid) {
+    modal.msgWarning(`${invalid.assetCode} ${invalid.assetName} 的入账金额必须大于 0`)
+    return
+  }
+  const payload = surplusRows.value.map((r: any) => ({ itemId: r.itemId, amount: Number(r.amount) }))
+  surplusSubmitting.value = true
+  bookSurplusFixedAssetCheck(surplusCheckId.value, payload).then((res: any) => {
+    const vo = res.data || {}
+    const lines = [
+      `成功入账 ${vo.processedCount || 0} 项`,
+      ...(vo.skipped || []).map((s: any) => `跳过 ${s.assetCode ?? ''} ${s.assetName ?? ''}：${s.reason}`)
+    ]
+    surplusVisible.value = false
+    ElMessageBox.alert(lines.join('<br/>'), '盘盈入账结果', { dangerouslyUseHTMLString: true })
+    getList()
+  }).finally(() => {
+    surplusSubmitting.value = false
   })
 }
 
@@ -510,6 +646,9 @@ onMounted(getList)
 .check-tip {
   color: var(--el-text-color-secondary);
   font-size: 12px;
+}
+.surplus-tip {
+  margin-bottom: 12px;
 }
 .check-surplus {
   color: var(--el-color-warning);

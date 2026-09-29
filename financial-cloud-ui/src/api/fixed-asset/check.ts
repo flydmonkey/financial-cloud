@@ -24,6 +24,14 @@ export function disposeDeficitFixedAssetCheck(id: string) {
   return request({ url: `/fixed-asset/check/dispose-deficit/${id}`, method: 'put' })
 }
 
+export function surplusPreviewFixedAssetCheck(id: string) {
+  return request({ url: `/fixed-asset/check/surplus-preview/${id}`, method: 'get' })
+}
+
+export function bookSurplusFixedAssetCheck(id: string, data: { itemId: string; amount: number }[]) {
+  return request({ url: `/fixed-asset/check/book-surplus/${id}`, method: 'put', data })
+}
+
 export function deleteFixedAssetCheck(id: string) {
   return request({ url: `/fixed-asset/check/${id}`, method: 'delete' })
 }

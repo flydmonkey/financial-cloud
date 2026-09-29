@@ -34,6 +34,7 @@ import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
 import com.financial.cloud.util.excel.ExportTemplateFiles;
+import com.financial.cloud.util.pdf.PdfTableExporter;
 import com.financial.cloud.util.StatementIncomeRules;
 import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.exception.ServiceException;
@@ -378,6 +379,35 @@ public class StatementIncomeService{
         if (tempFile.exists()) tempFile.delete();
         if (templateSource.exists()) templateSource.delete();
     }
+
+    /**
+     * 利润表 PDF 导出
+     */
+    public void exportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        StatementIncome incomeStatement = getIncomeStatement(dto, true).getData();
+        Book book = bookMapper.selectById(dto.getBookId());
+        List<String[]> rows = new ArrayList<>();
+        if (incomeStatement.getItems() != null) {
+            for (StatementIncomeItem item : incomeStatement.getItems()) {
+                rows.add(new String[]{
+                        PdfTableExporter.nz(item.getItemName()),
+                        PdfTableExporter.nz(item.getSortIndex()),
+                        PdfTableExporter.formatAmount(item.getCurrentBalance()),
+                        PdfTableExporter.formatAmount(item.getCumulativeBalance()),
+                });
+            }
+        }
+        String company = book != null ? book.getCompanyName() : "";
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "利润表",
+                "核算单位：" + company + "　期间：" + PdfTableExporter.nz(incomeStatement.getYearPeriod()),
+                new String[]{"项目", "行次", "本月金额", "本年累计金额"},
+                rows,
+                false,
+                "利润表" + PdfTableExporter.nz(incomeStatement.getYearPeriod()) + ".pdf"
+        ), response);
+    }
+
     public boolean deleteByBookIds(List<String> bookIds) {
         LambdaQueryWrapper<StatementIncome> slqw = Wrappers.lambdaQuery();
         slqw.in(StatementIncome::getBookId, bookIds);

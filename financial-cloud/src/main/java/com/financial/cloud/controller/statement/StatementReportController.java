@@ -67,6 +67,15 @@ public class StatementReportController {
         statementReportService.subjectBalanceExport(dto, response);
     }
 
+    @GetMapping("/subject-balance/export-pdf")
+    public void subjectBalanceExportPdf(HttpServletResponse response,
+                                        StatementParamsDto dto,
+                                        @CurrentUser UserInfo userInfo) throws IOException {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        statementReportService.subjectBalanceExportPdf(dto, response);
+    }
+
     @GetMapping(value = {"/voucher-summary"})
     public Message<List<StatementSubjectBalance>> voucherSummary(StatementParamsDto dto,
                                                             @CurrentUser UserInfo userInfo) {

@@ -53,6 +53,15 @@ public class StatementBalanceSheetController {
         statementBalanceSheetService.export(dto, response);
     }
 
+    @GetMapping("/balance-sheet/export-pdf")
+    public void exportPdf(HttpServletResponse response,
+                          StatementParamsDto dto,
+                          @CurrentUser UserInfo userInfo) throws IOException {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        statementBalanceSheetService.exportPdf(dto, response);
+    }
+
     /**
      * 资产负债表行次下钻：列出构成该行数字的科目及金额
      */

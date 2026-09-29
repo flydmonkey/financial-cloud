@@ -19,6 +19,15 @@ export function incomeExport(query : any): any {
     })
 }
 
+export function incomeExportPdf(query : any): any {
+    return request({
+        url: '/statement/income/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
 // 获取净利润
 export function getNetProfit(query : any): any {
     return request({

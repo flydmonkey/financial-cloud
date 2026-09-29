@@ -137,6 +137,9 @@
           <el-button @click="handleExport">
             导出
           </el-button>
+          <el-button @click="handleExportPdf">
+            导出 PDF
+          </el-button>
           <el-button @click="handlePrint">
             打印
           </el-button>
@@ -354,6 +357,12 @@ const handlePeriodType = (value: any) => {
 function handleExport() {
   reportApis.subjectBalanceExport(queryParams.value).then((data: any) => {
     downloadData(data, `科目余额表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+function handleExportPdf() {
+  reportApis.subjectBalanceExportPdf(queryParams.value).then((data: any) => {
+    downloadData(data, `科目余额表${queryParams.value.reportDate}.pdf`)
   })
 }
 

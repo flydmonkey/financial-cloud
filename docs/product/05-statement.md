@@ -1,6 +1,6 @@
 # 05 · 财务报表
 
-> 状态：部分实现（资产负债、利润、现金流量、费用明细可用；Excel 导出 + 浏览器打印/另存 PDF；老板极简独立页未做）
+> 状态：部分实现（资产负债、利润、现金流量、费用明细可用；Excel + 浏览器打印/另存 PDF + 服务端 PDF（资产负债/利润/科目余额）；老板极简独立页未做）
 
 ## 1. 模块定位
 
@@ -25,7 +25,7 @@
 | 按年/月筛选、刷新 | **已实现** | 各页顶部 |
 | 报表取数规则配置 | **已实现** | `statement_rules`、config API |
 | 资产负债/利润表行配置 | **已实现** | config + 准则模板 |
-| PDF 导出 | **部分实现** | 浏览器打印对话框另存 PDF（`tablePrint.ts`）；无服务端 PDF 通道 |
+| PDF 导出 | **部分实现** | 服务端 PDF：资产负债/利润/科目余额；其余仍可浏览器打印另存 |
 | 打印 | **已实现** | 资产负债表/利润表/现金流量表/科目余额/总账等走 `openTablePrintWindow` |
 | 数字一键溯源到账簿/凭证 | **已实现** | 资产负债/利润表行次下钻科目构成 → 明细账 |
 | 老板极简报表独立页 | **未实现** | 首页看板部分承接，待确认是否单列 |
@@ -60,11 +60,11 @@
 
 | 前缀 / 路径 | 说明 |
 |-------------|------|
-| `/api/statement/balance-sheet` (+ `/export`) | 资产负债表 |
-| `/api/statement/income` (+ `/export`) | 利润表 |
+| `/api/statement/balance-sheet` (+ `/export`、`/export-pdf`) | 资产负债表 |
+| `/api/statement/income` (+ `/export`、`/export-pdf`) | 利润表 |
 | `/api/statement/cash-flow`、`/api/statement/cash-flow/*` | 现金流量查询与指定 |
 | `/api/statement/expense-detail` | 费用明细 |
-| `/api/statement/subject-balance`、`/voucher-summary`、`/general-ledger` | 余额、汇总、总账 |
+| `/api/statement/subject-balance`（+ `/export-pdf`）、`/voucher-summary`、`/general-ledger` | 余额、汇总、总账 |
 | `/api/statement/config/*` | 资产负债/利润/规则配置 |
 
 服务：`StatementBalanceSheetService`、`StatementIncomeService`、`StatementReportService`、`StatementExpenseDetailService`、`StatementCashFlowService`。
@@ -77,9 +77,8 @@
 
 ## 8. 已知缺口
 
-- PDF、正式打印、老板极简报表产品页。
-- 报表单元格溯源。
-- 「本月账本包」ZIP 一键导出：OpenSpec `daizhang-commercial-plan` / `monthly-books-pack` **待实现**。
+- 服务端 PDF 扩更多表（现金流量/费用明细/账簿等仍可浏览器另存）；老板极简报表产品页。
+- 「本月账本包」ZIP 一键导出已落地（见 `monthly-books-pack`）；按客户声音继续扩 PDF 覆盖面。
 
 ## 9. 证据索引
 

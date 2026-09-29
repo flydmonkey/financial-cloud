@@ -46,6 +46,15 @@ public class StatementIncomeController {
         statementIncomeService.export(dto, response);
     }
 
+    @GetMapping("/income/export-pdf")
+    public void exportPdf(HttpServletResponse response,
+                          StatementParamsDto dto,
+                          @CurrentUser UserInfo userInfo) throws IOException {
+        dto.setBookId(userInfo.getBookId());
+        validParams(dto);
+        statementIncomeService.exportPdf(dto, response);
+    }
+
     /**
      * 利润表行次下钻：列出构成该行数字的科目及本期发生额
      */

@@ -47,6 +47,15 @@ export function subjectBalanceExport(query : any): any {
     })
 }
 
+export function subjectBalanceExportPdf(query : any): any {
+    return request({
+        url: '/statement/subject-balance/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
 // 资产负债表
 export function selectGroupBalanceSheet(query : any): any {
     return request({
@@ -60,6 +69,15 @@ export function selectGroupBalanceSheet(query : any): any {
 export function balanceSheetExport(query : any): any {
     return request({
         url: '/statement/balance-sheet/export',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
+export function balanceSheetExportPdf(query : any): any {
+    return request({
+        url: '/statement/balance-sheet/export-pdf',
         method: 'get',
         params: query,
         responseType: 'blob'

@@ -13,7 +13,7 @@
 | 1 | `print-delivery-polish` | 已归档 | 打印收口 |
 | 2 | `opening-balance-excel` | 已归档 | 期初 Excel 导出/模板/导入 |
 | 3 | `docs-as-built-sync` | 已归档 | 分册/overview 与已落地能力全面对齐 |
-| 4 | `server-pdf-channel` 或按客户声音 | 排队 | P2；文档校准后评估 |
+| 4 | `server-pdf-channel` | 已归档 | 服务端 PDF 首批：资产负债/利润/科目余额 |
 | 5 | 定时备份 | 排队 | backup Non-goal v2 |
 
 ## 决策原则

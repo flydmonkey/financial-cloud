@@ -38,6 +38,7 @@ import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
 import com.financial.cloud.util.excel.ExportTemplateFiles;
+import com.financial.cloud.util.pdf.PdfTableExporter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -332,6 +333,47 @@ public class StatementBalanceSheetService{
         if (tempFile.exists()) tempFile.delete();
         if (templateSource.exists()) templateSource.delete();
     }
+
+    /**
+     * 资产负债表 PDF 导出
+     */
+    public void exportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        StatementBalanceSheet balanceSheet = queryBalanceSheet(dto, true).getData();
+        StatementBalanceSheetItemListVo itemListVo = balanceSheet.getItems();
+        List<StatementBalanceSheetItem> assets = itemListVo.getAssets();
+        List<StatementBalanceSheetItem> liability = itemListVo.getLiability();
+        Book book = bookMapper.selectById(dto.getBookId());
+        int max = Math.max(assets.size(), liability.size());
+        List<String[]> rows = new ArrayList<>();
+        for (int i = 0; i < max; i++) {
+            StatementBalanceSheetItem assetItem = i < assets.size() ? assets.get(i) : null;
+            StatementBalanceSheetItem liabilityItem = i < liability.size() ? liability.get(i) : null;
+            String assetName = assetItem == null ? "" : ((StatementSymbolEnum.MINUS.getValue().equals(assetItem.getSymbol()) ? "减：" : "")
+                    + PdfTableExporter.nz(assetItem.getItemName()));
+            String liabilityName = liabilityItem == null ? "" : ((StatementSymbolEnum.MINUS.getValue().equals(liabilityItem.getSymbol()) ? "减：" : "")
+                    + PdfTableExporter.nz(liabilityItem.getItemName()));
+            rows.add(new String[]{
+                    assetName,
+                    assetItem == null ? "" : PdfTableExporter.nz(assetItem.getSortIndex()),
+                    assetItem == null ? "" : PdfTableExporter.formatAmount(assetItem.getCurrentBalance()),
+                    assetItem == null ? "" : PdfTableExporter.formatAmount(assetItem.getInitialBalance()),
+                    liabilityName,
+                    liabilityItem == null ? "" : PdfTableExporter.nz(liabilityItem.getSortIndex()),
+                    liabilityItem == null ? "" : PdfTableExporter.formatAmount(liabilityItem.getCurrentBalance()),
+                    liabilityItem == null ? "" : PdfTableExporter.formatAmount(liabilityItem.getInitialBalance()),
+            });
+        }
+        String company = book != null ? book.getCompanyName() : "";
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "资产负债表",
+                "核算单位：" + company + "　期间：" + PdfTableExporter.nz(balanceSheet.getYearPeriod()),
+                new String[]{"资产", "行次", "期末余额", "年初余额", "负债和所有者权益", "行次", "期末余额", "年初余额"},
+                rows,
+                true,
+                "资产负债表" + PdfTableExporter.nz(balanceSheet.getYearPeriod()) + ".pdf"
+        ), response);
+    }
+
     public boolean deleteByBookIds(List<String> bookIds) {
         LambdaQueryWrapper<StatementBalanceSheet> slqw = Wrappers.lambdaQuery();
         slqw.in(StatementBalanceSheet::getBookId, bookIds);

@@ -147,6 +147,9 @@
           <el-button @click="handleExport">
             导出
           </el-button>
+          <el-button @click="handleExportPdf">
+            导出 PDF
+          </el-button>
         </div>
       </div>
 
@@ -778,6 +781,12 @@ const handlePeriodType = (value: string) => {
 function handleExport() {
   reportApis.balanceSheetExport(queryParams.value).then((data: any) => {
     downloadData(data, `资产负载表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+function handleExportPdf() {
+  reportApis.balanceSheetExportPdf(queryParams.value).then((data: any) => {
+    downloadData(data, `资产负债表${queryParams.value.reportDate}.pdf`)
   })
 }
 

@@ -136,6 +136,9 @@
           <el-button @click="handleExport">
             导出
           </el-button>
+          <el-button @click="handleExportPdf">
+            导出 PDF
+          </el-button>
         </div>
       </div>
 
@@ -637,6 +640,12 @@ function handleQuery() {
 function handleExport() {
   incomeApis.incomeExport(queryParams.value).then((data: any) => {
     downloadData(data, `利润表${queryParams.value.reportDate} ` + parseTime(new Date()) + ".xlsx")
+  })
+}
+
+function handleExportPdf() {
+  incomeApis.incomeExportPdf(queryParams.value).then((data: any) => {
+    downloadData(data, `利润表${queryParams.value.reportDate}.pdf`)
   })
 }
 

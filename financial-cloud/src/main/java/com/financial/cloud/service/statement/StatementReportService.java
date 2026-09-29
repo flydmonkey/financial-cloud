@@ -43,6 +43,7 @@ import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
 import com.financial.cloud.util.excel.ExcelParams;
 import com.financial.cloud.util.excel.ExportTemplateFiles;
+import com.financial.cloud.util.pdf.PdfTableExporter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -184,6 +185,39 @@ public class StatementReportService{
         // 最后删除临时文件
         if (tempFile.exists()) tempFile.delete();
         if (templateSource.exists()) templateSource.delete();
+    }
+
+    /**
+     * 科目余额表 PDF 导出
+     */
+    public void subjectBalanceExportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        dto.parse();
+        List<StatementSubjectBalance> subjectBalances = subjectBalance(dto).getData();
+        Book book = bookMapper.selectById(dto.getBookId());
+        List<String[]> rows = new ArrayList<>();
+        if (subjectBalances != null) {
+            for (StatementSubjectBalance b : subjectBalances) {
+                rows.add(new String[]{
+                        PdfTableExporter.nz(b.getSubjectCode()),
+                        PdfTableExporter.nz(b.getSubjectName()),
+                        PdfTableExporter.formatAmount(b.getOpeningBalanceDebit()),
+                        PdfTableExporter.formatAmount(b.getOpeningBalanceCredit()),
+                        PdfTableExporter.formatAmount(b.getCurrentPeriodDebit()),
+                        PdfTableExporter.formatAmount(b.getCurrentPeriodCredit()),
+                        PdfTableExporter.formatAmount(b.getClosingBalanceDebit()),
+                        PdfTableExporter.formatAmount(b.getClosingBalanceCredit()),
+                });
+            }
+        }
+        String bookName = book != null ? book.getName() : "";
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "科目余额表",
+                "账套：" + bookName + "　期间：" + PdfTableExporter.nz(dto.getReportDate()),
+                new String[]{"科目编码", "科目名称", "期初借方", "期初贷方", "本期借方", "本期贷方", "期末借方", "期末贷方"},
+                rows,
+                true,
+                "科目余额表" + PdfTableExporter.nz(dto.getReportDate()) + ".pdf"
+        ), response);
     }
 
     /**

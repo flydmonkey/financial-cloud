@@ -51,7 +51,9 @@ public class JournalAccountService extends ServiceImpl<JournalAccountMapper, Jou
             account.setSortIndex(1);
         }
         boolean saveResult = super.save(account);
-        return saveResult ? new Message<>(Message.SUCCESS, "新增成功") : new Message<>(Message.FAIL, "新增失败");
+        return saveResult
+                ? new Message<>(Message.SUCCESS, "新增成功", account.getId())
+                : new Message<>(Message.FAIL, "新增失败");
     }
     @Transactional
     public Message<String> update(JournalAccountDto dto) {

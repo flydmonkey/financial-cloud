@@ -182,6 +182,8 @@ public final class MessageKeys {
         public static final String SUBJECT_NOT_FOUND = "journal.error.subject_not_found";
         public static final String ENTRY_LINKED_LOCKED = "journal.error.entry_linked_locked";
         public static final String SUBJECT_SAME_AS_FUND = "journal.error.subject_same_as_fund";
+        public static final String ACCOUNT_NOT_FOUND = "journal.error.account_not_found";
+        public static final String DIRECTION_INVALID = "journal.error.direction_invalid";
 
         private Journal() {
         }

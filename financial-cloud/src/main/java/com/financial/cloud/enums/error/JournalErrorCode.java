@@ -14,7 +14,9 @@ public enum JournalErrorCode implements ErrorCode {
     SUBJECT_REQUIRED(508004, MessageKeys.Journal.SUBJECT_REQUIRED),
     SUBJECT_NOT_FOUND(508005, MessageKeys.Journal.SUBJECT_NOT_FOUND),
     ENTRY_LINKED_LOCKED(508006, MessageKeys.Journal.ENTRY_LINKED_LOCKED),
-    SUBJECT_SAME_AS_FUND(508007, MessageKeys.Journal.SUBJECT_SAME_AS_FUND);
+    SUBJECT_SAME_AS_FUND(508007, MessageKeys.Journal.SUBJECT_SAME_AS_FUND),
+    ACCOUNT_NOT_FOUND(508008, MessageKeys.Journal.ACCOUNT_NOT_FOUND),
+    DIRECTION_INVALID(508009, MessageKeys.Journal.DIRECTION_INVALID);
 
     private final int code;
     private final String messageKey;

@@ -74,32 +74,40 @@ public class JournalEntryService extends ServiceImpl<JournalEntryMapper, Journal
         }
         
         JournalAccount  journalAccount  = journalAccountService.getById(journalEntry.getAccId());
-        
-        if(journalEntry.getDirection().equalsIgnoreCase("i") 
-        		|| journalEntry.getDirection().equalsIgnoreCase("o")) {
+        if (journalAccount == null) {
+        	throw new BusinessException(JournalErrorCode.ACCOUNT_NOT_FOUND);
+        }
+        String direction = journalEntry.getDirection();
+        if (direction == null || !(direction.equalsIgnoreCase("i")
+        		|| direction.equalsIgnoreCase("o") || direction.equalsIgnoreCase("e"))) {
+        	throw new BusinessException(JournalErrorCode.DIRECTION_INVALID);
+        }
+
+        if(direction.equalsIgnoreCase("i")
+        		|| direction.equalsIgnoreCase("o")) {
         	journalEntry.setExpenditure(null);
-        	if(journalEntry.getDirection().equalsIgnoreCase("o")
+        	if(direction.equalsIgnoreCase("o")
         			&& nullToZero(journalAccount.getOpeningBalance()).compareTo(BigDecimal.ZERO) == 0) {
         		journalAccount.setOpeningBalance(journalEntry.getIncome());
         		journalAccountService.updateById(journalAccount);
         	}
         	journalAccountService.income(journalEntry.getAccId(), journalEntry.getIncome());
-        	
-        }else if(journalEntry.getDirection().equalsIgnoreCase("e")){
+
+        }else {
         	journalEntry.setIncome(null);
         	if(journalAccount.getBalance().subtract(journalEntry.getExpenditure()).doubleValue() < 0 ) {
         		throw new BusinessException(JournalErrorCode.INSUFFICIENT_BALANCE);
         	}
         	journalAccountService.expenditure(journalEntry.getAccId(), journalEntry.getExpenditure());
         }
-        
-        if(journalAccount != null) {
-        	JournalAccount journalAccountBalance  = journalAccountService.getById(journalEntry.getAccId());
-        	journalEntry.setBalance(journalAccountBalance.getBalance());
-        }
+
+        JournalAccount journalAccountBalance  = journalAccountService.getById(journalEntry.getAccId());
+        journalEntry.setBalance(journalAccountBalance.getBalance());
         boolean saveResult = super.save(journalEntry);
 
-        return saveResult ? new Message<>(Message.SUCCESS, "新增成功") : new Message<>(Message.FAIL, "新增失败");
+        return saveResult
+        		? new Message<>(Message.SUCCESS, "新增成功", journalEntry.getId())
+        		: new Message<>(Message.FAIL, "新增失败");
     }
 
     @Transactional

@@ -93,6 +93,8 @@ public class TaxEstimateService {
         BigDecimal surtaxTotal = urbanTax.add(eduTax).add(localEduTax);
 
         // ---- 利润总额与企业所得税 ----
+        // 口径：损益类按科目性质取「发生额」（贷方性质取贷方发生、借方性质取借方发生），
+        // 与利润表一致；期末损益结转凭证记在科目对方，不会把本期发生额对冲为 0。
         BigDecimal profit = BigDecimal.ZERO;
         BigDecimal revenue = BigDecimal.ZERO;
         for (String prefix : new String[]{"5", "6"}) {
@@ -102,12 +104,10 @@ public class TaxEstimateService {
                     continue;
                 }
                 boolean creditNature = isCreditNature(subjectByCode, code);
-                BigDecimal net = creditNature
-                        ? nz(item.getCreditAmount()).subtract(nz(item.getDebitAmount()))
-                        : nz(item.getDebitAmount()).subtract(nz(item.getCreditAmount()));
-                profit = profit.add(creditNature ? net : net.negate());
+                BigDecimal occurred = creditNature ? nz(item.getCreditAmount()) : nz(item.getDebitAmount());
+                profit = profit.add(creditNature ? occurred : occurred.negate());
                 if (startsWithAny(code, REVENUE_PREFIXES)) {
-                    revenue = revenue.add(net);
+                    revenue = revenue.add(occurred);
                 }
             }
         }

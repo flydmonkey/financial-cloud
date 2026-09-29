@@ -133,6 +133,28 @@ class TaxEstimateServiceTest {
     }
 
     @Test
+    void estimate_carryForwardVouchersDoNotZeroOutMonth() {
+        stubSubjects();
+        // 期末结转后：收入/费用被对方结转分录对冲，但发生额口径应仍取本期业务发生
+        when(voucherItemMapper.multiColumnLedgerItems(eq(BOOK_ID), eq("2221"), any(), any()))
+                .thenReturn(List.of());
+        when(voucherItemMapper.multiColumnLedgerItems(eq(BOOK_ID), eq("2171"), any(), any()))
+                .thenReturn(List.of());
+        when(voucherItemMapper.multiColumnLedgerItems(eq(BOOK_ID), eq("5"), any(), any()))
+                .thenReturn(List.of(
+                        plItem("5001", "主营业务收入", null, "2000"),
+                        plItem("5001", "主营业务收入", "2000", null),
+                        plItem("5401", "主营业务成本", "1200", null),
+                        plItem("5401", "主营业务成本", null, "1200")));
+        when(voucherItemMapper.multiColumnLedgerItems(eq(BOOK_ID), eq("6"), any(), any()))
+                .thenReturn(List.of());
+
+        TaxEstimateVo vo = service.estimate(BOOK_ID, "2026-09", URBAN, EDU, LOCAL, CIT, THRESHOLD);
+        assertEquals(0, vo.getRevenue().compareTo(new BigDecimal("2000.00")));
+        assertEquals(0, vo.getProfitBeforeTax().compareTo(new BigDecimal("800.00")));
+    }
+
+    @Test
     void estimate_blankPeriodRejected() {
         assertThrows(BusinessException.class,
                 () -> service.estimate(BOOK_ID, " ", URBAN, EDU, LOCAL, CIT, THRESHOLD));

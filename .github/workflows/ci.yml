@@ -38,7 +38,9 @@ jobs:
       - name: Typecheck
         working-directory: financial-cloud-ui
         run: npm run typecheck
-        continue-on-error: true
+      - name: Unit tests (voucher workspace)
+        working-directory: financial-cloud-ui
+        run: npm run test:unit
 
   e2e:
     runs-on: ubuntu-latest

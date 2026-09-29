@@ -39,7 +39,7 @@ flowchart LR
 | ~~经典凭证打印接入~~ | 编辑页 + 列表批量 → classic HTML | **已落地**（`print-delivery-polish`） |
 | ~~凭证批量专业打印~~ | 列表多选打印 | **已落地** |
 | ~~报表打印 / 浏览器另存 PDF~~ | 三表（含现金流量）与账簿 `tablePrint` | **已落地** |
-| （可选）建账/期初录入提速 | 代账接手吞吐 | 后续 |
+| （可选）建账/期初录入提速 | 代账接手吞吐 | **已落地** `opening-balance-excel`（期初 Excel 导出/导入） |
 | 服务端统一 PDF | 真正 `.pdf` 下载 | P2 增强，非本切片 |
 
 ### S2 · 资金往来（对齐 PRD 最大缺口 + commercial-plan S3 前半）

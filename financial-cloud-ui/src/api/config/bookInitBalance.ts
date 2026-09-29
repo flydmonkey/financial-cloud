@@ -18,3 +18,28 @@ export function saveBookInitBalance(data: any) {
     })
 }
 
+export function exportBookInitBalance(query: any) {
+    return request({
+        url: '/base/init-balance/export',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
+export function downloadBookInitBalanceTemplate() {
+    return request({
+        url: '/base/init-balance/import-template',
+        method: 'get',
+        responseType: 'blob'
+    })
+}
+
+export function importBookInitBalance(data: FormData) {
+    return request({
+        url: '/base/init-balance/import',
+        method: 'post',
+        data,
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+}

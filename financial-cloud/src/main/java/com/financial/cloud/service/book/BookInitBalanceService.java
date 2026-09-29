@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.constants.system.ConstsSysConfig;
+import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.BookInitBalance;
 import com.financial.cloud.dto.book.BookInitBalanceChangeDto;
+import com.financial.cloud.dto.book.BookInitBalanceImportResultVo;
 import com.financial.cloud.dto.book.BookInitBalancePageDto;
 import com.financial.cloud.dto.book.BookInitBalanceVo;
 import com.financial.cloud.domain.book.BookSubject;
@@ -22,15 +24,24 @@ import com.financial.cloud.repository.book.BookInitBalanceMapper;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.financial.cloud.repository.book.BookSubjectMapper;
 import com.financial.cloud.repository.statement.StatementSubjectBalanceMapper;
-import com.financial.cloud.service.book.BookInitBalanceService;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
+import com.financial.cloud.util.ExcelUtils;
+import com.financial.cloud.util.excel.ExcelExporter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -279,5 +290,204 @@ public class BookInitBalanceService extends ServiceImpl<BookInitBalanceMapper, B
 
         boolean save = Db.saveOrUpdateBatch(bookInitBalances);
         return save ? new Message<>(Message.SUCCESS, "保存成功") : new Message<>(Message.FAIL, "保存失败");
+    }
+
+    private static final String[] EXPORT_HEADERS = {
+            "科目编码", "科目名称", "方向", "年初余额借方", "年初余额贷方", "本年累计借方", "本年累计贷方", "余额"
+    };
+
+    public void export(BookInitBalancePageDto dto, HttpServletResponse response) throws IOException {
+        Message<List<BookInitBalanceVo>> listed = list(dto);
+        List<BookInitBalanceVo> rows = listed.getData() == null ? List.of() : listed.getData();
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("期初余额");
+            Row header = sheet.createRow(0);
+            for (int i = 0; i < EXPORT_HEADERS.length; i++) {
+                header.createCell(i).setCellValue(EXPORT_HEADERS[i]);
+            }
+            int rowIndex = 1;
+            for (BookInitBalanceVo vo : rows) {
+                Row row = sheet.createRow(rowIndex++);
+                int col = 0;
+                row.createCell(col++).setCellValue(StringUtils.defaultString(vo.getCode()));
+                row.createCell(col++).setCellValue(StringUtils.defaultString(vo.getName()));
+                row.createCell(col++).setCellValue(StringUtils.defaultString(vo.getDirection()));
+                setAmountCell(row, col++, vo.getOpeningYearBalanceDebit());
+                setAmountCell(row, col++, vo.getOpeningYearBalanceCredit());
+                setAmountCell(row, col++, vo.getDebitAmount());
+                setAmountCell(row, col++, vo.getCreditAmount());
+                setAmountCell(row, col, vo.getBalance());
+            }
+            for (int i = 0; i < EXPORT_HEADERS.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+            response.setContentType(ExcelExporter.APPLICATION_MS_EXCEL);
+            response.setHeader("Content-Disposition", "attachment; filename="
+                    + URLEncoder.encode("期初余额.xlsx", StandardCharsets.UTF_8));
+            workbook.write(response.getOutputStream());
+            response.getOutputStream().flush();
+        }
+    }
+
+    public void downloadImportTemplate(HttpServletResponse response) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("期初余额导入");
+            Row header = sheet.createRow(0);
+            for (int i = 0; i < EXPORT_HEADERS.length; i++) {
+                header.createCell(i).setCellValue(EXPORT_HEADERS[i]);
+            }
+            Row sample = sheet.createRow(1);
+            sample.createCell(0).setCellValue("1001");
+            sample.createCell(1).setCellValue("库存现金");
+            sample.createCell(2).setCellValue("1");
+            sample.createCell(3).setCellValue(10000);
+            sample.createCell(4).setCellValue(0);
+            sample.createCell(5).setCellValue(0);
+            sample.createCell(6).setCellValue(0);
+            sample.createCell(7).setCellValue(10000);
+            for (int i = 0; i < EXPORT_HEADERS.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+            response.setContentType(ExcelExporter.APPLICATION_MS_EXCEL);
+            response.setHeader("Content-Disposition", "attachment; filename="
+                    + URLEncoder.encode("期初余额导入模板.xlsx", StandardCharsets.UTF_8));
+            workbook.write(response.getOutputStream());
+            response.getOutputStream().flush();
+        }
+    }
+
+    @Transactional
+    public Message<BookInitBalanceImportResultVo> importFromExcel(String bookId, ExcelImport excelImportFile) {
+        BookInitBalanceImportResultVo result = new BookInitBalanceImportResultVo();
+        if (StringUtils.isBlank(bookId)) {
+            return Message.failed("所属账套ID不能为空");
+        }
+        String initializeTask = configSysService.selectConfigByKey(bookId, ConstsSysConfig.SYS_INITIALIZE_TASK);
+        if ("true".equals(initializeTask)) {
+            return Message.failed("当前不允许操作，初始化已完成");
+        }
+        if (excelImportFile == null || !excelImportFile.isExcelNotEmpty()) {
+            result.setFailed(1);
+            BookInitBalanceImportResultVo.RowError err = new BookInitBalanceImportResultVo.RowError();
+            err.setRow(0);
+            err.setMessage("请上传 Excel 文件");
+            result.getErrors().add(err);
+            return new Message<>(Message.FAIL, "导入失败", result);
+        }
+
+        BookInitBalancePageDto pageDto = new BookInitBalancePageDto();
+        pageDto.setBookId(bookId);
+        List<BookInitBalanceVo> current = Optional.ofNullable(list(pageDto).getData()).orElse(List.of());
+        Map<String, BookInitBalanceVo> byCode = current.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getCode()))
+                .collect(Collectors.toMap(BookInitBalanceVo::getCode, v -> v, (a, b) -> a));
+        Set<String> parentOriginIds = current.stream()
+                .map(BookInitBalanceVo::getParentId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        List<BookInitBalanceChangeDto> toSave = new ArrayList<>();
+        try {
+            Workbook workbook = excelImportFile.biuldWorkbook();
+            Sheet sheet = workbook.getSheetAt(0);
+            int last = sheet.getLastRowNum();
+            for (int r = 1; r <= last; r++) {
+                Row row = sheet.getRow(r);
+                if (row == null || isBlankRow(row)) {
+                    continue;
+                }
+                int excelRow = r + 1;
+                String code = StringUtils.trimToEmpty(ExcelUtils.getValue(row, 0));
+                if (StringUtils.isBlank(code)) {
+                    addImportError(result, excelRow, code, "科目编码不能为空");
+                    continue;
+                }
+                BookInitBalanceVo existing = byCode.get(code);
+                if (existing == null) {
+                    addImportError(result, excelRow, code, "科目编码不存在于当前账套");
+                    continue;
+                }
+                if (existing.isHasVoucher()) {
+                    addImportError(result, excelRow, code, "科目已有凭证，不允许改期初");
+                    continue;
+                }
+                String originId = StringUtils.defaultIfBlank(existing.getOriginId(), existing.getId());
+                if (parentOriginIds.contains(originId)) {
+                    addImportError(result, excelRow, code, "非末级科目，请只导入末级科目金额");
+                    continue;
+                }
+                BookInitBalanceChangeDto dto = new BookInitBalanceChangeDto();
+                BeanUtil.copyProperties(existing, dto);
+                dto.setBookId(bookId);
+                dto.setOpeningYearBalanceDebit(parseAmount(ExcelUtils.getValue(row, 3)));
+                dto.setOpeningYearBalanceCredit(parseAmount(ExcelUtils.getValue(row, 4)));
+                dto.setDebitAmount(parseAmount(ExcelUtils.getValue(row, 5)));
+                dto.setCreditAmount(parseAmount(ExcelUtils.getValue(row, 6)));
+                BigDecimal balance = parseAmount(ExcelUtils.getValue(row, 7));
+                if (balance.compareTo(BigDecimal.ZERO) == 0) {
+                    // 余额列空时按方向推算：借方科目=年初借+累计借-年初贷-累计贷
+                    if (SubjectDirectionEnum.DEBIT.getValue().equals(String.valueOf(existing.getDirection()))) {
+                        balance = dto.getOpeningYearBalanceDebit().add(dto.getDebitAmount())
+                                .subtract(dto.getOpeningYearBalanceCredit()).subtract(dto.getCreditAmount());
+                    } else {
+                        balance = dto.getOpeningYearBalanceCredit().add(dto.getCreditAmount())
+                                .subtract(dto.getOpeningYearBalanceDebit()).subtract(dto.getDebitAmount());
+                    }
+                }
+                dto.setBalance(balance);
+                toSave.add(dto);
+                result.setSuccess(result.getSuccess() + 1);
+            }
+            excelImportFile.closeWorkbook();
+        } catch (IOException e) {
+            throw new IllegalStateException("读取 Excel 失败", e);
+        }
+
+        if (!toSave.isEmpty()) {
+            Message<String> saved = save(toSave);
+            if (saved.getCode() != Message.SUCCESS) {
+                return new Message<>(Message.FAIL, saved.getMessage(), result);
+            }
+        }
+        String msg = "导入完成：成功 " + result.getSuccess() + " 条，失败 " + result.getFailed() + " 条";
+        return new Message<>(Message.SUCCESS, msg, result);
+    }
+
+    private void addImportError(BookInitBalanceImportResultVo result, int row, String code, String message) {
+        result.setFailed(result.getFailed() + 1);
+        BookInitBalanceImportResultVo.RowError err = new BookInitBalanceImportResultVo.RowError();
+        err.setRow(row);
+        err.setCode(code);
+        err.setMessage(message);
+        result.getErrors().add(err);
+    }
+
+    private boolean isBlankRow(Row row) {
+        for (int i = 0; i < EXPORT_HEADERS.length; i++) {
+            if (StringUtils.isNotBlank(ExcelUtils.getValue(row, i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void setAmountCell(Row row, int col, BigDecimal value) {
+        if (value == null) {
+            row.createCell(col).setCellValue("");
+        } else {
+            row.createCell(col).setCellValue(value.doubleValue());
+        }
+    }
+
+    private BigDecimal parseAmount(String raw) {
+        String text = StringUtils.trimToEmpty(raw).replace(",", "");
+        if (StringUtils.isBlank(text)) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(text);
+        } catch (Exception e) {
+            return BigDecimal.ZERO;
+        }
     }
 }

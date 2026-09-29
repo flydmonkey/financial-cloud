@@ -83,6 +83,27 @@
         >
           试算平衡
         </el-button>
+        <el-button @click="handleExport">
+          导出
+        </el-button>
+        <el-button
+          v-if="ableEdit"
+          @click="handleDownloadTemplate"
+        >
+          下载模板
+        </el-button>
+        <el-upload
+          v-if="ableEdit"
+          :show-file-list="false"
+          :http-request="importExcel"
+          :before-upload="beforeImportUpload"
+          accept=".xls,.xlsx"
+          style="display: inline-block; margin: 0 8px"
+        >
+          <el-button>
+            导入
+          </el-button>
+        </el-upload>
       </div>
 
       <el-table
@@ -306,11 +327,56 @@
         </span>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="importResult.visible"
+      title="期初导入结果"
+      width="640px"
+    >
+      <p class="import-summary">
+        成功 {{ importResult.success }} 条，失败 {{ importResult.failed }} 条
+      </p>
+      <el-table
+        v-if="importResult.errors.length"
+        :data="importResult.errors"
+        border
+        max-height="320"
+      >
+        <el-table-column
+          prop="row"
+          label="行号"
+          width="80"
+        />
+        <el-table-column
+          prop="code"
+          label="科目编码"
+          width="120"
+        />
+        <el-table-column
+          prop="message"
+          label="原因"
+        />
+      </el-table>
+      <template #footer>
+        <el-button
+          type="primary"
+          @click="importResult.visible = false"
+        >
+          关闭
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts" name="BookInitBalance">
-import {listBookInitBalance, saveBookInitBalance} from "@/api/config/bookInitBalance";
+import {
+  listBookInitBalance,
+  saveBookInitBalance,
+  exportBookInitBalance,
+  downloadBookInitBalanceTemplate,
+  importBookInitBalance,
+} from "@/api/config/bookInitBalance";
 import {useI18n} from "vue-i18n";
 import bookStore from "@/store/modules/bookStore";
 import {reactive, ref, toRefs, getCurrentInstance} from "vue";
@@ -319,6 +385,7 @@ import {formatAmount,} from "@/utils";
 import {handleTree, handleTreeToList} from "@/utils/financialCloud";
 import Decimal from 'decimal.js'
 import {handleSummaryMethod, SummaryMethodProps} from "@/utils/Subjects";
+import modal from "@/plugins/modal";
 
 const {proxy} = getCurrentInstance()!;
 const {subjects_category} = toRefs<any>(proxy?.useDict("subjects_category"));
@@ -335,6 +402,12 @@ const ableEdit = ref(!currBookStore.initializeStatus);
 const dialog = reactive<any>({
   visible: false,
   title: ''
+});
+const importResult = reactive({
+  visible: false,
+  success: 0,
+  failed: 0,
+  errors: [] as any[],
 });
 const data: any = reactive({
   form: {},
@@ -476,6 +549,55 @@ const submitForm = async () => {
     proxy?.$modal.msgError('请保持试算平衡');
   }
 };
+
+function handleExport() {
+  exportBookInitBalance({ ...queryParams.value }).then((blob: any) => {
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = '期初余额.xlsx'
+    a.click()
+    window.URL.revokeObjectURL(url)
+  })
+}
+
+function handleDownloadTemplate() {
+  downloadBookInitBalanceTemplate().then((blob: any) => {
+    const url = window.URL.createObjectURL(new Blob([blob]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = '期初余额导入模板.xlsx'
+    a.click()
+    window.URL.revokeObjectURL(url)
+  })
+}
+
+function beforeImportUpload(file: any) {
+  const name = (file?.name || '').toLowerCase()
+  if (!name.endsWith('.xls') && !name.endsWith('.xlsx')) {
+    modal.msgError('请上传 Excel 文件（.xls / .xlsx）')
+    return false
+  }
+  return true
+}
+
+function importExcel(item: any) {
+  const formData = new FormData()
+  formData.append('excelFile', item.file)
+  importBookInitBalance(formData).then((res: any) => {
+    const data = res.data || {}
+    importResult.success = data.success || 0
+    importResult.failed = data.failed || 0
+    importResult.errors = data.errors || []
+    getList()
+    if (importResult.failed > 0) {
+      importResult.visible = true
+    } else {
+      modal.msgSuccess(res.message || `导入完成，成功 ${importResult.success} 条`)
+    }
+    handleTrialBalance(true)
+  }).catch(() => undefined)
+}
 
 function getIndent(row: any) {
   if (row.code) {

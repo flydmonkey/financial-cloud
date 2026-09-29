@@ -99,7 +99,7 @@
 import {ref, getCurrentInstance} from "vue";
 import {useI18n} from 'vue-i18n'
 import {useRoute, useRouter} from "vue-router";
-import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked} from '@element-plus/icons-vue'
+import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked, Ticket, Document} from '@element-plus/icons-vue'
 import Footer from "@/components/Footer/index.vue"
 import TodoPanel from "@/views/dashboard/accounting/TodoPanel.vue";
 import FundBalance from "@/views/dashboard/accounting/fund_balance.vue";
@@ -124,6 +124,8 @@ const quickEntries = [
   {label: '日记账', path: '/journal/journalentry', icon: Wallet},
   {label: '资产负债表', path: '/statement/balance-sheet', icon: DataAnalysis},
   {label: '利润表', path: '/statement/income-statement', icon: TrendCharts},
+  {label: '费用报销', path: '/expense/claim', icon: Ticket},
+  {label: '增值税申报表', path: '/statement/tax-declaration', icon: Document},
   {label: '期末结账', path: '/settlement/settle-list', icon: Checked},
 ]
 

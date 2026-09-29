@@ -82,6 +82,12 @@
           >
             测算
           </el-button>
+          <el-button
+            :disabled="!data"
+            @click="handlePrint"
+          >
+            打印
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -214,6 +220,7 @@ import {formatAmount} from '@/utils'
 import {parseTime} from '@/utils/financialCloud'
 import {taxEstimate} from '@/api/statement/tax-estimate'
 import bookStore from '@/store/modules/bookStore'
+import {openTablePrintWindow} from '@/utils/tablePrint'
 
 const currBookStore = bookStore()
 
@@ -252,6 +259,45 @@ function handleQuery() {
 }
 
 onMounted(handleQuery)
+
+/** 打印测算结果（可另存 PDF） */
+function handlePrint() {
+  if (!data.value) {
+    return
+  }
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const row = (label: string, value: any) =>
+    `<tr><td>${esc(label)}</td><td class="r">${esc(value)}</td></tr>`
+  const sec = (title: string) =>
+    `<tr><td colspan="2" style="background:#f0f0f0;font-weight:bold">${esc(title)}</td></tr>`
+  const d = data.value
+  const body = sec('增值税测算')
+    + row('销项税额', formatAmount(d.outputTax))
+    + row('进项税额', formatAmount(d.inputTax))
+    + row('进项税额转出', formatAmount(d.inputTransferOut))
+    + row('应纳税额', formatAmount(d.vatPayable))
+    + (d.vatCredit > 0 ? row('期末留抵税额', formatAmount(d.vatCredit)) : '')
+    + row('已交税金', formatAmount(d.paidTax))
+    + row('本期应补税额', formatAmount(d.vatDue))
+    + sec('附加税测算')
+    + row(`城市维护建设税（${formatPercent(d.urbanRate)}）`, formatAmount(d.urbanTax))
+    + row(`教育费附加（${formatPercent(d.eduRate)}）`, formatAmount(d.eduTax))
+    + row(`地方教育附加（${formatPercent(d.localEduRate)}）`, formatAmount(d.localEduTax))
+    + row('附加税合计', formatAmount(d.surtaxTotal))
+    + sec('企业所得税测算')
+    + row('利润总额（剔除所得税费用）', formatAmount(d.profitBeforeTax))
+    + row(`测算企业所得税（${formatPercent(d.incomeTaxRate)}）`, formatAmount(d.incomeTax))
+    + sec('税负分析')
+    + row('营业收入', formatAmount(d.revenue))
+    + row('增值税税负率', formatPercent(d.vatBurdenRate))
+    + row('预警线', formatPercent(d.burdenThreshold))
+  const company = currBookStore.getBookItem()?.companyName || ''
+  openTablePrintWindow({
+    title: '税费测算单',
+    subtitle: `核算单位：${company}　测算期间：${d.yearMonth}　口径：已过账凭证分录，仅供申报前参考`,
+    tableHtml: `<thead><tr><th>项目</th><th style="width:180px">金额</th></tr></thead><tbody>${body}</tbody>`,
+  })
+}
 </script>
 
 <style lang="scss" scoped>

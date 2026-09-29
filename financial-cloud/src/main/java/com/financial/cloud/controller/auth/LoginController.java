@@ -4,6 +4,7 @@ package com.financial.cloud.controller.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import com.financial.cloud.authn.core.AuthAuthentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -78,17 +79,23 @@ public class LoginController {
  	@PostMapping(value={"/signin"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<AuthJwt> signin( @RequestBody LoginCredential credential) {
  		Message<AuthJwt> authJwtMessage = new Message<>(Message.FAIL);
- 		if(authTokenService.validateState(credential.getState())){
-	 		AuthAuthentication authentication  = authenticationProvider.authenticate(credential);
-	 		if(authentication != null) {//success
-	 			AuthJwt authJwt = authTokenService.genAuthJwt(authentication);
-	 			authJwtMessage.setData(Message.SUCCESS,authJwt);
-	 		}else {//fail
-	 			String errorMsg = WebContext.getAttribute(WebConstants.LOGIN_ERROR_SESSION_MESSAGE) == null ?
-							      "" : WebContext.getAttribute(WebConstants.LOGIN_ERROR_SESSION_MESSAGE).toString();
-	 			authJwtMessage.setMessage(errorMsg);
-	 			log.debug("login fail , message {}",errorMsg);
-	 		}
+ 		if(!authTokenService.validateState(credential.getState())){
+ 			authJwtMessage.setMessage("登录状态已失效，请刷新页面后重试");
+ 			log.debug("login fail , blank or invalid state");
+ 			return authJwtMessage;
+ 		}
+ 		AuthAuthentication authentication  = authenticationProvider.authenticate(credential);
+ 		if(authentication != null) {//success
+ 			AuthJwt authJwt = authTokenService.genAuthJwt(authentication);
+ 			authJwtMessage.setData(Message.SUCCESS,authJwt);
+ 		}else {//fail
+ 			String errorMsg = WebContext.getAttribute(WebConstants.LOGIN_ERROR_SESSION_MESSAGE) == null ?
+						      "" : WebContext.getAttribute(WebConstants.LOGIN_ERROR_SESSION_MESSAGE).toString();
+ 			if (StringUtils.isBlank(errorMsg)) {
+ 				errorMsg = "用户名或密码错误，或登录方式不受支持";
+ 			}
+ 			authJwtMessage.setMessage(errorMsg);
+ 			log.debug("login fail , message {}",errorMsg);
  		}
  		return authJwtMessage;
  	}

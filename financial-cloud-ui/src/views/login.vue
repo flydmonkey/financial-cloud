@@ -27,8 +27,11 @@
         <el-input
           v-model="loginForm.username"
           type="text"
-          auto-complete="off"
+          name="username"
+          autocomplete="username"
+          auto-complete="username"
           :placeholder="t('login.textUsername')"
+          aria-label="用户名"
         >
           <template #prepend>
             <svg-icon
@@ -42,9 +45,12 @@
         <el-input
           v-model="loginForm.password"
           type="password"
-          auto-complete="off"
+          name="password"
+          autocomplete="current-password"
+          auto-complete="current-password"
           show-password
           :placeholder="t('login.textPassword')"
+          aria-label="密码"
           @keyup.enter="handleLogin"
         >
           <template #prepend>
@@ -57,7 +63,7 @@
       </el-form-item>
       <el-form-item
         v-if="captchaEnabled"
-        prop="code"
+        prop="captcha"
       >
         <el-input
           v-model="loginForm.captcha"
@@ -191,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, getCurrentInstance, reactive, watch} from "vue";
+import {ref, getCurrentInstance, reactive, watch, computed} from "vue";
 import {getCodeImg, loginPreGet, getThirdById, registerAccount} from "@/api/login";
 import {privateImage} from "@/utils/financialCloud";
 import Cookies from "js-cookie";
@@ -220,10 +226,17 @@ const loginForm: any = ref({
   authType: 'normal'
 });
 
-const loginRules: any = reactive<FormRules>({
-  username: [{required: true, trigger: "blur", message: t('login.textUsernameNotice')}],
-  password: [{required: true, trigger: "blur", message: t('login.textPwdNotice')}],
-  captcha: [{required: true, trigger: "change", message: t('login.textCodeNotice')}]
+const captchaEnabled: any = ref(false);
+
+const loginRules: any = computed<FormRules>(() => {
+  const rules: FormRules = {
+    username: [{required: true, trigger: "blur", message: t('login.textUsernameNotice')}],
+    password: [{required: true, trigger: "blur", message: t('login.textPwdNotice')}],
+  }
+  if (captchaEnabled.value) {
+    rules.captcha = [{required: true, trigger: "change", message: t('login.textCodeNotice')}]
+  }
+  return rules
 });
 
 const showRegister: any = ref(false);
@@ -276,8 +289,6 @@ const staticAppInfo: any = ref({
 });
 const codeUrl: any = ref("");
 const loading: any = ref(false);
-// 验证码开关
-const captchaEnabled: any = ref(false);
 // 注册开关
 const register: any = ref(false);
 const redirect: any = ref("");
@@ -300,37 +311,44 @@ const loginRef: any = ref<FormInstance>();
 function handleLogin(): any {
   if (!loginRef.value) return;
   loginRef.value.validate((valid: any) => {
-    if (valid) {
-      loading.value = true;
-      loginForm.value.state = state.value;
-
-      // 调用action的登录方法
-      userStore.login(loginForm.value).then((res: any) => {
-        const query: any = route.query;
-        const otherQueryParams: any = Object.keys(query).reduce((acc: any, cur: any) => {
-          if (cur !== "redirect") {
-            acc[cur] = query[cur];
-          }
-          return acc;
-        }, {});
-        if (redirect.value && redirect.value?.startsWith("http")) {
-          location.replace(redirect.value)
-        } else if (redirect.value) {
-          router.push({path: redirect.value, query: otherQueryParams});
-        } else {
-          window.location.reload()
-        }
-      }).catch((err: any) => {
-        console.error(err)
-        loading.value = false;
-        // 重新获取验证码
-        if (captchaEnabled.value) {
-          getCode();
-        }
-      }).finally(() => {
-        loading.value = false
-      });
+    if (!valid) {
+      return;
     }
+    if (!state.value) {
+      modal.msgError("登录状态未就绪，请刷新页面后重试");
+      getState();
+      return;
+    }
+    loading.value = true;
+    // 账号密码登录固定走 normal；避免空 authType 导致后端静默失败
+    loginForm.value.authType = 'normal';
+    loginForm.value.state = state.value;
+
+    userStore.login(loginForm.value).then((res: any) => {
+      const query: any = route.query;
+      const otherQueryParams: any = Object.keys(query).reduce((acc: any, cur: any) => {
+        if (cur !== "redirect") {
+          acc[cur] = query[cur];
+        }
+        return acc;
+      }, {});
+      if (redirect.value && redirect.value?.startsWith("http")) {
+        location.replace(redirect.value)
+      } else if (redirect.value) {
+        router.push({path: redirect.value, query: otherQueryParams});
+      } else {
+        window.location.reload()
+      }
+    }).catch((err: any) => {
+      console.error(err)
+      // 重新获取验证码与 state，避免复用失效状态
+      getState();
+      if (captchaEnabled.value) {
+        getCode();
+      }
+    }).finally(() => {
+      loading.value = false
+    });
   });
 }
 

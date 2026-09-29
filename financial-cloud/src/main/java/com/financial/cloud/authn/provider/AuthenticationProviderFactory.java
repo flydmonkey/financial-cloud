@@ -5,6 +5,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.financial.cloud.authn.core.AuthAuthentication;
 
 import com.financial.cloud.authn.LoginCredential;
+import com.financial.cloud.context.WebConstants;
+import com.financial.cloud.context.WebContext;
 
 public class AuthenticationProviderFactory extends AbstractAuthenticationProvider {
 
@@ -16,8 +18,11 @@ public class AuthenticationProviderFactory extends AbstractAuthenticationProvide
     @Override
     public AuthAuthentication authenticate(LoginCredential credential){
     	AbstractAuthenticationProvider provider = providers.get(credential.getAuthType() + PROVIDER_SUFFIX);
-    	
-    	return provider == null ? null : provider.doAuthenticate(credential);
+    	if (provider == null) {
+    		WebContext.setAttribute(WebConstants.LOGIN_ERROR_SESSION_MESSAGE, "不支持的登录方式");
+    		return null;
+    	}
+    	return provider.doAuthenticate(credential);
     }
     
     /**

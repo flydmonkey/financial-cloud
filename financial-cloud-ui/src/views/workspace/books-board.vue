@@ -267,6 +267,7 @@ function blockerPath(row: any): string {
     case "DEPRECIATION":
       return "/fixed-asset/depreciation";
     case "READY_CLOSE":
+    case "BEHIND":
       return "/settlement/settle-period";
     case "READY_PACK":
       return "/settlement/settle-list";

@@ -108,7 +108,7 @@
 import {ref, getCurrentInstance} from "vue";
 import {useI18n} from 'vue-i18n'
 import {useRoute, useRouter} from "vue-router";
-import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked, Ticket, Document, OfficeBuilding} from '@element-plus/icons-vue'
+import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked, Ticket, Document, OfficeBuilding, Monitor} from '@element-plus/icons-vue'
 import Footer from "@/components/Footer/index.vue"
 import TodoPanel from "@/views/dashboard/accounting/TodoPanel.vue";
 import FundBalance from "@/views/dashboard/accounting/fund_balance.vue";
@@ -128,6 +128,7 @@ const proxy: any = getCurrentInstance()!.proxy;
 
 /** 首页快捷入口：覆盖日常做账主路径 */
 const quickEntries = [
+  {label: '代账工作台', path: '/workspace/books-board', icon: Monitor},
   {label: '录凭证', path: '/voucher/voucher-edit', icon: EditPen},
   {label: '凭证列表', path: '/voucher/voucher-index', icon: Tickets},
   {label: '明细账', path: '/voucher/sub-ledger', icon: Notebook},

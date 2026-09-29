@@ -92,9 +92,10 @@
 2. 按阻塞摘要跳转：
    - 待审 / 待过账 → `/voucher/voucher-index`
    - 待折旧 → `/fixed-asset/depreciation`
-   - 可结账 → `/settlement/settle-period`
+   - 可结账 / **落后** → `/settlement/settle-period`
    - 可交账 → `/settlement/settle-list`
 3. 封存账套：列表可见；禁用写路径「进入处理」；已结账期仍可导出。
+4. 首页快捷入口含「代账工作台」→ `/workspace/books-board`。
 
 ### 5.4 批量导出
 

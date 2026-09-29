@@ -18,4 +18,7 @@ public class ArapDetailLineVo {
 	private BigDecimal debitAmount;
 	private BigDecimal creditAmount;
 	private BigDecimal runningBalance;
+	private String voucherItemId;
+	/** 未核销 / 部分核销 / 已核销 */
+	private String writeoffStatus;
 }

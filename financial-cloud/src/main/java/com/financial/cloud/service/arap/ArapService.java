@@ -97,6 +97,7 @@ public class ArapService {
 		YearMonth end = parsePeriod(dto.getPeriodEnd(), false);
 		boolean receivable = ArapRules.isReceivableSide(side);
 		List<ArapMovementRow> rows = loadFiltered(bookId, side, dto.getCounterpartId());
+		Map<String, BigDecimal> written = arapWriteoffService.loadWrittenOff(bookId);
 		BigDecimal running = BigDecimal.ZERO;
 		for (ArapMovementRow row : rows) {
 			YearMonth ym = yearMonthOf(row);
@@ -111,6 +112,9 @@ public class ArapService {
 				continue;
 			}
 			running = running.add(ArapAgingCalculator.signedAmount(row, receivable));
+			String itemId = row.getVoucherItemId() == null ? "" : row.getVoucherItemId();
+			BigDecimal orig = ArapAgingCalculator.signedAmount(row, receivable).abs();
+			BigDecimal w = written.getOrDefault(itemId, BigDecimal.ZERO);
 			lines.add(ArapDetailLineVo.builder()
 					.voucherDate(row.getVoucherDate())
 					.voucherId(row.getVoucherId())
@@ -121,6 +125,8 @@ public class ArapService {
 					.debitAmount(nz(row.getDebitAmount()))
 					.creditAmount(nz(row.getCreditAmount()))
 					.runningBalance(running)
+					.voucherItemId(row.getVoucherItemId())
+					.writeoffStatus(ArapWriteoffRules.writeoffStatus(orig, w))
 					.build());
 		}
 		return Message.ok(lines);
@@ -219,6 +225,7 @@ public class ArapService {
 			header.createCell(3).setCellValue("借方");
 			header.createCell(4).setCellValue("贷方");
 			header.createCell(5).setCellValue("余额");
+			header.createCell(6).setCellValue("核销状态");
 			for (ArapDetailLineVo line : detailMsg.getData()) {
 				Row row = sheet.createRow(r++);
 				row.createCell(0).setCellValue(line.getVoucherDate() == null ? ""
@@ -228,6 +235,7 @@ public class ArapService {
 				row.createCell(3).setCellValue(nz(line.getDebitAmount()).doubleValue());
 				row.createCell(4).setCellValue(nz(line.getCreditAmount()).doubleValue());
 				row.createCell(5).setCellValue(nz(line.getRunningBalance()).doubleValue());
+				row.createCell(6).setCellValue(line.getWriteoffStatus() == null ? "未核销" : line.getWriteoffStatus());
 			}
 			Row end = sheet.createRow(r);
 			end.createCell(0).setCellValue("期末余额");

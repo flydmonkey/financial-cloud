@@ -1,5 +1,7 @@
 # 代账工作台 · 多账套月末看板 Implementation Plan
 
+> **Status: completed** — 2026-09-29；收口见 [2026-09-29-books-board-backlog.md](2026-09-29-books-board-backlog.md)
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship a cross-book「代账工作台」so bookkeepers see authorized books' period/todos/close status, jump into blockers, and batch-export monthly books packs.

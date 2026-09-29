@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import {
   booksBoardBlockerPath,
   filterBooksBoardRows,
+  sortBooksBoardRows,
   summarizeBooksBoardRows,
 } from './booksBoard.ts'
 
@@ -29,6 +30,20 @@ describe('filterBooksBoardRows', () => {
     ]
     assert.deepEqual(filterBooksBoardRows(rows, 'BEHIND'), [rows[2]])
     assert.equal(filterBooksBoardRows(rows, 'ALL').length, 3)
+  })
+})
+
+describe('sortBooksBoardRows', () => {
+  it('orders behind before open before closed', () => {
+    const sorted = sortBooksBoardRows([
+      { bookName: '丙', closeStatus: 'CLOSED' },
+      { bookName: '乙', closeStatus: 'OPEN' },
+      { bookName: '甲', closeStatus: 'BEHIND' },
+    ])
+    assert.deepEqual(
+      sorted.map((r) => r.bookName),
+      ['甲', '乙', '丙'],
+    )
   })
 })
 

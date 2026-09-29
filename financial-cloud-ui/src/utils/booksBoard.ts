@@ -20,6 +20,25 @@ export function booksBoardBlockerPath(blocker: string | undefined | null): strin
 
 export type CloseStatusFilter = "ALL" | "OPEN" | "CLOSED" | "BEHIND" | "UNKNOWN";
 
+const CLOSE_PRIORITY: Record<string, number> = {
+  BEHIND: 0,
+  OPEN: 1,
+  UNKNOWN: 2,
+  CLOSED: 3,
+};
+
+/** 紧急度：落后 > 未结 > 未知 > 已结，同档按账套名。 */
+export function sortBooksBoardRows<T extends { closeStatus?: string; bookName?: string }>(
+  rows: T[] | null | undefined,
+): T[] {
+  return [...(rows || [])].sort((a, b) => {
+    const pa = CLOSE_PRIORITY[a.closeStatus || ""] ?? 9;
+    const pb = CLOSE_PRIORITY[b.closeStatus || ""] ?? 9;
+    if (pa !== pb) return pa - pb;
+    return String(a.bookName || "").localeCompare(String(b.bookName || ""), "zh");
+  });
+}
+
 export function filterBooksBoardRows<T extends { closeStatus?: string }>(
   rows: T[] | null | undefined,
   closeStatusFilter: CloseStatusFilter,
@@ -52,4 +71,28 @@ export function summarizeBooksBoardRows(
     if (todo) withTodo += 1;
   }
   return { total: list.length, open, closed, behind, withTodo };
+}
+
+export const BOOKS_BOARD_FOCUS_KEY = "fc.booksBoard.focusPeriod";
+
+export function readStoredFocusPeriod(fallback: string): string {
+  try {
+    const stored = sessionStorage.getItem(BOOKS_BOARD_FOCUS_KEY);
+    if (stored && /^\d{4}-(0[1-9]|1[0-2])$/.test(stored)) {
+      return stored;
+    }
+  } catch {
+    // ignore
+  }
+  return fallback;
+}
+
+export function writeStoredFocusPeriod(period: string): void {
+  try {
+    if (/^\d{4}-(0[1-9]|1[0-2])$/.test(period)) {
+      sessionStorage.setItem(BOOKS_BOARD_FOCUS_KEY, period);
+    }
+  } catch {
+    // ignore
+  }
 }

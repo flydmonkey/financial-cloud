@@ -70,10 +70,38 @@
       v-if="summary.total || loading"
       class="summary-strip"
     >
-      <span>共 <b>{{ summary.total }}</b> 套</span>
-      <span class="text-danger">落后 <b>{{ summary.behind }}</b></span>
-      <span>未结 <b>{{ summary.open }}</b></span>
-      <span>已结 <b>{{ summary.closed }}</b></span>
+      <button
+        type="button"
+        class="summary-chip"
+        :class="{active: closeStatusFilter === 'ALL'}"
+        @click="setCloseFilter('ALL')"
+      >
+        共 <b>{{ summary.total }}</b> 套
+      </button>
+      <button
+        type="button"
+        class="summary-chip text-danger"
+        :class="{active: closeStatusFilter === 'BEHIND'}"
+        @click="setCloseFilter('BEHIND')"
+      >
+        落后 <b>{{ summary.behind }}</b>
+      </button>
+      <button
+        type="button"
+        class="summary-chip"
+        :class="{active: closeStatusFilter === 'OPEN'}"
+        @click="setCloseFilter('OPEN')"
+      >
+        未结 <b>{{ summary.open }}</b>
+      </button>
+      <button
+        type="button"
+        class="summary-chip"
+        :class="{active: closeStatusFilter === 'CLOSED'}"
+        @click="setCloseFilter('CLOSED')"
+      >
+        已结 <b>{{ summary.closed }}</b>
+      </button>
       <span>有待办 <b>{{ summary.withTodo }}</b></span>
     </div>
 
@@ -221,7 +249,10 @@ import useUserStore from "@/store/modules/user";
 import {
   booksBoardBlockerPath,
   filterBooksBoardRows,
+  readStoredFocusPeriod,
+  sortBooksBoardRows,
   summarizeBooksBoardRows,
+  writeStoredFocusPeriod,
   type CloseStatusFilter,
 } from "@/utils/booksBoard";
 
@@ -234,7 +265,7 @@ const onlyTodo = ref(false);
 const keyword = ref("");
 const includeVoucherList = ref(true);
 const closeStatusFilter = ref<CloseStatusFilter>("ALL");
-const focusMonth = ref(defaultFocusMonth());
+const focusMonth = ref(readStoredFocusPeriod(defaultFocusMonth()));
 const selected = ref<any[]>([]);
 const board = reactive<any>({rows: [], totalGranted: 0, truncated: false, focusPeriod: ""});
 
@@ -246,7 +277,7 @@ const canExport = computed(() => {
 });
 
 const displayedRows = computed(() =>
-  filterBooksBoardRows(board.rows || [], closeStatusFilter.value)
+  filterBooksBoardRows(sortBooksBoardRows(board.rows || []), closeStatusFilter.value)
 );
 
 const summary = computed(() => summarizeBooksBoardRows(board.rows || []));
@@ -308,6 +339,7 @@ function onSelectionChange(rows: any[]): void {
 
 function load(): void {
   loading.value = true;
+  writeStoredFocusPeriod(focusMonth.value);
   fetchBooksBoard({
     focusPeriod: focusMonth.value,
     onlyTodo: onlyTodo.value,
@@ -318,12 +350,17 @@ function load(): void {
         Object.assign(board, res.data || {});
         if (res.data?.focusPeriod) {
           focusMonth.value = res.data.focusPeriod;
+          writeStoredFocusPeriod(focusMonth.value);
         }
       }
     })
     .finally(() => {
       loading.value = false;
     });
+}
+
+function setCloseFilter(filter: CloseStatusFilter): void {
+  closeStatusFilter.value = filter;
 }
 
 async function enterBook(row: any): Promise<void> {
@@ -392,13 +429,38 @@ function goOnboarding(): void {
 .summary-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 10px;
+  align-items: center;
   margin-bottom: 10px;
   padding: 8px 12px;
   background: #f5f7fa;
   border-radius: 6px;
   color: #606266;
   font-size: 13px;
+}
+.summary-chip {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1.6;
+}
+.summary-chip:hover,
+.summary-chip.active {
+  border-color: #c6e2ff;
+  background: #ecf5ff;
+  color: #409eff;
+}
+.summary-chip.text-danger {
+  color: var(--el-color-danger);
+}
+.summary-chip.text-danger.active,
+.summary-chip.text-danger:hover {
+  border-color: #fbc4c4;
+  background: #fef0f0;
+  color: var(--el-color-danger);
 }
 .mb8 {
   margin-bottom: 8px;

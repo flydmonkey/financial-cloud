@@ -69,6 +69,36 @@ class BackupTableRegistryTest {
         assertThat(included).hasSize(BackupTableRegistry.SPECS.size());
     }
 
+    private static final Pattern CREATE_BLOCK =
+            Pattern.compile("CREATE TABLE (?:IF NOT EXISTS )?[`\"](\\w+)[`\"]\\s*\\((.*?)\\)\\s*ENGINE=",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+    @Test
+    void hasDeletedFlagMatchesDdl() throws IOException {
+        Path ddl = Path.of("..", "sql", "financial_cloud_init.sql");
+        assertThat(ddl).exists();
+        String sql = Files.readString(ddl);
+
+        // 表名 → 建表列定义块（精确到右括号，不含后续补丁/种子文本）
+        java.util.Map<String, String> bodies = new java.util.HashMap<>();
+        Matcher matcher = CREATE_BLOCK.matcher(sql);
+        while (matcher.find()) {
+            bodies.put(matcher.group(1), matcher.group(2));
+        }
+        List<String> mismatches = new ArrayList<>();
+        for (BackupTableSpec spec : BackupTableRegistry.SPECS) {
+            String body = bodies.get(spec.table());
+            assertThat(body).as("备份表 %s 在 init SQL 中不存在", spec.table()).isNotNull();
+            boolean ddlHasDeleted = body.contains("`deleted`");
+            if (ddlHasDeleted != spec.hasDeleted()) {
+                mismatches.add(spec.table() + "(DDL deleted=" + ddlHasDeleted + ", spec=" + spec.hasDeleted() + ")");
+            }
+        }
+        assertThat(mismatches)
+                .as("hasDeleted 声明与 DDL 不符（不符会导致导出 SQL 报 Unknown column 'deleted'）：%s", mismatches)
+                .isEmpty();
+    }
+
     @Test
     void everyFkEdgeReferencesAnEarlierRegisteredTable() {
         Set<String> seen = new HashSet<>();

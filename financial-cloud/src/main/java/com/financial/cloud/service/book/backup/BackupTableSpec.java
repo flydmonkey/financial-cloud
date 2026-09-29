@@ -32,14 +32,24 @@ public record BackupTableSpec(
         VIA_VOUCHER
     }
 
-    /** 外键边。soft=true 时找不到映射则置空（如 statement_subject_balance.source_id 多态引用）。 */
-    public record FkEdge(String column, String refTable, boolean soft) {
+    /**
+     * 外键边。
+     * soft=true 时找不到映射则置空（如 statement_subject_balance.source_id 多态引用）。
+     * keepOnMiss=true 时找不到映射则保留原值（如报表明细行的 'template' 哨兵引用——
+     * 表头 statement_balance_sheet 永不落库，模板行引用没有对应记录，既不能硬校验也不能置空）。
+     */
+    public record FkEdge(String column, String refTable, boolean soft, boolean keepOnMiss) {
         public static FkEdge of(String column, String refTable) {
-            return new FkEdge(column, refTable, false);
+            return new FkEdge(column, refTable, false, false);
         }
 
         public static FkEdge soft(String column, String refTable) {
-            return new FkEdge(column, refTable, true);
+            return new FkEdge(column, refTable, true, false);
+        }
+
+        /** 未命中映射时保留原值；命中（如表头真实落库）则正常重映射。 */
+        public static FkEdge softKeep(String column, String refTable) {
+            return new FkEdge(column, refTable, false, true);
         }
     }
 

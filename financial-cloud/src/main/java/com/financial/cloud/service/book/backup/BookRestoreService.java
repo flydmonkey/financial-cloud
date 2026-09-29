@@ -222,7 +222,9 @@ public class BookRestoreService {
             Map<String, String> refMap = idMaps.getOrDefault(edge.refTable(), Map.of());
             String mapped = refMap.get(String.valueOf(value));
             if (mapped == null) {
-                if (edge.soft()) {
+                if (edge.keepOnMiss()) {
+                    // 哨兵值（如 'template'）无对应表头行，保留原值
+                } else if (edge.soft()) {
                     row.put(edge.column(), null);
                 } else {
                     throw new BusinessException(500, "备份恢复失败：" + spec.table() + "." + edge.column()

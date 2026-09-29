@@ -24,20 +24,20 @@ public final class BackupTableRegistry {
                     .fks(FkEdge.of("parent_id", "book_subject")),
             BackupTableSpec.of("book_init_balance")
                     .fks(FkEdge.of("parent_id", "book_init_balance")),
-            // 辅助核算与凭证字号
+            // 辅助核算与凭证字号（均无 deleted 列）
             BackupTableSpec.of("assist_acc"),
-            BackupTableSpec.of("voucher_word"),
+            BackupTableSpec.of("voucher_word").noDeleted(),
             // 凭证链（人员 ID 置空，姓名列保留用于展示）
             BackupTableSpec.of("voucher")
                     .nulls("company_id", "audit_member_id", "sender_id", "manager_id"),
             BackupTableSpec.of("voucher_item")
                     .fks(FkEdge.of("voucher_id", "voucher"),
                             FkEdge.of("subject_id", "book_subject")),
-            BackupTableSpec.of("voucher_auxiliary")
+            BackupTableSpec.of("voucher_auxiliary").noDeleted()
                     .fks(FkEdge.of("voucher_id", "voucher"),
                             FkEdge.of("voucher_item_id", "voucher_item"),
                             FkEdge.soft("item_id", "assist_acc")),
-            BackupTableSpec.of("voucher_item_cash_flow")
+            BackupTableSpec.of("voucher_item_cash_flow").noDeleted()
                     .fks(FkEdge.of("voucher_item_id", "voucher_item")),
             // 附件关联表：file_id 指向 file_storage（全局表，二进制不进备份包；同实例恢复仍可用）
             BackupTableSpec.of("voucher_attachment")
@@ -107,9 +107,15 @@ public final class BackupTableRegistry {
                     .fks(FkEdge.of("writeoff_id", "arap_writeoff"),
                             FkEdge.of("voucher_item_id", "voucher_item"),
                             FkEdge.soft("voucher_id", "voucher")),
-            // 薪资（employee.department_id / manager_id 指向实例级组织与用户，置空）
+            // 组织/部门（账套级：EmployeeMapper.pageList 按 book_id INNER JOIN，
+            // 不备份会导致恢复后员工列表为空；parent_id 自引用软映射，人员字段置空）
+            BackupTableSpec.of("organizations")
+                    .fks(FkEdge.soft("parent_id", "organizations"))
+                    .nulls("created_by", "modified_by"),
+            // 薪资（employee.manager_id 指向实例级用户，置空）
             BackupTableSpec.of("employee")
-                    .nulls("department_id", "manager_id"),
+                    .fks(FkEdge.soft("department_id", "organizations"))
+                    .nulls("manager_id"),
             BackupTableSpec.of("employee_salary")
                     .fks(FkEdge.of("employee_id", "employee"),
                             FkEdge.soft("accrual_voucher_id", "voucher"),
@@ -130,14 +136,16 @@ public final class BackupTableRegistry {
             // 报表与配置
             BackupTableSpec.of("statement_rules").noDeleted(),
             BackupTableSpec.of("statement_subject_balance")
-                    .fks(FkEdge.soft("parent_id", "statement_subject_balance"),
-                            FkEdge.soft("source_id", "voucher")),
+                    .fks(FkEdge.soft("parent_id", "book_subject"),
+                            FkEdge.soft("source_id", "book_subject")),
             BackupTableSpec.of("statement_balance_sheet"),
             BackupTableSpec.of("statement_balance_sheet_item")
-                    .fks(FkEdge.of("balance_sheet_id", "statement_balance_sheet")),
+                    // 表头永不落库，模板行 balance_sheet_id='template' 无对应记录：保留原值
+                    .fks(FkEdge.softKeep("balance_sheet_id", "statement_balance_sheet")),
             BackupTableSpec.of("statement_income"),
             BackupTableSpec.of("statement_income_item")
-                    .fks(FkEdge.of("income_id", "statement_income")),
+                    // 模板行 income_id='template' 无对应表头：保留原值；真实表头行正常重映射
+                    .fks(FkEdge.softKeep("income_id", "statement_income")),
             BackupTableSpec.of("statement_cash_flow"),
             BackupTableSpec.of("config_cash_flow_balance").noDeleted(),
             // 科目与现金流项目关系（code 引用，无 ID 外键；模板行 is_template=1 目标实例自带，仅备份非模板行）
@@ -157,7 +165,6 @@ public final class BackupTableRegistry {
             "permission",             // 权限
             "permission_book",        // 账套授权（恢复环境用户不同）
             "role_member",            // 角色成员
-            "organizations",          // 组织（实例级）
             "history_event",          // 日志
             "history_login",          // 登录日志
             "history_synchronizer",   // 同步日志

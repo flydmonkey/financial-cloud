@@ -104,6 +104,58 @@ class BookRestoreServiceTest {
     }
 
     @Test
+    void restoreKeepsTemplateSentinelOnReportItems() {
+        Map<String, List<Map<String, Object>>> tableData = new LinkedHashMap<>();
+        // 利润表表头真实落库：明细行应重映射到新表头 id
+        addRow(tableData, "statement_income", orderedMap("id", "inc-1", "book_id", "b-old"));
+        addRow(tableData, "statement_income_item", orderedMap("id", "ii-1", "book_id", "b-old",
+                "income_id", "inc-1", "item_name", "营业收入"));
+        // 哨兵行：income_id='template' 无对应表头，必须保留原值
+        addRow(tableData, "statement_income_item", orderedMap("id", "ii-2", "book_id", "b-old",
+                "income_id", "template", "item_name", "模板行"));
+        // 资产负债表表头永不落库：模板行只能保留哨兵
+        addRow(tableData, "statement_balance_sheet_item", orderedMap("id", "bi-1", "book_id", "b-old",
+                "balance_sheet_id", "template", "item_name", "货币资金"));
+
+        BookRestoreService.RestoreResult result = service.restore(
+                new ByteArrayInputStream(buildZip(tableData, Map.of(), null)), operator());
+
+        Map<String, List<Map<String, Object>>> inserted = captureInserts();
+        String newBookId = result.bookId();
+
+        Map<String, Object> header = inserted.get("statement_income").get(0);
+        Map<String, Object> realItem = inserted.get("statement_income_item").stream()
+                .filter(r -> "营业收入".equals(r.get("item_name"))).findFirst().orElseThrow();
+        Map<String, Object> sentinelItem = inserted.get("statement_income_item").stream()
+                .filter(r -> "模板行".equals(r.get("item_name"))).findFirst().orElseThrow();
+        assertThat(realItem.get("income_id")).isEqualTo(header.get("id"));
+        assertThat(sentinelItem.get("income_id")).isEqualTo("template");
+        assertThat(sentinelItem.get("book_id")).isEqualTo(newBookId);
+        assertThat(inserted.get("statement_balance_sheet_item").get(0).get("balance_sheet_id"))
+                .isEqualTo("template");
+    }
+
+    @Test
+    void restoreRemapsEmployeeDepartmentToRestoredOrganization() {
+        Map<String, List<Map<String, Object>>> tableData = new LinkedHashMap<>();
+        addRow(tableData, "organizations", orderedMap("id", "org-1", "book_id", "b-old",
+                "org_name", "财务部", "created_by", "user-9"));
+        addRow(tableData, "employee", orderedMap("id", "emp-1", "book_id", "b-old",
+                "display_name", "张三", "department_id", "org-1", "manager_id", "user-9"));
+
+        service.restore(new ByteArrayInputStream(buildZip(tableData, Map.of(), null)), operator());
+
+        Map<String, List<Map<String, Object>>> inserted = captureInserts();
+        Map<String, Object> org = inserted.get("organizations").get(0);
+        Map<String, Object> employee = inserted.get("employee").get(0);
+        assertThat(employee.get("department_id")).isEqualTo(org.get("id"));
+        assertThat(org.get("id")).isNotEqualTo("org-1");
+        // 实例级人员引用一律置空
+        assertThat(employee.get("manager_id")).isNull();
+        assertThat(org.get("created_by")).isNull();
+    }
+
+    @Test
     void tamperedChecksumIsRejectedWithZeroWrites() {
         Map<String, List<Map<String, Object>>> tableData = new LinkedHashMap<>();
         byte[] zip = buildZip(tableData,

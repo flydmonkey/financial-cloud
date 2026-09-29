@@ -43,12 +43,12 @@ book-backup-<账套名>-<yyyyMMdd-HHmmss>.zip
 | 审批 | approval_record | V | voucher_id→voucher.id；approver_id 置空 |
 | 日记账 | journal_account / journal_entry / journal_summary | B | entry.acc_id→journal_account.id；entry.subject_id→book_subject.id；entry.voucher_id→voucher.id；account.subject_id→book_subject.id |
 | 固定资产 | asset_category / fixed_asset / fixed_asset_work / fixed_asset_accrual / fixed_asset_depr / fixed_asset_change / fixed_asset_change_item | B | asset.category_id→asset_category.id；各 *_subject_id→book_subject.id；asset.purchase/dispose_voucher_id→voucher.id；work/depr/change.asset_id→fixed_asset.id；depr.accrual_id→fixed_asset_accrual.id；change_item.change_id→fixed_asset_change.id |
-| 薪资 | employee / employee_salary / employee_salary_summary / employee_salary_temp / employee_tax_deduction / config_salary_formula / config_insurance_fund | B | salary.employee_id→employee.id；salary/summary.accrual_voucher_id、salary_voucher_id→voucher.id；employee.department_id、manager_id 置空（部门/组织不纳入 v1） |
+| 薪资 | organizations / employee / employee_salary / employee_salary_summary / employee_salary_temp / employee_tax_deduction / config_salary_formula / config_insurance_fund | B | salary.employee_id→employee.id；salary/summary.accrual_voucher_id、salary_voucher_id→voucher.id；employee.department_id→organizations.id（账套级部门档案，随备份重映射）；employee.manager_id 置空（实例级用户） |
 | 结账 | settlement / settlement_carryforward | B | carryforward.voucher_id→voucher.id；voucher_template_id 置空（模板全局） |
 | 报表 | statement_rules / statement_subject_balance / statement_balance_sheet(+_item) / statement_income(+_item) / statement_cash_flow / config_cash_flow_balance | B | item 表按头表 id 重映射 |
 | 配置 | config | B | — |
 
-**明确排除**：userinfo / permission* / role_member / organizations（用户权限与组织，实例级）；history_* / session_list / scheduled_lock（日志锁）；socials_* / config_email_senders / config_sms_provider / config_login_policy / config_password_policy / captcha 相关（实例级配置）；standard* / config_personal_tax（准则与个税税率模板，目标实例自带）；voucher_template(+_item)（全局模板）；file_storage（附件文件体，v1 凭证附件能力未建）；customer（全局往来单位档案——assist_acc 已内联名称，恢复不依赖）。
+**明确排除**：userinfo / permission* / role_member（用户与权限，实例级）；history_* / session_list / scheduled_lock（日志锁）；socials_* / config_email_senders / config_sms_provider / config_login_policy / config_password_policy / captcha 相关（实例级配置）；standard* / config_personal_tax（准则与个税税率模板，目标实例自带）；voucher_template(+_item)（全局模板）；file_storage（附件文件体，v1 凭证附件能力未建）；customer（全局往来单位档案——assist_acc 已内联名称，恢复不依赖）。organizations 为账套级部门档案（员工列表按 book_id INNER JOIN 依赖），纳入备份，parent_id 自引用软映射。
 
 排除原则：**只带账套业务数据，不带实例身份与安全配置**。每条排除在代码注释中可追溯。
 

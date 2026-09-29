@@ -152,7 +152,7 @@
           <el-table-column
             type="selection"
             width="45"
-            :selectable="(row) => !row.opening"
+            :selectable="(row: any) => !row.opening"
           />
           <el-table-column
             label="日期"

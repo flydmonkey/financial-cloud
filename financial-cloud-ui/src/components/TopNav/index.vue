@@ -131,7 +131,7 @@ const activeMenu: any = computed(() => {
 
 function setVisibleNumber(): any {
   const width: any = document.body.getBoundingClientRect().width / 3;
-  visibleNumber.value = parseInt(width / 85);
+  visibleNumber.value = parseInt(String(width / 85), 10);
 }
 
 function handleSelect(key: any, keyPath: any): any {

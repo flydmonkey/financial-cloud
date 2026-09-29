@@ -370,7 +370,7 @@ function handleQuery() {
 }
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
-  proxy.$tab.openPage('/settlement/' + tab.paneName)
+  proxy?.$tab.openPage('/settlement/' + tab.paneName)
 }
 
 getList();

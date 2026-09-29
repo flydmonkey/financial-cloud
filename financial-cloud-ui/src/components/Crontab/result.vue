@@ -542,7 +542,7 @@ function formatDate(value: any, type: any): any {
 // 检查日期是否存在
 function checkDate(value: any): any {
     let time: any = new Date(value);
-    let format: any = formatDate(time)
+    let format: any = formatDate(time, 'yyyy-MM-dd')
     return value === format;
 }
 onMounted(() => {

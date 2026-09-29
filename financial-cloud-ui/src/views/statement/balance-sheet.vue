@@ -590,7 +590,7 @@ import StatementDrillDialog from "./components/StatementDrillDialog.vue";
 import {openTablePrintWindow} from "@/utils/tablePrint";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance();
+const {proxy} = getCurrentInstance()!;
 const {account_balance_type, period_type} = proxy?.useDict("account_balance_type", "period_type");
 const currBookStore = booksSetStore()
 const ableEdit = ref(false);

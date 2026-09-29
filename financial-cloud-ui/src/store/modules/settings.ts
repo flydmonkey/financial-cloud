@@ -24,8 +24,8 @@ const useSettingsStore: any = defineStore(
             // 修改布局设置
             changeSetting(data: any) {
                 const {key, value} = data
-                if (this.hasOwnProperty(key)) {
-                    this[key] = value
+                if (Object.prototype.hasOwnProperty.call(this, key)) {
+                    ;(this as any)[key] = value
                 }
             },
             // 设置网页标题

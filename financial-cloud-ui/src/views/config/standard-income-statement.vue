@@ -362,14 +362,14 @@ import bookStore from "@/store/modules/bookStore";
 import {ElForm, FormInstance, TableColumnCtx} from "element-plus";
 import {cascaderSubjectProps} from "@/utils/Subjects"
 import * as standardStatementIncome from "@/api/standard/standard-statement-income";
-import {getSubjectBalance, selectGroupIncome} from "@/api/statement/statement";
+import {getSubjectBalance} from "@/api/statement/statement";
 import {useI18n} from "vue-i18n";
 import DictTag from "@/components/DictTag/index.vue";
 import * as subjectApi from "@/api/standard/standard-subject";
 import {listStandardsAll} from "@/api/standard/standard";
 
 const {t} = useI18n()
-const {proxy} = getCurrentInstance();
+const {proxy} = getCurrentInstance()!;
 const {account_income_balance_type} = proxy?.useDict("account_income_balance_type");
 const currBookStore = bookStore()
 // 会计科目数据

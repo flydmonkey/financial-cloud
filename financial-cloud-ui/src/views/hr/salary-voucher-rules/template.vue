@@ -242,8 +242,8 @@ interface VoucherItem {
   id: null;
   summary: string;
   direction: string;
-  subjectCode: string | null;
-  selectedValue: string;
+  subjectCode: string | number | null;
+  selectedValue: string | number | null;
   // 其他可能的字段...
   [key: string]: any; // 这允许添加其他可能从后端返回的字段
 }

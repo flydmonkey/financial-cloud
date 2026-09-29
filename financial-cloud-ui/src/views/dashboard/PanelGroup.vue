@@ -125,6 +125,8 @@
 <script lang="ts">
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";
 import modal from "@/plugins/modal";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — package ships JS without types
 import CountTo from 'vue-count-to'
 
 export default {

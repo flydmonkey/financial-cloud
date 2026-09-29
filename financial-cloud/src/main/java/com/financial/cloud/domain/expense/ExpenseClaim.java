@@ -85,6 +85,10 @@ public class ExpenseClaim extends BaseEntity implements Serializable {
 
     private String rejectReason;
 
+    /** 明细行（非持久化，detail 接口填充） */
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private java.util.List<com.financial.cloud.domain.expense.ExpenseClaimItem> items;
+
     @TableField(fill = FieldFill.INSERT)
     @TableLogic(value = "n", delval = "y")
     private String deleted;

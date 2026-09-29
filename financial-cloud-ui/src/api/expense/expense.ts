@@ -18,6 +18,14 @@ export function expenseClaimSave(data: any): any {
     })
 }
 
+// 单头 + 明细行
+export function expenseClaimDetail(id: string): any {
+    return request({
+        url: `/expense/claim/${id}`,
+        method: 'get'
+    })
+}
+
 // 提交审核
 export function expenseClaimSubmit(id: string): any {
     return request({

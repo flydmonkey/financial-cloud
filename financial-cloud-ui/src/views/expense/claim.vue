@@ -52,7 +52,45 @@
         :data="recordsList"
         border
         size="small"
+        row-key="id"
       >
+        <el-table-column type="expand">
+          <template #default="scope">
+            <div class="item-expand">
+              <el-table
+                :data="scope.row.items || []"
+                size="small"
+                border
+              >
+                <el-table-column
+                  label="费用科目"
+                  prop="expenseSubjectName"
+                  min-width="200"
+                />
+                <el-table-column
+                  label="金额"
+                  width="130"
+                  align="right"
+                >
+                  <template #default="line">
+                    {{ formatAmount(line.row.amount) }}
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  label="费用说明"
+                  prop="summary"
+                  min-width="200"
+                />
+              </el-table>
+              <div
+                v-if="scope.row.rejectReason"
+                class="reject-reason"
+              >
+                拒绝原因：{{ scope.row.rejectReason }}
+              </div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           label="单号"
           prop="claimNo"
@@ -73,19 +111,13 @@
         <el-table-column
           label="事由"
           prop="summary"
-          min-width="160"
+          min-width="140"
           show-overflow-tooltip
         />
         <el-table-column
           label="费用科目"
           prop="expenseSubjectName"
-          min-width="140"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          label="付款科目"
-          prop="fundSubjectName"
-          min-width="130"
+          min-width="150"
           show-overflow-tooltip
         />
         <el-table-column
@@ -113,7 +145,7 @@
         </el-table-column>
         <el-table-column
           label="操作"
-          width="300"
+          width="290"
           align="center"
         >
           <template #default="scope">
@@ -188,11 +220,12 @@
     <el-dialog
       v-model="formVisible"
       :title="form.id ? '编辑报销单' : '新增报销单'"
-      width="520px"
+      width="760px"
       append-to-body
     >
       <el-form
-        label-width="90px"
+        :inline="true"
+        label-width="80px"
       >
         <el-form-item
           label="报销人"
@@ -200,7 +233,7 @@
         >
           <el-input
             v-model="form.claimant"
-            style="width: 220px"
+            style="width: 180px"
             placeholder="报销人姓名"
           />
         </el-form-item>
@@ -212,20 +245,7 @@
             v-model="form.claimDate"
             type="date"
             value-format="YYYY-MM-DD"
-            style="width: 220px"
-          />
-        </el-form-item>
-        <el-form-item
-          label="费用科目"
-          required
-        >
-          <el-cascader
-            v-model="form.expensePath"
-            style="width: 380px"
-            filterable
-            :options="subjectList"
-            :props="cascaderProps"
-            placeholder="借方科目（如管理费用）"
+            style="width: 160px"
           />
         </el-form-item>
         <el-form-item
@@ -234,33 +254,98 @@
         >
           <el-cascader
             v-model="form.fundPath"
-            style="width: 380px"
+            style="width: 260px"
             filterable
             :options="subjectList"
             :props="cascaderProps"
-            placeholder="贷方科目（如库存现金/银行存款）"
-          />
-        </el-form-item>
-        <el-form-item
-          label="金额"
-          required
-        >
-          <el-input-number
-            v-model="form.amount"
-            :min="0.01"
-            :precision="2"
-            style="width: 220px"
+            placeholder="贷方（库存现金/银行存款）"
           />
         </el-form-item>
         <el-form-item label="事由">
           <el-input
             v-model="form.summary"
-            type="textarea"
-            :rows="2"
+            style="width: 300px"
             placeholder="报销事由"
           />
         </el-form-item>
       </el-form>
+
+      <div class="items-head">
+        <span class="items-title">费用明细</span>
+        <el-button
+          size="small"
+          type="primary"
+          plain
+          @click="addLine"
+        >
+          添加明细
+        </el-button>
+      </div>
+      <el-table
+        :data="form.lines"
+        size="small"
+        border
+      >
+        <el-table-column
+          label="费用科目"
+          min-width="260"
+        >
+          <template #default="scope">
+            <el-cascader
+              v-model="scope.row.path"
+              style="width: 100%"
+              filterable
+              :options="subjectList"
+              :props="cascaderProps"
+              placeholder="借方费用科目"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="金额"
+          width="160"
+        >
+          <template #default="scope">
+            <el-input-number
+              v-model="scope.row.amount"
+              :min="0.01"
+              :precision="2"
+              style="width: 140px"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="费用说明"
+          min-width="160"
+        >
+          <template #default="scope">
+            <el-input
+              v-model="scope.row.summary"
+              placeholder="选填"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          label=""
+          width="60"
+          align="center"
+        >
+          <template #default="scope">
+            <el-button
+              link
+              type="danger"
+              :disabled="form.lines.length <= 1"
+              @click="form.lines.splice(scope.$index, 1)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="items-total">
+        合计：<span class="total-amount">{{ formatAmount(totalAmount) }}</span>
+      </div>
+
       <template #footer>
         <el-button @click="formVisible = false">
           取消
@@ -278,7 +363,7 @@
 </template>
 
 <script setup name="ExpenseClaim" lang="ts">
-import {reactive, ref, toRefs, getCurrentInstance} from 'vue'
+import {computed, reactive, ref, toRefs, getCurrentInstance} from 'vue'
 import {useRouter} from 'vue-router'
 import {formatAmount} from '@/utils'
 import {parseTime} from '@/utils/financialCloud'
@@ -286,6 +371,7 @@ import * as subjectApi from '@/api/standard/standard-subject'
 import {cascaderSubjectProps} from '@/utils/Subjects'
 import {
   expenseClaimPage,
+  expenseClaimDetail,
   expenseClaimSave,
   expenseClaimSubmit,
   expenseClaimAudit,
@@ -320,6 +406,8 @@ const formVisible = ref(false)
 
 const cascaderProps = ref<any>({...cascaderSubjectProps, checkStrictly: true})
 
+const emptyLine = () => ({path: [] as string[], amount: 0.01, summary: ''})
+
 const data = reactive({
   queryParams: {
     status: '',
@@ -331,10 +419,9 @@ const data = reactive({
     id: '' as string,
     claimant: '',
     claimDate: parseTime(new Date(), '{y}-{m}-{d}'),
-    expensePath: [] as string[],
     fundPath: [] as string[],
-    amount: 0.01,
-    summary: ''
+    summary: '',
+    lines: [emptyLine()] as any[]
   }
 })
 const {queryParams, form} = toRefs(data)
@@ -342,6 +429,13 @@ const {queryParams, form} = toRefs(data)
 const editable = (row: any) => ['draft', 'rejected'].includes(row.claimStatus)
 
 const lastOf = (path: string[]) => (Array.isArray(path) && path.length ? String(path[path.length - 1]) : '')
+
+const totalAmount = computed(() =>
+  form.value.lines.reduce((sum: number, line: any) => sum + (Number(line.amount) || 0), 0))
+
+function addLine() {
+  form.value.lines.push(emptyLine())
+}
 
 function getSubjectList() {
   subjectApi.getTree({bookId: currBookStore.bookId}).then((res: any) => {
@@ -351,8 +445,16 @@ function getSubjectList() {
 
 function getList() {
   loading.value = true
-  expenseClaimPage(queryParams.value).then((res: any) => {
-    recordsList.value = res.data.records
+  expenseClaimPage(queryParams.value).then(async (res: any) => {
+    const rows = res.data.records || []
+    // 逐单拉明细供展开行展示
+    await Promise.all(rows.map((row: any) =>
+      expenseClaimDetail(row.id).then((d: any) => {
+        row.items = d.data.items || []
+      }).catch(() => {
+        row.items = []
+      })))
+    recordsList.value = rows
     total.value = res.data.total
   }).finally(() => {
     loading.value = false
@@ -366,34 +468,53 @@ function handleQuery() {
 
 function openForm(row?: any) {
   if (row) {
-    form.value = {
-      id: row.id,
-      claimant: row.claimant,
-      claimDate: row.claimDate,
-      expensePath: [row.expenseSubjectCode],
-      fundPath: [row.fundSubjectCode],
-      amount: Number(row.amount),
-      summary: row.summary || ''
-    }
+    expenseClaimDetail(row.id).then((res: any) => {
+      const d = res.data
+      form.value = {
+        id: d.id,
+        claimant: d.claimant,
+        claimDate: d.claimDate,
+        fundPath: [d.fundSubjectCode],
+        summary: d.summary || '',
+        lines: (d.items || []).map((it: any) => ({
+          path: [it.expenseSubjectCode],
+          amount: Number(it.amount),
+          summary: it.summary || ''
+        }))
+      }
+      if (!form.value.lines.length) {
+        form.value.lines = [emptyLine()]
+      }
+      formVisible.value = true
+    })
   } else {
     form.value = {
       id: '',
       claimant: '',
       claimDate: parseTime(new Date(), '{y}-{m}-{d}'),
-      expensePath: [],
       fundPath: [],
-      amount: 0.01,
-      summary: ''
+      summary: '',
+      lines: [emptyLine()]
     }
+    formVisible.value = true
   }
-  formVisible.value = true
 }
 
 function handleSave() {
-  const expenseSubjectCode = lastOf(form.value.expensePath)
   const fundSubjectCode = lastOf(form.value.fundPath)
-  if (!form.value.claimant || !expenseSubjectCode || !fundSubjectCode) {
-    proxy?.$modal?.msgWarning('请完整填写报销人、费用科目与付款科目')
+  const items = form.value.lines
+    .filter((line: any) => lastOf(line.path))
+    .map((line: any) => ({
+      expenseSubjectCode: lastOf(line.path),
+      amount: line.amount,
+      summary: line.summary
+    }))
+  if (!form.value.claimant || !fundSubjectCode) {
+    proxy?.$modal?.msgWarning('请填写报销人并选择付款科目')
+    return
+  }
+  if (!items.length) {
+    proxy?.$modal?.msgWarning('请至少填写一行费用明细')
     return
   }
   saving.value = true
@@ -401,10 +522,9 @@ function handleSave() {
     id: form.value.id || undefined,
     claimant: form.value.claimant,
     claimDate: form.value.claimDate,
-    expenseSubjectCode,
     fundSubjectCode,
-    amount: form.value.amount,
-    summary: form.value.summary
+    summary: form.value.summary,
+    items
   }).then(() => {
     proxy?.$modal?.msgSuccess('已保存')
     formVisible.value = false
@@ -471,5 +591,37 @@ getList()
 
 .common-card {
   margin-bottom: 12px;
+}
+
+.item-expand {
+  padding: 8px 24px;
+}
+
+.reject-reason {
+  margin-top: 6px;
+  color: #f56c6c;
+  font-size: 12px;
+}
+
+.items-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0 8px;
+
+  .items-title {
+    font-weight: bold;
+  }
+}
+
+.items-total {
+  margin-top: 8px;
+  text-align: right;
+  color: #606266;
+
+  .total-amount {
+    font-weight: bold;
+    color: #303133;
+  }
 }
 </style>

@@ -43,6 +43,13 @@ public class ExpenseClaimController {
         return expenseClaimService.save(userInfo.getBookId(), dto);
     }
 
+    /** 单头 + 明细行 */
+    @GetMapping("/{id}")
+    public Message<ExpenseClaim> detail(@PathVariable String id,
+                                        @CurrentUser UserInfo userInfo) {
+        return Message.ok(expenseClaimService.detail(id, userInfo.getBookId()));
+    }
+
     /** 提交审核：暂存/已拒绝 → 已提交 */
     @PutMapping("/submit/{id}")
     public Message<Void> submit(@PathVariable String id,

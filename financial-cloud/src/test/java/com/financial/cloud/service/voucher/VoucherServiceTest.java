@@ -77,6 +77,8 @@ class VoucherServiceTest {
     private VoucherMapper voucherMapper;
     @Mock
     private com.financial.cloud.service.book.BookSealGuard bookSealGuard;
+    @Mock
+    private org.springframework.beans.factory.ObjectProvider<com.financial.cloud.service.journal.JournalEntryService> journalEntryServiceProvider;
 
     @Spy
     @InjectMocks

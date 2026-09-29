@@ -347,6 +347,67 @@ class JournalEntryServiceTest {
         verify(journalEntryService).removeBatchByIds(List.of("e1"));
     }
 
+    @Test
+    void clearLinksByVoucherIds_updatesNullVoucherId() {
+        doReturn(true).when(journalEntryService).update(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
+        journalEntryService.clearLinksByVoucherIds(List.of("v-1"));
+        verify(journalEntryService).update(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
+    }
+
+    @Test
+    void syncLinkedEntriesFromVoucher_writesFundDebitAsIncome() {
+        JournalEntry linked = baseEntry("e1", "acc1", "i", "100", null);
+        linked.setVoucherId("v-1");
+        JournalAccount account = new JournalAccount();
+        account.setId("acc1");
+        account.setSubjectId("fund-sub");
+        when(journalAccountService.getById("acc1")).thenReturn(account);
+
+        doAnswer(inv -> List.of(linked)).when(journalEntryService)
+                .list(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
+        doReturn(true).when(journalEntryService).updateById(any(JournalEntry.class));
+        when(journalAccountService.setBalance(eq("acc1"), any())).thenReturn(true);
+
+        com.financial.cloud.domain.voucher.VoucherItem fund = new com.financial.cloud.domain.voucher.VoucherItem();
+        fund.setSubjectId("fund-sub");
+        fund.setDebitAmount(new BigDecimal("250"));
+        com.financial.cloud.domain.voucher.VoucherItem counter = new com.financial.cloud.domain.voucher.VoucherItem();
+        counter.setSubjectId("sub-counter-2");
+        counter.setCreditAmount(new BigDecimal("250"));
+
+        journalEntryService.syncLinkedEntriesFromVoucher(
+                "v-1", "book1", new Date(), "回写备注", List.of(fund, counter));
+
+        ArgumentCaptor<JournalEntry> captor = ArgumentCaptor.forClass(JournalEntry.class);
+        verify(journalEntryService, org.mockito.Mockito.atLeastOnce()).updateById(captor.capture());
+        boolean synced = captor.getAllValues().stream().anyMatch(e ->
+                e.getIncome() != null && e.getIncome().compareTo(new BigDecimal("250")) == 0
+                        && "回写备注".equals(e.getRemark())
+                        && "sub-counter-2".equals(e.getSubjectId()));
+        assertTrue(synced);
+    }
+
+    @Test
+    void syncLinkedEntriesFromVoucher_rejectsMissingFundLine() {
+        JournalEntry linked = baseEntry("e1", "acc1", "i", "100", null);
+        linked.setVoucherId("v-1");
+        doReturn(List.of(linked)).when(journalEntryService)
+                .list(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
+        JournalAccount account = new JournalAccount();
+        account.setId("acc1");
+        account.setSubjectId("fund-sub");
+        when(journalAccountService.getById("acc1")).thenReturn(account);
+
+        com.financial.cloud.domain.voucher.VoucherItem onlyCounter = new com.financial.cloud.domain.voucher.VoucherItem();
+        onlyCounter.setSubjectId("other");
+        onlyCounter.setDebitAmount(new BigDecimal("100"));
+
+        BusinessException ex = assertThrows(BusinessException.class, () ->
+                journalEntryService.syncLinkedEntriesFromVoucher(
+                        "v-1", "book1", new Date(), "x", List.of(onlyCounter)));
+        assertEquals(JournalErrorCode.VOUCHER_SYNC_STRUCTURE.getCode(), ex.getCode());
+    }
+
     private static JournalEntry baseEntry(String id, String accId, String direction, String income, String expenditure) {
         JournalEntry entry = new JournalEntry();
         entry.setId(id);

@@ -185,6 +185,7 @@ public final class MessageKeys {
         public static final String SUBJECT_SAME_AS_FUND = "journal.error.subject_same_as_fund";
         public static final String ACCOUNT_NOT_FOUND = "journal.error.account_not_found";
         public static final String DIRECTION_INVALID = "journal.error.direction_invalid";
+        public static final String VOUCHER_SYNC_STRUCTURE = "journal.error.voucher_sync_structure";
 
         private Journal() {
         }

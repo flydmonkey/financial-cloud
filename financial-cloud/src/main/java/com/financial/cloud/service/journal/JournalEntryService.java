@@ -19,6 +19,7 @@ import com.financial.cloud.domain.journal.JournalAccount;
 import com.financial.cloud.domain.journal.JournalEntry;
 import com.financial.cloud.dto.journal.JournalEntryDto;
 import com.financial.cloud.dto.journal.JournalEntryPageDto;
+import com.financial.cloud.domain.voucher.VoucherItem;
 import com.financial.cloud.dto.voucher.GenerateVoucherDto;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -332,6 +334,100 @@ public class JournalEntryService extends ServiceImpl<JournalEntryMapper, Journal
 		super.update(updateWrapper);
 
 		return Message.ok(voucherDto.getId());
+	}
+
+	/**
+	 * 凭证删除/作废后解绑流水，保留出纳记录以便再生成。
+	 */
+	@Transactional
+	public void clearLinksByVoucherIds(Collection<String> voucherIds) {
+		if (voucherIds == null || voucherIds.isEmpty()) {
+			return;
+		}
+		List<String> ids = voucherIds.stream()
+				.filter(StringUtils::isNotBlank)
+				.distinct()
+				.collect(Collectors.toList());
+		if (ids.isEmpty()) {
+			return;
+		}
+		LambdaUpdateWrapper<JournalEntry> uw = new LambdaUpdateWrapper<>();
+		uw.set(JournalEntry::getVoucherId, null);
+		uw.in(JournalEntry::getVoucherId, ids);
+		super.update(uw);
+	}
+
+	/**
+	 * 未过账关联凭证修改后，按资金科目分录回写流水并重算余额。
+	 */
+	@Transactional
+	public void syncLinkedEntriesFromVoucher(String voucherId, String bookId,
+											 Date voucherDate, String remark,
+											 List<VoucherItem> items) {
+		if (StringUtils.isBlank(voucherId) || StringUtils.isBlank(bookId)) {
+			return;
+		}
+		List<JournalEntry> linked = list(new LambdaQueryWrapper<JournalEntry>()
+				.eq(JournalEntry::getVoucherId, voucherId)
+				.eq(JournalEntry::getBookId, bookId));
+		if (linked.isEmpty()) {
+			return;
+		}
+		if (items == null || items.isEmpty()) {
+			throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
+		}
+		Set<String> affectedAccounts = new LinkedHashSet<>();
+		for (JournalEntry entry : linked) {
+			JournalAccount account = journalAccountService.getById(entry.getAccId());
+			if (account == null || StringUtils.isBlank(account.getSubjectId())) {
+				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
+			}
+			String fundSubjectId = account.getSubjectId();
+			VoucherItem fundLine = null;
+			VoucherItem counterpartLine = null;
+			for (VoucherItem item : items) {
+				if (item == null || StringUtils.isBlank(item.getSubjectId())) {
+					continue;
+				}
+				if (fundSubjectId.equals(item.getSubjectId())) {
+					fundLine = item;
+				} else if (counterpartLine == null) {
+					counterpartLine = item;
+				}
+			}
+			if (fundLine == null) {
+				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
+			}
+			BigDecimal debit = nullToZero(fundLine.getDebitAmount());
+			BigDecimal credit = nullToZero(fundLine.getCreditAmount());
+			boolean incomeSide = debit.compareTo(BigDecimal.ZERO) > 0;
+			BigDecimal amount = incomeSide ? debit : credit;
+			if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
+			}
+
+			entry.setTradeDate(voucherDate != null ? voucherDate : entry.getTradeDate());
+			if (remark != null) {
+				entry.setRemark(remark);
+			}
+			if (counterpartLine != null && StringUtils.isNotBlank(counterpartLine.getSubjectId())) {
+				entry.setSubjectId(counterpartLine.getSubjectId());
+			}
+			if (incomeSide) {
+				entry.setDirection("i");
+				entry.setIncome(amount);
+				entry.setExpenditure(null);
+			} else {
+				entry.setDirection("e");
+				entry.setIncome(null);
+				entry.setExpenditure(amount);
+			}
+			super.updateById(entry);
+			affectedAccounts.add(entry.getAccId());
+		}
+		for (String accId : affectedAccounts) {
+			recalculateAccountBalances(accId);
+		}
 	}
 
 	void recalculateAccountBalances(String accId) {

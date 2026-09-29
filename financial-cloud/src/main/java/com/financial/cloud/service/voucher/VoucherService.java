@@ -42,6 +42,7 @@ import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.service.book.BookSealGuard;
 import com.financial.cloud.service.book.BookSubjectService;
+import com.financial.cloud.service.journal.JournalEntryService;
 import com.financial.cloud.util.DateUtils;
 import com.financial.cloud.util.ExcelUtils;
 import com.financial.cloud.util.SubjectDisplayNameUtils;
@@ -62,6 +63,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +103,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     private final VoucherItemCashFlowMapper voucherItemCashFlowMapper;
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
     private final BookSealGuard bookSealGuard;
+    /** 延迟获取，避免与 JournalEntryService 循环依赖 */
+    private final ObjectProvider<JournalEntryService> journalEntryServiceProvider;
     public Message<Page<VoucherItemVo>> subLedger(VoucherItemPageDto paramsDto) {
         paramsDto.parse();
         return Message.ok(voucherItemMapper.subLedgerPage(paramsDto.build(), paramsDto));
@@ -732,6 +736,15 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             }
         }
         boolean update = super.updateById(booksVoucher);
+        if (update) {
+            journalEntryServiceProvider.ifAvailable(journal ->
+                    journal.syncLinkedEntriesFromVoucher(
+                            currentId,
+                            dto.getBookId(),
+                            booksVoucher.getVoucherDate(),
+                            booksVoucher.getRemark(),
+                            insertItems));
+        }
         return update
                 ? new Message<>(Message.SUCCESS, isRepeat ? "凭证字号重复，已为您重新编号并保存成功！" : "修改成功", currentId)
                 : new Message<>(Message.FAIL, "修改失败");
@@ -1669,8 +1682,11 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         int update = baseMapper.delete(new LambdaUpdateWrapper<Voucher>().in(Voucher::getId, ids));
 
-
-        return update == ids.size() ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
+        if (update == ids.size()) {
+            journalEntryServiceProvider.ifAvailable(journal -> journal.clearLinksByVoucherIds(ids));
+            return new Message<>(Message.SUCCESS, "删除成功");
+        }
+        return new Message<>(Message.FAIL, "删除失败");
     }
 
     /**
@@ -1735,6 +1751,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         update.setId(voucher.getId());
         update.setStatus(VoucherStatusEnum.CANCELLED.getValue());
         baseMapper.updateById(update);
+        journalEntryServiceProvider.ifAvailable(journal ->
+                journal.clearLinksByVoucherIds(List.of(id)));
         return Message.ok("作废成功");
     }
 

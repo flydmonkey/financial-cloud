@@ -18,13 +18,14 @@
 | 6 | `server-pdf-cash-flow` | 已归档 | 现金流量表服务端 PDF |
 | 7 | `server-pdf-ledgers` | 已归档 | 总账 + 明细账服务端 PDF |
 | 8 | `server-pdf-expense-detail` | 已归档 | 费用明细表服务端 PDF |
+| 9 | `server-pdf-specialty-ledgers` | 已归档 | 多栏账 + 数量金额账服务端 PDF |
 
 ## 后续候选（按客户声音）
 
 | 项 | 说明 |
 |----|------|
-| 多栏/数量金额 PDF | 次优交付 |
-| 覆盖式恢复 | 非克隆 |
+| 凭证汇总 PDF | 次优 |
+| 覆盖式恢复 | 非克隆；需强确认与预备份 |
 | 工资条员工自助 | Non-goal |
 
 ## 决策原则

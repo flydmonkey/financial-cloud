@@ -8,10 +8,13 @@ import com.financial.cloud.enums.book.SubjectDirectionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookSubjectMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
+import com.financial.cloud.util.pdf.PdfTableExporter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -112,6 +115,52 @@ public class QuantityLedgerService {
                 .periodOutAmount(outAmt)
                 .rows(rows)
                 .build();
+    }
+
+    /**
+     * 数量金额账 PDF 导出。
+     */
+    public void exportPdf(String bookId, String subjectCode, String startDate, String endDate,
+                          HttpServletResponse response) throws IOException {
+        QuantityLedgerVo vo = query(bookId, subjectCode, startDate, endDate);
+        List<String[]> rows = new ArrayList<>();
+        if (vo.getRows() != null) {
+            for (QuantityLedgerVo.Row row : vo.getRows()) {
+                rows.add(new String[]{
+                        PdfTableExporter.nz(row.getVoucherDate()),
+                        PdfTableExporter.nz(row.getWord()),
+                        PdfTableExporter.nz(row.getSummary()),
+                        row.getInQuantity() == null ? "" : String.valueOf(row.getInQuantity()),
+                        PdfTableExporter.formatAmount(row.getInPrice()),
+                        PdfTableExporter.formatAmount(row.getInAmount()),
+                        row.getOutQuantity() == null ? "" : String.valueOf(row.getOutQuantity()),
+                        PdfTableExporter.formatAmount(row.getOutPrice()),
+                        PdfTableExporter.formatAmount(row.getOutAmount()),
+                        row.getBalanceQuantity() == null ? "" : String.valueOf(row.getBalanceQuantity()),
+                        PdfTableExporter.formatAmount(row.getBalancePrice()),
+                        PdfTableExporter.formatAmount(row.getBalanceAmount()),
+                });
+            }
+        }
+        String period = PdfTableExporter.nz(startDate) + " ~ " + PdfTableExporter.nz(endDate);
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "数量金额明细账",
+                "科目：" + PdfTableExporter.nz(vo.getSubjectCode()) + " "
+                        + PdfTableExporter.nz(vo.getSubjectName()) + "　期间：" + period
+                        + "　期初：" + PdfTableExporter.nz(vo.getOpeningQuantity()) + " / "
+                        + PdfTableExporter.formatAmount(vo.getOpeningAmount())
+                        + "　期末：" + PdfTableExporter.nz(vo.getClosingQuantity()) + " / "
+                        + PdfTableExporter.formatAmount(vo.getClosingAmount()),
+                new String[]{
+                        "日期", "凭证字号", "摘要",
+                        "收入数量", "收入单价", "收入金额",
+                        "发出数量", "发出单价", "发出金额",
+                        "结存数量", "结存单价", "结存金额"
+                },
+                rows,
+                true,
+                "数量金额账" + PdfTableExporter.nz(subjectCode) + ".pdf"
+        ), response);
     }
 
     /** 收入侧判定：借方科目借=收入；贷方科目贷=收入。按金额列是否有值判定所在侧。 */

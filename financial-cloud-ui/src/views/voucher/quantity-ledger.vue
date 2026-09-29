@@ -49,6 +49,12 @@
           >
             打印
           </el-button>
+          <el-button
+            :disabled="!ledger"
+            @click="handleExportPdf"
+          >
+            导出 PDF
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -216,9 +222,9 @@
 <script setup name="QuantityLedger" lang="ts">
 import {getCurrentInstance, reactive, ref, toRefs} from 'vue'
 import {useRouter} from 'vue-router'
-import {formatAmount} from '@/utils'
+import {formatAmount, downloadData} from '@/utils'
 import {parseTime} from '@/utils/financialCloud'
-import {quantityLedger} from '@/api/voucher/voucher'
+import {quantityLedger, quantityLedgerExportPdf} from '@/api/voucher/voucher'
 import * as subjectApi from '@/api/standard/standard-subject'
 import {cascaderSubjectProps} from '@/utils/Subjects'
 import bookStore from '@/store/modules/bookStore'
@@ -317,6 +323,22 @@ function handlePrint() {
       </tr>
       <tr><th>数量</th><th>单价</th><th>金额</th><th>数量</th><th>单价</th><th>金额</th><th>数量</th><th>单价</th><th>金额</th></tr>
     </thead><tbody>${body}</tbody>`,
+  })
+}
+
+function handleExportPdf() {
+  const path = queryParams.value.subjectCodePath
+  const subjectCode = Array.isArray(path) && path.length ? String(path[path.length - 1]) : ''
+  if (!subjectCode) {
+    proxy?.$modal?.msgWarning('请选择科目')
+    return
+  }
+  quantityLedgerExportPdf({
+    subjectCode,
+    startDate: queryParams.value.startMonth + '-01',
+    endDate: lastDayOfMonth(queryParams.value.endMonth),
+  }).then((data: any) => {
+    downloadData(data, `数量金额账${subjectCode}_${queryParams.value.startMonth}_${queryParams.value.endMonth}.pdf`)
   })
 }
 

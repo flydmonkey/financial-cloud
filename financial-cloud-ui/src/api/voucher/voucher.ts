@@ -293,11 +293,29 @@ export function multiColumnLedger(query: any): any {
     })
 }
 
+export function multiColumnLedgerExportPdf(query: any): any {
+    return request({
+        url: '/voucher/multi-column-ledger/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}
+
 // 数量金额账
 export function quantityLedger(query: any): any {
     return request({
         url: '/voucher/quantity-ledger',
         method: 'get',
         params: query
+    })
+}
+
+export function quantityLedgerExportPdf(query: any): any {
+    return request({
+        url: '/voucher/quantity-ledger/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
     })
 }

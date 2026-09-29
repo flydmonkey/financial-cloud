@@ -8,10 +8,13 @@ import com.financial.cloud.enums.book.SubjectDirectionEnum;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookSubjectMapper;
 import com.financial.cloud.repository.voucher.VoucherItemMapper;
+import com.financial.cloud.util.pdf.PdfTableExporter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -142,6 +145,57 @@ public class MultiColumnLedgerService {
                 .columnTotals(columnTotals)
                 .periodTotal(periodTotal)
                 .build();
+    }
+
+    /**
+     * 多栏账 PDF 导出。
+     */
+    public void exportPdf(String bookId, String subjectCode, String startDate, String endDate,
+                          HttpServletResponse response) throws IOException {
+        MultiColumnLedgerVo vo = query(bookId, subjectCode, startDate, endDate);
+        List<MultiColumnLedgerVo.Column> columns = vo.getColumns() == null ? List.of() : vo.getColumns();
+        List<String> headerList = new ArrayList<>();
+        headerList.add("日期");
+        headerList.add("凭证字号");
+        headerList.add("摘要");
+        for (MultiColumnLedgerVo.Column col : columns) {
+            headerList.add(StringUtils.defaultString(col.getName(), col.getCode()));
+        }
+        headerList.add("合计");
+        headerList.add("余额");
+        String[] headers = headerList.toArray(new String[0]);
+
+        List<String[]> rows = new ArrayList<>();
+        if (vo.getRows() != null) {
+            for (MultiColumnLedgerVo.Row row : vo.getRows()) {
+                String[] cells = new String[headers.length];
+                cells[0] = PdfTableExporter.nz(row.getVoucherDate());
+                cells[1] = PdfTableExporter.nz(row.getWord());
+                cells[2] = PdfTableExporter.nz(row.getSummary());
+                int i = 3;
+                Map<String, BigDecimal> amounts = row.getAmounts();
+                for (MultiColumnLedgerVo.Column col : columns) {
+                    BigDecimal amt = amounts == null ? null : amounts.get(col.getCode());
+                    cells[i++] = PdfTableExporter.formatAmount(amt);
+                }
+                cells[i++] = PdfTableExporter.formatAmount(row.getTotal());
+                cells[i] = PdfTableExporter.formatAmount(row.getBalance());
+                rows.add(cells);
+            }
+        }
+        String direction = "2".equals(vo.getDirection()) ? "贷方栏" : "借方栏";
+        String period = PdfTableExporter.nz(startDate) + " ~ " + PdfTableExporter.nz(endDate);
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "多栏式明细账",
+                "科目：" + PdfTableExporter.nz(vo.getSubjectCode()) + " "
+                        + PdfTableExporter.nz(vo.getSubjectName()) + "（" + direction + "）　期间：" + period
+                        + "　期初：" + PdfTableExporter.formatAmount(vo.getOpeningBalance())
+                        + "　期末：" + PdfTableExporter.formatAmount(vo.getClosingBalance()),
+                headers,
+                rows,
+                true,
+                "多栏账" + PdfTableExporter.nz(subjectCode) + ".pdf"
+        ), response);
     }
 
     /** 栏位净额：借方栏母取 借-贷，贷方栏母取 贷-借 */

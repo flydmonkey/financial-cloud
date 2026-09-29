@@ -92,6 +92,16 @@ public class VoucherController {
                 userInfo.getBookId(), subjectCode, startDate, endDate));
     }
 
+    @GetMapping("/multi-column-ledger/export-pdf")
+    public void multiColumnLedgerExportPdf(@RequestParam String subjectCode,
+                                           @RequestParam(required = false) String startDate,
+                                           @RequestParam(required = false) String endDate,
+                                           @CurrentUser UserInfo userInfo,
+                                           HttpServletResponse response) throws IOException {
+        multiColumnLedgerService.exportPdf(
+                userInfo.getBookId(), subjectCode, startDate, endDate, response);
+    }
+
     /**
      * 数量金额账：科目 + 日期区间，逐分录展示收入/发出/结存的数量、单价、金额
      */
@@ -102,6 +112,16 @@ public class VoucherController {
                                                     @CurrentUser UserInfo userInfo) {
         return Message.ok(quantityLedgerService.query(
                 userInfo.getBookId(), subjectCode, startDate, endDate));
+    }
+
+    @GetMapping("/quantity-ledger/export-pdf")
+    public void quantityLedgerExportPdf(@RequestParam String subjectCode,
+                                        @RequestParam(required = false) String startDate,
+                                        @RequestParam(required = false) String endDate,
+                                        @CurrentUser UserInfo userInfo,
+                                        HttpServletResponse response) throws IOException {
+        quantityLedgerService.exportPdf(
+                userInfo.getBookId(), subjectCode, startDate, endDate, response);
     }
 
     @GetMapping(value = {"/fetch"})

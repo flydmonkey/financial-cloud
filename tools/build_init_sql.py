@@ -75,6 +75,11 @@ BALANCE_SHEET_RULES_SQL = [
     SEED / "rules" / "balance_sheet_bad_debt_rules.sql",
 ]
 
+# 企业会计制度(standard_id=2) 报表模板：源库仅准则1，准则2建账后报表全空
+STATEMENT_STD2_SQL = [
+    SEED / "data" / "standard2_statement_templates.sql",
+]
+
 VOUCHER_SUMMARY_OLD = (
     "('1891486309700673537','凭证汇总表','凭证汇总表','MENU',"
     "'1891486309700673537','/statement/voucher-summary','GET',NULL,'r',NULL,NULL,"
@@ -490,6 +495,20 @@ def main() -> int:
         ]
     )
     for chunk in load_balance_sheet_rules_sql():
+        lines.append(chunk)
+        lines.append("")
+
+    std2_chunks: list[str] = []
+    append_sql_chunks(std2_chunks, STATEMENT_STD2_SQL)
+    lines.extend(
+        [
+            "-- ------------------------------------------------------------------",
+            "-- Standard 2 (企业会计制度) statement templates",
+            "-- ------------------------------------------------------------------",
+            "",
+        ]
+    )
+    for chunk in std2_chunks:
         lines.append(chunk)
         lines.append("")
 

@@ -92,7 +92,9 @@ public final class MonthEndCloseRules {
 	 */
 	public static List<String> costCarryRootsForStandard(String standardId) {
 		if (isEnterpriseAccountingSystem(standardId)) {
-			return List.of("5401", "5405", "5501", "5502", "5503", "5601");
+			// 企业会计制度：主营业务成本、主营业务税金及附加、其他业务支出、营业/管理/财务费用、
+			// 营业外支出、所得税（准则2种子无 qm_jz_sds 模板，所得税随成本费用一并结转）
+			return List.of("5401", "5402", "5405", "5501", "5502", "5503", "5601", "5701");
 		}
 		return List.of("5401", "5402", "5601", "5602", "5603", "5711");
 	}

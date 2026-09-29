@@ -20,6 +20,9 @@ class MonthEndCloseRulesTest {
     void enterpriseSystemUsesQiyeKuaijiZhiduRoots() {
         assertTrue(MonthEndCloseRules.costCarryRootsForStandard("2").contains("5501"));
         assertTrue(MonthEndCloseRules.costCarryRootsForStandard("2").contains("5405"));
+        // 主营业务税金及附加与所得税必须随成本费用结转，否则 3131 本年利润漏项
+        assertTrue(MonthEndCloseRules.costCarryRootsForStandard("2").contains("5402"));
+        assertTrue(MonthEndCloseRules.costCarryRootsForStandard("2").contains("5701"));
         assertTrue(MonthEndCloseRules.incomeCarryRootsForStandard("2").contains("5101"));
         assertEquals("3131", MonthEndCloseRules.yearProfitSubjectForStandard("2"));
         assertEquals("3141.15", MonthEndCloseRules.undistributedProfitSubjectForStandard("2"));
@@ -38,7 +41,7 @@ class MonthEndCloseRulesTest {
     @Test
     void defaultCostCarryTemplateItemsFollowEnterpriseSystem() {
         var items = MonthEndCloseRules.defaultCostCarryTemplateItems("2");
-        assertEquals(7, items.size());
+        assertEquals(9, items.size());
         assertEquals("5401", items.get(0).subjectCode());
         assertEquals(2, items.get(0).direction());
         assertEquals("3131", items.get(items.size() - 1).subjectCode());

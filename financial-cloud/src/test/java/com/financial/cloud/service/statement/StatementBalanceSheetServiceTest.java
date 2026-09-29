@@ -64,6 +64,87 @@ class StatementBalanceSheetServiceTest {
     private StatementBalanceSheetService statementBalanceSheetService;
 
     @Test
+    void refreshItemsBalance_exactCodeWinsOverAlias() {
+        // 企业会计制度：1131=应收账款 与 1122=应收利息 同时存在，
+        // 规则科目 1131 必须只取 1131 的余额，不能经别名 1131→1122 把应收利息并入
+        StatementBalanceSheetItem arItem = new StatementBalanceSheetItem();
+        arItem.setItemCode("1106");
+        arItem.setAssetOrLiability(AssetOrLiabilityEnum.asset.name());
+        arItem.setSymbol(StatementSymbolEnum.PLUS.getValue());
+        arItem.setLevel(2);
+        arItem.setCurrentBalance(BigDecimal.ZERO);
+        arItem.setInitialBalance(BigDecimal.ZERO);
+
+        StatementRules rule = StatementRules.builder()
+                .bookId("b1").type("balance_sheet").itemCode("1106")
+                .subjectCode("1131")
+                .rule(com.financial.cloud.util.StatementBalanceSheetRules.DEBIT_BALANCE)
+                .symbol("+").build();
+        // 服务内有两个 StatementRulesMapper 字段，构造器注入对同类型字段不确定，显式按名设置
+        ReflectionTestUtils.setField(statementBalanceSheetService, "rulesMapper", rulesMapper);
+        ReflectionTestUtils.setField(statementBalanceSheetService, "subjectBalanceMapper", subjectBalanceMapper);
+        org.mockito.Mockito.when(rulesMapper.selectList(
+                org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<StatementRules>>any()))
+                .thenReturn(List.of(rule));
+
+        StatementSubjectBalance ar = StatementSubjectBalance.builder()
+                .subjectCode("1131").direction(SubjectDirectionEnum.DEBIT.getValue())
+                .closingBalanceDebit(bd("1000")).closingBalanceCredit(BigDecimal.ZERO)
+                .openingYearBalanceDebit(bd("800")).openingYearBalanceCredit(BigDecimal.ZERO)
+                .balance(bd("1000")).build();
+        StatementSubjectBalance interest = StatementSubjectBalance.builder()
+                .subjectCode("1122").direction(SubjectDirectionEnum.DEBIT.getValue())
+                .closingBalanceDebit(bd("200")).closingBalanceCredit(BigDecimal.ZERO)
+                .openingYearBalanceDebit(bd("200")).openingYearBalanceCredit(BigDecimal.ZERO)
+                .balance(bd("200")).build();
+        org.mockito.Mockito.when(subjectBalanceMapper.selectList(
+                org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<StatementSubjectBalance>>any()))
+                .thenReturn(List.of(ar, interest));
+
+        statementBalanceSheetService.refreshItemsBalance(List.of(arItem), "b1", "2026-09", 3);
+
+        assertEquals(0, bd("1000").compareTo(arItem.getCurrentBalance()));
+        assertEquals(0, bd("800").compareTo(arItem.getInitialBalance()));
+    }
+
+    @Test
+    void refreshItemsBalance_aliasFallbackWhenExactCodeAbsent() {
+        // 小企业账套无 4103：规则科目 4103 应回落到别名 3103 取数
+        StatementBalanceSheetItem profitItem = new StatementBalanceSheetItem();
+        profitItem.setItemCode("2310");
+        profitItem.setAssetOrLiability(AssetOrLiabilityEnum.liability.name());
+        profitItem.setSymbol(StatementSymbolEnum.PLUS.getValue());
+        profitItem.setLevel(2);
+        profitItem.setCurrentBalance(BigDecimal.ZERO);
+        profitItem.setInitialBalance(BigDecimal.ZERO);
+
+        StatementRules rule = StatementRules.builder()
+                .bookId("b1").type("balance_sheet").itemCode("2310")
+                .subjectCode("4103")
+                .rule(com.financial.cloud.util.StatementBalanceSheetRules.BALANCE)
+                .symbol("+").build();
+        ReflectionTestUtils.setField(statementBalanceSheetService, "rulesMapper", rulesMapper);
+        ReflectionTestUtils.setField(statementBalanceSheetService, "subjectBalanceMapper", subjectBalanceMapper);
+        org.mockito.Mockito.when(rulesMapper.selectList(
+                org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<StatementRules>>any()))
+                .thenReturn(List.of(rule));
+
+        StatementSubjectBalance aliasRow = StatementSubjectBalance.builder()
+                .subjectCode("3103").direction(SubjectDirectionEnum.CREDIT.getValue())
+                .closingBalanceDebit(BigDecimal.ZERO).closingBalanceCredit(bd("5000"))
+                .openingYearBalanceDebit(BigDecimal.ZERO).openingYearBalanceCredit(bd("4000"))
+                .balance(bd("-5000")).build();
+        org.mockito.Mockito.when(subjectBalanceMapper.selectList(
+                org.mockito.ArgumentMatchers.<com.baomidou.mybatisplus.core.conditions.Wrapper<StatementSubjectBalance>>any()))
+                .thenReturn(List.of(aliasRow));
+
+        statementBalanceSheetService.refreshItemsBalance(List.of(profitItem), "b1", "2026-09", 3);
+
+        assertEquals(0, bd("5000").compareTo(profitItem.getCurrentBalance()));
+        assertEquals(0, bd("4000").compareTo(profitItem.getInitialBalance()));
+    }
+
+    @Test
     void updateRuleBalance_debitBalanceRule_accumulatesMultipleRows() {
         StatementRules arRule = StatementRules.builder()
                 .rule(com.financial.cloud.util.StatementBalanceSheetRules.DEBIT_BALANCE)

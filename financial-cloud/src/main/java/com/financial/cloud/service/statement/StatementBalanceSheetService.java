@@ -421,11 +421,20 @@ public class StatementBalanceSheetService{
             for (StatementRules statementRules : rules) {
                 statementRules.setOpeningYearBalance(BigDecimal.ZERO);
                 statementRules.setClosingBalance(BigDecimal.ZERO);
-                for (String subjectCode : SubjectCodeCompat.lookupCandidates(statementRules.getSubjectCode())) {
-                    for (StatementSubjectBalance subjectBalance :
-                            subjectMapByCode.getOrDefault(subjectCode, List.of())) {
-                        updateRuleBalance(subjectBalance, statementRules);
+                // 精确编码优先，别名兜底：企业会计制度科目体系下 1131=应收账款 与 1122=应收利息
+                // 同时存在，别名 1131→1122 若不加区分会把应收利息重复计入应收账款
+                List<StatementSubjectBalance> matched =
+                        subjectMapByCode.get(statementRules.getSubjectCode());
+                if (matched == null) {
+                    for (String subjectCode : SubjectCodeCompat.lookupCandidates(statementRules.getSubjectCode())) {
+                        matched = subjectMapByCode.get(subjectCode);
+                        if (matched != null) {
+                            break;
+                        }
                     }
+                }
+                for (StatementSubjectBalance subjectBalance : matched != null ? matched : List.<StatementSubjectBalance>of()) {
+                    updateRuleBalance(subjectBalance, statementRules);
                 }
                 StatementBalanceSheetItem balanceSheet = mapSheet.get(statementRules.getItemCode());
                 if (StatementSymbolEnum.PLUS.getValue().equals(statementRules.getSymbol())) {

@@ -32,6 +32,17 @@
           仅有待办
         </el-checkbox>
       </el-form-item>
+      <el-form-item label="结账">
+        <el-radio-group
+          v-model="closeStatusFilter"
+          size="small"
+        >
+          <el-radio-button value="ALL">全部</el-radio-button>
+          <el-radio-button value="BEHIND">落后</el-radio-button>
+          <el-radio-button value="OPEN">未结</el-radio-button>
+          <el-radio-button value="CLOSED">已结</el-radio-button>
+        </el-radio-group>
+      </el-form-item>
       <el-form-item>
         <el-button
           type="primary"
@@ -55,6 +66,17 @@
       </el-form-item>
     </el-form>
 
+    <div
+      v-if="summary.total || loading"
+      class="summary-strip"
+    >
+      <span>共 <b>{{ summary.total }}</b> 套</span>
+      <span class="text-danger">落后 <b>{{ summary.behind }}</b></span>
+      <span>未结 <b>{{ summary.open }}</b></span>
+      <span>已结 <b>{{ summary.closed }}</b></span>
+      <span>有待办 <b>{{ summary.withTodo }}</b></span>
+    </div>
+
     <el-alert
       v-if="board.truncated"
       type="warning"
@@ -66,7 +88,7 @@
 
     <el-table
       v-loading="loading"
-      :data="board.rows || []"
+      :data="displayedRows"
       border
       @selection-change="onSelectionChange"
     >
@@ -171,7 +193,7 @@
     </el-table>
 
     <el-empty
-      v-if="!loading && !(board.rows && board.rows.length)"
+      v-if="!loading && !displayedRows.length"
       description="暂无授权账套或无匹配结果"
     >
       <el-button
@@ -196,6 +218,12 @@ import {
 import {switchBook} from "@/api/idm/user";
 import {downloadData} from "@/utils";
 import useUserStore from "@/store/modules/user";
+import {
+  booksBoardBlockerPath,
+  filterBooksBoardRows,
+  summarizeBooksBoardRows,
+  type CloseStatusFilter,
+} from "@/utils/booksBoard";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -205,6 +233,7 @@ const exportingId = ref("");
 const onlyTodo = ref(false);
 const keyword = ref("");
 const includeVoucherList = ref(true);
+const closeStatusFilter = ref<CloseStatusFilter>("ALL");
 const focusMonth = ref(defaultFocusMonth());
 const selected = ref<any[]>([]);
 const board = reactive<any>({rows: [], totalGranted: 0, truncated: false, focusPeriod: ""});
@@ -215,6 +244,12 @@ const canExport = computed(() => {
     ["ROLE_ADMINISTRATORS", "ROLE_BOOKKEEPER", "ROLE_REVIEWER"].includes(r)
   );
 });
+
+const displayedRows = computed(() =>
+  filterBooksBoardRows(board.rows || [], closeStatusFilter.value)
+);
+
+const summary = computed(() => summarizeBooksBoardRows(board.rows || []));
 
 const selectedClosedIds = computed(() =>
   selected.value.filter((r) => r.closeStatus === "CLOSED").map((r) => r.bookId)
@@ -260,20 +295,7 @@ function blockerLabel(blocker: string): string {
 }
 
 function blockerPath(row: any): string {
-  switch (row.blocker) {
-    case "AUDIT":
-    case "POST":
-      return "/voucher/voucher-index";
-    case "DEPRECIATION":
-      return "/fixed-asset/depreciation";
-    case "READY_CLOSE":
-    case "BEHIND":
-      return "/settlement/settle-period";
-    case "READY_PACK":
-      return "/settlement/settle-list";
-    default:
-      return "/index";
-  }
+  return booksBoardBlockerPath(row.blocker);
 }
 
 function rowSelectable(row: any): boolean {
@@ -366,6 +388,17 @@ function goOnboarding(): void {
 <style scoped>
 .toolbar {
   margin-bottom: 8px;
+}
+.summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
+  color: #606266;
+  font-size: 13px;
 }
 .mb8 {
   margin-bottom: 8px;

@@ -164,6 +164,7 @@ flowchart LR
 | 薪资与个税 | [09](09-payroll.md) |
 | 反结账 | [06](06-settlement.md) |
 | 准则模板双套 | [02](02-basic-settings.md) |
+| 代账工作台（多账套月末看板） | `/workspace/books-board`；见 [books-board 设计](../superpowers/specs/2026-09-29-daizhang-books-board-design.md) |
 
 ## 9. 规模与质量快照
 

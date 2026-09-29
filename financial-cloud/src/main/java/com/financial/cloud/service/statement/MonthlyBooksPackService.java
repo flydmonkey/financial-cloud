@@ -96,6 +96,56 @@ public class MonthlyBooksPackService {
         }
     }
 
+    /**
+     * 多账套账本包总 ZIP：成功套放入 {@code 账套名/本月账本包_period.zip}；失败写入 errors.txt。
+     */
+    public BooksPack buildBatch(List<String> bookIds, String yearPeriod, boolean includeVoucherList,
+                                String userId, java.util.function.Predicate<String> granted) {
+        parsePeriod(yearPeriod);
+        if (bookIds == null || bookIds.isEmpty()) {
+            throw new BusinessException(400, "请选择至少一个账套");
+        }
+        Map<String, byte[]> members = new LinkedHashMap<>();
+        StringBuilder errors = new StringBuilder();
+        for (String bookId : bookIds) {
+            if (bookId == null || bookId.isBlank()) {
+                continue;
+            }
+            if (granted == null || !granted.test(bookId)) {
+                errors.append(bookId).append(": 无权限或未授权\n");
+                continue;
+            }
+            try {
+                BooksPack pack = build(bookId, yearPeriod, includeVoucherList, userId);
+                Book book = bookMapper.selectById(bookId);
+                String folder = safeName(book == null ? bookId : book.getName());
+                members.put(folder + "/" + pack.fileName(), pack.content());
+            } catch (RuntimeException ex) {
+                String msg = ex instanceof BusinessException be ? be.getMessage() : ex.getMessage();
+                errors.append(bookId).append(": ").append(msg == null ? "导出失败" : msg).append('\n');
+                log.warn("books pack batch member failed bookId={} period={} userId={}: {}",
+                        bookId, yearPeriod, userId, msg);
+            }
+        }
+        if (!errors.isEmpty()) {
+            members.put("errors.txt", errors.toString().getBytes(StandardCharsets.UTF_8));
+        }
+        if (members.isEmpty()) {
+            throw new BusinessException(400, "没有可导出的账本包");
+        }
+        try {
+            byte[] zip = zip(members);
+            return new BooksPack("批量账本包_" + yearPeriod + ".zip", zip, members.size());
+        } catch (IOException ex) {
+            throw new BusinessException(500, "批量账本包生成失败");
+        }
+    }
+
+    static String safeName(String bookName) {
+        String safe = text(bookName).replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        return safe.isBlank() ? "账套" : safe;
+    }
+
     byte[] detailLedger(String bookId, String yearPeriod) throws IOException {
         VoucherItemPageDto query = new VoucherItemPageDto();
         query.setBookId(bookId);

@@ -26,7 +26,7 @@ export const getLocale: any = () => {
     // 存在返回当前语言
     if (storLanguage) return storLanguage
     // 不存在 获取系统语言
-    const language: any = (navigator.language || navigator?.browserLanguage)?.toLowerCase()
+    const language: any = (navigator.language || (navigator as any).browserLanguage)?.toLowerCase()
     const locales: any = Object.keys(messages)
     for (const locale of locales) {
         if (language.indexOf(locale) > -1) {

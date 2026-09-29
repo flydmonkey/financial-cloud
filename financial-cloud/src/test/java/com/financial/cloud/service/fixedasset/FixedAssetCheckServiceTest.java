@@ -304,7 +304,8 @@ class FixedAssetCheckServiceTest {
 
         assertEquals(1, vo.getRows().size());
         assertTrue(vo.getRows().get(0).isHasDepreciation());
-        assertTrue(vo.getRows().get(0).getWarning() != null && vo.getRows().get(0).getWarning().contains("累计折旧"));
+        assertTrue(vo.getRows().get(0).getWarning() != null
+                && vo.getRows().get(0).getWarning().contains("不允许在原卡累加数量入账"));
     }
 
     @Test
@@ -470,6 +471,25 @@ class FixedAssetCheckServiceTest {
         verify(assetMapper).updateById(src);
         assertEquals("voucher-2", it.getSurplusVoucherId());
         assertEquals(null, it.getSurplusAssetId());
+    }
+
+    @Test
+    void bookSurplus_skipsBumpWhenCardHasDepreciation() {
+        when(checkMapper.selectById("check-1")).thenReturn(completedCheck());
+        FixedAssetCheckItem it = surplusItem("item-1", "asset-2", 2, 3);
+        when(itemMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(it));
+        when(itemMapper.selectById("item-1")).thenReturn(it);
+        FixedAsset src = asset("asset-2", "FA-2", 2, "1000");
+        src.setAccumDepr(new BigDecimal("200"));
+        when(assetMapper.selectById("asset-2")).thenReturn(src);
+
+        FixedAssetCheckDtos.SurplusBookVo vo = service.bookSurplus("check-1", BOOK_ID,
+                List.of(bookDto("item-1", "500")));
+
+        assertEquals(0, vo.getProcessedCount());
+        assertTrue(vo.getSkipped().get(0).getReason().contains("禁止 bump"));
+        verify(fixedAssetService, never()).createSurplusVoucher(any(), any(), any());
+        verify(assetMapper, never()).updateById(any(FixedAsset.class));
     }
 
     @Test

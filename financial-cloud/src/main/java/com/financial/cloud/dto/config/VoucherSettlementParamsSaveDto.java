@@ -6,4 +6,5 @@ import lombok.Data;
 public class VoucherSettlementParamsSaveDto {
     private Integer voucherReviewed;
     private Boolean arapVerifyEnabled;
+    private Boolean arapOverdueHard;
 }

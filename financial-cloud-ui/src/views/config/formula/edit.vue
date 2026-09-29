@@ -178,7 +178,7 @@ const props: any = defineProps({
     default: () => [],
   },
   operators: {
-    type: Array as PropType<{ id: string; name: string }[]>,
+    type: Array as PropType<{ id: string; name: string; symbol?: string }[]>,
     default: () => [],
   }
 })
@@ -194,9 +194,7 @@ const data: any = reactive({
   }
 })
 
-type Item = {};
-type Operator = {};
-type SelectedItem = Item | Operator;
+type SelectedItem = { name?: string; symbol?: string; type?: string; [key: string]: any };
 const selectedItems = ref<SelectedItem[]>([]);
 // 添加计算项
 const addItem = (item: any) => {
@@ -221,7 +219,7 @@ const removeItem = (index: any) => {
 // 计算最终公式字符串
 const formulaString = computed(() => {
   return selectedItems.value
-      .map(item => item.name)
+      .map(item => item.name || item.symbol || '')
       .join(' ')
 })
 

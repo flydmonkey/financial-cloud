@@ -1,30 +1,32 @@
 # 质量仪表盘
 
-> 最后更新：2026-09-02  
-> 环境：后端 `localhost:2154`，前端 `localhost:3154`
+> 最后更新：2026-09-29（V2+Post-V2+TS 程序收口；CI 绿）  
+> 环境：本机 Cloud Agent（`financial-cloud` + `financial-cloud-ui`）；E2E 未在本轮全量复跑
 
 ## 总览
 
 | 维度 | 结果 |
 |------|------|
-| API 冒烟（`tools/smoke-api.mjs`） | 7 场景 |
-| Playwright E2E | 35 spec 文件 |
-| 后端单测 | 凭证 + 结账 + 报表 + book/journal/hr |
-| TypeScript | **121 error**（原 728 → 251 → 121） |
-| ESLint | **0 error** / ~3864 warning（原宣称 114 error；规则已降为 warning 后仅剩样式债） |
+| 后端单测（`./mvnw test`） | **通过**（BUILD SUCCESS，2026-09-29） |
+| TypeScript（`npm run typecheck`） | **0 error**（由 ~129 清零；CI **硬门禁**） |
+| ESLint（`npm run lint`） | **0 error** / **~905 warning** |
+| 前端单测（`npm run test:unit`） | voucherWorkspace + voucherPrint；CI 纳入 frontend-check |
+| GitHub CI（[#5](https://github.com/flydmonkey/financial-cloud/pull/5)） | **backend-test / frontend-check 绿**（e2e 仅 push main） |
+| Playwright E2E | 约 **40** 个 `e2e/*.spec.ts`（本轮未全量复跑） |
+| API 冒烟（`tools/smoke-api.mjs`） | 未本轮复跑 |
 
-## 分模块
+## 分模块（历史基线，仍适用）
 
 | 模块 | API 冒烟 | E2E | 说明 |
 |------|----------|-----|------|
 | auth | ✓ | smoke | 低 |
-| voucher | ✓ | 3 条 | 中 |
-| statement | ✓ | 4 条 | 报表平衡已修 |
-| settlement | ✓ | 3 条 | 结账年份默认已修 |
-| dashboard | ✓ | 2 条 | statistics API |
-| config | ✓ | 2 条 | 期初/辅助核算 |
-| book / journal / hr | ✓ | API + 页面 | 路由拼接已修 |
-| 其余 | ✓ | — | 低 |
+| voucher | ✓ | 多条 | 中；Post-V2 改证路径已产品化 |
+| statement | ✓ | 多条 | 报表平衡已修 |
+| settlement | ✓ | 多条 | 月结向导已落地 |
+| dashboard | ✓ | 有 | statistics API |
+| config | ✓ | 有 | 期初/辅助核算 |
+| arap / journal / hr | ✓ | 有 | 往来核销、日记账、薪资最小闭环 |
+| 其余 | — | — | 按模块增补 |
 
 ## 复跑
 
@@ -32,9 +34,10 @@
 # 后端单测
 cd financial-cloud && ./mvnw test
 
-# 前端类型 / Lint
+# 前端类型 / Lint / 单测
 cd financial-cloud-ui && npm run typecheck
 cd financial-cloud-ui && npm run lint
+cd financial-cloud-ui && npm run test:unit
 
 # API 冒烟
 node tools/smoke-api.mjs
@@ -45,7 +48,8 @@ cd financial-cloud-ui && npm run test:e2e
 
 ## 已知后续
 
-- **账套 4103/4104 权益核对（人工）**：在演示/回归账套打开资产负债表，确认「实收资本 / 资本公积 / 盈余公积 / 未分配利润」与科目余额一致；不平则记入报表缺陷，不阻断发版
-- TypeScript 剩余 ~121 error：集中在 `voucher-edit`、audit 页、cash-flow 编辑抽屉等；CI `typecheck` 仍为 `continue-on-error`
-- ESLint：error 已清零；大量 `vue/html-*` / `max-attributes-per-line` warning 可后续 `--fix` 分批消化
-- CI：`.github/workflows/ci.yml`（push 时跑 E2E）
+- TypeScript **已清零**；CI 对 `typecheck` 失败即红（不再 `continue-on-error`）
+- ESLint：0 error，大量 warning；功能刀不要求清零 warning
+- 吞吐 V2 / Post-V2 / TS：**程序已关闭** — [throughput-v2-backlog](superpowers/plans/2026-09-29-throughput-v2-backlog.md)
+- 账套权益核对（人工）：资产负债表与科目余额一致检查仍建议发版前抽检
+- 近端不以银行余额调节增强 / 税费向导 / 移动端 / AI / 税局直连扩容

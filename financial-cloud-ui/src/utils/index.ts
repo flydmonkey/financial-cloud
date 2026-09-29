@@ -49,7 +49,7 @@ export function debounce(func: any, wait: any, immediate: any): any {
         }
     }
 
-    return function (...args: any) {
+    return function (this: any, ...args: any) {
         context = this
         timestamp = +new Date()
         const callNow: any = immediate && !timeout

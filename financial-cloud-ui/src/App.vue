@@ -18,7 +18,7 @@ import elEnUS from 'element-plus/es/locale/lang/en'
 import Cookies from 'js-cookie'
 import {getLocale} from '@/languages'
 
-const elementPlusSize = Cookies.get('size') || 'default'
+const elementPlusSize = (Cookies.get('size') || 'default') as '' | 'default' | 'small' | 'large'
 
 const language = ref('zh-CN')
 language.value = getLocale()

@@ -388,7 +388,7 @@ function submitForm(isChange: boolean): Promise<any> {
   const processedEntries = new Set();
 
   // 计算借方金额和贷方金额总和（每个分录只计算一次）
-  const { totalDebit, totalCredit } = recordsList.value.reduce((acc, row) => {
+  const { totalDebit, totalCredit } = recordsList.value.reduce((acc: { totalDebit: number; totalCredit: number }, row: any) => {
     // 如果这个分录号还没处理过，那么计算它的借贷金额
     if (!processedEntries.has(row.entryNo)) {
       // 将分录号添加到已处理集合
@@ -408,7 +408,7 @@ function submitForm(isChange: boolean): Promise<any> {
   }, { totalDebit: 0, totalCredit: 0 });
 
   // 计算现金流量金额总和（每一行都要计算）
-  const totalCashFlow = recordsList.value.reduce((sum, row) => {
+  const totalCashFlow = recordsList.value.reduce((sum: number, row: any) => {
     // 只计算已指定现金流量项的行
     if (row.cashFlowItemCode && row.cashFlowItemCode !== 'no-select') {
       let cashFlowAmount = parseFloat(row.cashFlowBalance || 0);
@@ -475,13 +475,13 @@ function splitAssignment(row: any, index?: number) {
   addObject.cashFlowBalance = null;
 
   // 如果没有提供索引，则查找当前行的索引
-  if (index === undefined) {
-    index = recordsList.value.findIndex(item => item === row);
-  }
+  const at = index === undefined
+    ? recordsList.value.findIndex((item: any) => item === row)
+    : index;
 
   // 在当前行的下一个位置插入新对象
-  if (index !== -1) {
-    recordsList.value.splice(index + 1, 0, addObject);
+  if (at !== -1) {
+    recordsList.value.splice(at + 1, 0, addObject);
   } else {
     // 如果找不到当前行，则添加到末尾
     recordsList.value.push(addObject);
@@ -523,7 +523,7 @@ const canDelete = (entryNo: string) => {
 
 // 删除行
 const deleteRow = (row: any) => {
-  const index = recordsList.value.findIndex(item => item === row);
+  const index = recordsList.value.findIndex((item: any) => item === row);
   if (index !== -1) {
     recordsList.value.splice(index, 1);
   }

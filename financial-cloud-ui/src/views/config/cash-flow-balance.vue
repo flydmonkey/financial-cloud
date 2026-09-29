@@ -373,13 +373,14 @@ function calculateAllValues() {
 
   // 先执行所有基本计算规则（除了索引67的计算）
   calculationRules.filter(rule => rule.targetIndex !== 67).forEach(rule => {
-    if (rule.type === 'sum') {
+    if (rule.type === 'sum' && rule.sourceIndices) {
       const sum = calculateSum(rule.sourceIndices);
       updateRowValue(rule.targetIndex, sum);
-    } else if (rule.type === 'diff') {
+    } else if (rule.type === 'diff' && rule.minuend != null && rule.subtrahend != null) {
       const diff = calculateDifference(rule.minuend, rule.subtrahend);
       updateRowValue(rule.targetIndex, diff);
-    } else if (rule.type === 'sumBeforeBalance') {
+    } else if (rule.type === 'sumBeforeBalance' && rule.sourceIndices
+        && rule.balanceTarget != null && rule.otherItemIndex != null) {
       // 先计算除了"其他"项外的所有项的和
       const sumBeforeBalance = calculateSum(rule.sourceIndices);
 

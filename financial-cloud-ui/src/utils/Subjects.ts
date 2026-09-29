@@ -4,7 +4,7 @@ import {formatAmount} from "@/utils/index";
 import {TableColumnCtx} from "element-plus";
 import Decimal from 'decimal.js'
 
-export interface SummaryMethodProps<T = any> {
+export interface SummaryMethodProps<T extends Record<string, any> = any> {
     columns: TableColumnCtx<T>[]
     data: T[]
 }

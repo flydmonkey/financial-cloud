@@ -33,7 +33,7 @@
 import { useRoute, useRouter } from "vue-router";
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent, watchEffect} from "vue";
 import modal from "@/plugins/modal";
-import Fuse from "fuse"
+import Fuse from "fuse.js"
 import { getNormalPath } from '@/utils/financialCloud'
 import { isHttp } from '@/utils/Validate'
 import usePermissionStore from '@/store/modules/permission'

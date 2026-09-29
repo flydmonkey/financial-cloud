@@ -18,12 +18,13 @@
 |------|------|------|
 | 明细账 | **已实现** | `views/voucher/sub-ledger.vue`；数据来自凭证分录查询 |
 | 总账 | **已实现** | `views/statement/general-ledger.vue`；`StatementGeneralLedgerService` |
-| 科目余额表 | **已实现** | `views/statement/subject-balance.vue` |
+| 科目余额表 | **已实现** | `views/statement/subject-balance.vue`；`showAux` 开关过滤辅助行；科目编码跳转明细账 |
 | 凭证汇总表 | **已实现** | `views/statement/voucher-summary.vue`（偏报表，常与账簿共用） |
 | 按期间 / 科目筛选 | **已实现** | 各页顶部筛选 |
 | Excel 导出 | **已实现** | 总账、余额表、汇总表等 |
 | PDF 导出 | **已实现** | 服务端 PDF：总账/明细账/科目余额/多栏账/数量金额账；亦可浏览器另存 |
 | 凭证号点击跳转凭证详情 | **部分实现** | 以各页实际超链为准；见差距清单 |
+| 科目余额 → 明细账 | **已实现** | 科目编码链；辅助行取编码 `_` 前段 |
 | 总账 → 明细账 | **已实现** | `goSubLedger()` |
 | 凭证汇总 → 明细账 | **已实现** | `router-link` 带 subjectCode |
 | 多栏账 | **已实现** | `MultiColumnLedgerService` |

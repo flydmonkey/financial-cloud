@@ -475,7 +475,7 @@ function isSalaryTemplate(row: any): boolean {
 const {t} = useI18n()
 const route = useRoute()
 const router = useRouter()
-const {proxy} = getCurrentInstance();
+const {proxy} = getCurrentInstance()!;
 const {account_income_balance_type} = proxy?.useDict("account_income_balance_type");
 const currBookStore = bookStore()
 const salaryScope = computed(() =>

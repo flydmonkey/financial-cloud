@@ -38,6 +38,7 @@ import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.exception.ServiceException;
 import com.financial.cloud.util.StatementCashFlowIndirectRules;
 import com.financial.cloud.util.StatementCashFlowRules;
+import com.financial.cloud.util.SubjectBalanceAuxFilter;
 import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.util.excel.ExcelDataModeEnum;
 import com.financial.cloud.util.excel.ExcelExporter;
@@ -443,7 +444,7 @@ public class StatementReportService{
         String currentTerm = configSysService.selectConfigByKey(dto.getBookId(), ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT);
         List<String> allMonths = dto.getAllMonths(currentTerm);
 
-        List<StatementSubjectBalance> res = null;
+        List<StatementSubjectBalance> res;
         if (allMonths.size() > 1) {
             res = subjectBalanceMapper.groupCodeSubjectBalance(dto, allMonths,allMonths.get(0), allMonths.get(allMonths.size() - 1));
         } else {
@@ -453,46 +454,13 @@ public class StatementReportService{
             lqw.eq(Boolean.FALSE.equals(dto.getShowAll()), StatementSubjectBalance::getIsVoucher, YesNoEnum.y.name());
             res = subjectBalanceMapper.selectList(lqw);
         }
-
-//        // 拉取父级数据
-//        List<String> subjectIds = new ArrayList<>(res.stream().map(StatementSubjectBalance::getSourceId).toList());
-//        List<String> parentIds = res.stream().filter(item -> item.getIsAuxiliary().equals(YesNoEnum.y.name()))
-//                .map(StatementSubjectBalance::getParentId).toList();
-//        subjectIds.addAll(parentIds);
-//        if (!subjectIds.isEmpty()) {
-//            LambdaQueryWrapper<BookSubject> lqwSubject = Wrappers.lambdaQuery();
-//            lqwSubject.eq(BookSubject::getBookId, dto.getBookId());
-//            List<BookSubject> bookSubjects = bookSubjectMapper.selectList(lqwSubject);
-//            // 找出所有父级
-//            Set<String> subjectPaths = new HashSet<>();
-//            bookSubjects.forEach(bookSubject -> {
-//                for (String subjectId : subjectIds) {
-//                    if (bookSubject.getIdPath().contains(subjectId)) {
-//                        subjectPaths.addAll(List.of(bookSubject.getIdPath().split("/")));
-//                    }
-//                }
-//            });
-//            // 创建父级
-//            List<StatementSubjectBalance> balanceList = bookSubjects.stream()
-//                    .filter(bookSubject -> subjectPaths.contains(bookSubject.getId()))
-//                    .map(subject -> subjectBalanceService.create(subject, dto.getReportDate()))
-//                    .toList();
-//            // 合并
-//            Set<String> existingSourceIds = res.stream().map(StatementSubjectBalance::getSourceId).collect(Collectors.toSet());
-//            for (StatementSubjectBalance item : balanceList) {
-//                if (!existingSourceIds.contains(item.getSourceId())) {
-//                    res.add(item);
-//                }
-//            }
-//        }
-//        counterBalance(res);
+        if (res == null) {
+            res = new ArrayList<>();
+        }
 
         // 按照科目编号升序排列
         res.sort(Comparator.comparing(StatementSubjectBalance::getSubjectCode));
-
-//        if (!dto.getShowAux()) {
-//            res = res.stream().filter(item -> item.getIsAuxiliary().equals(YesNoEnum.n.name())).toList();
-//        }
+        res = SubjectBalanceAuxFilter.apply(res, dto.getShowAux());
         return new Message<>(res);
     }
 

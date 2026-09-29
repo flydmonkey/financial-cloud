@@ -1,0 +1,40 @@
+# 吞吐 V2 自主迭代 backlog
+
+> 规格：[2026-09-29-daizhang-throughput-v2-design.md](../specs/2026-09-29-daizhang-throughput-v2-design.md)
+> 计划：[2026-09-29-daizhang-throughput-v2-w0-w1.md](2026-09-29-daizhang-throughput-v2-w0-w1.md) · [2026-09-29-daizhang-throughput-v2-w2-w4.md](2026-09-29-daizhang-throughput-v2-w2-w4.md)
+> 状态：**吞吐 V2 已完成**（2026-09-29）
+
+## 回归门禁（W0-3）
+
+每功能刀完成前必须：
+
+1. 相关后端单测通过；
+2. 复用既有相关 E2E **或** 新增 1 条最小回归；
+3. CI 红则不得宣称完成。
+
+## 队列
+
+| ID | 切片 | 状态 |
+|----|------|------|
+| W0-1 | 产品叙事去陈 | 已完成 |
+| W0-2 | 质量仪表盘刷新 | 已完成 |
+| W0-3 | 回归门禁约定 | 已落地（本文） |
+| W1-1 | 科目余额 showAux + 穿透 | 已完成 |
+| W1-2 | 对账单核销状态 | 已完成 |
+| W2-1 | 红冲联动日记账（对冲流水） | 已完成 |
+| W3-1 | 购入入账规则产品化 | 已完成 |
+| W3-2 | 盘盈 bump 禁止已折旧卡 | 已完成 |
+| W4-1 | 逾期可配置硬阻断 | 已完成 |
+| W4-2 | 程序收口 | 已完成 |
+
+## Post-V2
+
+> 状态：**Post-V2 + TS 清零均已完成**（2026-09-29）— 见 [设计](../specs/2026-09-29-daizhang-post-v2-design.md)；交付 [#5](https://github.com/flydmonkey/financial-cloud/pull/5)（#4 已关闭为 superseded）
+
+| 项 | 说明 | 状态 |
+|----|------|------|
+| W2-2 / P1–P6 凭证改证路径 | 过账/审核/审核中只读引导 + 后端文案 + 仪表盘 | **已完成** |
+| TypeScript 存量 error 清零 | 质量债；129→0（`vue-cropper` / `vue-count-to` path stub） | **已完成** |
+| 银行余额调节 / 税费向导 | 既有 Non-goal / 后续模块 | 未开（非本程序） |
+
+**程序结论**：吞吐 V2 → Post-V2 → TS 清零链路关闭；近端不以新业务域扩容，增强项另开规格。

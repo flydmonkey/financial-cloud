@@ -62,7 +62,7 @@
 <script setup lang="ts">
 import {ref} from "vue"
 import {isExternal} from '@/utils/Validate'
-import AppLink from './Link'
+import AppLink from './Link.vue'
 import {getNormalPath} from '@/utils/financialCloud'
 
 const props = defineProps({

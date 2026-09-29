@@ -476,4 +476,25 @@ class VoucherServiceTest {
                                 && (i.getCreditAmount() == null || i.getCreditAmount().signum() <= 0))
                         && dto.getItems().stream().allMatch(i -> i.getSummary().startsWith("冲销："))));
     }
+
+    @Test
+    void modifyBlockedReason_postedCancelledAndClosed() {
+        Voucher posted = Voucher.builder().id("v1").senderId("u1").status(VoucherStatusEnum.COMPLETED.getValue()).build();
+        assertTrue(VoucherService.modifyBlockedReason(posted, true).contains("反过账"));
+
+        Voucher cancelled = Voucher.builder().id("v2").status(VoucherStatusEnum.CANCELLED.getValue()).build();
+        assertEquals("已作废凭证不能修改", VoucherService.modifyBlockedReason(cancelled, true));
+
+        Voucher audited = Voucher.builder().id("v2b").status(VoucherStatusEnum.COMPLETED.getValue()).build();
+        assertTrue(VoucherService.modifyBlockedReason(audited, true).contains("反审核"));
+
+        Voucher reviewing = Voucher.builder().id("v2c").status(VoucherStatusEnum.UNDER_REVIEW.getValue()).build();
+        assertTrue(VoucherService.modifyBlockedReason(reviewing, true).contains("撤回"));
+
+        Voucher closed = Voucher.builder().id("v3").status(VoucherStatusEnum.DRAFT.getValue()).build();
+        assertEquals("已结账期间的凭证不能修改", VoucherService.modifyBlockedReason(closed, false));
+
+        Voucher ok = Voucher.builder().id("v4").status(VoucherStatusEnum.DRAFT.getValue()).build();
+        assertEquals(null, VoucherService.modifyBlockedReason(ok, true));
+    }
 }

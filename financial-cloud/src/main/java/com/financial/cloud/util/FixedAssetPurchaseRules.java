@@ -23,4 +23,14 @@ public final class FixedAssetPurchaseRules {
     public static boolean shouldCreateVoucher(BigDecimal originalValue, BigDecimal taxAmount) {
         return creditAmount(originalValue, taxAmount).compareTo(BigDecimal.ZERO) > 0;
     }
+
+    /**
+     * User-facing reason when no purchase voucher is created. Null when a voucher should be created.
+     */
+    public static String skipVoucherReason(BigDecimal originalValue, BigDecimal taxAmount) {
+        if (shouldCreateVoucher(originalValue, taxAmount)) {
+            return null;
+        }
+        return "原值与税额合计为0，未生成购入凭证";
+    }
 }

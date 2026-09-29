@@ -264,6 +264,7 @@ import {addOneUserHat, deleteUserHat, getHatsDetail, listHats, updateOneUserHat}
 const {t} = useI18n()
 
 const proxy: any = getCurrentInstance()!.proxy;
+const hatRef = ref<any>(null)
 const emit: any = defineEmits(['hatsDrawerClose'])
 
 const props: any = defineProps({

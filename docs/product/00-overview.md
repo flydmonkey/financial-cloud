@@ -1,6 +1,6 @@
 # 00 · 产品总览
 
-> 现状基准文档 · 2026-09-03  
+> 现状基准文档 · 2026-09-29  
 > 代码证据：`financial-cloud` + `financial-cloud-ui` + `sql/financial_cloud_init.sql`
 
 ## 1. 产品定位
@@ -11,7 +11,7 @@
 - 固定资产、出纳日记账、薪资等周边核算
 - 经营仪表盘与基础权限管控
 
-与外部《小微企业财务软件产品需求文档》相比：本仓库**已提前实现**薪资、日记账、反结账、准则模板等能力；往来已落地 L1+L2（余额/明细/对账/账龄），**核销 L3、账套备份恢复、资产盘点**等仍缺。详见 [20-gap-analysis.md](20-gap-analysis.md)。
+与外部《小微企业财务软件产品需求文档》相比：本仓库**已提前实现**薪资、日记账、反结账、准则模板等能力；往来 L1–L3、账套备份/恢复、资产盘点（含盘盈入账）、打印/服务端 PDF、吞吐 V2 与 Post-V2 改证路径均已收口。详见 [20-gap-analysis.md](20-gap-analysis.md)。
 
 ## 2. 目标用户与角色
 
@@ -134,12 +134,14 @@ flowchart LR
 | `added_tax` | 增值税相关 |
 | `other_subjects` | 其他科目 |
 
-### 未实现 / 增强（相对 PRD）— 不阻塞专业可用
+### 下一阶段（近端主轴已收口）
 
 - ~~独立「老板极简报表」页~~ → **已由首页看板承接**（不做第二页）
 - ~~盘盈入账~~ → **已落地**（`surplusPreview` / `bookSurplus`，见 [07](07-fixed-asset.md)、[20](20-gap-analysis.md) §5.5）
 - ~~参数配置独立页~~ → **已落地**（`views/config/voucher-settlement.vue`，见 [20](20-gap-analysis.md) §2.4）
-- Post-V1 / Non-goal：工资条员工自助、税局直连、移动端/AI（见 [backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）
+- ~~代账吞吐 V2 + Post-V2 改证路径~~ → **已收口**（见 [V2](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md)；交付 [#5](https://github.com/flydmonkey/financial-cloud/pull/5)）
+- 近端不以 PRD 新模块扩容为主；增强项按客户声音排期
+- Non-goal 不变：工资条员工自助、税局直连、移动端/AI、银行余额调节增强、税费向导增强
 
 ## 8. 实现总览（对照 PRD 八大模块）
 

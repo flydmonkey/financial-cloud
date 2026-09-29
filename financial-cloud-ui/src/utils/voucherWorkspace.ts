@@ -113,9 +113,51 @@ export function formatVoucherStatusLabel(status: string | null | undefined, send
       return '审核中'
     case 'completed':
       return '已审核'
+    case 'cancelled':
+      return '已作废'
+    case 'rejected':
+      return '被拒绝'
     default:
       return status ? String(status) : '新建'
   }
+}
+
+/** 是否已过账（有过账人） */
+export function isVoucherPosted(senderId?: any): boolean {
+  return !!senderId
+}
+
+/**
+ * 已过账不可直接改时的引导文案（编辑页横幅 / tooltip）。
+ */
+export function postedVoucherEditGuidance(): string {
+  return '已过账凭证不可直接修改。请先反过账后再改，或使用红字冲销生成冲销凭证。'
+}
+
+/** 已审核或审核中（且未过账）——须先反审核/撤回后再改 */
+export function isVoucherReviewLocked(
+  status: string | null | undefined,
+  senderId?: any,
+): boolean {
+  if (senderId) return false
+  return status === 'completed' || status === 'reviewing'
+}
+
+export function reviewedVoucherEditGuidance(status?: string | null): string {
+  if (status === 'reviewing') {
+    return '审核中的凭证不可直接修改。请先撤回审核申请后再改。'
+  }
+  return '已审核凭证不可直接修改。请先反审核后再改。'
+}
+
+/** 列表「修改」应对只读打开的状态（已过账 / 审核中 / 已审核 / 已作废） */
+export function shouldOpenVoucherReadonly(
+  status: string | null | undefined,
+  senderId?: any,
+): boolean {
+  if (isVoucherPosted(senderId)) return true
+  if (status === 'cancelled') return true
+  return isVoucherReviewLocked(status, senderId)
 }
 
 /** 新建或草稿（未过账）才允许暂存 / 提交保存 */
@@ -124,7 +166,7 @@ export function isDraftEditableStatus(
   senderId?: any,
 ): boolean {
   if (senderId) return false
-  return !status || status === 'draft'
+  return !status || status === 'draft' || status === 'rejected'
 }
 
 function parseEntryAmount(value: any): number {

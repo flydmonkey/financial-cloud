@@ -128,8 +128,8 @@ export default {
   data() {
     return {
       loading: true,
-      selectionlist: [],
-      ids: [],
+      selectionlist: [] as any[],
+      ids: [] as any[],
       params: {
         username: '',
         displayName: '',
@@ -145,7 +145,7 @@ export default {
       showSearch: true,
       // 更多条件
       moreCondition: false,
-      sessions: [],
+      sessions: [] as any[],
       total: 0
     }
   },
@@ -208,9 +208,9 @@ export default {
       const seconds: any = String(date.getSeconds()).padStart(2, '0');
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
-    set2String(set) {
+    set2String(set: Iterable<any>) {
       let setValues: any = '';
-      set.forEach((value: any) => {
+      Array.from(set).forEach((value: any) => {
         setValues = `${setValues + value},`;
       });
       return setValues;

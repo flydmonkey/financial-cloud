@@ -36,5 +36,6 @@ echarts.use([
     CanvasRenderer,
 ])
 
-export type {ECharts, EChartsOption} from 'echarts/core'
+export type {ECharts} from 'echarts/core'
+export type {EChartsOption} from 'echarts'
 export default echarts

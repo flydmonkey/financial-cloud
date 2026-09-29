@@ -36,7 +36,7 @@
 | 2.1 | 标准科目 + 自定义明细 | 准则双套 + 账套科目树 | **已实现** | `standard_subject`、`book_subject` | — |
 | 2.2 | 辅助：往来/部门/员工/项目 | 六类含客户供应商存货 | **已实现**（超出） | `assist_type` 1–6 | — |
 | 2.3 | 往来单位档案关联核算 | 辅助档案 + 往来查询 + 核销 | **已实现（L1+L2+L3）** | `assistAcc`；`views/arap` | — |
-| 2.4 | 凭证参数 / 结账参数配置中心 | 独立页：审核开关 + 往来软提示；硬闸只读 | **已实现** | `VoucherSettlementParamsController`、`views/config/voucher-settlement.vue` | — |
+| 2.4 | 凭证参数 / 结账参数配置中心 | 独立页：审核 + 往来软提示 + 逾期硬阻断；硬闸只读 | **已实现** | `VoucherSettlementParamsController`、`views/config/voucher-settlement.vue` | — |
 
 ---
 
@@ -71,7 +71,7 @@
 | # | PRD 要求 | 代码现状 | 结论 | 证据 | 优先级 |
 |---|----------|----------|------|------|--------|
 | 5.1 | 新增卡片、年限法 | 有；另支持工作量等 | **已实现** | `FixedAsset` | — |
-| 5.2 | 新增自动入账凭证 | 有条件生成 | **部分实现** | `FixedAssetPurchaseRules` | P2 |
+| 5.2 | 新增自动入账凭证 | 有条件生成 + 跳过原因文案 | **已实现** | `FixedAssetPurchaseRules.skipVoucherReason` | — |
 | 5.3 | 月末折旧凭证 | accrue | **已实现** | `FixedAssetDepreciationService` | — |
 | 5.4 | 变动与清理凭证 | 有 | **已实现** | `change`、`dispose` | — |
 | 5.5 | 盘点与盘点表 | 盘点单快照在册资产→实盘录入→自动判定盘盈/盘亏并汇总；盘点表可打印；整件盘亏可一键下账；**盘盈入账**（可编辑均摊金额、草稿凭证、拆卡/累加） | **已实现** | `FixedAssetCheckService`（`surplusPreview` / `bookSurplus`）、`views/fixed-asset/check.vue` | — |
@@ -171,6 +171,8 @@
 6. ~~首页固定资产规模卡 / 凭证↔日记账回写~~ → **已落地**（`dashboard-asset-count`、`journal-voucher-reverse-sync`）
 
 **代账专业可用程序已收口**（见 [autonomous-iteration-backlog](../superpowers/plans/2026-09-29-autonomous-iteration-backlog.md)）。仍属 Post-V1：按钮级权限铺开。
+
+**吞吐 V2 + Post-V2**：均已完成 — [V2 设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2 设计](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md) / [backlog](../superpowers/plans/2026-09-29-throughput-v2-backlog.md)。TypeScript 存量 error 已清零；近端功能主轴关闭。
 
 ---
 

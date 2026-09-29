@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 凭证与结账参数中心：审核开关 + 往来软提示。
+ * 凭证与结账参数中心：审核开关 + 往来软提示 / 逾期硬阻断。
  */
 @Service
 @RequiredArgsConstructor
@@ -48,9 +48,12 @@ public class VoucherSettlementParamsService {
         }
         boolean canEdit = bookService.isBookAdministrator(user, bookId);
         String arapRaw = configSysService.selectConfigByKey(bookId, ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY);
+        String overdueHardRaw = configSysService.selectConfigByKey(bookId,
+                ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD);
         return VoucherSettlementParamsVo.builder()
                 .voucherReviewed(book.getVoucherReviewed() == null ? 0 : book.getVoucherReviewed())
                 .arapVerifyEnabled(SettlementService.arapVerifyEnabledFromConfig(arapRaw))
+                .arapOverdueHard(SettlementService.arapOverdueHardFromConfig(overdueHardRaw))
                 .canEdit(canEdit)
                 .hardGateLabels(HARD_GATE_LABELS)
                 .build();
@@ -74,12 +77,21 @@ public class VoucherSettlementParamsService {
             patch.setVoucherReviewed(reviewed);
             bookMapper.updateById(patch);
         }
-        if (dto.getArapVerifyEnabled() != null) {
+        if (dto.getArapVerifyEnabled() != null || dto.getArapOverdueHard() != null) {
             configSysService.ensureBookConfigsComplete(bookId);
+        }
+        if (dto.getArapVerifyEnabled() != null) {
             ConfigSys cfg = new ConfigSys();
             cfg.setBookId(bookId);
             cfg.setConfigKey(ConstsSysConfig.SYS_SETTLEMENT_ARAP_VERIFY);
             cfg.setConfigValue(Boolean.TRUE.equals(dto.getArapVerifyEnabled()) ? "true" : "false");
+            configSysService.update(cfg);
+        }
+        if (dto.getArapOverdueHard() != null) {
+            ConfigSys cfg = new ConfigSys();
+            cfg.setBookId(bookId);
+            cfg.setConfigKey(ConstsSysConfig.SYS_SETTLEMENT_ARAP_OVERDUE_HARD);
+            cfg.setConfigValue(Boolean.TRUE.equals(dto.getArapOverdueHard()) ? "true" : "false");
             configSysService.update(cfg);
         }
         return Message.ok("保存成功");

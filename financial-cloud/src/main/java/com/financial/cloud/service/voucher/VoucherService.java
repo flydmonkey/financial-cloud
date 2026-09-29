@@ -717,8 +717,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         booksVoucher.setWord(word);
 
-        if (!canModifyUnpostedVoucher(currentVoucher)) {
-            return new Message<>(Message.FAIL, "当前不允许修改");
+        String modifyBlock = modifyBlockedReason(currentVoucher, isVoucherInOpenPeriod(currentVoucher));
+        if (modifyBlock != null) {
+            return new Message<>(Message.FAIL, modifyBlock);
         }
 
         // 删除以前的明细数据
@@ -1817,6 +1818,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             int m = Integer.parseInt(currentTerm.substring(5, 7));
             reversalDate = new java.util.GregorianCalendar(y, m - 1, 1).getTime();
         }
+        final Date journalTradeDate = reversalDate;
         java.util.Calendar cal = java.util.Calendar.getInstance();
         cal.setTime(reversalDate);
         int year = cal.get(java.util.Calendar.YEAR);
@@ -1853,11 +1855,14 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (saveResult.getCode() != Message.SUCCESS) {
             return saveResult;
         }
+        final String reverseId = saveResult.getData();
         Voucher link = new Voucher();
-        link.setId(saveResult.getData());
+        link.setId(reverseId);
         link.setSourceVoucherId(id);
         baseMapper.updateById(link);
-        return new Message<>(Message.SUCCESS, "红字冲销凭证已生成（暂存），审核过账后生效", saveResult.getData());
+        journalEntryServiceProvider.ifAvailable(journal ->
+                journal.createReversalEntriesForVoucher(id, reverseId, bookId, journalTradeDate));
+        return new Message<>(Message.SUCCESS, "红字冲销凭证已生成（暂存），审核过账后生效", reverseId);
     }
 
     /**
@@ -2165,19 +2170,28 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
 
     /**
-     * 未过账凭证是否允许修改（未过账、未作废、所在期间未结账）
+     * @return null 表示可改；否则为用户可见拒绝原因
      */
-    private boolean canModifyUnpostedVoucher(Voucher voucher) {
+    static String modifyBlockedReason(Voucher voucher, boolean inOpenPeriod) {
         if (voucher == null) {
-            return false;
+            return "凭证不存在";
         }
         if (StringUtils.isNotBlank(voucher.getSenderId())) {
-            return false;
+            return "已过账凭证不能直接修改，请先反过账后再改，或使用红字冲销";
         }
         if (VoucherStatusEnum.CANCELLED.getValue().equals(voucher.getStatus())) {
-            return false;
+            return "已作废凭证不能修改";
         }
-        return isVoucherInOpenPeriod(voucher);
+        if (VoucherStatusEnum.COMPLETED.getValue().equals(voucher.getStatus())) {
+            return "已审核凭证不能直接修改，请先反审核后再改";
+        }
+        if (VoucherStatusEnum.UNDER_REVIEW.getValue().equals(voucher.getStatus())) {
+            return "审核中的凭证不能直接修改，请先撤回审核申请后再改";
+        }
+        if (!inOpenPeriod) {
+            return "已结账期间的凭证不能修改";
+        }
+        return null;
     }
 
     /**

@@ -23,7 +23,7 @@
           placeholder="请选择"
           @remove-tag="handleRemoveTag(item, $event)"
           @clear="handleClear(item)"
-          @change="val => handleChange(item, val)"
+          @change="(val: any) => handleChange(item, val)"
         >
           <el-option
             v-for="itemOp in listData[item.value]"

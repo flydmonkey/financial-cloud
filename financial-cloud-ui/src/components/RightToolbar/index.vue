@@ -97,7 +97,7 @@ const props: any = defineProps({
   },
   /* 显隐列信息 */
   columns: {
-    type: Array,
+    type: Array as () => any[],
   },
   /* 是否显示检索图标 */
   search: {

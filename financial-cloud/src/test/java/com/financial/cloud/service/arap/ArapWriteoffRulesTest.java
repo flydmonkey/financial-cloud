@@ -39,6 +39,15 @@ class ArapWriteoffRulesTest {
 	}
 
 	@Test
+	void writeoffStatusLabels() {
+		assertEquals("未核销", ArapWriteoffRules.writeoffStatus(new BigDecimal("100"), BigDecimal.ZERO));
+		assertEquals("部分核销", ArapWriteoffRules.writeoffStatus(new BigDecimal("100"), new BigDecimal("40")));
+		assertEquals("已核销", ArapWriteoffRules.writeoffStatus(new BigDecimal("100"), new BigDecimal("100")));
+		assertEquals("已核销", ArapWriteoffRules.writeoffStatus(new BigDecimal("100"), new BigDecimal("120")));
+		assertEquals("未核销", ArapWriteoffRules.writeoffStatus(BigDecimal.ZERO, BigDecimal.ZERO));
+	}
+
+	@Test
 	void suggestCreatesBalancedLegs() {
 		List<ArapMovementRow> rows = List.of(
 				row("i1", "c1", 100, 0),

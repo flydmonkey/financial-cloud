@@ -69,4 +69,9 @@ declare module '*.json' {
     export default value
 }
 
+declare module 'fuse' {
+    import Fuse from 'fuse.js'
+    export default Fuse
+}
+
 export {}

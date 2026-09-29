@@ -30,7 +30,7 @@ export default {
   },
   data() {
     return {
-      chart: null
+      chart: null as any
     }
   },
   mounted() {

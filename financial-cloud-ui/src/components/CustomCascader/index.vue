@@ -10,7 +10,7 @@
       :clearable="props.props.clearable"
       filterable
       style="width: 100%"
-      @change="(val) => emit('change', val)"
+      @change="(val: any) => emit('change', val)"
       @keydown="handleKeydown"
     />
   </div>
@@ -20,10 +20,16 @@
 import {ref, defineExpose, watch, nextTick} from 'vue'
 import type {CascaderProps, CascaderOption} from 'element-plus'
 
+type CascaderUiProps = CascaderProps & {
+  showAllLevels?: boolean
+  clearable?: boolean
+  filterable?: boolean
+}
+
 interface CustomCascaderProps {
   modelValue: string | number | (string | number)[]
   options: CascaderOption[]
-  props?: CascaderProps
+  props?: CascaderUiProps
   filterMethod?: (item: any, keyword: any) => boolean
 }
 

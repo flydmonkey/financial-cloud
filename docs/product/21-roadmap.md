@@ -15,6 +15,8 @@
 
 ## 2. 近端路线（建议 3～4 个切片）
 
+> **现行近端主轴（2026-09-29）**：吞吐 V2 + Post-V2 改证路径 + TS 清零**均已收口**（[#5](https://github.com/flydmonkey/financial-cloud/pull/5)）。见 [V2 设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2 设计](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md)。不以 PRD 新模块扩容为主。下列 S0–S3 为专业可用阶段历史切片（已收口）。
+
 ```mermaid
 flowchart LR
   S0["S0 交付包"] --> S1["S1 打印吞吐"]
@@ -51,7 +53,7 @@ flowchart LR
 3. **账龄**分段（30/60/90/180+，FIFO 估算）  
 4. 结账校验接入真实应收应付/逾期警告（不硬阻断）  
 
-后续再做：核销 L3、银行调节、辅助余额穿透查询。
+**L3 核销、银行调节已落地。** 近端主轴改为 [吞吐 V2](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md)（辅助穿透、对账单核销状态、红冲×日记账等）。
 
 ### S3 · 周边卫生
 
@@ -78,7 +80,7 @@ flowchart LR
 
 | PRD 版本 | PRD 主题 | 相对本仓库的建议 |
 |----------|----------|------------------|
-| **V1.0** | 八大模块全覆盖 | 文本上宣称「已完成」**不成立**；应以本目录 as-built + [20-gap-analysis](20-gap-analysis.md) 重写验收标准。往来+备份未完成前不宜称 PRD V1.0 全覆盖。 |
+| **V1.0** | 八大模块全覆盖 | 主做账闭环与往来/备份等代账刚需**已落地**；对外宜用本目录 as-built + [20-gap-analysis](20-gap-analysis.md) 表述覆盖边界，勿照抄外部 PRD「八大模块全覆盖」话术。 |
 | **V1.1** | 税费测算、申报表、税负预警 | **已落地**（`TaxEstimateService` 测算 + 税负预警；`TaxDeclarationService` 增值税及附加税费申报表简版主表，挂「报表」组、可打印）。税局直连仍为净新增，Non-goal 不变。 |
 | **V1.2** | 薪酬 + 票据 + 报销 | **薪酬大半已有**（分册 09）→ PRD 应改为「增强」而非「新增」。**费用报销已落地**（`ExpenseClaimService`：多行明细单据流转 + 一键生成报销凭证 + 票据附件影像 + 报销人取自员工档案可手输兜底）。V1.2 剩余为增强项（票据 OCR 识别）。 |
 | **V1.3** | 移动端 + AI 做账 + 消息预警 | 依赖 PC 闭环与待办/往来数据；预警可先做站内待办（S3），小程序与 AI 识别置后。 |

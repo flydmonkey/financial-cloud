@@ -298,7 +298,7 @@ public class FixedAssetCheckService {
             boolean hasDepr = hasExistingDepreciation(asset);
             row.setHasDepreciation(hasDepr);
             if (STRATEGY_BUMP_QTY.equals(strategy) && hasDepr) {
-                row.setWarning("该卡已有累计折旧：加原值后月折旧可能升高，且不调整已提折旧；如需独立折旧建议改拆新卡（将账面数量调为 1）后再盘。");
+                row.setWarning("该卡已有累计折旧：不允许在原卡累加数量入账；请将账面数量调整为 1 后按拆新卡入账，或手工处理。");
             }
             vo.getRows().add(row);
         }
@@ -381,6 +381,9 @@ public class FixedAssetCheckService {
         int delta = actual - book;
         if (delta <= 0) {
             return "无盘盈数量";
+        }
+        if (book != 1 && hasExistingDepreciation(asset)) {
+            return "原卡已有累计折旧，禁止 bump 数量入账；请将账面数量改为 1 后拆新卡入账";
         }
         String summary = "盘盈入账（盘点单：" + check.getTitle() + "）：" + item.getAssetCode() + " " + item.getAssetName();
 

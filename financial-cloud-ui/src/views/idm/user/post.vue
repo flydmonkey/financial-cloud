@@ -148,7 +148,7 @@
 </template>
 <script setup lang="ts">
 import modal from "@/plugins/modal";
-import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";;
+import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent, type PropType} from "vue";
 import {useI18n} from "vue-i18n";
 import {deletePost, getUsersPosts, addPost} from "@/api/idm/user";
 
@@ -175,8 +175,8 @@ const props: any = defineProps({
     default: null
   },
   post_options: {
-    type: Array,
-    default: []
+    type: Array as PropType<any[]>,
+    default: () => []
   }
 })
 

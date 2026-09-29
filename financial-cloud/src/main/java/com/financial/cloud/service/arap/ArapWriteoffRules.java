@@ -207,6 +207,21 @@ public final class ArapWriteoffRules {
 		return out;
 	}
 
+	/**
+	 * Labels for statement / detail lines. {@code originalAbs} is the absolute signed amount of the item.
+	 */
+	public static String writeoffStatus(BigDecimal originalAbs, BigDecimal writtenOff) {
+		BigDecimal orig = originalAbs == null ? BigDecimal.ZERO : originalAbs;
+		BigDecimal written = writtenOff == null ? BigDecimal.ZERO : writtenOff;
+		if (orig.compareTo(BigDecimal.ZERO) <= 0 || written.compareTo(BigDecimal.ZERO) <= 0) {
+			return "未核销";
+		}
+		if (written.compareTo(orig) >= 0) {
+			return "已核销";
+		}
+		return "部分核销";
+	}
+
 	private static Map<String, ArapMovementRow> indexByItem(List<ArapMovementRow> movements) {
 		Map<String, ArapMovementRow> map = new HashMap<>();
 		for (ArapMovementRow row : movements) {

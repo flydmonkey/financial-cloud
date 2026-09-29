@@ -214,7 +214,7 @@ export default {
             // params 包含了数据项的所有信息
             let name = params.name || '0';
             const value = params.value ? params.value : 0;
-            name = this.fmtHourText(name) + "-" + this.fmtHourText(parseInt(name) + 1)
+            name = this.fmtHourText(name) + "-" + this.fmtHourText(String(parseInt(name, 10) + 1))
             return `小时区间：<b>${name}</b><br/>访问次数：<b>${value || 0}次</b>`;
           }
         },

@@ -200,7 +200,7 @@ function handlePictureCardPreview(file: any): any {
 }
 
 // 对象转成指定字符串分隔
-function listToString(list: any, separator: any): any {
+function listToString(list: any, separator?: any): any {
   let strs: any = "";
   separator = separator || ",";
   for (let i in list) {

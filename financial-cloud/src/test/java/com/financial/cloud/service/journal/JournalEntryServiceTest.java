@@ -348,6 +348,32 @@ class JournalEntryServiceTest {
     }
 
     @Test
+    void createReversalEntriesForVoucher_flipsIncomeToExpenditure() {
+        JournalEntry linked = baseEntry("e1", "acc1", "i", "100", null);
+        linked.setVoucherId("v-src");
+        linked.setRemark("银行收款");
+        final int[] listCalls = {0};
+        doAnswer(inv -> {
+            listCalls[0]++;
+            // 1st list: source links; subsequent lists: balance rebuild (include new reverse via save side-effect)
+            return listCalls[0] == 1 ? List.of(linked) : List.of();
+        }).when(journalEntryService).list(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
+        doReturn(true).when(journalEntryService).save(any(JournalEntry.class));
+        when(journalAccountService.setBalance(eq("acc1"), any())).thenReturn(true);
+
+        int n = journalEntryService.createReversalEntriesForVoucher(
+                "v-src", "v-rev", "book1", new Date());
+        assertEquals(1, n);
+        ArgumentCaptor<JournalEntry> captor = ArgumentCaptor.forClass(JournalEntry.class);
+        verify(journalEntryService).save(captor.capture());
+        JournalEntry rev = captor.getValue();
+        assertEquals("v-rev", rev.getVoucherId());
+        assertEquals("e", rev.getDirection());
+        assertEquals(0, new BigDecimal("100").compareTo(rev.getExpenditure()));
+        assertTrue(rev.getRemark().contains("冲销"));
+    }
+
+    @Test
     void clearLinksByVoucherIds_updatesNullVoucherId() {
         doReturn(true).when(journalEntryService).update(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
         journalEntryService.clearLinksByVoucherIds(List.of("v-1"));

@@ -14,7 +14,15 @@
 | 2 | `opening-balance-excel` | 已归档 | 期初 Excel 导出/模板/导入 |
 | 3 | `docs-as-built-sync` | 已归档 | 分册/overview 与已落地能力全面对齐 |
 | 4 | `server-pdf-channel` | 已归档 | 服务端 PDF 首批：资产负债/利润/科目余额 |
-| 5 | 定时备份 | 排队 | backup Non-goal v2 |
+| 5 | `scheduled-book-backup` | 已归档 | 定时备份落盘 + 保留策略 |
+
+## 后续候选（按客户声音）
+
+| 项 | 说明 |
+|----|------|
+| 服务端 PDF 扩更多表 | 现金流量/账簿等 |
+| 覆盖式恢复 | 非克隆 |
+| 工资条员工自助 | Non-goal |
 
 ## 决策原则
 

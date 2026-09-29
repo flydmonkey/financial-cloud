@@ -51,7 +51,23 @@
         >
           恢复备份
         </el-button>
+        <el-button
+          v-if="hasAdminBooks && scheduleStatus"
+          plain
+          :loading="scheduleRunning"
+          @click="handleScheduleRun"
+        >
+          立即定时备份
+        </el-button>
       </div>
+      <el-alert
+        v-if="hasAdminBooks && scheduleStatus"
+        :type="scheduleStatus.enabled ? 'success' : 'info'"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 12px"
+        :title="scheduleSummary"
+      />
       <el-table
         v-loading="loading"
         :data="setsList"
@@ -271,7 +287,16 @@ import editForm from "./edit.vue";
 import membersDrawer from "./members.vue";
 import modal from "@/plugins/modal";
 import DictTagNumber from "@/components/DIctTagNumber/index.vue";
-import {listBooksSets, deleteBatch, exportBookBackup, restoreBookBackup, sealBook, unsealBook} from "@/api/book/book";
+import {
+  listBooksSets,
+  deleteBatch,
+  exportBookBackup,
+  restoreBookBackup,
+  sealBook,
+  unsealBook,
+  fetchBackupScheduleStatus,
+  runBackupScheduleNow
+} from "@/api/book/book";
 import {listStandardsAll} from "@/api/standard/standard";
 import SvgIcon from "@/components/SvgIcon/index.vue";
 import booksSetStore from "@/store/modules/bookStore";
@@ -315,6 +340,52 @@ const restoreOpen: any = ref(false);
 const restoreLoading: any = ref(false);
 const restoreFile: any = ref<File | null>(null);
 const restoreUploadRef: any = ref(null);
+const scheduleStatus: any = ref<any>(null);
+const scheduleRunning: any = ref(false);
+
+const scheduleSummary = computed(() => {
+  const st = scheduleStatus.value;
+  if (!st) {
+    return "";
+  }
+  const last = st.lastRun;
+  const lastText = last
+    ? `最近：${last.finishedAt || "-"} 成功 ${last.booksSucceeded || 0}/${last.booksAttempted || 0}`
+    : "尚未运行";
+  return `定时备份：${st.enabled ? "已开启" : "未开启"} · cron ${st.cron || "-"} · 保留 ${st.retainCount} 份 · ${lastText}`;
+});
+
+async function loadScheduleStatus(): Promise<void> {
+  if (!hasAdminBooks.value) {
+    scheduleStatus.value = null;
+    return;
+  }
+  try {
+    const res: any = await fetchBackupScheduleStatus();
+    if (res?.code === 0 || res?.code === 200) {
+      scheduleStatus.value = res.data;
+    }
+  } catch {
+    scheduleStatus.value = null;
+  }
+}
+
+async function handleScheduleRun(): Promise<void> {
+  scheduleRunning.value = true;
+  try {
+    const res: any = await runBackupScheduleNow();
+    if (res?.code === 0 || res?.code === 200) {
+      modal.msgSuccess(res.message || "定时备份已执行");
+      await loadScheduleStatus();
+    } else {
+      modal.msgError(res?.message || "定时备份失败");
+    }
+  } catch (error: any) {
+    modal.msgError(error?.response?.data?.message || error?.message || "定时备份失败");
+  } finally {
+    scheduleRunning.value = false;
+  }
+}
 
 /** 导出备份包 */
 async function handleBackup(row: any): Promise<void> {
@@ -428,6 +499,7 @@ function getList(): any {
       loading.value = false;
       setsList.value = res.data.records;
       total.value = res.data.total;
+      loadScheduleStatus();
     }
   })
 }

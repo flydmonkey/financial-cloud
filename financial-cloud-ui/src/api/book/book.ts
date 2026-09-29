@@ -87,6 +87,23 @@ export function restoreBookBackup(file: File): any {
     })
 }
 
+/** 定时备份状态 */
+export function fetchBackupScheduleStatus(): any {
+    return request({
+        url: '/book/backup/schedule/status',
+        method: 'get'
+    })
+}
+
+/** 立即跑一轮定时备份 */
+export function runBackupScheduleNow(): any {
+    return request({
+        url: '/book/backup/schedule/run',
+        method: 'post',
+        timeout: 600000
+    })
+}
+
 // 封存账套（归档只读）
 export function sealBook(id: string): any {
     return request({

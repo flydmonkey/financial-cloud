@@ -38,6 +38,12 @@ spring:
 financial-cloud:
   auth:
     captcha-enabled: false
+  backup:
+    schedule:
+      enabled: false
+      cron: "0 0 2 * * ?"
+      directory: ./data/book-backups
+      retain-count: 7
   statement:
     balance-sheet:
       strict-trial-balance: false

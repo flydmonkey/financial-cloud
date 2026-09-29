@@ -89,6 +89,16 @@ class BookBackupServiceTest {
         assertThat(pack.encodedFileName()).startsWith("book-backup-");
     }
 
+    @Test
+    void exportForSystemProducesZipWithoutAdminCheck() throws Exception {
+        BookBackupService.BackupPackage pack = service.exportForSystem("book-1");
+
+        Map<String, byte[]> entries = unzip(pack.content());
+        assertThat(entries).containsKey("manifest.json");
+        String manifest = new String(entries.get("manifest.json"), StandardCharsets.UTF_8);
+        assertThat(manifest).contains(BookBackupService.FORMAT);
+    }
+
     private Map<String, byte[]> unzip(byte[] zipBytes) throws Exception {
         Map<String, byte[]> entries = new HashMap<>();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {

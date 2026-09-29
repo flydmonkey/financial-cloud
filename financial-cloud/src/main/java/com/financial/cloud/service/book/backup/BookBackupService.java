@@ -54,6 +54,20 @@ public class BookBackupService {
     /** 导出当前账套的完整业务备份包。调用方必须为本账套管理员。 */
     public BackupPackage export(String bookId, UserInfo operator) {
         bookService.requireBookAdministrator(operator, bookId);
+        return doExport(bookId, operator, "export", "导出账套备份");
+    }
+
+    /**
+     * 系统调度导出：同格式 ZIP，不校验交互式账套管理员会话。
+     */
+    public BackupPackage exportForSystem(String bookId) {
+        UserInfo system = new UserInfo();
+        system.setId("scheduled-backup");
+        system.setUsername("scheduled-backup");
+        return doExport(bookId, system, "scheduled-export", "定时导出账套备份");
+    }
+
+    private BackupPackage doExport(String bookId, UserInfo operator, String action, String auditPrefix) {
         Book book = bookMapper.selectById(bookId);
         if (book == null) {
             throw new BusinessException(400, "当前账套不存在或不可访问");
@@ -88,13 +102,18 @@ public class BookBackupService {
 
             String fileName = "book-backup-" + safeFileName(book.getName())
                     + "-" + FILE_TS.format(LocalDateTime.now()) + ".zip";
-            audit(book, operator, "export", "success",
-                    "导出账套备份：" + BackupTableRegistry.SPECS.size() + " 表，" + totalRows + " 行");
+            audit(book, operator, action, "success",
+                    auditPrefix + "：" + BackupTableRegistry.SPECS.size() + " 表，" + totalRows + " 行");
             return new BackupPackage(zipBytes,
                     URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20"));
         } catch (IOException e) {
             throw new BusinessException(500, "账套备份导出失败：" + e.getMessage());
         }
+    }
+
+    /** 供定时落盘使用的安全文件名片段。 */
+    public static String safeBookFileName(String name) {
+        return safeFileName(name);
     }
 
     private byte[] exportTable(BackupTableSpec spec, String bookId) {

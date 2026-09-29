@@ -1,6 +1,6 @@
 # 01 · 账套管理与初始化
 
-> 状态：已实现（CRUD / 多账套 / onboarding / 封存 / 手动备份恢复；定时备份与覆盖式恢复未做；作废留存态未做）
+> 状态：已实现（CRUD / 多账套 / onboarding / 封存 / 手动备份恢复 / 定时备份落盘；覆盖式恢复未做；作废留存态未做）
 
 ## 1. 模块定位
 
@@ -28,7 +28,8 @@
 | 账套封存（归档只读） | **已实现** | status=2 + `BookSealGuard` 写拦截；往期锁定另靠结账期间 |
 | 账套作废（有数据不可删仅作废） | **未实现** | 仅启用/禁用 + 删除约束；P2 |
 | 手动备份 / 克隆式恢复 | **已实现** | `/api/book/backup/export`、`/restore`；列表行操作 |
-| 定时备份 / 覆盖式恢复 | **未实现** | Non-goal v2 |
+| 定时备份 | **已实现** | 配置 `financial-cloud.backup.schedule.*`；落盘同格式 ZIP + 保留 N 份；账套页可查看/立即跑一轮 |
+| 覆盖式恢复 | **未实现** | 仅克隆为新账套 |
 
 ## 4. 页面与路由
 
@@ -72,8 +73,10 @@
 | POST | `/api/book/setup` | Onboarding 建账 |
 | GET | `/api/book/onboarding-status` | 是否完成初始化 |
 | PUT | `/api/book/update` | 更新 |
-| DELETE | `/api/book/delete` | 删除（通常要求先禁用） |
-| GET/POST/DELETE | `/api/permissions/permissionBook/*` | 账套授权 |
+| POST | `/api/book/backup/export` | 手动导出业务备份 ZIP |
+| POST | `/api/book/backup/restore` | 克隆式恢复为新账套 |
+| GET | `/api/book/backup/schedule/status` | 定时备份配置与最近运行摘要 |
+| POST | `/api/book/backup/schedule/run` | 立即跑一轮定时备份 |
 
 前端 API：`src/api/book/book.ts`、`src/api/idm/user.ts`（`switchBook`）。
 
@@ -88,7 +91,7 @@
 
 ## 8. 已知缺口
 
-- 账套「作废留存」态（有数据不可删仅作废）未做；定时备份 / 覆盖式恢复为 v2。
+- 账套「作废留存」态（有数据不可删仅作废）未做；覆盖式恢复仍不做（仅克隆新账套）。
 - 机构层与账套层关系对用户侧说明不足（见 [00-overview.md](00-overview.md) §5）。
 
 ## 9. 证据索引

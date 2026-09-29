@@ -84,10 +84,11 @@ public class StatementBalanceSheetService{
     @Transactional
     public Message<StatementBalanceSheet> queryBalanceSheet(StatementParamsDto dto, boolean force) {
         dto.parse();
-        // 查询历史报表
+        // 查询历史报表(按账簿+账期+报表类型, 同一账期的月报/季报/年报是不同快照)
         LambdaQueryWrapper<StatementBalanceSheet> lqw = Wrappers.lambdaQuery();
         lqw.eq(StatementBalanceSheet::getBookId, dto.getBookId());
         lqw.eq(StatementBalanceSheet::getYearPeriod, dto.getReportDate());
+        lqw.eq(StatementBalanceSheet::getPeriodType, dto.getPeriodType());
         StatementBalanceSheet balanceSheet = balanceSheetMapper.selectOne(lqw);
 
         String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
@@ -140,6 +141,15 @@ public class StatementBalanceSheetService{
             itemLqw.eq(StatementBalanceSheetItem::getBookId, dto.getBookId());
             itemLqw.eq(StatementBalanceSheetItem::getBalanceSheetId, balanceSheet.getId());
             items = balanceSheetItemMapper.selectList(itemLqw);
+            // 快照保存的是聚合后的数据, 合计段(尾号00)与合计行(尾号99)需清零后由 insertSubtotals 重新聚合,
+            // 否则节合计会被重复累加。模板中尾号99/00的行均为一级合计/段标题行, 不直接绑定取数规则, 清零安全
+            for (StatementBalanceSheetItem item : items) {
+                String itemCode = item.getItemCode();
+                if (itemCode != null && (itemCode.endsWith("99") || itemCode.endsWith("00"))) {
+                    item.setCurrentBalance(BigDecimal.ZERO);
+                    item.setInitialBalance(BigDecimal.ZERO);
+                }
+            }
         }
 
         StatementBalanceSheetItemListVo itemListVo = insertSubtotals(items);
@@ -168,6 +178,19 @@ public class StatementBalanceSheetService{
         StatementBalanceSheet statementBalanceSheet = queryBalanceSheet(dto, true).getData();
 
         if (save) {
+            // 查找本期同类型报表主记录: 存在则复用其主键覆盖快照, 不存在则插入主记录。
+            // 主记录缺失会导致历史期报表永远走实时统计, 且快照明细成为无人引用的孤儿行越攒越多
+            LambdaQueryWrapper<StatementBalanceSheet> sheetLqw = Wrappers.lambdaQuery();
+            sheetLqw.eq(StatementBalanceSheet::getBookId, dto.getBookId());
+            sheetLqw.eq(StatementBalanceSheet::getYearPeriod, dto.getReportDate());
+            sheetLqw.eq(StatementBalanceSheet::getPeriodType, dto.getPeriodType());
+            StatementBalanceSheet existing = balanceSheetMapper.selectOne(sheetLqw);
+            if (existing == null) {
+                balanceSheetMapper.insert(statementBalanceSheet);
+            } else {
+                statementBalanceSheet.setId(existing.getId());
+            }
+
             StatementBalanceSheetItemListVo itemListVo = statementBalanceSheet.getItems();
             List<StatementBalanceSheetItem> balanceSheetItems = itemListVo.getAssets();
             balanceSheetItems.addAll(itemListVo.getLiability());

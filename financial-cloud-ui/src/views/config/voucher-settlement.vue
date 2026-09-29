@@ -30,7 +30,7 @@
           <span class="hint">不在本页执行。请到凭证列表或月末结账向导「凭证整理」步骤检查并补齐断号。</span>
           <div style="margin-top: 8px">
             <el-button @click="router.push('/voucher/voucher-index')">凭证列表</el-button>
-            <el-button @click="router.push('/settlement/settle-list')">月末结账</el-button>
+            <el-button @click="router.push('/settlement/settle-period')">月末结账</el-button>
           </div>
         </el-form-item>
         <el-divider content-position="left">结账校验</el-divider>
@@ -51,17 +51,23 @@
           />
           <span class="hint">关闭后月结系统校验不再列出往来汇总；逾期仍不阻断结账。</span>
         </el-form-item>
+        <el-alert
+          v-if="!canEdit"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="仅账套管理员可修改"
+          style="margin-bottom: 16px"
+        />
         <el-form-item v-if="canEdit">
           <el-button
             type="primary"
             :loading="saving"
+            :disabled="!dirty"
             @click="save"
           >
             保存
           </el-button>
-        </el-form-item>
-        <el-form-item v-else>
-          <span class="hint">仅账套管理员可修改。</span>
         </el-form-item>
       </el-form>
     </el-card>
@@ -69,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {useRouter} from "vue-router";
 import {getVoucherSettlementParams, saveVoucherSettlementParams} from "@/api/config/voucher-settlement";
 import booksSetStore from "@/store/modules/bookStore";
@@ -81,14 +87,30 @@ const saving = ref(false);
 const canEdit = ref(false);
 const voucherReviewedOn = ref(false);
 const arapVerifyEnabled = ref(true);
+const loadedVoucherReviewed = ref(false);
+const loadedArap = ref(true);
 const hardGateLabels = ref<string[]>([]);
+
+const dirty = computed(
+  () =>
+    voucherReviewedOn.value !== loadedVoucherReviewed.value
+    || arapVerifyEnabled.value !== loadedArap.value
+);
+
+function applyLoaded(voucherReviewed: boolean, arap: boolean): void {
+  loadedVoucherReviewed.value = voucherReviewed;
+  loadedArap.value = arap;
+}
 
 function load(): void {
   loading.value = true;
   getVoucherSettlementParams().then((res: any) => {
     if (res.code === 0 && res.data) {
-      voucherReviewedOn.value = res.data.voucherReviewed === 1;
-      arapVerifyEnabled.value = !!res.data.arapVerifyEnabled;
+      const reviewed = res.data.voucherReviewed === 1;
+      const arap = !!res.data.arapVerifyEnabled;
+      voucherReviewedOn.value = reviewed;
+      arapVerifyEnabled.value = arap;
+      applyLoaded(reviewed, arap);
       canEdit.value = !!res.data.canEdit;
       hardGateLabels.value = res.data.hardGateLabels || [];
     }
@@ -105,8 +127,8 @@ function save(): void {
   }).then((res: any) => {
     if (res.code === 0) {
       modal.msgSuccess(res.message || "保存成功");
+      applyLoaded(voucherReviewedOn.value, arapVerifyEnabled.value);
       booksSetStore().refreshData();
-      load();
     } else {
       modal.msgError(res.message || "保存失败");
     }

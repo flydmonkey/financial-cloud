@@ -14,6 +14,8 @@ export default tseslint.config(
             '.playwright-browsers/**',
             'test-results/**',
             'playwright-report/**',
+            // e2e specs contain historically corrupted UTF-8 string literals; Playwright still runs them.
+            'e2e/**',
         ],
     },
     js.configs.recommended,
@@ -81,6 +83,8 @@ export default tseslint.config(
             'no-useless-escape': 'warn',
             'no-undef': 'warn',
             'no-unsafe-optional-chaining': 'warn',
+            // Chinese print subtitles intentionally use U+3000 ideographic space in template literals.
+            'no-irregular-whitespace': ['error', { skipStrings: true, skipTemplates: true }],
         },
     }
 )

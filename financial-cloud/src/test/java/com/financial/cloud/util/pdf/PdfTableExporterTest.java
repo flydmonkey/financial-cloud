@@ -1,8 +1,10 @@
 package com.financial.cloud.util.pdf;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,11 @@ class PdfTableExporterTest {
 
     @Test
     void write_producesPdfBytes_whenCjkFontAvailable() throws Exception {
+        try {
+            PdfTableExporter.resolveChineseBaseFont();
+        } catch (IOException e) {
+            Assumptions.assumeTrue(false, "CJK font not available on this host: " + e.getMessage());
+        }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         List<String[]> rows = new ArrayList<>();
         rows.add(new String[]{"货币资金", "1", "1,000.00"});

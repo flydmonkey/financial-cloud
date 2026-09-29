@@ -58,3 +58,39 @@ export function expenseClaimDelete(id: string): any {
         method: 'delete'
     })
 }
+
+// 票据附件列表
+export function expenseAttachmentList(claimId: string): any {
+    return request({
+        url: '/expense/claim/attachment/list',
+        method: 'get',
+        params: {claimId}
+    })
+}
+
+// 上传票据（multipart）
+export function expenseAttachmentUpload(claimId: string, file: File): any {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('claimId', claimId)
+    return request({
+        url: '/expense/claim/attachment/upload',
+        method: 'post',
+        data: formData,
+        headers: {'Content-Type': 'multipart/form-data'},
+        timeout: 120000
+    })
+}
+
+// 删除票据
+export function expenseAttachmentDelete(id: string): any {
+    return request({
+        url: `/expense/claim/attachment/${id}`,
+        method: 'delete'
+    })
+}
+
+// 票据下载地址（流式）
+export function expenseAttachmentDownloadUrl(id: string): string {
+    return `/api/expense/claim/attachment/download/${id}`
+}

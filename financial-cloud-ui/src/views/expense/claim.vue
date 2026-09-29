@@ -88,6 +88,52 @@
               >
                 拒绝原因：{{ scope.row.rejectReason }}
               </div>
+              <div class="attach-block">
+                <span class="attach-title">票据附件</span>
+                <el-upload
+                  v-if="['draft', 'rejected'].includes(scope.row.claimStatus)"
+                  :show-file-list="false"
+                  :http-request="(opt: any) => handleUpload(scope.row, opt)"
+                  accept=".pdf,.png,.jpg,.jpeg,.webp,.ofd"
+                  style="display: inline-block; margin-left: 8px"
+                >
+                  <el-button
+                    link
+                    type="primary"
+                    size="small"
+                  >
+                    上传票据
+                  </el-button>
+                </el-upload>
+                <div
+                  v-if="scope.row.attachments?.length"
+                  class="attach-list"
+                >
+                  <div
+                    v-for="att in scope.row.attachments"
+                    :key="att.id"
+                    class="attach-item"
+                  >
+                    <a
+                      :href="expenseAttachmentDownloadUrl(att.id)"
+                      target="_blank"
+                    >{{ att.fileName }}</a>
+                    <el-button
+                      v-if="['draft', 'rejected'].includes(scope.row.claimStatus)"
+                      link
+                      type="danger"
+                      size="small"
+                      @click="handleAttachmentDelete(scope.row, att)"
+                    >
+                      删除
+                    </el-button>
+                  </div>
+                </div>
+                <span
+                  v-else
+                  class="attach-empty"
+                >暂无票据</span>
+              </div>
             </div>
           </template>
         </el-table-column>
@@ -376,7 +422,11 @@ import {
   expenseClaimSubmit,
   expenseClaimAudit,
   expenseClaimVoucher,
-  expenseClaimDelete
+  expenseClaimDelete,
+  expenseAttachmentList,
+  expenseAttachmentUpload,
+  expenseAttachmentDelete,
+  expenseAttachmentDownloadUrl
 } from '@/api/expense/expense'
 import bookStore from '@/store/modules/bookStore'
 
@@ -447,17 +497,44 @@ function getList() {
   loading.value = true
   expenseClaimPage(queryParams.value).then(async (res: any) => {
     const rows = res.data.records || []
-    // 逐单拉明细供展开行展示
-    await Promise.all(rows.map((row: any) =>
-      expenseClaimDetail(row.id).then((d: any) => {
+    // 逐单拉明细与票据供展开行展示
+    await Promise.all(rows.map((row: any) => {
+      const itemsP = expenseClaimDetail(row.id).then((d: any) => {
         row.items = d.data.items || []
       }).catch(() => {
         row.items = []
-      })))
+      })
+      const attP = expenseAttachmentList(row.id).then((a: any) => {
+        row.attachments = a.data || []
+      }).catch(() => {
+        row.attachments = []
+      })
+      return Promise.all([itemsP, attP])
+    }))
     recordsList.value = rows
     total.value = res.data.total
   }).finally(() => {
     loading.value = false
+  })
+}
+
+function handleUpload(row: any, opt: any) {
+  expenseAttachmentUpload(row.id, opt.file).then(() => {
+    proxy?.$modal?.msgSuccess('票据已上传')
+    return expenseAttachmentList(row.id)
+  }).then((a: any) => {
+    row.attachments = a.data || []
+  })
+}
+
+function handleAttachmentDelete(row: any, att: any) {
+  proxy?.$modal?.confirm(`确认删除票据 ${att.fileName}？`).then(() => {
+    expenseAttachmentDelete(att.id).then(() => {
+      proxy?.$modal?.msgSuccess('已删除')
+      return expenseAttachmentList(row.id)
+    }).then((a: any) => {
+      row.attachments = a.data || []
+    })
   })
 }
 
@@ -601,6 +678,32 @@ getList()
   margin-top: 6px;
   color: #f56c6c;
   font-size: 12px;
+}
+
+.attach-block {
+  margin-top: 10px;
+  font-size: 12px;
+
+  .attach-title {
+    font-weight: bold;
+    color: #606266;
+  }
+
+  .attach-list {
+    margin-top: 4px;
+  }
+
+  .attach-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.8;
+  }
+
+  .attach-empty {
+    margin-left: 8px;
+    color: #909399;
+  }
 }
 
 .items-head {

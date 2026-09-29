@@ -69,16 +69,6 @@ declare module '*.json' {
     export default value
 }
 
-declare module 'vue-count-to' {
-    const component: any
-    export default component
-}
-
-declare module 'vue-count-to/*' {
-    const component: any
-    export default component
-}
-
 declare module 'fuse' {
     import Fuse from 'fuse.js'
     export default Fuse

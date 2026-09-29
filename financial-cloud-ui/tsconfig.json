@@ -31,6 +31,9 @@
       ],
       "vue-cropper": [
         "src/types/stubs/vue-cropper.ts"
+      ],
+      "vue-count-to": [
+        "src/types/stubs/vue-count-to.ts"
       ]
     },
     "lib": [

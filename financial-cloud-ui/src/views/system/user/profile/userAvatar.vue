@@ -124,7 +124,6 @@
 import {ref, getCurrentInstance, reactive, toRefs, watch, defineComponent} from "vue";
 import modal from "@/plugins/modal";
 import "vue-cropper/dist/index.css";
-// @ts-ignore — package index.ts pulls untyped .vue
 import {VueCropper} from "vue-cropper";
 import {uploadImage} from "@/api/idm/user";
 import useUserStore from "@/store/modules/user";

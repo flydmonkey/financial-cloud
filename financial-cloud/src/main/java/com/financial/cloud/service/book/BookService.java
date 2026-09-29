@@ -8,6 +8,7 @@ import com.financial.cloud.service.config.ConfigInsuranceFundService;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementIncomeService;
 import com.financial.cloud.service.statement.StatementBalanceSheetService;
+import com.financial.cloud.domain.voucher.Voucher;
 import com.financial.cloud.service.voucher.VoucherService;
 import com.financial.cloud.service.voucher.VoucherTemplateService;
 import cn.hutool.core.bean.BeanUtil;
@@ -174,6 +175,15 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         sealedWrapper.in(Book::getId, bookIds);
         if (bookMapper.selectCount(sealedWrapper) > 0) {
             throw new BusinessException(BookBusinessExceptionEnum.SEALED_BOOK_DELETE);
+        }
+
+        // 有凭证的账套禁止硬删，引导封存留存
+        for (String bookId : bookIds) {
+            long voucherCount = voucherService.count(new LambdaQueryWrapper<Voucher>()
+                    .eq(Voucher::getBookId, bookId));
+            if (voucherCount > 0) {
+                throw new BusinessException(BookBusinessExceptionEnum.BOOK_HAS_DATA_DELETE);
+            }
         }
 
         //删除关联科目

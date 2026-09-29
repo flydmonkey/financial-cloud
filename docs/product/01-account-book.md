@@ -1,6 +1,6 @@
 # 01 · 账套管理与初始化
 
-> 状态：已实现（CRUD / 多账套 / onboarding / 封存 / 手动备份恢复 / 定时备份落盘 / 覆盖式恢复；作废留存态未做）
+> 状态：已实现（CRUD / 多账套 / onboarding / 封存 / 有数据禁硬删留存 / 手动备份恢复 / 定时备份落盘 / 覆盖式恢复）
 
 ## 1. 模块定位
 
@@ -26,7 +26,7 @@
 | Onboarding 向导 | **已实现** | `views/onboarding/index.vue`，`/api/book/setup`、`onboarding-status` |
 | 企业信息：信用代码、纳税人类型、行业、启用月、准则 | **已实现** | 见数据模型 |
 | 账套封存（归档只读） | **已实现** | status=2 + `BookSealGuard` 写拦截；往期锁定另靠结账期间 |
-| 账套作废（有数据不可删仅作废） | **未实现** | 仅启用/禁用 + 删除约束；P2 |
+| 账套作废（有数据不可删仅作废） | **已实现** | 有凭证禁硬删（`BOOK_HAS_DATA_DELETE`）；留存语义=封存 status=2 |
 | 手动备份 / 克隆式恢复 | **已实现** | `/api/book/backup/export`、`/restore`；列表行操作 |
 | 定时备份 | **已实现** | 配置 `financial-cloud.backup.schedule.*`；落盘同格式 ZIP + 保留 N 份；账套页可查看/立即跑一轮 |
 | 覆盖式恢复 | **已实现** | `/api/book/backup/restore-overwrite`；确认短语「覆盖恢复」+ 预备份 + 封存拒绝 |
@@ -57,7 +57,7 @@
 | `standard_id` | 会计准则模板 ID |
 | `current_account_date` | 当前记账年月 |
 | `voucher_reviewed` | 是否开启凭证审核 |
-| `status` | 1 启用 / 0 禁用（**非**封存/作废） |
+| `status` | 1 启用 / 0 禁用 / 2 封存（归档只读=作废留存） |
 | `deleted` | 逻辑删除标记 |
 
 关联：`permission_book`（用户授权）、`config`（账套级参数，含当前账期等）、业务表统一 `book_id`。
@@ -92,7 +92,6 @@
 
 ## 8. 已知缺口
 
-- 账套「作废留存」态（有数据不可删仅作废）未做。
 - 机构层与账套层关系对用户侧说明不足（见 [00-overview.md](00-overview.md) §5）。
 
 ## 9. 证据索引

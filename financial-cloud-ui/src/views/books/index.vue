@@ -638,7 +638,7 @@ function dialogOfClosedMethods(val: any): any {
 
 /** 多选删除操作*/
 function onBatchDelete(): any {
-  modal.confirm(t('jbx.confirm.text.delete')).then(function () {
+  modal.confirm("确认批量删除所选账套？空账套可删；有凭证的账套请改用封存，硬删将被拒绝。").then(function () {
     return deleteBatch({listIds: ids.value});
   }).then((res: any) => {
     if (res.code === 0) {
@@ -673,7 +673,9 @@ function handleDelete(row: any): any {
     modal.msgWarning("仅账套管理员可删除账套");
     return;
   }
-  modal.confirm(t('org.deleteTip1') + row.name + t('org.deleteTip2')).then(function () {
+  modal.confirm(
+    `确认删除账套「${row.name}」？空账套可删；若仍有凭证请改用「封存」留存，系统将拒绝硬删。`
+  ).then(function () {
     return deleteBatch({listIds: [row.id]});
   }).then((res: any) => {
     if (res.code === 0) {

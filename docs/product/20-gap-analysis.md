@@ -24,7 +24,7 @@
 | 1.1 | 新建账套：企业名称、信用代码、纳税人类型、行业、起始月、会计制度 | 字段齐全并初始化科目/报表/模板 | **已实现** | `Book`、`BookService.save` | — |
 | 1.2 | 账套列表、搜索、切换、多账套 | 列表 + `permission_book` + 顶栏切换 | **已实现** | `books/index.vue`、`switchBook` | — |
 | 1.3 | 账套封存（往期禁止改） | 封存态已落地：status=2 归档只读，凭证/结账/附件写操作由 BookSealGuard 拦截，封存账套禁删；另有期间锁 | **已实现** | `BookSealGuard`、`/api/book/seal|unseal` | — |
-| 1.4 | 作废留存 / 空账套删除 | 禁用后删除；无「作废」态 | **未实现** | `BookService.delete` | P2 |
+| 1.4 | 作废留存 / 空账套删除 | 有凭证禁硬删并引导封存；空账套禁用后可删；封存不可删 | **已实现** | `BookService.delete` + `BOOK_HAS_DATA_DELETE` / seal | — |
 | 1.5 | 手动备份、定时备份、恢复、导出备份文件 | 手动导出 + 克隆式恢复 + 覆盖式恢复（强确认+预备份）+ **定时落盘** | **已实现** | `BookBackupService`、`BookRestoreService`、`ScheduledBookBackupService`、`/api/book/backup/*` | — |
 
 ---

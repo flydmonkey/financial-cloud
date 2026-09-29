@@ -67,6 +67,7 @@ public final class MessageKeys {
         public static final String ASSIST_ACC_PARENT_HAS_ASSIST = "book.error.assist_acc_parent_has_assist";
         public static final String BOOK_SEALED = "book.error.book_sealed";
         public static final String SEALED_BOOK_DELETE = "book.error.sealed_book_delete";
+        public static final String BOOK_HAS_DATA_DELETE = "book.error.book_has_data_delete";
 
         private Book() {
         }

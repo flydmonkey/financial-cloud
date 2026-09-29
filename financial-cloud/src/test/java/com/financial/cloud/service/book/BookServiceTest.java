@@ -5,6 +5,8 @@ import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.book.BookPageDto;
+import com.financial.cloud.dto.common.ListIdsDto;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
 import com.financial.cloud.enums.error.UsersBusinessCode;
 import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.book.BookMapper;
@@ -22,9 +24,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,5 +102,23 @@ class BookServiceTest {
         user.setId("user-1");
         when(roleMemberService.count(any())).thenReturn(1L);
         bookService.requireBookAdministrator(user, "book-1");
+    }
+
+    @Test
+    void delete_rejectsWhenBookHasVouchers() {
+        UserInfo user = new UserInfo();
+        user.setId("user-1");
+        when(roleMemberService.count(any())).thenReturn(1L);
+        when(bookMapper.selectList(any())).thenReturn(List.of());
+        when(bookMapper.selectCount(any())).thenReturn(0L);
+        when(voucherService.count(any())).thenReturn(3L);
+
+        ListIdsDto dto = new ListIdsDto();
+        dto.setListIds(List.of("book-1"));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> bookService.delete(dto, user));
+        assertEquals(BookBusinessExceptionEnum.BOOK_HAS_DATA_DELETE.getCode(), ex.getCode());
+        verify(voucherService, never()).deleteByBookIds(any());
     }
 }

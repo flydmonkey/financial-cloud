@@ -139,8 +139,8 @@ export default {
   data() {
     return {
       loading: true,
-      selectionlist: [],
-      ids: [],
+      selectionlist: [] as any[],
+      ids: [] as any[],
       params: {
         username: '',
         displayName: '',
@@ -156,7 +156,7 @@ export default {
       showSearch: true,
       // 更多条件
       moreCondition: false,
-      sessions: [],
+      sessions: [] as any[],
       total: 0
     }
   },

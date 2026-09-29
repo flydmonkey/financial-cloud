@@ -133,8 +133,8 @@ export default {
   data() {
     return {
       loading: true,
-      selectionlist: [],
-      ids: [],
+      selectionlist: [] as any[],
+      ids: [] as any[],
       params: {
         username: '',
         displayName: '',
@@ -150,7 +150,7 @@ export default {
       showSearch: true,
       // 更多条件
       moreCondition: false,
-      sessions: [],
+      sessions: [] as any[],
       total: 0
     }
   },
@@ -159,21 +159,21 @@ export default {
   },
   methods: {
     getList() {
-      this.params.startDate = this.formatTimestamp(this.params.startDatePicker, 'yyyy-MM-dd HH:mm:ss');
-      this.params.endDate = this.formatTimestamp(this.params.endDatePicker, 'yyyy-MM-dd HH:mm:ss');
+      this.params.startDate = this.formatTimestamp(this.params.startDatePicker);
+      this.params.endDate = this.formatTimestamp(this.params.endDatePicker);
       loginAppsHistory(this.params).then((res: any) =>  {
         this.sessions = res.data.records;
         this.total = res.data.records;
         this.loading = false;
       })
     },
-    addDays(date, days) {
+    addDays(date: Date | number, days: number) {
       const newDate: any = new Date(date);
       newDate.setDate(newDate.getDate() + days);
       return newDate.getTime();
     },
     /** 多选操作*/
-    handleSelectionChange(selection) {
+    handleSelectionChange(selection: any[]) {
       this.selectionlist = selection;
       this.ids = this.selectionlist.map((item: any) =>  item.id);
     },
@@ -198,7 +198,7 @@ export default {
       this.handleQuery();
     },
     //时间格式化方法
-    formatTimestamp(timestamp) {
+    formatTimestamp(timestamp: Date | number | string) {
       const date: any = new Date(timestamp);
       const year: any = date.getFullYear();
       const month: any = String(date.getMonth() + 1).padStart(2, '0');
@@ -208,9 +208,9 @@ export default {
       const seconds: any = String(date.getSeconds()).padStart(2, '0');
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
-    set2String(set) {
+    set2String(set: Iterable<any>) {
       let setValues: any = '';
-      set.forEach((value: any) =>  {
+      Array.from(set).forEach((value: any) =>  {
         setValues = `${setValues + value},`;
       });
       return setValues;

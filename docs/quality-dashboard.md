@@ -8,7 +8,7 @@
 | 维度 | 结果 |
 |------|------|
 | 后端单测（`./mvnw test`） | **通过**（BUILD SUCCESS，2026-09-29） |
-| TypeScript（`npm run typecheck`） | **129 error**（存量质量债；CI `continue-on-error`） |
+| TypeScript（`npm run typecheck`） | **71 error**（由 ~129 收敛；audit/dashboard/cash-flow 簇已修；CI `continue-on-error`） |
 | ESLint（`npm run lint`） | **0 error** / **~913 warning** |
 | Playwright E2E | 约 **40** 个 `e2e/*.spec.ts`（本轮未全量复跑） |
 | API 冒烟（`tools/smoke-api.mjs`） | 未本轮复跑 |

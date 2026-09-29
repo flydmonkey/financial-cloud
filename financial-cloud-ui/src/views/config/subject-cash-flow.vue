@@ -172,7 +172,7 @@ const currBookStore = bookStore()
 const deptOptions: any = ref<any[]>([]);
 const resTreeRef: any = ref<any>({});
 const currentSubjectName = ref("")
-const currentSubject = ref({})
+const currentSubject = ref<any>({})
 const mainTableList = ref([])
 const supplementaryList = ref([])
 const defaultProps: any = ref({
@@ -187,9 +187,9 @@ const direction = ref(1)
 const singleTable: any = ref<any>({});
 const singleTableSupple: any = ref<any>({});
 //所选的主表项目
-const selectedRow = ref(null)
+const selectedRow = ref<any>(null)
 //所选的补充资料项目
-const selectedRowSupple = ref(null)
+const selectedRowSupple = ref<any>(null)
 
 /*获取准则列表*/
 function getStandardList() {
@@ -301,9 +301,9 @@ function selectedItem() {
 }
 
 function toggleRowByCode(mainCode?: string, suppleCode?: string) {
-  const selectRow = (list: any[], tableRef: any, code?: string, row: any) => {
+  const selectRow = (list: any[], tableRef: any, code: string | undefined, row: { value: any }) => {
     if (!code) return
-    const target = list.find(item => item.itemCode === code)
+    const target = list.find((item: any) => item.itemCode === code)
     if (target) {
       tableRef?.toggleRowSelection?.(target, true)
       row.value = target;

@@ -1,7 +1,7 @@
 # 代账工作台 · 多账套月末看板
 
 > Date: 2026-09-29  
-> Status: **approved (spec)** — 待写实施计划  
+> Status: **implemented** — 分支 `cursor/daizhang-books-board-be74`  
 > Owner: product  
 > Related: [吞吐 V2](2026-09-29-daizhang-throughput-v2-design.md)（已完成）、[Post-V2](2026-09-29-daizhang-post-v2-design.md)（已完成）、[21-roadmap](../../product/21-roadmap.md)、[00-overview](../../product/00-overview.md)
 

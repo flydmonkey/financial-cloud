@@ -74,6 +74,13 @@ export const constantRoutes: any = [
                 component: () => import('@/views/index.vue'),
                 name: 'Index',
                 meta: {title: '首页', icon: 'dashboard', affix: true}
+            },
+            {
+                // Deep-link / E2E without waiting for menu seed; sidebar still from resources menu.
+                path: '/workspace/books-board',
+                component: () => import('@/views/workspace/books-board.vue'),
+                name: 'BooksBoardPage',
+                meta: {title: '代账工作台'}
             }
         ]
     },

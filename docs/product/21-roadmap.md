@@ -15,14 +15,25 @@
 
 ## 2. 近端路线（建议 3～4 个切片）
 
-> **现行近端主轴（2026-09-29）**：吞吐 V2 + Post-V2 改证路径 + TS 清零**均已收口**（[#5](https://github.com/flydmonkey/financial-cloud/pull/5)）。见 [V2 设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2 设计](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md)。不以 PRD 新模块扩容为主。下列 S0–S3 为专业可用阶段历史切片（已收口）。
+> **现行近端主轴（2026-09-29）**：**代账工作台 · 多账套月末看板**（吞吐下一程序）。规格见 [books-board 设计](../superpowers/specs/2026-09-29-daizhang-books-board-design.md) / [实施计划](../superpowers/plans/2026-09-29-daizhang-books-board.md)。  
+> 此前吞吐 V2 + Post-V2 + TS 清零已收口（[#5](https://github.com/flydmonkey/financial-cloud/pull/5)）。不以 PRD 新模块扩容为主。下列 S0–S3 为专业可用阶段历史切片（已收口）。
 
 ```mermaid
 flowchart LR
   S0["S0 交付包"] --> S1["S1 打印吞吐"]
   S1 --> S2["S2 资金往来"]
   S2 --> S3["S3 周边卫生"]
+  S3 --> S4["S4 多账套工作台"]
 ```
+
+### S4 · 多账套月末工作台（现行）
+
+| 项 | 说明 | 状态 |
+|----|------|------|
+| 代账工作台看板 | 授权账套账期/待办/结账启发式/阻塞摘要 | **已落地** |
+| 进入处理 | 切账套跳转凭证/折旧/结账 | **已落地** |
+| 批量账本包 | 已结账套服务端总 ZIP | **已落地** |
+| 非目标 | 跨账套批量结账、verify 编排、SaaS 多租户 | — |
 
 ### S0 · 交付包（已落地）
 

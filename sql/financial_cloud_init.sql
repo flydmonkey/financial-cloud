@@ -1,5 +1,5 @@
 -- Financial Cloud full init SQL (schema + seed data, no business/test data)
--- Generated at: 2026-09-29 20:54:25
+-- Generated at: 2026-09-29 15:17:48
 -- Generator: python tools/build_init_sql.py
 
 SET NAMES utf8mb4;
@@ -3799,19 +3799,58 @@ WHERE b.deleted = 'n'
     SELECT 1 FROM `config` c WHERE c.book_id = b.id AND c.config_key = 'settlement.verify.arap.enabled'
 );
 
-INSERT INTO `config` (`config_id`, `book_id`, `config_name`, `config_key`, `config_value`, `config_type`, `remark`, `created_by`, `created_date`)
-SELECT REPLACE(UUID(), '-', ''), 'template', '结账往来逾期硬阻断', 'settlement.verify.arap.overdue.hard', 'false', 'y', '开启后月结逾期往来硬失败；缺省仅警告', '1', NOW()
-WHERE NOT EXISTS (
-    SELECT 1 FROM `config` WHERE `book_id` = 'template' AND `config_key` = 'settlement.verify.arap.overdue.hard'
+-- 代账工作台（多账套月末看板）菜单，挂根节点，幂等可重复执行
+SET @root_id = '1';
+SET @menu_id = '2026092900000000081';
+SET @perm_admin = '2026092900000000082';
+SET @perm_bk = '2026092900000000083';
+SET @perm_rv = '2026092900000000084';
+SET @perm_vw = '2026092900000000085';
+
+DELETE FROM permission WHERE id IN (@perm_admin, @perm_bk, @perm_rv, @perm_vw) OR resource_id = @menu_id;
+DELETE FROM resources WHERE id = @menu_id;
+
+INSERT INTO resources (
+    id, res_name, i18n, classify, permission, request_url, request_method,
+    params, action_type, icon, icon_selected, res_style,
+    is_open, is_frame, is_cache, is_visible,
+    parent_id, parent_name, sort_index, description,
+    created_by, created_date, modified_by, modified_date, status, deleted
+) VALUES (
+    @menu_id,
+    '代账工作台',
+    '代账工作台',
+    'MENU',
+    @menu_id,
+    '/workspace/books-board',
+    'GET',
+    NULL,
+    'r',
+    NULL,
+    NULL,
+    'dashboard',
+    'n',
+    'n',
+    'n',
+    'y',
+    @root_id,
+    'Financial Cloud',
+    2,
+    '多账套月末进度与批量交账',
+    '1',
+    NOW(),
+    '1',
+    NOW(),
+    '1',
+    'n'
 );
 
-INSERT INTO `config` (`config_id`, `book_id`, `config_name`, `config_key`, `config_value`, `config_type`, `remark`, `created_by`, `created_date`)
-SELECT REPLACE(UUID(), '-', ''), b.id, '结账往来逾期硬阻断', 'settlement.verify.arap.overdue.hard', 'false', 'y', '开启后月结逾期往来硬失败；缺省仅警告', '1', NOW()
-FROM `book` b
-WHERE b.deleted = 'n'
-  AND NOT EXISTS (
-    SELECT 1 FROM `config` c WHERE c.book_id = b.id AND c.config_key = 'settlement.verify.arap.overdue.hard'
-);
+INSERT INTO permission (id, role_id, resource_id, created_by, created_date, status, book_id)
+VALUES
+    (@perm_admin, 'ROLE_ADMINISTRATORS', @menu_id, '1', NOW(), 1, '1'),
+    (@perm_bk, 'ROLE_BOOKKEEPER', @menu_id, '1', NOW(), 1, '1'),
+    (@perm_rv, 'ROLE_REVIEWER', @menu_id, '1', NOW(), 1, '1'),
+    (@perm_vw, 'ROLE_VIEWER', @menu_id, '1', NOW(), 1, '1');
 
 -- 菜单微调（可重复执行）
 -- 1) 社保公积金、个人税率设置 → 薪资

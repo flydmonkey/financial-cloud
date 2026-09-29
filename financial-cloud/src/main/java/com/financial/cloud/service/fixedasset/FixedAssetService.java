@@ -191,6 +191,11 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
         if (StringUtils.isNotBlank(period) && period.contains("-")) {
             year = Integer.parseInt(period.split("-")[0]);
             month = Integer.parseInt(period.split("-")[1]);
+            // 凭证日期必须落在入账期间内：期间锁按 voucherDate 判定，
+            // 开始使用日期早于入账期间时(次月起提的常见场景)落在期间首日
+            if (!period.equals(FixedAssetDepreciationRules.periodOf(voucherDate))) {
+                voucherDate = java.sql.Date.valueOf(period + "-01");
+            }
         } else {
             java.util.Calendar cal = java.util.Calendar.getInstance();
             cal.setTime(voucherDate);

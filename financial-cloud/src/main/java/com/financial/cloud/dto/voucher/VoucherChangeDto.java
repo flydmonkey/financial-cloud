@@ -45,9 +45,8 @@ public class VoucherChangeDto {
     private Integer wordNum;
 
     /**
-     * 所属账套
+     * 所属账套（服务端从当前会话注入，客户端无需传递）
      */
-    @NotEmpty(message = MessageKeys.Validation.BOOK_OWNER_BOOK_ID_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     private String bookId;
 
     /**

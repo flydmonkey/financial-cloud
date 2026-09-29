@@ -19,7 +19,7 @@ public class AssetCategoryChangeDto implements Serializable {
     @NotBlank(message = MessageKeys.Validation.COMMON_ID_REQUIRED, groups = {EditGroup.class})
     private String id;
 
-    @NotBlank(message = MessageKeys.Validation.BOOK_OWNER_BOOK_ID_REQUIRED, groups = {AddGroup.class, EditGroup.class})
+    /** 账套 ID 由服务端从当前会话注入，客户端无需(也不得)传递 */
     private String bookId;
 
     @NotBlank(message = MessageKeys.Validation.FIXED_ASSET_CATEGORY_CODE_REQUIRED, groups = {AddGroup.class, EditGroup.class})

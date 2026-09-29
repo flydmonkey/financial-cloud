@@ -213,6 +213,34 @@ def record_vouchers(book_id: str, term: str, subjects: list[dict]) -> None:
                                    "现金购买销售用物料", subjects), "V3 现金购料3千")
 
 
+def ensure_voucher_posted(vid: str, label: str) -> dict:
+    """把已有凭证(购入/折旧/报销/结转生成)推到过账态, 返回最终明细。"""
+    detail = req("GET", f"/api/voucher/get/{vid}")["data"]
+    if not detail.get("senderId"):
+        payload = {
+            "bookId": detail["bookId"], "word": detail.get("word"), "wordHead": detail["wordHead"],
+            "wordNum": detail["wordNum"], "companyName": detail["companyName"],
+            "receiptNum": detail.get("receiptNum") or 0, "voucherDate": detail["voucherDate"],
+            "voucherYear": detail["voucherYear"], "voucherMonth": detail["voucherMonth"],
+            "items": [{"subjectId": i["subjectId"], "subjectName": i["subjectName"],
+                       "summary": i.get("summary"), "debitAmount": float(i.get("debitAmount") or 0),
+                       "creditAmount": float(i.get("creditAmount") or 0)} for i in detail.get("items") or []],
+        }
+        if detail.get("status") == "draft":
+            req("POST", "/api/voucher/submit", json={**payload, "id": vid})
+            detail = req("GET", f"/api/voucher/get/{vid}")["data"]
+        if detail.get("status") == "reviewing":
+            req("PUT", f"/api/voucher/audit/{vid}", headers=REVIEWER_HEADERS)
+            detail = req("GET", f"/api/voucher/get/{vid}")["data"]
+            if detail.get("status") != "completed":
+                fail(f"{label} 审核后状态异常: {detail.get('status')}")
+        req("PUT", f"/api/voucher/sender/{vid}")
+        detail = req("GET", f"/api/voucher/get/{vid}")["data"]
+    if not detail.get("senderId"):
+        fail(f"{label} 未能过账 status={detail.get('status')}")
+    return detail
+
+
 def expense_claim_flow(book_id: str, term: str, subjects: list[dict]) -> None:
     step("费用报销: 填单→提交→审批→生成凭证→过账")
     body = req("POST", "/api/expense/claim", json={
@@ -246,6 +274,62 @@ def expense_claim_flow(book_id: str, term: str, subjects: list[dict]) -> None:
     ok(f"claimId={claim_id} 凭证记-{payload['wordNum']} 金额1,500 已过账")
 
 
+def fixed_asset_flow(book_id: str, term: str, subjects: list[dict]) -> None:
+    step("固定资产: 类别→卡片(自动购入凭证6万)→次月起提折旧950→折旧报表")
+    fa = subject_by_code(subjects, "1601")
+    acc_depr = subject_by_code(subjects, "1602")
+    bank = subject_by_code(subjects, "1002")
+    admin_exp = subject_by_code(subjects, "5602")
+
+    body = req("POST", "/api/fixed-asset/category/save", json={
+        "code": "CAT01", "name": "电子设备", "depreciationMethod": "STRAIGHT_LINE",
+        "usefulLifeMonths": 60, "residualRate": 5,
+        "fixedAssetSubjectId": fa["id"], "accumDeprSubjectId": acc_depr["id"],
+    })
+    cat_id = body.get("data")
+    if not cat_id:
+        cats = req("GET", "/api/fixed-asset/category/list").get("data") or []
+        cat_id = next((c["id"] for c in cats if c.get("code") == "CAT01"), None)
+    if not cat_id:
+        fail("资产类别新增后未取到 ID")
+
+    prev_month = (datetime.date(int(term[:4]), int(term[5:7]), 1)
+                  - datetime.timedelta(days=1)).strftime("%Y-%m")
+    body = req("POST", "/api/fixed-asset/card/save", json={
+        "code": "FA001", "name": "办公电脑一批", "categoryId": cat_id,
+        "startUseDate": f"{prev_month}-10", "entryPeriod": term,
+        "quantity": 5, "originalValue": 60_000,
+        "purchaseCounterpartSubjectId": bank["id"], "expenseSubjectId": admin_exp["id"],
+    })
+    result = body["data"] or {}
+    purchase_vid = result.get("purchaseVoucherId")
+    if not purchase_vid:
+        fail("卡片保存未生成购入凭证")
+    detail = ensure_voucher_posted(purchase_vid, "购入凭证")
+    debit = sum(float(i.get("debitAmount") or 0) for i in detail.get("items") or [])
+    if abs(debit - 60_000) > 0.005:
+        fail(f"购入凭证借方合计 {debit} ≠ 60,000")
+    ok(f"卡片 FA001 原值60,000 购入凭证已过账")
+
+    body = req("POST", "/api/fixed-asset/depreciation/accrue", json={
+        "yearPeriod": term, "voucherDate": f"{term}-28 00:00:00", "summary": "计提本月折旧",
+    })
+    total = float(body["data"].get("totalAmount") or 0)
+    # 直线法: 60,000 × (1-5%) / 60 = 950/月
+    if abs(total - 950) > 0.005:
+        fail(f"本月折旧合计 {total} ≠ 950(直线法 60000×95%/60)")
+    depr_vid = body["data"]["voucherId"]
+    detail = ensure_voucher_posted(depr_vid, "折旧凭证")
+    credit_1602 = sum(float(i.get("creditAmount") or 0) for i in detail.get("items") or []
+                      if (i.get("subjectName") or "").startswith("累计折旧")
+                      or str(i.get("subjectCode") or "").startswith("1602"))
+    ok(f"计提折旧 950.00 凭证已过账 (累计折旧贷方 {credit_1602})")
+
+    detail_rpt = req("GET", f"/api/fixed-asset/report/depreciation-detail?yearPeriod={term}")["data"]
+    summary_rpt = req("GET", f"/api/fixed-asset/report/depreciation-summary?yearPeriod={term}")["data"]
+    ok(f"折旧明细/汇总报表返回正常")
+
+
 def journal_flow(term: str, subjects: list[dict]) -> str:
     step("出纳: 建银行账户→录流水→银行对账")
     bank = subject_by_code(subjects, "1002")
@@ -265,6 +349,7 @@ def journal_flow(term: str, subjects: list[dict]) -> str:
         ("I", 50_000, 0, "销售回款"),
         ("E", 0, 8_000, "支付房租"),
         ("E", 0, 1_500, "报销差旅费"),
+        ("E", 0, 60_000, "购入固定资产"),
     ]
     entry_ids = []
     for direction, income, expenditure, remark in entries:
@@ -281,7 +366,7 @@ def journal_flow(term: str, subjects: list[dict]) -> str:
     body = req("GET", f"/api/journal/reconciliation?accId={acc_id}&yearPeriod={term}")
     recon = body["data"]
     book_balance = float(recon.get("bookBalance") or 0)
-    expected_balance = 90_000 + 50_000 - 8_000 - 1_500
+    expected_balance = 90_000 + 50_000 - 8_000 - 1_500 - 60_000
     if abs(book_balance - expected_balance) > 0.005:
         fail(f"对账账面余额 {book_balance} ≠ 预期 {expected_balance}")
     req("PUT", "/api/journal/reconciliation/statement", json={
@@ -366,11 +451,16 @@ def reports_flow(term: str) -> None:
     monetary = row_val(assets_rows, "货币资金")
     asset_total = row_val(assets_rows, "总计")
     le_total = row_val(liability_rows, "总计")
-    if monetary is None or abs(monetary - 137_500) > 0.005:
-        fail(f"货币资金 {monetary} ≠ 137,500")
+    fixed_net = row_val(assets_rows, "固定资产")
+    if monetary is None or abs(monetary - 77_500) > 0.005:
+        fail(f"货币资金 {monetary} ≠ 77,500")
+    if fixed_net is None or abs(fixed_net - 59_050) > 0.005:
+        fail(f"固定资产净值 {fixed_net} ≠ 59,050(60,000-950)")
     if asset_total is None or le_total is None or abs(asset_total - le_total) > 0.005:
         fail(f"资产负债表不平衡: 资产总计={asset_total} 负债权益总计={le_total}")
-    ok(f"资产负债表平衡: 货币资金={monetary:,.2f} 资产总计={asset_total:,.2f}")
+    if abs(asset_total - 136_550) > 0.005:
+        fail(f"资产总计 {asset_total} ≠ 136,550")
+    ok(f"资产负债表平衡: 货币资金={monetary:,.2f} 固定资产净值={fixed_net:,.2f} 资产总计={asset_total:,.2f}")
 
     inc = req("GET", f"/api/statement/income?periodType=month&reportDate={term}")["data"]
     inc_rows = inc.get("items") or inc.get("rows") or []
@@ -378,8 +468,8 @@ def reports_flow(term: str) -> None:
     profit = row_val(inc_rows, "净利润")
     if rev is None or abs(rev - 50_000) > 0.005:
         fail(f"利润表营业收入 {rev} ≠ 50,000")
-    if profit is None or abs(profit - 37_500) > 0.005:
-        fail(f"利润表净利润 {profit} ≠ 37,500")
+    if profit is None or abs(profit - 36_550) > 0.005:
+        fail(f"利润表净利润 {profit} ≠ 36,550(50,000-12,500-950)")
     ok(f"利润表: 营业收入={rev:,.2f} 净利润={profit:,.2f}")
 
     cf = req("GET", f"/api/statement/cash-flow?periodType=month&reportDate={term}")["data"]
@@ -388,14 +478,25 @@ def reports_flow(term: str) -> None:
     sb = req("GET", f"/api/statement/subject-balance?periodType=month&reportDate={term}&showAll=true")["data"]
     ok(f"科目余额表 {len(sb)} 行")
 
+    vs = req("GET", f"/api/statement/voucher-summary?periodType=month&reportDate={term}")["data"]
+    ok(f"凭证汇总表 {len(vs)} 行")
+
+    resp = requests.get(f"{BASE}/api/statement/books-pack/export?yearPeriod={term}",
+                        headers=HEADERS, timeout=30)
+    if resp.status_code != 200 or len(resp.content) < 500:
+        fail(f"账簿打包导出异常: HTTP {resp.status_code} 大小 {len(resp.content)}")
+    if not resp.content[:2] == b"PK":
+        fail("账簿打包导出不是有效 ZIP")
+    ok(f"账簿打包(明细账/总账 ZIP)导出正常 {len(resp.content):,} 字节")
+
     est = req("GET", f"/api/tax-estimate?yearMonth={term}")["data"]
     est_revenue = float(est.get("revenue") or 0)
     est_profit = float(est.get("profitBeforeTax") or 0)
     est_cit = float(est.get("incomeTax") or 0)
     if abs(est_revenue - 50_000) > 0.005:
         fail(f"税负测算营业收入 {est_revenue} ≠ 50,000(结转后发生额口径)")
-    if abs(est_profit - 37_500) > 0.005 or abs(est_cit - 9_375) > 0.005:
-        fail(f"税负测算利润总额 {est_profit}/所得税 {est_cit} ≠ 37,500/9,375")
+    if abs(est_profit - 36_550) > 0.005 or abs(est_cit - 9_137.50) > 0.005:
+        fail(f"税负测算利润总额 {est_profit}/所得税 {est_cit} ≠ 36,550/9,137.50")
     ok(f"税负测算: 营收={est_revenue:,.2f} 利润总额={est_profit:,.2f} 企业所得税={est_cit:,.2f}")
 
     decl = req("GET", f"/api/tax-estimate/declaration?yearMonth={term}")["data"]
@@ -404,6 +505,20 @@ def reports_flow(term: str) -> None:
     if row1 is None or abs(float(row1.get("amount") or 0) - 50_000) > 0.005:
         fail(f"申报表第1行销售额 {row1 and row1.get('amount')} ≠ 50,000")
     ok(f"增值税申报表 {len(lines)} 行, 第1行销售额=50,000.00")
+
+
+def uncheckout_reclose_flow(term: str) -> None:
+    step("反结账→重新结账 (回滚验收)")
+    req("POST", f"/api/settlement/uncheckout?yearPeriod={term}", json={"yearPeriod": term})
+    reopened = current_term()
+    if reopened != term:
+        fail(f"反结账后账期 {reopened} ≠ {term}")
+    ok(f"已反结账回 {term}")
+    req("GET", f"/api/settlement/checkout?year={term[:4]}")
+    new_term = current_term()
+    if new_term == term:
+        fail("重新结账后账期未推进")
+    ok(f"重新结账 {term} → {new_term}")
 
 
 def main() -> None:
@@ -420,9 +535,11 @@ def main() -> None:
     save_opening_balances(book_id)
     record_vouchers(book_id, term, subjects)
     expense_claim_flow(book_id, term, subjects)
+    fixed_asset_flow(book_id, term, subjects)
     journal_flow(term, subjects)
     carry_and_close(book_id, term)
     reports_flow(term)
+    uncheckout_reclose_flow(term)
     print(f"\n=== 验收完成: {STEP_NO} 步全部通过 ===")
 
 

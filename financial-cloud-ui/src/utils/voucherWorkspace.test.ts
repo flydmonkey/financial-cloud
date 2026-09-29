@@ -8,7 +8,10 @@ import {
   formatVoucherStatusLabel,
   isDraftEditableStatus,
   isVoucherPosted,
+  isVoucherReviewLocked,
   postedVoucherEditGuidance,
+  reviewedVoucherEditGuidance,
+  shouldOpenVoucherReadonly,
   resolveLeafSubjectCode,
   sortVouchersForNavigation,
   snapshotVoucherEditable,
@@ -96,6 +99,18 @@ describe('voucherWorkspace display helpers', () => {
     assert.equal(isDraftEditableStatus('rejected', null), true)
     assert.match(postedVoucherEditGuidance(), /反过账/)
     assert.match(postedVoucherEditGuidance(), /红字冲销/)
+  })
+
+  it('review-locked edit guidance and readonly gate', () => {
+    assert.equal(isVoucherReviewLocked('completed', null), true)
+    assert.equal(isVoucherReviewLocked('reviewing', null), true)
+    assert.equal(isVoucherReviewLocked('completed', 'u1'), false)
+    assert.equal(isVoucherReviewLocked('draft', null), false)
+    assert.match(reviewedVoucherEditGuidance('completed'), /反审核/)
+    assert.match(reviewedVoucherEditGuidance('reviewing'), /撤回/)
+    assert.equal(shouldOpenVoucherReadonly('completed', null), true)
+    assert.equal(shouldOpenVoucherReadonly('draft', null), false)
+    assert.equal(shouldOpenVoucherReadonly('draft', 'u1'), true)
   })
 
   it('gates draft/save by empty entries and loan balance', () => {

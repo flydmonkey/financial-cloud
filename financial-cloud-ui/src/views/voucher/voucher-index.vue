@@ -571,6 +571,7 @@ import * as voucherApis from "@/api/voucher/voucher";
 import {useI18n} from "vue-i18n";
 import {useRouter} from "vue-router";
 import {getVoucherStatusDesc} from "@/utils/enums/VoucherStatusEnum"
+import {shouldOpenVoucherReadonly} from "@/utils/voucherWorkspace"
 import {parseTime} from "@/utils/financialCloud";
 import {formatAmount} from "@/utils";
 import {reactive, computed, ref, getCurrentInstance} from "vue";
@@ -894,9 +895,9 @@ function handleUpdate(row) {
     return
   }
   const voucher = row?.voucher || row
-  // 已过账：只读打开并展示反过账/红冲引导，避免进入可点格却不能保存的假编辑态
-  const query: Record<string, string> = {id: String(_id)}
-  if (voucher?.senderId) {
+  // 已过账/已审核/审核中/作废：只读打开并展示引导，避免假编辑态
+  const query = {id: String(_id)}
+  if (shouldOpenVoucherReadonly(voucher?.status, voucher?.senderId)) {
     query.readonly = '1'
   }
   router.push({

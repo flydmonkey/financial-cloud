@@ -123,6 +123,27 @@
         </div>
       </template>
     </el-alert>
+    <el-alert
+      v-else-if="!isPrintMode && isReviewLockedVoucher"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="posted-edit-alert"
+      :title="reviewedEditGuidance"
+    >
+      <template #default>
+        <div class="posted-edit-actions">
+          <el-button
+            type="primary"
+            size="small"
+            :loading="postedActionLoading"
+            @click="onUnlockReviewed"
+          >
+            {{ formData.status === 'reviewing' ? '撤回审核后修改' : '反审核后修改' }}
+          </el-button>
+        </div>
+      </template>
+    </el-alert>
     <div
       id="printable-content"
       ref="printMe"
@@ -765,12 +786,14 @@ import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'elem
 import {parseTime} from "@/utils/financialCloud";
 import * as subjectApi from "@/api/standard/standard-subject"
 import {
+  cancelVoucherByIds,
   draftVoucher,
   getOneVoucher,
   getVoucherAbleWordNum,
   listVouchers,
   reverseVoucher,
   submitVoucher,
+  unauditBatch,
   unsenderBatch,
 } from "@/api/voucher/voucher";
 import {
@@ -782,7 +805,9 @@ import {
   formatVoucherStatusLabel,
   isDraftEditableStatus,
   isVoucherPosted,
+  isVoucherReviewLocked,
   postedVoucherEditGuidance,
+  reviewedVoucherEditGuidance,
   snapshotVoucherEditable,
   type VoucherNavItem,
 } from "@/utils/voucherWorkspace";
@@ -1030,7 +1055,11 @@ const isPrintMode = computed(() => {
 const isWorkspaceReadonly = computed(() => route.query.readonly === '1' || route.query.readonly === 'true')
 const canEditWorkspace = computed(() => props.edit && !isWorkspaceReadonly.value && !isPrintMode.value)
 const isPostedVoucher = computed(() => isVoucherPosted(formData.value.senderId))
+const isReviewLockedVoucher = computed(() =>
+  isVoucherReviewLocked(formData.value.status, formData.value.senderId),
+)
 const postedEditGuidance = computed(() => postedVoucherEditGuidance())
+const reviewedEditGuidance = computed(() => reviewedVoucherEditGuidance(formData.value.status))
 const canUnsenderPosted = computed(() => {
   if (!isPostedVoucher.value || !formData.value.voucherDate) {
     return false
@@ -1078,6 +1107,9 @@ const draftButtonTip = computed(() => {
   if (isPostedVoucher.value) {
     return postedVoucherEditGuidance()
   }
+  if (isReviewLockedVoucher.value) {
+    return reviewedVoucherEditGuidance(formData.value.status)
+  }
   if (!canClickVoucherDraft(formData.value.status, formData.value.senderId)) {
     return '仅新建、草稿或被拒绝状态可暂存'
   }
@@ -1089,6 +1121,9 @@ const saveButtonTip = computed(() => {
   }
   if (isPostedVoucher.value) {
     return postedVoucherEditGuidance()
+  }
+  if (isReviewLockedVoucher.value) {
+    return reviewedVoucherEditGuidance(formData.value.status)
   }
   if (!canClickVoucherDraft(formData.value.status, formData.value.senderId)) {
     return '仅新建、草稿或被拒绝状态可保存'
@@ -1161,6 +1196,40 @@ async function onReversePosted(): Promise<void> {
     }
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || '红字冲销失败')
+  } finally {
+    postedActionLoading.value = false
+  }
+}
+
+async function onUnlockReviewed(): Promise<void> {
+  if (!formData.value.id) {
+    return
+  }
+  const reviewing = formData.value.status === 'reviewing'
+  try {
+    await ElMessageBox.confirm(
+      reviewing ? '确认撤回审核申请？撤回后可修改本凭证。' : '确认反审核？反审核后可修改本凭证。',
+      reviewing ? '撤回审核' : '反审核',
+      {type: 'warning'},
+    )
+  } catch {
+    return
+  }
+  postedActionLoading.value = true
+  try {
+    const res: any = reviewing
+      ? await cancelVoucherByIds(String(formData.value.id))
+      : await unauditBatch(String(formData.value.id))
+    if (res?.code === 0) {
+      ElMessage.success(res.message || (reviewing ? '已撤回' : '反审核成功'))
+      const id = formData.value.id
+      await loadVoucherById(id)
+      await router.replace({path: route.path, query: {id: String(id)}})
+    } else {
+      ElMessage.error(res?.message || '操作失败')
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || '操作失败')
   } finally {
     postedActionLoading.value = false
   }

@@ -2182,6 +2182,12 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         if (VoucherStatusEnum.CANCELLED.getValue().equals(voucher.getStatus())) {
             return "已作废凭证不能修改";
         }
+        if (VoucherStatusEnum.COMPLETED.getValue().equals(voucher.getStatus())) {
+            return "已审核凭证不能直接修改，请先反审核后再改";
+        }
+        if (VoucherStatusEnum.UNDER_REVIEW.getValue().equals(voucher.getStatus())) {
+            return "审核中的凭证不能直接修改，请先撤回审核申请后再改";
+        }
         if (!inOpenPeriod) {
             return "已结账期间的凭证不能修改";
         }

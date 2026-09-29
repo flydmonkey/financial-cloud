@@ -2,7 +2,7 @@
 
 > 规格：[2026-09-29-daizhang-throughput-v2-design.md](../specs/2026-09-29-daizhang-throughput-v2-design.md)
 > 计划：[2026-09-29-daizhang-throughput-v2-w0-w1.md](2026-09-29-daizhang-throughput-v2-w0-w1.md)
-> 状态：进行中
+> 状态：W0+W1 已交付；W2–W4 待开计划
 
 ## 回归门禁（W0-3）
 

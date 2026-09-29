@@ -15,7 +15,7 @@
 
 ## 2. 近端路线（建议 3～4 个切片）
 
-> **现行近端主轴（2026-09-29）**：吞吐 V2 已收口；Post-V2 首刀「过账后改证路径」见 [设计](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md)。不以 PRD 新模块扩容为主。下列 S0–S3 为专业可用阶段历史切片（已收口）。
+> **现行近端主轴（2026-09-29）**：吞吐 V2 + Post-V2 改证路径**均已收口**。见 [V2 设计](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2 设计](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md)。不以 PRD 新模块扩容为主。下列 S0–S3 为专业可用阶段历史切片（已收口）。
 
 ```mermaid
 flowchart LR

@@ -16,3 +16,12 @@ export function expenseDetailExport(query: any): any {
         responseType: 'blob'
     })
 }
+
+export function expenseDetailExportPdf(query: any): any {
+    return request({
+        url: '/statement/expense-detail/export-pdf',
+        method: 'get',
+        params: query,
+        responseType: 'blob'
+    })
+}

@@ -62,7 +62,7 @@
 | 4.1 | 总账 / 明细账 / 余额表 | 均有 | **已实现** | 对应 views | — |
 | 4.2 | 多栏账、数量金额账 | 多栏账已实现（栏母科目 + 子科目栏位 + 期初/余额滚动）；数量金额账已实现（收入/发出/结存的数量单价金额） | **已实现** | `MultiColumnLedgerService`、`QuantityLedgerService` | — |
 | 4.3 | 凭证号跳转详情 | 明细账凭证字号超链 → 凭证详情；总账→明细账有 | **已实现** | `sub-ledger.vue` | — |
-| 4.4 | 打印 / Excel / PDF | Excel + 浏览器打印另存 + **服务端 PDF（三表+科目余额+总账+明细账）** | **部分实现** | `PdfTableExporter` / `tablePrint.ts` | P2（多栏/数量金额） |
+| 4.4 | 打印 / Excel / PDF | Excel + 浏览器打印另存 + **服务端 PDF（三表+科目余额+总账+明细账+费用明细）** | **部分实现** | `PdfTableExporter` / `tablePrint.ts` | P2（多栏/数量金额） |
 
 ---
 
@@ -98,7 +98,7 @@
 | 7.1 | 资产负债表 / 利润表 / 现金流量表 | 均有 | **已实现** | `views/statement/*` | — |
 | 7.2 | 费用统计等经营表 | 费用明细表有 | **已实现** | `expense-detail` | — |
 | 7.3 | 老板极简报表 | 首页 8 卡片 + 待办面板 + 快捷入口条（录凭证/凭证列表/明细账/日记账/资产负债表/利润表/费用报销/增值税申报表/期末结账）即老板视图 | **已实现** | `views/index.vue` / `TodoPanel` | — |
-| 7.4 | Excel / PDF / 打印 | Excel + 经典凭证打印 + 浏览器打印另存 + 服务端 PDF（三表+科目余额+总账+明细账） | **已实现**（服务端 PDF 主交付表） | `voucher-print-classic.html` / `tablePrint.ts` / `PdfTableExporter` | — |
+| 7.4 | Excel / PDF / 打印 | Excel + 经典凭证打印 + 浏览器打印另存 + 服务端 PDF（三表+科目余额+总账+明细账+费用明细） | **已实现**（服务端 PDF 主交付表） | `voucher-print-classic.html` / `tablePrint.ts` / `PdfTableExporter` | — |
 | 7.5 | 数据溯源 | 账簿链路 + 资产负债表/利润表行次下钻（科目构成弹窗 → 明细账） | **已实现** | general-ledger / voucher-summary / `StatementDrillService` | — |
 | 7.6 | 本月账本包 ZIP | 已落地（月账簿打包导出） | **已实现** | `MonthlyBooksPackService` | — |
 
@@ -165,7 +165,7 @@
 
 1. ~~多栏账 / 数量金额账~~ → **已落地**（`MultiColumnLedgerService`、`QuantityLedgerService`）  
 2. ~~资产盘点~~ → **已落地**（`FixedAssetCheckService`；盘点凭证为后续增强）  
-3. PDF 导出与打印统一（~~服务端通道未做~~ → **已落地**：三表+科目余额+总账+明细账 `export-pdf`；多栏/数量金额/费用明细仍可浏览器另存）  
+3. PDF 导出与打印统一（~~服务端通道未做~~ → **已落地**：三表+科目余额+总账+明细账+费用明细 `export-pdf`；多栏/数量金额仍可浏览器另存）  
 4. ~~作废/拒绝状态机产品化~~ → **已落地**（作废/恢复 + 字号保留 + 期间/封存守卫）  
 5. ~~银行调节~~ → **已落地**（`JournalReconciliationService`：对账单余额登记 + 流水勾对 + 未达账项调节）；~~税务申报~~ → **申报底稿已落地**（`TaxDeclarationService`：增值税及附加税费申报表简版主表，按官方行次 + 可打印，正式税局直连仍为 Non-goal）；~~费用报销~~ → **已落地**（`ExpenseClaimService`：报销单（单头+多行费用明细）暂存→提交→审核/拒绝→一键生成报销凭证（逐行借方+合计贷方），票据附件影像（`ExpenseClaimAttachmentService`，复用 file_storage，暂存/已拒绝可增删、下载不限），挂「凭证」组）
 

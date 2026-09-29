@@ -109,6 +109,9 @@
           >
             导出
           </el-button>
+          <el-button @click="handleExportPdf">
+            导出 PDF
+          </el-button>
         </div>
       </div>
 
@@ -170,7 +173,7 @@
 <script setup name="StatementExpenseDetail" lang="ts">
 import {computed, nextTick, onMounted, reactive, ref} from 'vue'
 import {ElMessage} from 'element-plus'
-import {expenseDetailExport, getExpenseDetail} from '@/api/statement/statement-expense-detail'
+import {expenseDetailExport, expenseDetailExportPdf, getExpenseDetail} from '@/api/statement/statement-expense-detail'
 import * as subjectApi from '@/api/standard/standard-subject'
 import booksSetStore from '@/store/modules/bookStore'
 import {downloadData, formatAmount} from '@/utils'
@@ -369,6 +372,17 @@ function handleExport() {
     downloadData(data, `费用明细表${range} ${parseTime(new Date())}.xlsx`)
   }).finally(() => {
     exporting.value = false
+  })
+}
+
+function handleExportPdf() {
+  if (!queryParams.dateRange || queryParams.dateRange.length !== 2) {
+    ElMessage.warning('请选择起始月份和结束月份')
+    return
+  }
+  expenseDetailExportPdf(buildQuery()).then((data: Blob) => {
+    const range = queryParams.dateRange.join('至')
+    downloadData(data, `费用明细表${range}.pdf`)
   })
 }
 

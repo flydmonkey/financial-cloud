@@ -59,3 +59,11 @@ The system SHALL allow an authorized user to download the current book's subject
 - **WHEN** an authorized user requests sub-ledger PDF export with book and filter parameters
 - **THEN** the system SHALL return an `application/pdf` attachment
 - **AND** the PDF SHALL include date, voucher word/number, summary, debit, credit, and running balance columns for matching rows
+
+### Requirement: Expense detail PDF export
+The system SHALL allow an authorized user to download the current book's expense detail report for a selected period range as a PDF file.
+
+#### Scenario: Expense detail PDF download
+- **WHEN** an authorized user requests expense-detail PDF export for a book and period range
+- **THEN** the system SHALL return an `application/pdf` attachment
+- **AND** the PDF SHALL include subject codes/names and period amount columns consistent with the on-screen report

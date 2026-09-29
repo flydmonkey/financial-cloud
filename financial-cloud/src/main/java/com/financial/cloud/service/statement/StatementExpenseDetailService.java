@@ -20,6 +20,7 @@ import com.financial.cloud.util.StatementExpenseDetailRules;
 import com.financial.cloud.util.StatementIncomeRules;
 import com.financial.cloud.util.SubjectCodeCompat;
 import com.financial.cloud.util.excel.ExcelExporter;
+import com.financial.cloud.util.pdf.PdfTableExporter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -132,6 +133,78 @@ public class StatementExpenseDetailService {
                     + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
             workbook.write(response.getOutputStream());
             response.getOutputStream().flush();
+        }
+    }
+
+    /**
+     * 费用明细表 PDF 导出（树形展平）。
+     */
+    public void exportPdf(StatementParamsDto dto, HttpServletResponse response) throws IOException {
+        StatementExpenseDetailReport report = query(dto).getData();
+        Book book = bookMapper.selectById(dto.getBookId());
+        String bookName = book != null ? book.getName() : "";
+        List<String> periods = report.getPeriods() == null ? List.of() : report.getPeriods();
+
+        List<String> headerList = new ArrayList<>();
+        headerList.add("编码");
+        headerList.add("名称");
+        for (String period : periods) {
+            headerList.add(formatPeriodLabel(period));
+        }
+        headerList.add(StringUtils.defaultIfBlank(report.getYearLabel(), "本年累计"));
+        String[] headers = headerList.toArray(new String[0]);
+
+        List<String[]> rows = new ArrayList<>();
+        flattenExpenseItems(report.getItems(), periods, 0, rows);
+        if (report.getTotals() != null) {
+            String[] totalRow = new String[headers.length];
+            totalRow[0] = "合计";
+            totalRow[1] = "";
+            int col = 2;
+            for (String period : periods) {
+                totalRow[col++] = PdfTableExporter.formatAmount(report.getTotals().get(period));
+            }
+            totalRow[col] = PdfTableExporter.formatAmount(
+                    report.getTotals().get(StatementExpenseDetailRules.YEAR_TOTAL_KEY));
+            rows.add(totalRow);
+        }
+
+        String range = "";
+        if (dto.getDateRange() != null && dto.getDateRange().length == 2) {
+            range = dto.getDateRange()[0] + "~" + dto.getDateRange()[1];
+        }
+        PdfTableExporter.write(new PdfTableExporter.PdfTableRequest(
+                "费用明细表",
+                "账套：" + bookName + "　期间：" + range,
+                headers,
+                rows,
+                periods.size() > 3,
+                "费用明细表" + range + ".pdf"
+        ), response);
+    }
+
+    private static void flattenExpenseItems(
+            List<StatementExpenseDetailItem> items,
+            List<String> periods,
+            int depth,
+            List<String[]> rows) {
+        if (items == null) {
+            return;
+        }
+        for (StatementExpenseDetailItem item : items) {
+            String indent = "  ".repeat(Math.max(0, depth));
+            String[] row = new String[2 + periods.size() + 1];
+            row[0] = PdfTableExporter.nz(item.getSubjectCode());
+            row[1] = indent + PdfTableExporter.nz(item.getSubjectName());
+            int col = 2;
+            Map<String, BigDecimal> amounts = item.getAmounts();
+            for (String period : periods) {
+                BigDecimal amt = amounts == null ? null : amounts.get(period);
+                row[col++] = PdfTableExporter.formatAmount(amt);
+            }
+            row[col] = PdfTableExporter.formatAmount(item.getYearTotal());
+            rows.add(row);
+            flattenExpenseItems(item.getChildren(), periods, depth + 1, rows);
         }
     }
 

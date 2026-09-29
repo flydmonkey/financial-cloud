@@ -140,6 +140,28 @@ class BooksBoardServiceTest {
     }
 
     @Test
+    void sortsBehindBeforeOpenBeforeClosed() {
+        stubGrants("b1", "b2", "b3");
+        when(bookMapper.selectBatchIds(any())).thenReturn(List.of(
+                book("b1", "丙已结", 1),
+                book("b2", "乙未结", 1),
+                book("b3", "甲落后", 1)));
+        when(dashboardTodoService.todo("b1")).thenReturn(DashboardTodoVo.builder()
+                .currentTerm("2026-10").build());
+        when(dashboardTodoService.todo("b2")).thenReturn(DashboardTodoVo.builder()
+                .currentTerm("2026-09").build());
+        when(dashboardTodoService.todo("b3")).thenReturn(DashboardTodoVo.builder()
+                .currentTerm("2026-08").build());
+
+        BooksBoardVo vo = service.list("u1", "2026-09", false, null);
+
+        assertThat(vo.getRows()).extracting(r -> r.getBookName())
+                .containsExactly("甲落后", "乙未结", "丙已结");
+        assertThat(vo.getRows()).extracting(r -> r.getCloseStatus())
+                .containsExactly("BEHIND", "OPEN", "CLOSED");
+    }
+
+    @Test
     void resolveBlockerPriority() {
         DashboardTodoVo todo = DashboardTodoVo.builder()
                 .voucherReviewed(true)

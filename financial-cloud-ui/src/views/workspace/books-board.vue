@@ -59,6 +59,7 @@
           type="success"
           :disabled="!selectedClosedIds.length"
           :loading="batchLoading"
+          :title="selectedClosedIds.length ? '' : '请勾选关注月已结的账套'"
           @click="batchExport"
         >
           批量导出账本包 ({{ selectedClosedIds.length }})
@@ -102,7 +103,14 @@
       >
         已结 <b>{{ summary.closed }}</b>
       </button>
-      <span>有待办 <b>{{ summary.withTodo }}</b></span>
+      <button
+        type="button"
+        class="summary-chip"
+        :class="{active: onlyTodo}"
+        @click="toggleOnlyTodo"
+      >
+        有待办 <b>{{ summary.withTodo }}</b>
+      </button>
     </div>
 
     <el-alert
@@ -212,6 +220,7 @@
             type="success"
             :disabled="row.closeStatus !== 'CLOSED'"
             :loading="exportingId === row.bookId"
+            :title="row.closeStatus === 'CLOSED' ? '导出本月账本包' : '仅关注月已结可导出'"
             @click="exportOne(row)"
           >
             导出账本包
@@ -361,6 +370,11 @@ function load(): void {
 
 function setCloseFilter(filter: CloseStatusFilter): void {
   closeStatusFilter.value = filter;
+}
+
+function toggleOnlyTodo(): void {
+  onlyTodo.value = !onlyTodo.value;
+  load();
 }
 
 async function enterBook(row: any): Promise<void> {

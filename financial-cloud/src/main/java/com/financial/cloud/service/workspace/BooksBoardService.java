@@ -82,12 +82,24 @@ public class BooksBoardService {
             rows.add(row);
         }
 
+        rows.sort(Comparator
+                .comparingInt((BooksBoardRowVo r) -> closePriority(r.getCloseStatus()))
+                .thenComparing(r -> StringUtils.defaultString(r.getBookName()), String.CASE_INSENSITIVE_ORDER));
+
         return BooksBoardVo.builder()
                 .focusPeriod(focus)
                 .rows(rows)
                 .totalGranted(totalGranted)
                 .truncated(truncated)
                 .build();
+    }
+
+    static int closePriority(String closeStatus) {
+        if ("BEHIND".equals(closeStatus)) return 0;
+        if ("OPEN".equals(closeStatus)) return 1;
+        if ("UNKNOWN".equals(closeStatus)) return 2;
+        if ("CLOSED".equals(closeStatus)) return 3;
+        return 9;
     }
 
     private BooksBoardRowVo toRow(Book book, String focus) {

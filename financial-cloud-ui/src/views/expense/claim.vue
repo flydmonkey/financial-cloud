@@ -244,6 +244,13 @@
               查看凭证
             </el-button>
             <el-button
+              link
+              type="primary"
+              @click="handleClaimPrint(scope.row)"
+            >
+              打印
+            </el-button>
+            <el-button
               v-if="editable(scope.row)"
               link
               type="danger"
@@ -440,6 +447,7 @@ import {
   expenseAttachmentDownloadUrl
 } from '@/api/expense/expense'
 import bookStore from '@/store/modules/bookStore'
+import {openTablePrintWindow} from '@/utils/tablePrint'
 
 const router = useRouter()
 const {proxy} = getCurrentInstance() as any
@@ -678,6 +686,36 @@ function handleDelete(row: any) {
       proxy?.$modal?.msgSuccess('已删除')
       getList()
     })
+  })
+}
+
+/** 打印报销单：明细 + 签字栏（贴票存档用，可另存 PDF） */
+function handleClaimPrint(row: any) {
+  const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const lines: any[] = row.items || []
+  const body = lines.map((it: any) => `<tr>
+    <td>${esc(it.expenseSubjectName)}</td>
+    <td class="r">${formatAmount(it.amount)}</td>
+    <td>${esc(it.summary)}</td>
+  </tr>`).join('')
+    + `<tr>
+    <td style="font-weight:bold">合计</td>
+    <td class="r" style="font-weight:bold">${formatAmount(row.amount)}</td>
+    <td></td>
+  </tr>`
+    + `<tr>
+    <td colspan="3" style="padding:18px 6px">报销人：＿＿＿＿＿＿　　审核：＿＿＿＿＿＿　　会计：＿＿＿＿＿＿　　出纳：＿＿＿＿＿＿</td>
+  </tr>`
+  const company = currBookStore.getBookItem()?.companyName || ''
+  const status = STATUS_LABELS[row.claimStatus] || row.claimStatus
+  openTablePrintWindow({
+    title: '费用报销单',
+    subtitle: `核算单位：${company}　单号：${row.claimNo}　报销人：${row.claimant}`
+      + `　日期：${row.claimDate}　付款科目：${row.fundSubjectName || ''}`
+      + `　事由：${row.summary || ''}　状态：${status}`,
+    tableHtml: `<thead><tr>
+      <th>费用科目</th><th style="width:140px">金额</th><th>费用说明</th>
+    </tr></thead><tbody>${body}</tbody>`,
   })
 }
 </script>

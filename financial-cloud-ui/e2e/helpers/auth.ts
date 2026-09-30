@@ -4,6 +4,10 @@ import {expect} from '@playwright/test'
 export const username = process.env.E2E_USERNAME || 'admin'
 export const password = process.env.E2E_PASSWORD || 'changeme'
 
+/** 制单/审核职责分离：e2e 专用审核员（与 admin 不同 userId） */
+export const reviewerUsername = process.env.E2E_REVIEWER_USERNAME || 'e2e_reviewer'
+export const reviewerPassword = process.env.E2E_REVIEWER_PASSWORD || 'Review@2026'
+
 export interface AuthSession {
     token: string
     state: string
@@ -16,7 +20,13 @@ export interface BookSubjectRef {
     code?: string
 }
 
-export async function loginViaApi(request: APIRequestContext): Promise<AuthSession> {
+const reviewerSessionByBook = new Map<string, AuthSession>()
+
+export async function loginViaApiAs(
+    request: APIRequestContext,
+    loginUsername: string,
+    loginPassword: string,
+): Promise<AuthSession> {
     const init = await request.get('/api/login/get?_allow_anonymous=true')
     if (!init.ok()) {
         throw new Error(`login/get failed: HTTP ${init.status()}`)
@@ -27,8 +37,8 @@ export async function loginViaApi(request: APIRequestContext): Promise<AuthSessi
     }
     const signin = await request.post('/api/login/signin?_allow_anonymous=true', {
         data: {
-            username,
-            password,
+            username: loginUsername,
+            password: loginPassword,
             captcha: '',
             state: initBody.data.state,
             authType: 'normal',
@@ -50,6 +60,91 @@ export async function loginViaApi(request: APIRequestContext): Promise<AuthSessi
         state: initBody.data.state,
         headers: {Authorization: `Bearer ${token}`},
     }
+}
+
+export async function loginViaApi(request: APIRequestContext): Promise<AuthSession> {
+    return loginViaApiAs(request, username, password)
+}
+
+/**
+ * 确保存在独立审核员并切入目标账套。
+ * 会计规范：制单人与审核人不得为同一人；admin 制单后必须由此账号审核。
+ */
+export async function ensureReviewerSession(
+    request: APIRequestContext,
+    adminHeaders: Record<string, string>,
+    bookId: string,
+): Promise<AuthSession> {
+    const cached = reviewerSessionByBook.get(bookId)
+    if (cached) {
+        return cached
+    }
+
+    let userId: string | undefined
+    const existing = await request.get(`/api/users/getByUsername/${reviewerUsername}`, {
+        headers: adminHeaders,
+    })
+    if (existing.ok()) {
+        try {
+            const body = await existing.json()
+            if (body?.code === 0 && body?.data?.id) {
+                userId = String(body.data.id)
+            }
+        } catch {
+            // getByUsername 在用户不存在时可能返回非 JSON / 500，忽略并创建
+        }
+    }
+
+    if (!userId) {
+        const create = await request.post('/api/users/add', {
+            headers: adminHeaders,
+            data: {
+                username: reviewerUsername,
+                password: reviewerPassword,
+                displayName: 'E2E审核员',
+                userType: 'EMPLOYEE',
+                userState: 'RESIDENT',
+                status: 1,
+                sortIndex: 99,
+            },
+        })
+        const createBody = await create.json()
+        expect(createBody.code, createBody.message || 'create reviewer failed').toBe(0)
+
+        const created = await request.get(`/api/users/getByUsername/${reviewerUsername}`, {
+            headers: adminHeaders,
+        })
+        const createdBody = await created.json()
+        expect(createdBody.code, createdBody.message || 'fetch reviewer failed').toBe(0)
+        userId = String(createdBody.data.id)
+    }
+
+    // 使用管理员角色保证凭证审核 API 可用（init 中 ROLE_REVIEWER 角色行可能缺失）
+    const role = await request.post('/api/idm/groupmembers/add', {
+        headers: adminHeaders,
+        data: {
+            roleId: 'ROLE_ADMINISTRATORS',
+            memberIds: [userId],
+            type: 'USER',
+        },
+    })
+    const roleBody = await role.json()
+    // 已是成员时也可能成功；仅在明确失败时抛错
+    if (roleBody.code !== 0 && roleBody.code !== undefined) {
+        // 忽略重复加入；若完全失败仍尝试登录（admin seed 场景）
+        const msg = String(roleBody.message || '')
+        if (!/已|存在|duplicate|Duplicate/i.test(msg)) {
+            expect(roleBody.code, roleBody.message || 'add reviewer role failed').toBe(0)
+        }
+    }
+
+    const session = await loginViaApiAs(request, reviewerUsername, reviewerPassword)
+    const switched = await request.get(`/api/users/switchBook/${bookId}`, {headers: session.headers})
+    const switchBody = await switched.json()
+    expect(switchBody.code, switchBody.message || 'reviewer switchBook failed').toBe(0)
+
+    reviewerSessionByBook.set(bookId, session)
+    return session
 }
 
 export async function getCurrentUser(request: APIRequestContext, headers: Record<string, string>) {

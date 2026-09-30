@@ -1,9 +1,26 @@
 import {expect, type APIRequestContext} from '@playwright/test'
 import {
+    ensureReviewerSession,
     fetchBookSubjects,
     getCurrentTerm,
+    getCurrentUser,
     type BookSubjectRef,
 } from './auth'
+
+async function auditHeadersForBook(
+    request: APIRequestContext,
+    makerHeaders: Record<string, string>,
+    bookId?: string,
+) {
+    let targetBookId = bookId
+    if (!targetBookId) {
+        const user = await getCurrentUser(request, makerHeaders)
+        targetBookId = user?.bookId
+    }
+    expect(targetBookId, '缺少账套，无法按职责分离审核').toBeTruthy()
+    const reviewer = await ensureReviewerSession(request, makerHeaders, String(targetBookId))
+    return reviewer.headers
+}
 
 export interface VoucherPayload {
     bookId: string
@@ -270,9 +287,15 @@ export async function auditVoucher(
     headers: Record<string, string>,
     voucherId: string,
 ) {
-    const res = await request.put(`/api/voucher/audit/${voucherId}`, {headers})
+    // 制单人与审核人不得同一人：始终用独立审核员会话
+    const before = await getVoucherDetail(request, headers, voucherId)
+    const auditHeaders = await auditHeadersForBook(request, headers, before.bookId)
+    const res = await request.put(`/api/voucher/audit/${voucherId}`, {headers: auditHeaders})
     const body = await res.json()
     expect(body.code, body.message || 'audit failed').toBe(0)
+    expect(body.message || '', body.message || 'audit succeeded 0').toMatch(/成功：([1-9]\d*)/)
+    const after = await getVoucherDetail(request, headers, voucherId)
+    expect(after.status, 'audit should move voucher to completed').toBe('completed')
 }
 
 export async function postVoucher(
@@ -364,13 +387,16 @@ export async function tryBatchPostVoucher(
     return res.json() as Promise<{code: number; message?: string}>
 }
 
-/** 批量审核 reviewing 凭证 */
+/** 批量审核 reviewing 凭证（独立审核员，避免制单人自审被拒） */
 export async function tryBatchAuditVoucher(
     request: APIRequestContext,
     headers: Record<string, string>,
     voucherIds: string[],
 ) {
-    const res = await request.put(`/api/voucher/audit/${voucherIds.join(',')}`, {headers})
+    const auditHeaders = await auditHeadersForBook(request, headers)
+    const res = await request.put(`/api/voucher/audit/${voucherIds.join(',')}`, {
+        headers: auditHeaders,
+    })
     return res.json() as Promise<{code: number; message?: string}>
 }
 
@@ -457,6 +483,12 @@ export async function runVoucherToPosted(
         await auditVoucher(request, headers, voucherId)
     } else if (options?.skipAudit) {
         expect(afterSubmit.status).toBe('completed')
+    } else {
+        // 未开审核时 submit 应直接 completed；否则禁止带着非 completed 去过账
+        expect(
+            afterSubmit.status,
+            `submit 后状态异常: ${afterSubmit.status}`,
+        ).toBe('completed')
     }
     await postVoucher(request, headers, voucherId)
 }

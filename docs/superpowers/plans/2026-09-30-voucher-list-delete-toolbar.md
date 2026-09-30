@@ -16,8 +16,8 @@
 - Modify: `financial-cloud-ui/src/views/voucher/voucher-index.vue`
 - Spec: `docs/superpowers/specs/2026-09-30-voucher-list-delete-toolbar-design.md`
 
-- [ ] Add computed `canToolbarDelete` from selected deletable vouchers
-- [ ] Insert primary danger「删除」between 过账 and 更多; wrap with tooltip on disable
-- [ ] Keep「更多」内删除 item
-- [ ] Manual / Playwright smoke: select draft → delete; select posted → disabled
+- [x] Add computed `canToolbarDelete` from selected deletable vouchers
+- [x] Insert primary danger「删除」between 过账 and 更多; wrap with tooltip on disable
+- [x] Keep「更多」内删除 item
+- [x] Manual / Playwright smoke: select draft → delete; select posted → disabled
 - [ ] Commit

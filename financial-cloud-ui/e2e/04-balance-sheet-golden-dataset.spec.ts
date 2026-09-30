@@ -259,7 +259,7 @@ test.describe.serial('three-statement golden dataset', () => {
     test('CF-G05: indirect operating net reconciles with direct after carry-forward', async ({request}) => {
         test.skip(!ctx.expected, '未执行 BS-G06')
         const incomeNet = await getIncomeNetProfit(request, ctx.headers, ctx.term)
-        expect(incomeNet).toBeCloseTo(ctx.expected!.cashFlow.netProfit, 0)
+        expect(incomeNet.current).toBeCloseTo(ctx.expected!.cashFlow.netProfit, 0)
 
         await assertGoldenCashFlowLines(request, ctx.headers, ctx.term, [
             {itemCode: CashFlowItems.NET_PROFIT, label: '净利润', expected: ctx.expected!.cashFlow.netProfit},

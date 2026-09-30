@@ -163,7 +163,7 @@
             label="项目"
             align="left"
             fixed="left"
-            min-width="200"
+            min-width="180"
             :show-overflow-tooltip="true"
             class-name="cf-name-col"
           >

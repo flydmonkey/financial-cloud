@@ -95,14 +95,14 @@
             <el-table-column
               label="项目"
               prop="item"
-              min-width="200"
+              min-width="160"
               fixed="left"
               class-name="tax-item-col"
               :show-overflow-tooltip="true"
             />
             <el-table-column
               label="金额"
-              min-width="140"
+              min-width="120"
               align="right"
               class-name="cell-nowrap"
             >

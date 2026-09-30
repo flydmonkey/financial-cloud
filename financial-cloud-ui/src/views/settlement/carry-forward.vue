@@ -32,7 +32,7 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <div class="table-scroll-x table-scroll-x--fixed">
+          <div class="table-scroll-x table-scroll-x--wide">
             <el-table
               v-loading="loading"
               :data="vouchertemplateList"
@@ -41,6 +41,7 @@
               row-key="id"
               default-expand-all
               height="650"
+              style="min-width: 1080px"
               @cell-mouse-enter="cellMouseEnter"
               @cell-mouse-leave="cellMouseLeave"
             >
@@ -50,6 +51,7 @@
                 header-align="center"
                 prop="code"
                 min-width="120"
+                class-name="cell-nowrap"
               />
               <el-table-column
                 label="名称"
@@ -57,12 +59,14 @@
                 header-align="center"
                 prop="name"
                 min-width="140"
+                class-name="cell-nowrap"
               />
               <el-table-column
                 label="字头"
                 align="center"
                 prop="wordHead"
                 width="72"
+                class-name="cell-nowrap"
               />
               <el-table-column
                 label="备注"
@@ -75,13 +79,14 @@
                 align="left"
                 prop="sortIndex"
                 width="72"
+                class-name="cell-nowrap"
               />
               <el-table-column
                 :label="$t('jbx.voucher.voucher')"
                 align="center"
                 prop="voucherId"
                 min-width="180"
-                fixed="right"
+                class-name="cell-nowrap"
               >
                 <template #default="scope">
                   <el-button
@@ -113,7 +118,6 @@
                 header-align="center"
                 min-width="140"
                 prop="sortIndex"
-                fixed="right"
               >
                 <template #default="scope">
                   <el-tooltip content="新增/编辑">

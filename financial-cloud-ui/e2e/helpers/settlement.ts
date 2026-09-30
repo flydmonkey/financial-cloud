@@ -25,7 +25,7 @@ export async function cleanupBlockingVouchersForSettlement(
     const year = term.slice(0, 4)
     const month = Number(term.slice(5, 7))
     const res = await request.get(
-        `/api/voucher/fetch?pageNumber=1&pageSize=200&year=${year}&month=${month}`,
+        `/api/voucher/fetch?pageNumber=1&pageSize=200&voucherYear=${year}&voucherMonth=${month}`,
         {headers},
     )
     if (!res.ok()) {
@@ -36,6 +36,7 @@ export async function cleanupBlockingVouchersForSettlement(
         id: string
         status?: string
         senderId?: string | null
+        senderName?: string | null
     }>
     for (const row of records) {
         if (!row?.id) continue
@@ -48,7 +49,7 @@ export async function cleanupBlockingVouchersForSettlement(
             await tryDeleteVoucher(request, headers, row.id)
             continue
         }
-        if (row.status === 'completed' && !row.senderId) {
+        if (row.status === 'completed' && !row.senderId && !row.senderName) {
             const posted = await tryPostVoucher(request, headers, row.id)
             if (posted.code !== 0) {
                 await tryDeleteVoucher(request, headers, row.id)
@@ -123,8 +124,14 @@ export async function verifySettlement(
     const res = await request.get('/api/settlement/verify', {headers})
     expect(res.ok()).toBeTruthy()
     const body = await res.json()
-    expect(body.code, body.message || 'verify failed').toBe(0)
     const checks = body.data || []
+    if (body.code !== 0) {
+        const failed = checks
+            .filter((item: any) => item.hard !== false && item.applicable !== false && !item.result)
+            .map((item: any) => `${item.item}:${item.reason || 'fail'}`)
+            .join(' | ')
+        expect(body.code, `${body.message || 'verify failed'}; ${failed}`).toBe(0)
+    }
     expect(checks.length).toBeGreaterThan(0)
     for (const item of checks) {
         if (item.hard === false) continue

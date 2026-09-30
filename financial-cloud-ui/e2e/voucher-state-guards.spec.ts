@@ -188,12 +188,26 @@ test.describe.serial('voucher state guards', () => {
         expect(Number(detail.debitAmount)).toBe(22)
     })
 
-    test('TC-VCH-041: reviewing voucher can be updated', async ({request}) => {
-        test.skip(!ctx.reviewingId, '无 reviewing 凭证')
-        await updateVoucher(request, ctx.headers, ctx.reviewingId, (p) => {
+    test('TC-VCH-041: reviewing voucher cannot be updated until cancelled', async ({request}) => {
+        const payload = await buildBalancedVoucherPayload(
+            request, ctx.headers, ctx.bookId, '守卫-reviewing-改', 18,
+        )
+        const id = await createDraftVoucher(request, ctx.headers, payload)
+        await submitVoucher(request, ctx.headers, payload, id)
+
+        const blocked = await tryUpdateVoucher(request, ctx.headers, id, (p) => {
+            p.items[0].summary = '守卫-reviewing-直接改'
+        })
+        expect(blocked.code).not.toBe(0)
+        expect(blocked.message || '').toMatch(/撤回|审核中/)
+
+        const cancel = await tryCancelVoucher(request, ctx.headers, id)
+        expect(cancel.code, cancel.message || 'cancel reviewing failed').toBe(0)
+        await updateVoucher(request, ctx.headers, id, (p) => {
             p.items[0].summary = '守卫-reviewing-已改'
         })
-        const detail = await getVoucherDetail(request, ctx.headers, ctx.reviewingId)
+        const detail = await getVoucherDetail(request, ctx.headers, id)
+        expect(detail.status).toBe('draft')
         expect(detail.items[0].summary).toBe('守卫-reviewing-已改')
     })
 

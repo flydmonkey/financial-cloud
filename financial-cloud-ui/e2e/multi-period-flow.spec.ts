@@ -99,7 +99,7 @@ test.describe.serial('multi-period accounting flow', () => {
         }
 
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
         await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
 
         ctx.period1Income = await getIncomeNetProfit(request, ctx.headers, ctx.period1Term)

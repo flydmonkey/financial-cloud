@@ -152,7 +152,8 @@
           :prop="`amounts.${period}`"
           align="right"
           header-align="center"
-          min-width="120"
+          width="120"
+          class-name="cell-nowrap"
         >
           <template #default="{ row }">
             {{ formatAmount(row.amounts?.[period], '') }}
@@ -161,11 +162,10 @@
         <el-table-column
           :label="yearLabel"
           prop="yearTotal"
-          fixed="right"
           align="right"
           header-align="center"
-          min-width="130"
-          class-name="col-year-total"
+          width="130"
+          class-name="col-year-total cell-nowrap"
         >
           <template #default="{ row }">
             {{ formatAmount(row.yearTotal, '') }}
@@ -341,13 +341,38 @@ function applyExpandState() {
   })
 }
 
-function expandMonths(range: string[]): string[] {
-  if (!range || range.length !== 2 || !range[0] || !range[1]) {
+function expandMonths(range: string[] | unknown): string[] {
+  if (!Array.isArray(range) || range.length < 2 || !range[0] || !range[1]) {
+    return []
+  }
+  const startRaw = String(range[0]).trim()
+  const endRaw = String(range[1]).trim()
+  // 兼容 YYYY-MM / YYYY-MM-DD / YYYY年MM期
+  const parseYm = (raw: string): [number, number] | null => {
+    const normalized = raw
+      .replace(/年/, '-')
+      .replace(/期/, '')
+      .replace(/月/, '')
+    const m = normalized.match(/(\d{4})\D+(\d{1,2})/)
+    if (!m) {
+      return null
+    }
+    const y = Number(m[1])
+    const month = Number(m[2])
+    if (!y || !month || month < 1 || month > 12) {
+      return null
+    }
+    return [y, month]
+  }
+  const start = parseYm(startRaw)
+  const end = parseYm(endRaw)
+  if (!start || !end) {
     return []
   }
   const result: string[] = []
-  let [y, m] = range[0].split('-').map(Number)
-  const [ey, em] = range[1].split('-').map(Number)
+  let [y, m] = start
+  const [ey, em] = end
+  // 闭区间：含起止月（1–9 应得到 9 列）
   while (y < ey || (y === ey && m <= em)) {
     result.push(`${y}-${String(m).padStart(2, '0')}`)
     m += 1
@@ -355,8 +380,23 @@ function expandMonths(range: string[]): string[] {
       m = 1
       y += 1
     }
+    // 防护：最多 24 期
+    if (result.length > 24) {
+      break
+    }
   }
   return result
+}
+
+function mergePeriodColumns(filterPeriods: string[], apiPeriods?: string[]) {
+  const set = new Set<string>()
+  filterPeriods.forEach(p => set.add(p))
+  ;(apiPeriods || []).forEach(p => {
+    if (p) {
+      set.add(p)
+    }
+  })
+  return Array.from(set).sort()
 }
 
 function getList() {
@@ -365,7 +405,7 @@ function getList() {
     return
   }
 
-  // 先按筛选期间生成表头列，避免接口 periods 缺月时只渲染到 7 期
+  // 先按筛选期间（闭区间）生成表头列，避免接口 periods 缺月
   const fromFilter = expandMonths(queryParams.dateRange as string[])
   if (fromFilter.length) {
     periods.value = fromFilter
@@ -376,9 +416,9 @@ function getList() {
     const report = response.data || {}
     recordsList.value = report.items || []
     const filterPeriods = expandMonths(queryParams.dateRange as string[])
-    // 筛选期间优先；若筛选为空再回退接口 periods
+    // 筛选闭区间优先，并与接口 periods 并集，防止缺月末列（如 9 期）
     periods.value = filterPeriods.length
-      ? filterPeriods
+      ? mergePeriodColumns(filterPeriods, report.periods)
       : (report.periods || [])
     yearLabel.value = report.yearLabel || '区间合计'
     totals.value = report.totals || {}

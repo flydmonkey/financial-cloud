@@ -150,20 +150,20 @@
           </el-button>
         </div>
       </div>
-      <div class="table-scroll-x table-scroll-x--fixed">
+      <div class="table-scroll-x table-scroll-x--wide cash-flow-table-scroll">
         <el-table
           v-loading="loading"
           :data="cashFlowStatementList"
           border
           height="600"
           stripe
+          style="min-width: 560px"
         >
           <el-table-column
             prop="itemName"
             label="项目"
             align="left"
-            fixed="left"
-            min-width="180"
+            min-width="220"
             :show-overflow-tooltip="true"
             class-name="cf-name-col"
           >
@@ -182,7 +182,7 @@
             prop="monthlyAmount"
             :label="monthlyAmountLabel"
             align="right"
-            min-width="120"
+            width="130"
             :show-overflow-tooltip="true"
             class-name="cell-nowrap"
           >
@@ -233,7 +233,7 @@
           prop="currentAmount"
           label="本年累计金额"
           align="right"
-          min-width="120"
+          width="130"
           :show-overflow-tooltip="true"
           class-name="cell-nowrap"
         >

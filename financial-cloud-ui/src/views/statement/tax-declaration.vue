@@ -77,32 +77,31 @@
         <template #header>
           <span class="section-title">{{ section }}</span>
         </template>
-        <div class="table-scroll-x table-scroll-x--fixed">
+        <div class="table-scroll-x table-scroll-x--wide tax-table-scroll">
           <el-table
             :data="grouped[section]"
             border
             size="small"
             :show-header="true"
+            style="min-width: 520px"
           >
             <el-table-column
               label="行次"
               prop="rowNo"
               width="64"
               align="center"
-              fixed="left"
               class-name="cell-nowrap"
             />
             <el-table-column
               label="项目"
               prop="item"
-              min-width="160"
-              fixed="left"
+              min-width="220"
               class-name="tax-item-col"
               :show-overflow-tooltip="true"
             />
             <el-table-column
               label="金额"
-              min-width="120"
+              width="140"
               align="right"
               class-name="cell-nowrap"
             >

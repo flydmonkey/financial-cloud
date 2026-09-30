@@ -398,24 +398,17 @@ public class StatementReportService{
 
         stringBigDecimalMap.putAll(stringBigDecimalMapSpecify);
 
-        //获取利润表净利润
-        // 查出所有数据
-        LambdaQueryWrapper<StatementIncome> lqw = Wrappers.lambdaQuery();
-        lqw.eq(StatementIncome::getYearPeriod, dto.getReportDate());
-        lqw.eq(StatementIncome::getPeriodType, dto.getPeriodType());
-        lqw.eq(StatementIncome::getBookId, dto.getBookId());
-        StatementIncome statementIncome = statementIncomeMapper.selectOne(lqw);
-
-        if (statementIncome != null) {
-            LambdaQueryWrapper<StatementIncomeItem> itemlqw = Wrappers.lambdaQuery();
-            itemlqw.eq(StatementIncomeItem::getBookId, statementIncome.getBookId());
-            itemlqw.eq(StatementIncomeItem::getIncomeId, statementIncome.getId());
-            //净利润编码
-            itemlqw.eq(StatementIncomeItem::getItemCode, 4);
-            StatementIncomeItem statementIncomeItem = statementIncomeItemMapper.selectList(itemlqw).get(0);
-            if (Objects.nonNull(statementIncomeItem)) {
-                stringBigDecimalMapYear.put("41-xj-jlr", statementIncomeItem.getCumulativeBalance());
-                stringBigDecimalMap.put("41-xj-jlr", statementIncomeItem.getCurrentBalance());
+        //获取利润表净利润（与利润表接口一致：当期实时重算，避免未落库时附表净利润为 0）
+        StatementIncome statementIncome = statementIncomeService.getIncomeStatement(dto, false).getData();
+        if (statementIncome != null && statementIncome.getItems() != null) {
+            for (StatementIncomeItem statementIncomeItem : statementIncome.getItems()) {
+                if ("4".equals(statementIncomeItem.getItemCode())) {
+                    stringBigDecimalMapYear.put("41-xj-jlr",
+                            Optional.ofNullable(statementIncomeItem.getCumulativeBalance()).orElse(BigDecimal.ZERO));
+                    stringBigDecimalMap.put("41-xj-jlr",
+                            Optional.ofNullable(statementIncomeItem.getCurrentBalance()).orElse(BigDecimal.ZERO));
+                    break;
+                }
             }
         }
 

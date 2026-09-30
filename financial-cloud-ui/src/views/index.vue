@@ -178,4 +178,31 @@ const quickEntries = [
     color: #409eff;
   }
 }
+
+@media (max-width: 768px) {
+  .quick-entry {
+    :deep(.el-card__body) {
+      gap: 4px 2px;
+      padding: 10px 8px;
+      justify-content: space-between;
+    }
+  }
+
+  .quick-entry-item {
+    width: calc(25% - 4px);
+    min-width: 70px;
+    max-width: 88px;
+    padding: 6px 0;
+    gap: 4px;
+    font-size: 12px;
+
+    :deep(.el-icon) {
+      font-size: 18px;
+    }
+  }
+
+  .el-col {
+    margin-bottom: 12px;
+  }
+}
 </style>

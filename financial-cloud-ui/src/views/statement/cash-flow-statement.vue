@@ -150,12 +150,11 @@
           </el-button>
         </div>
       </div>
-      <div class="table-scroll-x table-scroll-x--wide cash-flow-table-scroll">
+      <div class="table-scroll-x table-scroll-x--wide table-scroll-x--sticky cash-flow-table-scroll">
         <el-table
           v-loading="loading"
           :data="cashFlowStatementList"
           border
-          height="600"
           stripe
           style="min-width: 560px"
         >
@@ -163,9 +162,9 @@
             prop="itemName"
             label="项目"
             align="left"
-            min-width="220"
+            width="130"
             :show-overflow-tooltip="true"
-            class-name="cf-name-col"
+            class-name="cf-name-col col-sticky-left"
           >
             <template #default="scope">
               <span :class="{ 'indented-item': scope.row.isTitle !== 1 }">{{ scope.row.itemName }}</span>

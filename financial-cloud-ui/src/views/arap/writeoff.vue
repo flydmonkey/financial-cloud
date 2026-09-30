@@ -59,6 +59,7 @@
         v-loading="loading"
         :data="openItems"
         border
+        style="min-width: 860px"
         @selection-change="onSelect"
       >
         <el-table-column
@@ -69,11 +70,15 @@
           prop="voucherDate"
           label="日期"
           width="120"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="voucherWord"
           label="凭证"
           width="100"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="summary"
@@ -83,6 +88,8 @@
         <el-table-column
           label="方向"
           width="90"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="scope">
             {{ scope.row.increaseSide ? '挂账' : '冲减' }}
@@ -92,20 +99,31 @@
           prop="originalAmount"
           label="原额"
           align="right"
+          width="110"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="writtenOffAmount"
           label="已核销"
           align="right"
+          width="110"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="remainingAmount"
           label="未核销"
           align="right"
+          width="110"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           label="本次核销"
           width="140"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="scope">
             <el-input-number
@@ -128,12 +146,12 @@
       <el-table
         :data="history"
         border
-        style="min-width: 480px"
+        style="min-width: 420px"
       >
         <el-table-column
           prop="writeoffDate"
           label="日期"
-          width="120"
+          width="100"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         />
@@ -141,21 +159,20 @@
           prop="amount"
           label="金额"
           align="right"
-          width="120"
+          width="100"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="status"
           label="状态"
-          min-width="80"
-          width="90"
+          width="88"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         />
         <el-table-column
           label="操作"
-          width="100"
+          width="88"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         >

@@ -145,24 +145,25 @@
           </el-button>
         </div>
       </div>
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="recordsList"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        :expand-row-keys="expandsIds"
-        show-summary
-        :summary-method="handleSummaryMethod2"
-        row-key="sourceId"
-        height="590"
-      >
-        <el-table-column
-          label="科目编码"
-          align="left"
-          prop="subjectCode"
-          width="250"
-          show-overflow-tooltip
+      <div class="table-scroll-x table-scroll-x--wide">
+        <el-table
+          ref="tableRef"
+          v-loading="loading"
+          :data="recordsList"
+          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          :expand-row-keys="expandsIds"
+          show-summary
+          :summary-method="handleSummaryMethod2"
+          row-key="sourceId"
+          height="590"
         >
+          <el-table-column
+            label="科目编码"
+            align="left"
+            prop="subjectCode"
+            min-width="140"
+            show-overflow-tooltip
+          >
           <template #default="scope">
             <el-link
               type="primary"
@@ -177,7 +178,7 @@
           label="科目名称"
           align="left"
           prop="subjectName"
-          width="300"
+          min-width="160"
           show-overflow-tooltip
         >
           <template #default="scope">
@@ -285,6 +286,7 @@
           </el-table-column>
         </el-table-column>
       </el-table>
+      </div>
     </el-card>
   </div>
 </template>

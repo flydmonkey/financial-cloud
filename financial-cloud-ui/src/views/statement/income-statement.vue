@@ -142,77 +142,80 @@
         </div>
       </div>
 
-      <el-table
-        v-loading="loading"
-        :data="statementIncomeList"
-        border
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        row-key="id"
-        default-expand-all
-        height="610"
-      >
-        <el-table-column
-          label="项目"
-          align="left"
-          header-align="center"
-          prop="itemName"
-          width="500"
+      <div class="table-scroll-x">
+        <el-table
+          v-loading="loading"
+          :data="statementIncomeList"
+          border
+          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          row-key="id"
+          default-expand-all
+          height="610"
         >
-          <template #default="scope">
-            <span
-              :style="{'text-indent': scope.row.level + 'em',
-                       display: 'inline-block', 'margin-right': '30px'}"
-            >
-              <el-link
-                v-if="!ableEdit && scope.row.itemCode && scope.row.itemCode.length > 1"
-                type="primary"
-                :underline="false"
-                @click="openDrill(scope.row)"
+          <el-table-column
+            label="项目"
+            align="left"
+            header-align="center"
+            prop="itemName"
+            min-width="220"
+            class-name="is-name-col"
+          >
+            <template #default="scope">
+              <span
+                class="is-name-cell"
+                :style="{'text-indent': scope.row.level + 'em'}"
               >
-                {{ scope.row.itemName }}
-              </el-link>
-              <template v-else>
-                {{ scope.row.itemName }}
-              </template>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="行次"
-          align="center"
-          prop="sortIndex"
-          width="100"
-        />
-        <el-table-column
-          label="本月金额"
-          align="right"
-          header-align="center"
-          width="160"
-          prop="currentBalance"
-        >
-          <template #default="scope">
-            {{ formatAmount(scope.row.currentBalance, '') }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="本年累计金额"
-          align="right"
-          header-align="center"
-          width="160"
-          prop="cumulativeBalance"
-        >
-          <template #default="scope">
-            {{ formatAmount(scope.row.cumulativeBalance, '') }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          v-if="ableEdit"
-          label="操作"
-          align="center"
-          header-align="center"
-          width="160"
-          prop="cumulativeBalance"
-        >
+                <el-link
+                  v-if="!ableEdit && scope.row.itemCode && scope.row.itemCode.length > 1"
+                  type="primary"
+                  :underline="false"
+                  @click="openDrill(scope.row)"
+                >
+                  {{ scope.row.itemName }}
+                </el-link>
+                <template v-else>
+                  {{ scope.row.itemName }}
+                </template>
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="行次"
+            align="center"
+            prop="sortIndex"
+            width="64"
+            class-name="cell-nowrap"
+          />
+          <el-table-column
+            label="本月金额"
+            align="right"
+            header-align="center"
+            min-width="120"
+            prop="currentBalance"
+          >
+            <template #default="scope">
+              {{ formatAmount(scope.row.currentBalance, '') }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="本年累计金额"
+            align="right"
+            header-align="center"
+            min-width="130"
+            prop="cumulativeBalance"
+          >
+            <template #default="scope">
+              {{ formatAmount(scope.row.cumulativeBalance, '') }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="ableEdit"
+            label="操作"
+            align="center"
+            header-align="center"
+            width="72"
+            prop="cumulativeBalance"
+          >
           <template #default="scope">
             <!--
            <el-tooltip content="新增/编辑">
@@ -239,7 +242,8 @@
             暂无数据
           </div>
         </template>
-      </el-table>
+        </el-table>
+      </div>
     </el-card>
 
     <el-dialog
@@ -789,5 +793,17 @@ getList();
 
 .common-card {
   margin-bottom: 15px;
+}
+
+.is-name-cell {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+:deep(.is-name-col .cell) {
+  white-space: nowrap;
+  word-break: keep-all;
 }
 </style>

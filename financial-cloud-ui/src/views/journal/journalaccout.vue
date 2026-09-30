@@ -44,6 +44,7 @@
           {{ $t('jbx.text.delete') }}
         </el-button>
       </div>
+      <div class="table-scroll-x table-scroll-x--wide">
       <el-table
         v-loading="loading"
         :data="list"
@@ -61,11 +62,14 @@
           :label="$t('jbx.journalaccout.accName')"
           align="left"
           prop="accName"
+          min-width="120"
         />
         <el-table-column
           :label="$t('jbx.journalaccout.category.category')"
           align="center"
           prop="category"
+          min-width="90"
+          class-name="cell-nowrap"
         >
           <template #default="scope">
             <span v-if="scope.row.category == 'deposit'">{{ $t('jbx.journalaccout.category.deposit') }}</span>
@@ -76,11 +80,13 @@
           :label="$t('jbx.journalaccout.accCode')"
           align="left"
           prop="accCode"
+          min-width="110"
         />
         <el-table-column
           :label="$t('jbx.journalaccout.balance')"
           align="right"
           prop="balance"
+          min-width="100"
         >
           <template #default="scope">
             {{ formatAmount(scope.row.balance) }}
@@ -90,15 +96,18 @@
           :label="$t('jbx.journalaccout.currency')"
           align="center"
           prop="currency"
+          min-width="80"
+          class-name="cell-nowrap"
         />
         <el-table-column
           :label="$t('jbx.journalaccout.bank')"
           align="left"
           prop="bank"
+          min-width="120"
         />
         <el-table-column
           :label="$t('jbx.journalaccout.bankNo')"
-          width="180"
+          min-width="160"
           align="left"
           prop="bankNo"
         />
@@ -106,11 +115,15 @@
           :label="$t('jbx.text.sortIndex')"
           align="center"
           prop="sortIndex"
+          width="72"
+          class-name="cell-nowrap"
         />
         <el-table-column
           :label="$t('jbx.text.status.status')"
           align="center"
           prop="status"
+          min-width="80"
+          class-name="cell-nowrap"
         >
           <template #default="scope">
             <span v-if="scope.row.status === 1 || scope.row.status === '1'"><el-icon color="green"><SuccessFilled class="success" /></el-icon></span>
@@ -144,6 +157,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
       <pagination
         v-show="total > 0"
         v-model:page="queryParams.pageNumber"

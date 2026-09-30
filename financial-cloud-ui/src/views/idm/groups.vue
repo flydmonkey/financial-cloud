@@ -58,7 +58,7 @@
           prop="roleCode"
           :label="t('jbx.text.id')"
           align="center"
-          min-width="100"
+          min-width="180"
           :show-overflow-tooltip="true"
         />
         <el-table-column

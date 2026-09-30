@@ -34,6 +34,7 @@
             </el-form>
           </div>
 
+          <div class="settle-steps">
           <el-steps
             :active="active"
             finish-status="success"
@@ -45,6 +46,7 @@
             <el-step title="系统校验" />
             <el-step title="结账" />
           </el-steps>
+          </div>
 
           <StepManual
             v-if="active === 0"
@@ -389,6 +391,28 @@ onActivated(() => {
 </script>
 
 <style scoped>
+.settle-steps {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.settle-steps :deep(.el-step__title) {
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.2;
+}
+@media (max-width: 768px) {
+  .settle-steps :deep(.el-steps) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .settle-steps :deep(.el-step) {
+    flex-basis: auto !important;
+  }
+  .settle-steps :deep(.el-step__head),
+  .settle-steps :deep(.el-step__main) {
+    text-align: left;
+  }
+}
 .wizard-footer {
   margin-top: 24px;
   padding-top: 16px;

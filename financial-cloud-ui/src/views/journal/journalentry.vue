@@ -45,6 +45,7 @@
           {{ $t('jbx.text.delete') }}
         </el-button>
       </div>
+      <div class="table-scroll-x table-scroll-x--wide">
       <el-table
         v-loading="loading"
         :data="list"
@@ -61,17 +62,20 @@
           :label="$t('jbx.journalentry.tradeDate')"
           align="left"
           prop="tradeDate"
-          width="160"
+          min-width="120"
+          class-name="cell-nowrap"
         />
         <el-table-column
           :label="$t('jbx.journalentry.remark')"
           align="left"
           prop="remark"
+          min-width="120"
         />
         <el-table-column
           :label="$t('jbx.journalentry.subjectId')"
           align="left"
           prop="subjectId"
+          min-width="140"
         >
           <template #default="scope">
             {{ getSubjectName(scope.row.subjectId) }}
@@ -81,6 +85,8 @@
           :label="$t('jbx.journalaccout.category.category')"
           align="center"
           prop="category"
+          min-width="90"
+          class-name="cell-nowrap"
         >
           <template #default="scope">
             <span v-if="scope.row.category == 'deposit'">{{ $t('jbx.journalaccout.category.deposit') }}</span>
@@ -91,10 +97,12 @@
           :label="$t('jbx.journalentry.accName')"
           align="left"
           prop="accName"
+          min-width="120"
         />
         <el-table-column
           :label="$t('jbx.journalentry.income')"
           align="right"
+          min-width="100"
         >
           <template #default="scope">
             {{ formatAmount(scope.row.income) }}
@@ -103,6 +111,7 @@
         <el-table-column
           :label="$t('jbx.journalentry.expenditure')"
           align="right"
+          min-width="100"
         >
           <template #default="scope">
             {{ formatAmount(scope.row.expenditure) }}
@@ -111,6 +120,7 @@
         <el-table-column
           :label="$t('jbx.journalentry.balance')"
           align="right"
+          min-width="100"
         >
           <template #default="scope">
             {{ formatAmount(scope.row.balance) }}
@@ -171,6 +181,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
       <pagination
         v-show="total > 0"
         v-model:page="queryParams.pageNumber"

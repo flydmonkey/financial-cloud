@@ -51,10 +51,15 @@
           刷新
         </el-button>
       </el-form-item>
-      <el-form-item v-if="canExport">
+      <el-form-item
+        v-if="canExport"
+        class="export-actions"
+      >
         <el-checkbox v-model="includeVoucherList">
           账本包含凭证清单
         </el-checkbox>
+      </el-form-item>
+      <el-form-item v-if="canExport">
         <el-button
           type="success"
           :disabled="!selectedClosedIds.length"
@@ -439,6 +444,21 @@ function goOnboarding(): void {
 <style scoped>
 .toolbar {
   margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.toolbar :deep(.el-form-item) {
+  margin-bottom: 8px;
+}
+
+.toolbar :deep(.export-actions .el-form-item__content) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 .summary-strip {
   display: flex;

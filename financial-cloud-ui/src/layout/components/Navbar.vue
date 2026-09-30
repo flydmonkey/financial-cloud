@@ -16,7 +16,7 @@
         <span>账套：</span>
         <el-select
           v-model="currentSet"
-          style="width: 250px;"
+          class="navbar-book-select"
           @change="handleSwitchBook"
         >
           <el-option
@@ -154,7 +154,7 @@ function handleSwitchBook(val: any) {
   z-index: 1001;
   width: 100%;
   height: $base-navbar-height;
-  overflow: hidden;
+  overflow: visible;
   background: #fff;
   display: flex;
   justify-content: space-between;
@@ -222,11 +222,16 @@ function handleSwitchBook(val: any) {
     }
 
     .right-menu-item {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
       padding: 0 8px;
       color: #000000;
       cursor: pointer;
       outline: none;
       transition: background-color .3s;
+      max-width: min(100%, 520px);
 
       &.hover-effect {
         cursor: pointer;
@@ -242,9 +247,20 @@ function handleSwitchBook(val: any) {
       }
     }
 
+    .navbar-book-select {
+      width: min(250px, 42vw);
+    }
+
     .avatar-box {
       height: $base-navbar-height;
       line-height: normal;
+    }
+
+    @media (max-width: 768px) {
+      .right-menu-item {
+        white-space: normal;
+        max-width: min(100%, 360px);
+      }
     }
 
     .avatar-wrapper {

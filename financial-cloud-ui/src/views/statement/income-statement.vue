@@ -194,7 +194,7 @@
             prop="currentBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.currentBalance, '') }}
+              {{ formatAmount(scope.row.currentBalance) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -205,7 +205,7 @@
             prop="cumulativeBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.cumulativeBalance, '') }}
+              {{ formatAmount(scope.row.cumulativeBalance) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -424,7 +424,7 @@
               prop="closingBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.closingBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.closingBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -434,7 +434,7 @@
               prop="openingYearBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.openingYearBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.openingYearBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -593,7 +593,7 @@ function openDrill(row: any) {
 /** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
 function handlePrint() {
   const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const amt = (v: any) => formatAmount(v, '')
+  const amt = (v: any) => formatAmount(v)
   const body = statementIncomeList.value.map((row: any) => `<tr>
     <td>${esc('　'.repeat(Math.max(0, (row.level || 1) - 1)) + (row.itemName || ''))}</td>
     <td class="c">${esc(row.sortIndex ?? '')}</td>

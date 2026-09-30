@@ -3,10 +3,11 @@
  * @param value 数值
  */
 export function formatBalance(value: number | string): string {
-    if (value === undefined || value === null || value === '' || value === 0) return '';
+    if (value === undefined || value === null || value === '') return '0.00';
+    if (value === 0) return '0.00';
 
     const num = parseFloat(String(value));
-    if (isNaN(num)) return '';
+    if (isNaN(num)) return '0.00';
 
     // 格式化为带千分位和两位小数的格式
     return num.toLocaleString('zh-CN', {

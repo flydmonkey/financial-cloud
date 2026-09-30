@@ -2702,12 +2702,12 @@ onBeforeUpdate(() => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.3;
     color: $primary-color;
     padding: 4px 12px;
-    border: 1px solid #d0d0d0;
-    background: #fff;
+    border: 1px solid #c6d4f0;
+    background: #f3f7ff;
     border-radius: 4px;
 
     em {
@@ -2717,7 +2717,7 @@ onBeforeUpdate(() => {
     }
 
     strong {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
     }
   }

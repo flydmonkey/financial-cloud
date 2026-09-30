@@ -106,6 +106,13 @@ defineComponent({
   margin-top: $base-navbar-height;
 }
 
+@media (max-width: 768px) {
+  .container-main {
+    /* 窄屏顶栏账期/账套两行时预留高度，避免主区被遮挡 */
+    margin-top: calc(#{$base-navbar-height} + 28px);
+  }
+}
+
 .app-wrapper {
 
 }

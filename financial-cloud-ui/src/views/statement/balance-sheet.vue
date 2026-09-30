@@ -211,7 +211,7 @@
             prop="currentBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.currentBalance, '') }}
+              {{ formatAmount(scope.row.currentBalance) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -222,7 +222,7 @@
             prop="initialBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.initialBalance, '') }}
+              {{ formatAmount(scope.row.initialBalance) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -291,7 +291,7 @@
             prop="liabilityCurrentBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.liabilityCurrentBalance, '') }}
+              {{ formatAmount(scope.row.liabilityCurrentBalance) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -302,7 +302,7 @@
             prop="liabilityInitialBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.liabilityInitialBalance, '') }}
+              {{ formatAmount(scope.row.liabilityInitialBalance) }}
             </template>
           </el-table-column>
 
@@ -517,7 +517,7 @@
               prop="closingBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.closingBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.closingBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -527,7 +527,7 @@
               prop="openingYearBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.openingYearBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.openingYearBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -819,7 +819,7 @@ function openDrill(row: any, side: 'asset' | 'liability') {
 /** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
 function handlePrint() {
   const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const amt = (v: any) => formatAmount(v, '')
+  const amt = (v: any) => formatAmount(v)
   const name = (level: any, itemName: any, symbol: any) =>
     '　'.repeat(Math.max(0, (level || 1) - 1)) + (symbol === '-' ? '减：' : '') + (itemName || '')
   const body = balanceSheetList.value.map((row: any) => `<tr>

@@ -1411,7 +1411,15 @@ getList();
 
   .toolbar-delete-wrap {
     display: inline-flex;
+    align-items: center;
     vertical-align: middle;
+
+    :deep(.el-button.is-disabled) {
+      opacity: 1;
+      color: var(--el-color-danger-light-3);
+      background: var(--el-color-danger-light-9);
+      border-color: var(--el-color-danger-light-5);
+    }
   }
 }
 

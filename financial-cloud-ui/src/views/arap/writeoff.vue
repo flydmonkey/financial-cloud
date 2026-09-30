@@ -131,18 +131,20 @@
         <el-table-column
           prop="writeoffDate"
           label="日期"
-          min-width="120"
+          width="120"
+          class-name="cell-nowrap"
         />
         <el-table-column
           prop="amount"
           label="金额"
           align="right"
-          min-width="120"
+          width="120"
+          class-name="cell-nowrap"
         />
         <el-table-column
           prop="status"
           label="状态"
-          min-width="90"
+          width="90"
           class-name="cell-nowrap"
         />
         <el-table-column

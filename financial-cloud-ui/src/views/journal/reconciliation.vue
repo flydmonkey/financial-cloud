@@ -4,13 +4,14 @@
       <el-form
         :inline="true"
         label-width="88px"
+        class="recon-query-form"
       >
         <el-form-item label="资金账户">
           <el-select
             v-model="query.accId"
             filterable
             placeholder="选择账户"
-            style="width: 220px"
+            class="recon-acc-select"
             @change="handleQuery"
           >
             <el-option
@@ -306,6 +307,24 @@ loadAccounts()
 </script>
 
 <style lang="scss" scoped>
+.recon-query-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+}
+.recon-acc-select {
+  width: min(220px, 100%);
+}
+@media (max-width: 768px) {
+  .recon-acc-select {
+    width: 100%;
+  }
+  .recon-query-form :deep(.el-form-item) {
+    margin-right: 0;
+  }
+}
+
 .app-container {
   padding: 0;
   background-color: #f5f7fa;

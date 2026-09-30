@@ -38,7 +38,7 @@
         <el-form-item label="企税税率">
           <el-select
             v-model="rates.incomeTaxRate"
-            style="width: 110px"
+            style="width: 150px"
             @change="handleQuery"
           >
             <el-option

@@ -75,6 +75,8 @@
         border
         size="small"
         max-height="620"
+        style="width: 100%"
+        class="multi-column-table"
       >
         <el-table-column
           label="日期"
@@ -274,6 +276,14 @@ getSubjectList()
 </script>
 
 <style lang="scss" scoped>
+.multi-column-table {
+  width: 100%;
+}
+.multi-column-table :deep(.el-table__empty-block) {
+  width: 100% !important;
+  min-width: 100%;
+}
+
 .app-container {
   padding: 0;
   background-color: #f5f7fa;

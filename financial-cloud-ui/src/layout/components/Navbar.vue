@@ -44,8 +44,8 @@
               class="user-avatar"
               alt=""
             >
-            <span style="margin-left: 5px">{{ userStore.name }}</span>
-            <span>({{ userStore.username }})</span>
+            <span class="user-display-name">{{ userStore.name }}</span>
+            <span class="user-username">({{ userStore.username }})</span>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
@@ -264,15 +264,40 @@ function handleSwitchBook(val: any) {
 
     .avatar-wrapper {
       height: $base-navbar-height;
-      display: flex;
+      display: inline-flex;
       justify-content: flex-start;
       align-items: center;
+      flex-wrap: nowrap;
+      gap: 4px;
+      max-width: min(100%, 220px);
+      min-width: 0;
       cursor: pointer;
+      white-space: nowrap;
+      writing-mode: horizontal-tb;
 
       .user-avatar {
         width: 24px;
         height: 24px;
         border-radius: 50%;
+        flex: 0 0 auto;
+      }
+
+      .user-display-name,
+      .user-username {
+        display: inline-block;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        writing-mode: horizontal-tb;
+        word-break: keep-all;
+        line-height: 1.2;
+      }
+
+      .user-display-name {
+        margin-left: 5px;
       }
     }
   }
@@ -286,6 +311,8 @@ function handleSwitchBook(val: any) {
       margin-right: 12px;
       align-items: flex-start;
       padding: 6px 0;
+      min-width: 0;
+      max-width: calc(100% - 96px);
 
       .right-menu-item.book-context {
         display: grid;
@@ -318,6 +345,23 @@ function handleSwitchBook(val: any) {
         grid-area: select;
         width: 100%;
         max-width: 100%;
+      }
+
+      .avatar-box {
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .avatar-wrapper {
+        max-width: 140px;
+
+        .user-display-name {
+          max-width: 4.5em;
+        }
+
+        .user-username {
+          flex: 0 0 auto;
+        }
       }
     }
   }

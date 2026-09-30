@@ -32,7 +32,7 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <div class="table-scroll-x table-scroll-x--wide">
+          <div class="table-scroll-x table-scroll-x--fixed">
             <el-table
               v-loading="loading"
               :data="vouchertemplateList"
@@ -81,6 +81,7 @@
                 align="center"
                 prop="voucherId"
                 min-width="180"
+                fixed="right"
               >
                 <template #default="scope">
                   <el-button
@@ -112,6 +113,7 @@
                 header-align="center"
                 min-width="140"
                 prop="sortIndex"
+                fixed="right"
               >
                 <template #default="scope">
                   <el-tooltip content="新增/编辑">

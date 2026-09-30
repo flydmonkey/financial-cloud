@@ -71,6 +71,7 @@
             style="width: 100%;margin-top: 10px"
             v-slot="{ node, data }"
             node-key="id"
+            empty-text=""
             :data="deptOptions"
             :props="defaultProps"
             :expand-on-click-node="false"
@@ -216,9 +217,6 @@
                 </el-tooltip>
               </template>
             </el-table-column>
-            <template #empty>
-              <span>暂无数据</span>
-            </template>
           </el-table>
           </div>
           <pagination

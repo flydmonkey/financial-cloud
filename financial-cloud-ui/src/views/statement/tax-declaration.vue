@@ -77,24 +77,28 @@
         <template #header>
           <span class="section-title">{{ section }}</span>
         </template>
-        <div class="table-scroll-x">
+        <div class="table-scroll-x table-scroll-x--fixed">
           <el-table
             :data="grouped[section]"
             border
             size="small"
-            :show-header="section === sections[0]"
+            :show-header="true"
           >
             <el-table-column
               label="行次"
               prop="rowNo"
               width="64"
               align="center"
+              fixed="left"
               class-name="cell-nowrap"
             />
             <el-table-column
               label="项目"
               prop="item"
-              min-width="220"
+              min-width="200"
+              fixed="left"
+              class-name="tax-item-col"
+              :show-overflow-tooltip="true"
             />
             <el-table-column
               label="金额"
@@ -239,5 +243,15 @@ onMounted(handleQuery)
 
 .common-card {
   margin-bottom: 12px;
+}
+
+:deep(.tax-item-col .cell) {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+:deep(.cell-nowrap .cell) {
+  white-space: nowrap;
+  word-break: keep-all;
 }
 </style>

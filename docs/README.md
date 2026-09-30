@@ -36,7 +36,7 @@
 | [subject-import-compatibility.md](subject-import-compatibility.md) | 标准科目导入兼容性（脚本自动生成，勿手改） |
 | [小企业会计准则科目.xlsx](小企业会计准则科目.xlsx) | 标准科目模板（standard_id=1） |
 | [企业会计制度科目.xlsx](企业会计制度科目.xlsx) | 标准科目模板（standard_id=2） |
-| [../sql/README.md](../sql/README.md) | 数据库全量初始化 |
+| [../sql/README.md](../sql/README.md) | 数据库全量初始化（**新环境 / 以后任务一律用 `financial_cloud_init.sql`**） |
 
 ## 前端
 

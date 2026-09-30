@@ -39,7 +39,7 @@ VO 并入 `dto`；MyBatis mapper 在 `repository/**/*.xml`。
 | 会话上限 | `financial-cloud.session.max-size` |
 | 报表 strict | `financial-cloud.statement.*.strict-*` |
 
-数据库初始化见 [sql/README.md](../../sql/README.md)。
+数据库初始化见 [sql/README.md](../../sql/README.md)。**新环境与后续任务一律执行 `sql/financial_cloud_init.sql`（或 `python tools/run_init_sql.py`）**；零散 patch 仅用于已有库升级，且须注册进 `tools/build_init_sql.py` 以免下次生成 init 丢失。
 
 ## API 要点（认证）
 

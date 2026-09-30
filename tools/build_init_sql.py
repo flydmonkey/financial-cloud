@@ -61,6 +61,9 @@ MENU_SEED_SQL = [
     PATCHES / "2026-09-29-books-board-menu.sql",
     SEED / "menus" / "menu_salary_tax_and_rename_config.sql",
     SEED / "menus" / "menu_icons_align.sql",
+    # 菜单终态（顺序敏感：先嵌套仪表盘，再精简系统设置/日志审计）
+    PATCHES / "2026-09-30-menu-dashboard-nest-icons.sql",
+    PATCHES / "2026-10-01-menu-trim-sys-audit-icons.sql",
 ]
 
 # 数据补丁：必须在 SEED_TABLES 插入之后执行（按 id 更新种子行）

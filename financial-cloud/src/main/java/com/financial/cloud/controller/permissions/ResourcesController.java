@@ -38,7 +38,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+// DISABLED menu-trim-2026-10-01: admin UI removed, code retained
+//@RestController
 @RequestMapping(value={"/api/permissions/resources"})
 public class ResourcesController {
 

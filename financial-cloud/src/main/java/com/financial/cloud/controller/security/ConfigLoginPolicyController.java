@@ -21,7 +21,8 @@ import com.financial.cloud.service.security.ConfigLoginPolicyService;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+// DISABLED menu-trim-2026-10-01: admin UI removed, code retained
+//@RestController
 @RequestMapping(value={"/api/security/configLoginPolicy"})
 public class ConfigLoginPolicyController {
 

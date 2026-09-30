@@ -24,7 +24,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Slf4j
-// DISABLED open-register-book-auth: menu hidden, code retained
+// DISABLED menu-trim-2026-10-01: admin UI removed, code retained
 //@RestController
 @RequestMapping(value={"/api/security/passwordpolicy"})
 public class ConfigPasswordPolicyController {

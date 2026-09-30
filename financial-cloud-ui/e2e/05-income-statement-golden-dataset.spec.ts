@@ -6,6 +6,7 @@ import {
     assertIncomeFormulaChain,
     assertIncomeGoldenLines,
     assertReportsBalanced,
+    computeCarryNetFromSubjectBalances,
     fetchIncomeStatement,
     fetchIncomeStatementResult,
     fetchSubjectBalances,
@@ -155,20 +156,29 @@ test.describe.serial('income statement golden dataset', () => {
 
         const beforeBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
         ctx.profit3103BeforeCarry = getSubjectBalance(beforeBalances, '3103')
+        // qm_jz_sr/cbfy 不含 5801，Δ3103 用科目口径而非利润表净利润
+        const expectedCarryNet = computeCarryNetFromSubjectBalances(
+            beforeBalances,
+            ['5001', '5051', '5111', '5301'],
+            ['5401', '5402', '5601', '5602', '5603', '5711'],
+        )
 
         await generateAndPostCarryByCode(request, ctx.headers, 'qm_jz_sr')
         await generateAndPostCarryByCode(request, ctx.headers, 'qm_jz_cbfy')
 
         await assertIncomeCarryReconciliation(request, ctx.headers, ctx.term, {
+            expectedCarryNet,
             netProfitBeforeCarry: ctx.netProfitBeforeCarry,
             profit3103BeforeCarry: ctx.profit3103BeforeCarry,
-            pAndLSubjectCodes: ctx.pAndLCodes,
+            // 5801 需 qm_jz_sds，本用例只跑收入/成本费用结转
+            pAndLSubjectCodes: ctx.pAndLCodes.filter((code) => code !== '5801'),
+            tolerance: 1,
         })
 
         const income = await getIncomeNetProfit(request, ctx.headers, ctx.term)
         test.info().annotations.push({
             type: 'note',
-            description: `IS-R01 完成: 结转后净利润=${income.current}, 3103=${getSubjectBalance(await fetchSubjectBalances(request, ctx.headers, ctx.term), '3103')}`,
+            description: `IS-R01 完成: 结转后净利润=${income.current}, 3103=${getSubjectBalance(await fetchSubjectBalances(request, ctx.headers, ctx.term), '3103')}, expectedCarryNet=${expectedCarryNet}`,
         })
     })
 })

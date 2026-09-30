@@ -3052,8 +3052,9 @@ onBeforeUpdate(() => {
       -webkit-overflow-scrolling: touch;
 
       .rv-table {
-        min-width: 960px;
-        width: max-content;
+        /* 桌面拉满；窄屏保底 960 触发外层横滑，避免右侧留白 */
+        width: 100%;
+        min-width: max(100%, 960px);
         max-width: none;
 
         :deep(.el-table__body-wrapper),

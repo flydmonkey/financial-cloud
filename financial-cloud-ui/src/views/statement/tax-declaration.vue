@@ -38,7 +38,7 @@
         <el-form-item label="企税税率">
           <el-select
             v-model="rates.incomeTaxRate"
-            style="width: 110px"
+            style="width: 150px"
             @change="handleQuery"
           >
             <el-option
@@ -77,35 +77,39 @@
         <template #header>
           <span class="section-title">{{ section }}</span>
         </template>
-        <el-table
-          :data="grouped[section]"
-          border
-          size="small"
-          :show-header="section === sections[0]"
-        >
-          <el-table-column
-            label="行次"
-            prop="rowNo"
-            width="80"
-            align="center"
-          />
-          <el-table-column
-            label="项目"
-            prop="item"
-            min-width="320"
-          />
-          <el-table-column
-            label="金额"
-            width="180"
-            align="right"
+        <div class="table-scroll-x">
+          <el-table
+            :data="grouped[section]"
+            border
+            size="small"
+            :show-header="section === sections[0]"
           >
-            <template #default="scope">
-              <span :class="{ 'amount-strong': isKeyRow(scope.row.rowNo) }">
-                {{ scope.row.amount === null || scope.row.amount === undefined ? '' : formatAmount(scope.row.amount) }}
-              </span>
-            </template>
-          </el-table-column>
-        </el-table>
+            <el-table-column
+              label="行次"
+              prop="rowNo"
+              width="64"
+              align="center"
+              class-name="cell-nowrap"
+            />
+            <el-table-column
+              label="项目"
+              prop="item"
+              min-width="220"
+            />
+            <el-table-column
+              label="金额"
+              min-width="140"
+              align="right"
+              class-name="cell-nowrap"
+            >
+              <template #default="scope">
+                <span :class="{ 'amount-strong': isKeyRow(scope.row.rowNo) }">
+                  {{ scope.row.amount === null || scope.row.amount === undefined ? '' : formatAmount(scope.row.amount) }}
+                </span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-card>
       <div class="tax-tip">
         口径：已过账凭证分录（与账簿一致）；销售额按营业收入估算，空白行次为账面无法拆分项目，请按实际申报数据填写。

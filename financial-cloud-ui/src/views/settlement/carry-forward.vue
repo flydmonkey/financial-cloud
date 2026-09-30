@@ -15,6 +15,7 @@
           <el-form-item label="类型：">
             <el-radio-group
               v-model="queryParams.category"
+              class="carry-type-filter"
               @change="getList"
             >
               <el-radio-button :value="1">
@@ -31,120 +32,124 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <el-table
-            v-loading="loading"
-            :data="vouchertemplateList"
-            border
-            :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-            row-key="id"
-            default-expand-all
-            height="650"
-            @cell-mouse-enter="cellMouseEnter"
-            @cell-mouse-leave="cellMouseLeave"
-          >
-            <el-table-column
-              label="编码"
-              align="left"
-              header-align="center"
-              prop="code"
-              width="150"
-            />
-            <el-table-column
-              label="名称"
-              align="left"
-              header-align="center"
-              prop="name"
-            />
-            <el-table-column
-              label="字头"
-              align="center"
-              prop="wordHead"
-              width="80"
-            />
-            <el-table-column
-              label="备注"
-              align="left"
-              prop="remark"
-            />
-            <el-table-column
-              label="排序"
-              align="left"
-              prop="sortIndex"
-              width="80"
-            />
-            <el-table-column
-              :label="$t('jbx.voucher.voucher')"
-              align="center"
-              prop="voucherId"
-              width="180"
+          <div class="table-scroll-x table-scroll-x--wide">
+            <el-table
+              v-loading="loading"
+              :data="vouchertemplateList"
+              border
+              :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+              row-key="id"
+              default-expand-all
+              height="650"
+              @cell-mouse-enter="cellMouseEnter"
+              @cell-mouse-leave="cellMouseLeave"
             >
-              <template #default="scope">
-                <el-button
-                  v-if="scope.row.voucherId === null ||scope.row.voucherId ===''"
-                  type="primary"
-                  @click="newVoucher(scope.row)"
-                >
-                  生成
-                </el-button>
-                <el-button
-                  v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
-                  type="primary"
-                  @click="viewVoucher(scope.row.voucherId)"
-                >
-                  查看
-                </el-button>
-                <el-button
-                  v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
-                  type="danger"
-                  @click="deleteVoucher(scope.row.voucherId)"
-                >
-                  删除
+              <el-table-column
+                label="编码"
+                align="left"
+                header-align="center"
+                prop="code"
+                min-width="120"
+              />
+              <el-table-column
+                label="名称"
+                align="left"
+                header-align="center"
+                prop="name"
+                min-width="140"
+              />
+              <el-table-column
+                label="字头"
+                align="center"
+                prop="wordHead"
+                width="72"
+              />
+              <el-table-column
+                label="备注"
+                align="left"
+                prop="remark"
+                min-width="100"
+              />
+              <el-table-column
+                label="排序"
+                align="left"
+                prop="sortIndex"
+                width="72"
+              />
+              <el-table-column
+                :label="$t('jbx.voucher.voucher')"
+                align="center"
+                prop="voucherId"
+                min-width="180"
+              >
+                <template #default="scope">
+                  <el-button
+                    v-if="scope.row.voucherId === null ||scope.row.voucherId ===''"
+                    type="primary"
+                    @click="newVoucher(scope.row)"
+                  >
+                    生成
+                  </el-button>
+                  <el-button
+                    v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
+                    type="primary"
+                    @click="viewVoucher(scope.row.voucherId)"
+                  >
+                    查看
+                  </el-button>
+                  <el-button
+                    v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
+                    type="danger"
+                    @click="deleteVoucher(scope.row.voucherId)"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+              <el-table-column
+                label="模板"
+                align="center"
+                header-align="center"
+                min-width="140"
+                prop="sortIndex"
+              >
+                <template #default="scope">
+                  <el-tooltip content="新增/编辑">
+                    <el-button
+                      type="primary"
+                      link
+                      icon="Plus"
+                      @click="handleAdd(scope.row)"
+                    />
+                  </el-tooltip>
+                  <el-tooltip content="编辑">
+                    <el-button
+                      type="primary"
+                      link
+                      icon="Edit"
+                      @click="handleEdit(scope.row)"
+                    />
+                  </el-tooltip>
+                  <el-tooltip content="移除">
+                    <el-button
+                      type="primary"
+                      link
+                      icon="Delete"
+                      @click="handleDel(scope.row, 'asset')"
+                    />
+                  </el-tooltip>
+                </template>
+              </el-table-column>
+              <template #empty>
+                <div class="empty-text">
+                  暂无数据
+                </div>
+                <el-button @click="handleAdd(null)">
+                  立即添加
                 </el-button>
               </template>
-            </el-table-column>
-            <el-table-column
-              label="模板"
-              align="center"
-              header-align="center"
-              width="160"
-              prop="sortIndex"
-            >
-              <template #default="scope">
-                <el-tooltip content="新增/编辑">
-                  <el-button
-                    type="primary"
-                    link
-                    icon="Plus"
-                    @click="handleAdd(scope.row)"
-                  />
-                </el-tooltip>
-                <el-tooltip content="编辑">
-                  <el-button
-                    type="primary"
-                    link
-                    icon="Edit"
-                    @click="handleEdit(scope.row)"
-                  />
-                </el-tooltip>
-                <el-tooltip content="移除">
-                  <el-button
-                    type="primary"
-                    link
-                    icon="Delete"
-                    @click="handleDel(scope.row, 'asset')"
-                  />
-                </el-tooltip>
-              </template>
-            </el-table-column>
-            <template #empty>
-              <div class="empty-text">
-                暂无数据
-              </div>
-              <el-button @click="handleAdd(null)">
-                立即添加
-              </el-button>
-            </template>
-          </el-table>
+            </el-table>
+          </div>
 
           <el-dialog
             v-model="dialog.visible"
@@ -729,8 +734,13 @@ onMounted(() => {
 })
 </script>
 
-<style>
-.demo-tabs > .el-tabs__content {
+<style scoped>
+.carry-type-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
+.demo-tabs > .el-tabs__content {
 }
 </style>

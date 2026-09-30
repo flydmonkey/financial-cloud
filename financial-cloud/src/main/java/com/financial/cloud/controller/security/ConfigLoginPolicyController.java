@@ -21,8 +21,7 @@ import com.financial.cloud.service.security.ConfigLoginPolicyService;
 
 @RequiredArgsConstructor
 @Slf4j
-// DISABLED open-register-book-auth: menu hidden, code retained
-//@RestController
+@RestController
 @RequestMapping(value={"/api/security/configLoginPolicy"})
 public class ConfigLoginPolicyController {
 
@@ -30,7 +29,8 @@ public class ConfigLoginPolicyController {
 
 	@GetMapping(value={"/get"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<ConfigLoginPolicy> get(@CurrentUser UserInfo currentUser){
-		ConfigLoginPolicy configLoginPolicy = configLoginPolicyService.getById(currentUser.getBookId());
+		// 登录策略为实例级配置，不按账套 id 查询
+		ConfigLoginPolicy configLoginPolicy = configLoginPolicyService.getConfigLoginPolicy();
 		return new Message<>(configLoginPolicy);
 	}
 

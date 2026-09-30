@@ -141,8 +141,9 @@ flowchart LR
 - ~~参数配置独立页~~ → **已落地**（`views/config/voucher-settlement.vue`，见 [20](20-gap-analysis.md) §2.4）
 - ~~代账吞吐 V2 + Post-V2 改证路径~~ → **已收口**（见 [V2](../superpowers/specs/2026-09-29-daizhang-throughput-v2-design.md) / [Post-V2](../superpowers/specs/2026-09-29-daizhang-post-v2-design.md)；交付 [#5](https://github.com/flydmonkey/financial-cloud/pull/5)）
 - ~~代账工作台（多账套月末看板）~~ → **已收口**（见 [books-board 设计](../superpowers/specs/2026-09-29-daizhang-books-board-design.md) / [收口 backlog](../superpowers/plans/2026-09-29-books-board-backlog.md)；交付 [#6](https://github.com/flydmonkey/financial-cloud/pull/6)）
-- 近端不以 PRD 新模块扩容为主；增强项按客户声音排期（候选：跨套结账就绪软报告）
-- Non-goal 不变：工资条员工自助、税局直连、移动端/AI、银行余额调节增强、税费向导增强；跨账套一键批量结账不做
+- 近端不以 PRD 新模块扩容为主；增强项按客户声音排期
+- **明确不做跨账套结账**：不提供跨账套一键/批量结账、批量过账，也不做「跨套结账就绪软报告」类聚合写路径准备；结账始终在单账套内完成。代账工作台仅负责跨套进度一览、进入单套处理、已结账本包导出
+- Non-goal 不变：工资条员工自助、税局直连、移动端/AI、银行余额调节增强、税费向导增强
 
 ## 8. 实现总览（对照 PRD 八大模块）
 

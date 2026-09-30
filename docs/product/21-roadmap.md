@@ -16,7 +16,8 @@
 ## 2. 近端路线（建议 3～4 个切片）
 
 > **近端主轴（2026-09-29）**：代账工作台 · 多账套月末看板 **已收口**（[#6](https://github.com/flydmonkey/financial-cloud/pull/6)）。见 [设计](../superpowers/specs/2026-09-29-daizhang-books-board-design.md) / [收口 backlog](../superpowers/plans/2026-09-29-books-board-backlog.md)。  
-> 此前吞吐 V2 + Post-V2 + TS 清零已收口（[#5](https://github.com/flydmonkey/financial-cloud/pull/5)）。不以 PRD 新模块扩容为主。下列 S0–S4 均为已收口历史切片；下一切片待产品另开（候选：跨套结账就绪软报告）。
+> 此前吞吐 V2 + Post-V2 + TS 清零已收口（[#5](https://github.com/flydmonkey/financial-cloud/pull/5)）。不以 PRD 新模块扩容为主。下列 S0–S4 均为已收口历史切片；下一切片待产品另开。  
+> **产品边界（已确认）**：**不做跨账套结账**——不含跨套批量结账/过账，也不排期「跨套结账就绪软报告」；结账只在单账套内进行。
 
 ```mermaid
 flowchart LR
@@ -34,7 +35,7 @@ flowchart LR
 | 进入处理 | 切账套跳转凭证/折旧/结账（含落后→向导） | **已落地** |
 | 批量账本包 | 已结账套服务端总 ZIP | **已落地** |
 | 摘要筛选 / 首页入口 / RBAC | 可点摘要、session 关注月、四角色菜单 | **已落地** |
-| 非目标 | 跨账套批量结账、verify 编排、SaaS 多租户 | — |
+| 非目标 | **不做跨账套结账**（含批量结账/过账、跨套结账就绪软报告）；verify 编排；SaaS 多租户 | — |
 
 ### S0 · 交付包（已落地）
 

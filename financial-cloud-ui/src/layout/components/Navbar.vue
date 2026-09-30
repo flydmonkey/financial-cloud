@@ -341,7 +341,7 @@ function handleSwitchBook(val: any) {
 
       .right-menu-item.book-context {
         display: grid;
-        grid-template-columns: auto minmax(7.5em, 1fr);
+        grid-template-columns: auto minmax(9em, 1fr);
         grid-template-areas:
           "term term"
           "label select";
@@ -373,22 +373,22 @@ function handleSwitchBook(val: any) {
       .navbar-book-select {
         grid-area: select;
         width: 100%;
-        min-width: 7.5em;
+        min-width: 9em;
         max-width: 100%;
       }
 
       .avatar-box {
         flex: 0 0 auto;
-        max-width: 7.5em;
+        max-width: 6.5em;
         min-width: 0;
         padding: 0 2px;
       }
 
       .avatar-wrapper {
-        max-width: 7.5em;
+        max-width: 6.5em;
 
         .user-display-name {
-          max-width: 5.5em;
+          max-width: 4.8em;
         }
 
         /* 窄屏隐藏 (username)，腾出空间给账套名；完整信息仍在下拉菜单 */

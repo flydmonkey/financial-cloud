@@ -143,7 +143,7 @@
             @node-click="handleTreeNodeClick"
           />
         </div>
-        <div class="sub-ledger-table table-scroll-x">
+        <div class="sub-ledger-table table-scroll-x table-scroll-x--wide">
           <el-table
             v-loading="loading"
             :data="recordsList"
@@ -153,6 +153,7 @@
             :summary-method="handleSummaryMethod2"
             :span-method="objectSpanMethod"
             border
+            style="min-width: 780px"
           >
             <el-table-column
               label="日期"
@@ -160,6 +161,7 @@
               prop="voucherDate"
               min-width="100"
               class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             />
             <el-table-column
               label="凭证字号"
@@ -168,6 +170,7 @@
               prop="word"
               min-width="110"
               class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             >
               <template #default="scope">
                 <el-link
@@ -193,6 +196,8 @@
               align="right"
               prop="debitAmount"
               min-width="110"
+              class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             >
               <template #default="scope">
                 {{ formatAmount(scope.row.debitAmount, '') }}
@@ -203,6 +208,8 @@
               align="right"
               prop="creditAmount"
               min-width="110"
+              class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             >
               <template #default="scope">
                 {{ formatAmount(scope.row.creditAmount, '') }}
@@ -213,6 +220,8 @@
               align="right"
               prop="subjectBalance"
               min-width="110"
+              class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             >
               <template #default="scope">
                 {{ formatAmount(scope.row.subjectBalance, '') }}

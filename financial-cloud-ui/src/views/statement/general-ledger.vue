@@ -173,12 +173,15 @@
           v-loading="loading"
           :data="recordsList"
           border
+          style="min-width: 960px"
           :span-method="spanMethod"
         >
         <el-table-column
           prop="subjectCode"
           label="科目编码"
           min-width="110"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="{ row }">
             <el-link
@@ -195,22 +198,30 @@
           label="科目名称"
           min-width="140"
           show-overflow-tooltip
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="period"
           label="期间"
           width="100"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="summary"
           label="摘要"
           width="110"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="debit"
           label="借方"
           align="right"
           min-width="120"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="{ row }">
             {{ formatAmount(row.debit, '') }}
@@ -221,6 +232,8 @@
           label="贷方"
           align="right"
           min-width="120"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="{ row }">
             {{ formatAmount(row.credit, '') }}
@@ -231,12 +244,16 @@
           label="方向"
           width="70"
           align="center"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="balance"
           label="余额"
           align="right"
           min-width="120"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="{ row }">
             {{ formatAmount(row.balance, '') }}

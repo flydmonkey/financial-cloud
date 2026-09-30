@@ -307,29 +307,58 @@ function handleSwitchBook(val: any) {
     align-items: flex-start;
     padding: 4px 0;
 
+    .left-main {
+      flex: 0 0 auto;
+
+      .logo {
+        margin-right: 8px;
+
+        :deep(.sidebar-logo) {
+          width: 28px;
+          height: 28px;
+        }
+
+        :deep(.sidebar-title) {
+          font-size: 16px;
+          letter-spacing: 0;
+        }
+
+        :deep(.sidebar-logo-link) {
+          gap: 6px;
+          padding: 0 6px;
+        }
+      }
+    }
+
     .right-menu {
-      margin-right: 12px;
+      margin-right: 8px;
       align-items: flex-start;
       padding: 6px 0;
+      flex: 1 1 auto;
       min-width: 0;
-      max-width: calc(100% - 96px);
+      max-width: none;
+      gap: 2px;
 
       .right-menu-item.book-context {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: auto minmax(7.5em, 1fr);
         grid-template-areas:
           "term term"
           "label select";
-        column-gap: 6px;
+        column-gap: 4px;
         row-gap: 4px;
         align-items: center;
         white-space: normal;
-        max-width: min(100%, 360px);
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: none;
+        padding: 0 4px;
       }
 
       .book-term {
         grid-area: term;
         white-space: nowrap;
+        font-size: 13px;
       }
 
       .book-divider {
@@ -344,23 +373,27 @@ function handleSwitchBook(val: any) {
       .navbar-book-select {
         grid-area: select;
         width: 100%;
+        min-width: 7.5em;
         max-width: 100%;
       }
 
       .avatar-box {
-        max-width: 100%;
+        flex: 0 0 auto;
+        max-width: 7.5em;
         min-width: 0;
+        padding: 0 2px;
       }
 
       .avatar-wrapper {
-        max-width: 140px;
+        max-width: 7.5em;
 
         .user-display-name {
-          max-width: 4.5em;
+          max-width: 5.5em;
         }
 
+        /* 窄屏隐藏 (username)，腾出空间给账套名；完整信息仍在下拉菜单 */
         .user-username {
-          flex: 0 0 auto;
+          display: none;
         }
       }
     }

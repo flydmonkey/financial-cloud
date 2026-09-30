@@ -102,11 +102,12 @@
           :lg="20"
           :xl="20"
         >
-          <div class="table-scroll-x">
+          <div class="table-scroll-x table-scroll-x--fill">
           <el-table
             v-loading="loading"
             :data="employeeList"
             border
+            style="width: 100%"
             @selection-change="handleSelectionChange"
           >
             <el-table-column
@@ -125,14 +126,14 @@
               prop="displayName"
               label="姓名"
               align="center"
-              min-width="60"
+              min-width="80"
               :show-overflow-tooltip="true"
             />
             <el-table-column
               prop="departmentName"
               label="所属部门"
               align="center"
-              min-width="80"
+              min-width="100"
               :show-overflow-tooltip="true"
             />
             <el-table-column
@@ -146,7 +147,9 @@
               label="性别"
               align="center"
               prop="gender"
-              min-width="45"
+              min-width="64"
+              class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             >
               <template #default="scope">
                 <span>{{ GendersEnum.getGenderName(scope.row.gender) }}</span>
@@ -156,7 +159,7 @@
               label="员工类型"
               align="center"
               prop="employeeType"
-              min-width="80"
+              min-width="90"
               :show-overflow-tooltip="true"
             >
               <template #default="scope">
@@ -170,7 +173,7 @@
               label="员工状态"
               align="center"
               prop="employeeStatus"
-              min-width="80"
+              min-width="90"
               :show-overflow-tooltip="true"
             >
               <template #default="scope">
@@ -184,7 +187,9 @@
               prop="status"
               :label="t('org.status')"
               align="center"
-              min-width="40"
+              min-width="64"
+              class-name="cell-nowrap"
+              label-class-name="cell-nowrap"
             >
               <template #default="scope">
                 <span v-if="scope.row.status === 1"><el-icon color="green"><SuccessFilled

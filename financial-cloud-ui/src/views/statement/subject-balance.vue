@@ -156,6 +156,7 @@
           :summary-method="handleSummaryMethod2"
           row-key="sourceId"
           height="590"
+          style="min-width: 1100px"
         >
           <el-table-column
             label="科目编码"
@@ -163,6 +164,8 @@
             prop="subjectCode"
             min-width="140"
             show-overflow-tooltip
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
           <template #default="scope">
             <el-link
@@ -180,6 +183,8 @@
           prop="subjectName"
           min-width="160"
           show-overflow-tooltip
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="scope">
             <div :style="{'text-indent': getSubjectIndent(scope.row.subjectCode) + 'em'}">
@@ -195,6 +200,9 @@
             prop="openingBalanceDebit"
             align="center"
             label="借方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               {{ formatAmount(scope.row.openingBalanceDebit, '') }}
@@ -204,6 +212,9 @@
             prop="openingBalanceCredit"
             align="center"
             label="贷方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               {{ formatAmount(scope.row.openingBalanceCredit, '') }}
@@ -218,6 +229,9 @@
             prop="currentPeriodDebit"
             align="center"
             label="借方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               {{ formatAmount(scope.row.currentPeriodDebit, '') }}
@@ -227,6 +241,9 @@
             prop="currentPeriodCredit"
             align="center"
             label="贷方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               {{ formatAmount(scope.row.currentPeriodCredit, '') }}
@@ -242,6 +259,9 @@
             prop="yearToDateDebit"
             align="center"
             label="借方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               {{ formatAmount(scope.row.yearToDateDebit, '') }}
@@ -251,6 +271,9 @@
             prop="yearToDateCredit"
             align="center"
             label="贷方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               {{ formatAmount(scope.row.yearToDateCredit, '') }}
@@ -266,6 +289,9 @@
             prop="closingBalanceDebit"
             align="center"
             label="借方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               <div :style="{backgroundColor: scope.row.closingBalanceDebit >= 0 ? '' : 'bisque'}">
@@ -277,6 +303,9 @@
             prop="closingBalanceCredit"
             align="center"
             label="贷方"
+            min-width="100"
+            class-name="cell-nowrap"
+            label-class-name="cell-nowrap"
           >
             <template #default="scope">
               <div :style="{backgroundColor: scope.row.closingBalanceCredit >= 0 ? '' : 'bisque'}">

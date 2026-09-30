@@ -124,15 +124,18 @@
       <h4 style="margin-top: 20px">
         核销记录
       </h4>
+      <div class="table-scroll-x">
       <el-table
         :data="history"
         border
+        style="min-width: 480px"
       >
         <el-table-column
           prop="writeoffDate"
           label="日期"
           width="120"
           class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="amount"
@@ -140,16 +143,21 @@
           align="right"
           width="120"
           class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="status"
           label="状态"
+          min-width="80"
           width="90"
           class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           label="操作"
           width="100"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         >
           <template #default="scope">
             <el-button
@@ -163,6 +171,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
     </el-card>
   </div>
 </template>

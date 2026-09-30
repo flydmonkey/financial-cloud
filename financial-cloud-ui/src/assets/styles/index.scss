@@ -236,6 +236,13 @@ aside {
   min-width: 1280px;
 }
 
+/* 桌面拉满内容区宽度；窄屏仍保底 min-width 以启用外层真横滑 */
+.table-scroll-x.table-scroll-x--fill .el-table {
+  width: 100%;
+  min-width: max(100%, 720px);
+  max-width: none;
+}
+
 /*
  * 禁止再走「外层 overflow:hidden + 压扁表宽」的 --fixed：
  * 窄屏下 el-table 内部横滑经常不生效，scrollLeft 外层也无变化。
@@ -268,6 +275,14 @@ aside {
 
 .cell-nowrap {
   white-space: nowrap;
+  word-break: keep-all;
+}
+
+.cell-nowrap .cell,
+.el-table .cell.cell-nowrap,
+.el-table th.cell-nowrap > .cell,
+.el-table td.cell-nowrap > .cell {
+  white-space: nowrap !important;
   word-break: keep-all;
 }
 

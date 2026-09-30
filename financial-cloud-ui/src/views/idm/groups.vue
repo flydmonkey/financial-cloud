@@ -43,10 +43,12 @@
           {{ t('org.button.deleteBatch') }}
         </el-button>
       </div>
+      <div class="table-scroll-x table-scroll-x--fill">
       <el-table
         v-loading="loading"
         border
         :data="groupList"
+        style="width: 100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column
@@ -65,8 +67,10 @@
           prop="roleName"
           :label="t('jbx.roles.name')"
           align="center"
-          min-width="100"
+          min-width="140"
           :show-overflow-tooltip="true"
+          class-name="cell-nowrap"
+          label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="category"
@@ -111,6 +115,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
       <pagination
         v-show="total > 0"
         v-model:page="queryParams.pageNumber"

@@ -4,6 +4,7 @@
       <el-form
         :inline="true"
         :model="query"
+        class="writeoff-toolbar"
       >
         <el-form-item label="类型">
           <el-radio-group
@@ -25,7 +26,7 @@
             placeholder="客户/供应商辅助ID"
           />
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="writeoff-actions">
           <el-button
             type="primary"
             @click="reload"
@@ -53,6 +54,7 @@
         style="margin-bottom: 12px"
       />
 
+      <div class="table-scroll-x">
       <el-table
         v-loading="loading"
         :data="openItems"
@@ -117,6 +119,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <h4 style="margin-top: 20px">
         核销记录
@@ -128,17 +131,21 @@
         <el-table-column
           prop="writeoffDate"
           label="日期"
-          width="160"
+          width="120"
+          class-name="cell-nowrap"
         />
         <el-table-column
           prop="amount"
           label="金额"
           align="right"
+          width="120"
+          class-name="cell-nowrap"
         />
         <el-table-column
           prop="status"
           label="状态"
-          width="100"
+          width="90"
+          class-name="cell-nowrap"
         />
         <el-table-column
           label="操作"
@@ -254,3 +261,18 @@ async function onReverse(id: string) {
 
 onMounted(reload)
 </script>
+
+<style scoped>
+.writeoff-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+}
+.writeoff-actions :deep(.el-form-item__content) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+</style>

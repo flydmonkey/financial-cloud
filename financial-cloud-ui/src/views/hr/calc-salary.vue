@@ -95,9 +95,10 @@
         type="info"
         :closable="false"
         show-icon
-        title="普通员工个税已按综合所得累计预扣计算（减除费用 5000×任职月数，并扣减本年已预扣）。"
         class="pit-hint"
-      />
+      >
+        普通员工个税已按综合所得累计预扣计算（减除费用 5000×任职月数，并扣减本年已预扣）。
+      </el-alert>
       <div class="btn-form">
         <el-button
           type="danger"
@@ -672,6 +673,24 @@ getList();
 <style lang="scss" scoped>
 .pit-hint {
   margin-bottom: 12px;
+}
+.pit-hint :deep(.el-alert__content),
+.pit-hint :deep(.el-alert__description) {
+  white-space: normal;
+  line-height: 1.45;
+  word-break: break-word;
+}
+@media (max-width: 768px) {
+  .payroll-guide :deep(.el-step__description) {
+    display: none;
+  }
+  .payroll-guide :deep(.el-step__title) {
+    white-space: nowrap;
+    font-size: 13px;
+  }
+  .payroll-guide :deep(.el-steps) {
+    overflow-x: auto;
+  }
 }
 
 .btn-form {

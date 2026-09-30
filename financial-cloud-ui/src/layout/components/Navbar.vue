@@ -10,13 +10,16 @@
     </div>
 
     <div class="right-menu">
-      <div class="right-menu-item">
-        <span>当前账期：{{ termCurrent }}</span>
-        <el-divider direction="vertical" />
-        <span>账套：</span>
+      <div class="right-menu-item book-context">
+        <span class="book-term">当前账期：{{ termCurrent }}</span>
+        <el-divider
+          class="book-divider"
+          direction="vertical"
+        />
+        <span class="book-label">账套：</span>
         <el-select
           v-model="currentSet"
-          style="width: 250px;"
+          class="navbar-book-select"
           @change="handleSwitchBook"
         >
           <el-option
@@ -154,7 +157,8 @@ function handleSwitchBook(val: any) {
   z-index: 1001;
   width: 100%;
   height: $base-navbar-height;
-  overflow: hidden;
+  min-height: $base-navbar-height;
+  overflow: visible;
   background: #fff;
   display: flex;
   justify-content: space-between;
@@ -222,11 +226,16 @@ function handleSwitchBook(val: any) {
     }
 
     .right-menu-item {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
       padding: 0 8px;
       color: #000000;
       cursor: pointer;
       outline: none;
       transition: background-color .3s;
+      max-width: min(100%, 520px);
 
       &.hover-effect {
         cursor: pointer;
@@ -242,6 +251,12 @@ function handleSwitchBook(val: any) {
       }
     }
 
+    .navbar-book-select {
+      width: min(250px, 42vw);
+      min-width: 0;
+      max-width: 100%;
+    }
+
     .avatar-box {
       height: $base-navbar-height;
       line-height: normal;
@@ -249,7 +264,6 @@ function handleSwitchBook(val: any) {
 
     .avatar-wrapper {
       height: $base-navbar-height;
-
       display: flex;
       justify-content: flex-start;
       align-items: center;
@@ -259,6 +273,51 @@ function handleSwitchBook(val: any) {
         width: 24px;
         height: 24px;
         border-radius: 50%;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    height: auto;
+    align-items: flex-start;
+    padding: 4px 0;
+
+    .right-menu {
+      margin-right: 12px;
+      align-items: flex-start;
+      padding: 6px 0;
+
+      .right-menu-item.book-context {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+          "term term"
+          "label select";
+        column-gap: 6px;
+        row-gap: 4px;
+        align-items: center;
+        white-space: normal;
+        max-width: min(100%, 360px);
+      }
+
+      .book-term {
+        grid-area: term;
+        white-space: nowrap;
+      }
+
+      .book-divider {
+        display: none;
+      }
+
+      .book-label {
+        grid-area: label;
+        white-space: nowrap;
+      }
+
+      .navbar-book-select {
+        grid-area: select;
+        width: 100%;
+        max-width: 100%;
       }
     }
   }

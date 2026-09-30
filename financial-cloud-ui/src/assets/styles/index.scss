@@ -195,12 +195,49 @@ aside {
 
   .btn-form {
     margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
 
     .btn-form-right {
-      float: right;
+      float: none;
+      margin-left: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
     }
   }
 
+}
+
+/* 宽表区域横滑：仅表内横滑，避免整页出现横向滚动条 */
+.table-scroll-x {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll-x .el-table {
+  min-width: 720px;
+}
+
+.table-scroll-x.table-scroll-x--wide .el-table {
+  min-width: 960px;
+}
+
+.toolbar-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-nowrap {
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 @media print {

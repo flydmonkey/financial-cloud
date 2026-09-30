@@ -2634,6 +2634,23 @@ onBeforeUpdate(() => {
     background: #fff;
   }
 
+  @media (max-width: 900px) {
+    .workspace-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .workspace-toolbar-spacer {
+      display: none;
+    }
+
+    .workspace-toolbar-main,
+    .workspace-toolbar-status {
+      justify-content: flex-start;
+      flex: 1 1 auto;
+    }
+  }
+
   .posted-edit-alert {
     margin: 0 0 12px;
   }
@@ -2685,12 +2702,12 @@ onBeforeUpdate(() => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.3;
     color: $primary-color;
     padding: 4px 12px;
-    border: 1px solid #d0d0d0;
-    background: #fff;
+    border: 1px solid #c6d4f0;
+    background: #f3f7ff;
     border-radius: 4px;
 
     em {
@@ -2700,7 +2717,7 @@ onBeforeUpdate(() => {
     }
 
     strong {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
     }
   }
@@ -2837,15 +2854,21 @@ onBeforeUpdate(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+      min-width: 0;
 
       &-left {
-
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
       }
 
       &-right {
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        flex: 0 0 auto;
+        white-space: nowrap;
       }
 
       .company-info-item {
@@ -2853,21 +2876,32 @@ onBeforeUpdate(() => {
         font-size: inherit;
         font-weight: normal;
         color: $primary-color !important;
+        white-space: nowrap;
+        word-break: keep-all;
+      }
+
+      &-left .company-info-item,
+      &-left .company-info-item :deep(.el-input),
+      &-left .company-info-item :deep(.el-input__wrapper),
+      &-left .company-info-item :deep(.el-input__inner) {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
 
     .voucher-sheet {
       width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
 
       .rv-table {
+        min-width: 720px;
 
         :deep(.el-table__body-wrapper),
         :deep(.el-scrollbar__wrap) {
-          overflow: hidden !important;
-        }
-
-        :deep(.el-scrollbar__bar) {
-          display: none !important;
+          overflow-x: auto !important;
         }
 
         :deep(.el-table__inner-wrapper::before) {

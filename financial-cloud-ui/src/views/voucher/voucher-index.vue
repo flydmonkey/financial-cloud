@@ -131,18 +131,19 @@
         </div>
       </div>
 
-      <el-table
-        v-loading="loading"
-        max-height="620"
-        :data="tableRows"
-        border
-        row-key="rowKey"
-        :span-method="spanMethod"
-        :row-class-name="tableRowClassName"
-        show-summary
-        :summary-method="getSummaries"
-        @selection-change="handleSelectionChange"
-      >
+      <div class="table-scroll-x table-scroll-x--wide">
+        <el-table
+          v-loading="loading"
+          max-height="620"
+          :data="tableRows"
+          border
+          row-key="rowKey"
+          :span-method="spanMethod"
+          :row-class-name="tableRowClassName"
+          show-summary
+          :summary-method="getSummaries"
+          @selection-change="handleSelectionChange"
+        >
         <el-table-column
           type="selection"
           width="42"
@@ -164,8 +165,9 @@
         <el-table-column
           label="凭证字号"
           align="center"
-          width="88"
+          min-width="110"
           fixed="left"
+          class-name="cell-nowrap"
         >
           <template #default="scope">
             <el-link
@@ -370,6 +372,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <pagination
         v-show="total>0"
@@ -1355,7 +1358,7 @@ getList();
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
@@ -1366,6 +1369,19 @@ getList();
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+    flex: 1 1 280px;
+  }
+
+  .toolbar-right {
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 768px) {
+    .toolbar-left,
+    .toolbar-right {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+    }
   }
 
   .toolbar-label {
@@ -1395,7 +1411,15 @@ getList();
 
   .toolbar-delete-wrap {
     display: inline-flex;
+    align-items: center;
     vertical-align: middle;
+
+    :deep(.el-button.is-disabled) {
+      opacity: 1;
+      color: var(--el-color-danger-light-3);
+      background: var(--el-color-danger-light-9);
+      border-color: var(--el-color-danger-light-5);
+    }
   }
 }
 

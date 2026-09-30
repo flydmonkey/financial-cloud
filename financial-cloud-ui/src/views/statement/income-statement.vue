@@ -142,77 +142,80 @@
         </div>
       </div>
 
-      <el-table
-        v-loading="loading"
-        :data="statementIncomeList"
-        border
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        row-key="id"
-        default-expand-all
-        height="610"
-      >
-        <el-table-column
-          label="项目"
-          align="left"
-          header-align="center"
-          prop="itemName"
-          width="500"
+      <div class="table-scroll-x">
+        <el-table
+          v-loading="loading"
+          :data="statementIncomeList"
+          border
+          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          row-key="id"
+          default-expand-all
+          height="610"
         >
-          <template #default="scope">
-            <span
-              :style="{'text-indent': scope.row.level + 'em',
-                       display: 'inline-block', 'margin-right': '30px'}"
-            >
-              <el-link
-                v-if="!ableEdit && scope.row.itemCode && scope.row.itemCode.length > 1"
-                type="primary"
-                :underline="false"
-                @click="openDrill(scope.row)"
+          <el-table-column
+            label="项目"
+            align="left"
+            header-align="center"
+            prop="itemName"
+            min-width="220"
+            class-name="is-name-col"
+          >
+            <template #default="scope">
+              <span
+                class="is-name-cell"
+                :style="{'text-indent': scope.row.level + 'em'}"
               >
-                {{ scope.row.itemName }}
-              </el-link>
-              <template v-else>
-                {{ scope.row.itemName }}
-              </template>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="行次"
-          align="center"
-          prop="sortIndex"
-          width="100"
-        />
-        <el-table-column
-          label="本月金额"
-          align="right"
-          header-align="center"
-          width="160"
-          prop="currentBalance"
-        >
-          <template #default="scope">
-            {{ formatAmount(scope.row.currentBalance, '') }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="本年累计金额"
-          align="right"
-          header-align="center"
-          width="160"
-          prop="cumulativeBalance"
-        >
-          <template #default="scope">
-            {{ formatAmount(scope.row.cumulativeBalance, '') }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          v-if="ableEdit"
-          label="操作"
-          align="center"
-          header-align="center"
-          width="160"
-          prop="cumulativeBalance"
-        >
+                <el-link
+                  v-if="!ableEdit && scope.row.itemCode && scope.row.itemCode.length > 1"
+                  type="primary"
+                  :underline="false"
+                  @click="openDrill(scope.row)"
+                >
+                  {{ scope.row.itemName }}
+                </el-link>
+                <template v-else>
+                  {{ scope.row.itemName }}
+                </template>
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="行次"
+            align="center"
+            prop="sortIndex"
+            width="64"
+            class-name="cell-nowrap"
+          />
+          <el-table-column
+            label="本月金额"
+            align="right"
+            header-align="center"
+            min-width="120"
+            prop="currentBalance"
+          >
+            <template #default="scope">
+              {{ formatAmount(scope.row.currentBalance) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="本年累计金额"
+            align="right"
+            header-align="center"
+            min-width="130"
+            prop="cumulativeBalance"
+          >
+            <template #default="scope">
+              {{ formatAmount(scope.row.cumulativeBalance) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="ableEdit"
+            label="操作"
+            align="center"
+            header-align="center"
+            width="72"
+            prop="cumulativeBalance"
+          >
           <template #default="scope">
             <!--
            <el-tooltip content="新增/编辑">
@@ -239,7 +242,8 @@
             暂无数据
           </div>
         </template>
-      </el-table>
+        </el-table>
+      </div>
     </el-card>
 
     <el-dialog
@@ -420,7 +424,7 @@
               prop="closingBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.closingBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.closingBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -430,7 +434,7 @@
               prop="openingYearBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.openingYearBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.openingYearBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -589,7 +593,7 @@ function openDrill(row: any) {
 /** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
 function handlePrint() {
   const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const amt = (v: any) => formatAmount(v, '')
+  const amt = (v: any) => formatAmount(v)
   const body = statementIncomeList.value.map((row: any) => `<tr>
     <td>${esc('　'.repeat(Math.max(0, (row.level || 1) - 1)) + (row.itemName || ''))}</td>
     <td class="c">${esc(row.sortIndex ?? '')}</td>
@@ -789,5 +793,17 @@ getList();
 
 .common-card {
   margin-bottom: 15px;
+}
+
+.is-name-cell {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+:deep(.is-name-col .cell) {
+  white-space: nowrap;
+  word-break: keep-all;
 }
 </style>

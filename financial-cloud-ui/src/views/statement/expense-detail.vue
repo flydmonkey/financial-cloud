@@ -13,6 +13,7 @@
           >
             <el-date-picker
               v-model="queryParams.dateRange"
+              class="expense-period-picker"
               type="monthrange"
               unlink-panels
               range-separator="至"
@@ -115,6 +116,7 @@
         </div>
       </div>
 
+      <div class="table-scroll-x table-scroll-x--wide">
       <el-table
         :key="tableKey"
         v-loading="loading"
@@ -166,6 +168,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
     </el-card>
   </div>
 </template>
@@ -328,6 +331,24 @@ function applyExpandState() {
   })
 }
 
+function expandMonths(range: string[]): string[] {
+  if (!range || range.length !== 2 || !range[0] || !range[1]) {
+    return []
+  }
+  const result: string[] = []
+  let [y, m] = range[0].split('-').map(Number)
+  const [ey, em] = range[1].split('-').map(Number)
+  while (y < ey || (y === ey && m <= em)) {
+    result.push(`${y}-${String(m).padStart(2, '0')}`)
+    m += 1
+    if (m > 12) {
+      m = 1
+      y += 1
+    }
+  }
+  return result
+}
+
 function getList() {
   if (!queryParams.dateRange || queryParams.dateRange.length !== 2) {
     ElMessage.warning('请选择起始月份和结束月份')
@@ -338,7 +359,9 @@ function getList() {
   getExpenseDetail(buildQuery()).then((response: { data?: ExpenseDetailReport }) => {
     const report = response.data || {}
     recordsList.value = report.items || []
-    periods.value = report.periods || []
+    // 表头期间与筛选期间同步，避免仅依赖接口 periods 导致缺列
+    const fromFilter = expandMonths(queryParams.dateRange)
+    periods.value = fromFilter.length ? fromFilter : (report.periods || [])
     yearLabel.value = report.yearLabel || '区间合计'
     totals.value = report.totals || {}
     applyExpandState()
@@ -418,8 +441,16 @@ onMounted(async () => {
   background-color: #f5f7fa;
 }
 
+.queryForm :deep(.el-form) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.expense-period-picker {
+  width: min(280px, 100%);
+}
 .subject-tree-select {
-  width: 360px;
+  width: min(360px, 100%);
 
   :deep(.el-select__wrapper) {
     flex-wrap: nowrap;

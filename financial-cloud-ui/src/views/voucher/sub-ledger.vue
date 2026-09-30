@@ -120,8 +120,8 @@
         <el-button type="primary" @click="handlePrint">打印</el-button>
         <el-button @click="handleExportPdf">导出 PDF</el-button>
       </div>
-      <div style="display: flex;justify-content: flex-start">
-        <div style="width: 300px;display: inline-block">
+      <div class="sub-ledger-layout">
+        <div class="sub-ledger-tree">
           <el-input
             v-model="filterSubject"
             style="width: 95%;margin-bottom: 10px"
@@ -143,7 +143,7 @@
             @node-click="handleTreeNodeClick"
           />
         </div>
-        <div style="width: calc(100% - 320px);margin-left: 20px;display: inline-block">
+        <div class="sub-ledger-table table-scroll-x">
           <el-table
             v-loading="loading"
             :data="recordsList"
@@ -158,12 +158,16 @@
               label="日期"
               align="center"
               prop="voucherDate"
+              min-width="100"
+              class-name="cell-nowrap"
             />
             <el-table-column
               label="凭证字号"
               align="left"
               header-align="center"
               prop="word"
+              min-width="110"
+              class-name="cell-nowrap"
             >
               <template #default="scope">
                 <el-link
@@ -182,11 +186,13 @@
               align="left"
               header-align="center"
               prop="summary"
+              min-width="140"
             />
             <el-table-column
               label="借方金额"
               align="right"
               prop="debitAmount"
+              min-width="110"
             >
               <template #default="scope">
                 {{ formatAmount(scope.row.debitAmount, '') }}
@@ -196,6 +202,7 @@
               label="贷方金额"
               align="right"
               prop="creditAmount"
+              min-width="110"
             >
               <template #default="scope">
                 {{ formatAmount(scope.row.creditAmount, '') }}
@@ -205,6 +212,7 @@
               label="余额"
               align="right"
               prop="subjectBalance"
+              min-width="110"
             >
               <template #default="scope">
                 {{ formatAmount(scope.row.subjectBalance, '') }}
@@ -584,6 +592,29 @@ onActivated(() => {
 </script>
 
 <style lang="scss" scoped>
+.sub-ledger-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+.sub-ledger-tree {
+  width: 300px;
+  flex: 0 0 300px;
+}
+.sub-ledger-table {
+  flex: 1 1 360px;
+  min-width: 0;
+  width: calc(100% - 320px);
+}
+@media (max-width: 900px) {
+  .sub-ledger-tree,
+  .sub-ledger-table {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+}
+
 .app-container {
   padding: 0;
   background-color: #f5f7fa;

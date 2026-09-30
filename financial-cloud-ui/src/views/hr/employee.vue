@@ -60,7 +60,7 @@
       </div>
       <el-row :gutter="20">
         <el-col
-          :xs="8"
+          :xs="24"
           :sm="6"
           :md="6"
           :lg="4"
@@ -95,12 +95,13 @@
           </el-tree>
         </el-col>
         <el-col
-          :xs="16"
+          :xs="24"
           :sm="18"
           :md="18"
           :lg="20"
           :xl="20"
         >
+          <div class="table-scroll-x">
           <el-table
             v-loading="loading"
             :data="employeeList"
@@ -215,7 +216,11 @@
                 </el-tooltip>
               </template>
             </el-table-column>
+            <template #empty>
+              <span>暂无数据</span>
+            </template>
           </el-table>
+          </div>
           <pagination
             v-show="total>0"
             v-model:page="queryParams.pageNum"

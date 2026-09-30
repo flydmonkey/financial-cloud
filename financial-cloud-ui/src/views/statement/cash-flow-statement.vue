@@ -150,37 +150,39 @@
           </el-button>
         </div>
       </div>
-      <el-table
-        v-loading="loading"
-        :data="cashFlowStatementList"
-        border
-        height="600"
-        stripe
-      >
-        <el-table-column
-          prop="itemName"
-          label="项目"
-          align="left"
-          min-width="160"
-          :show-overflow-tooltip="true"
+      <div class="table-scroll-x table-scroll-x--wide">
+        <el-table
+          v-loading="loading"
+          :data="cashFlowStatementList"
+          border
+          height="600"
+          stripe
         >
-          <template #default="scope">
-            <span :class="{ 'indented-item': scope.row.isTitle !== 1 }">{{ scope.row.itemName }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="sortIndex"
-          label="行次"
-          align="center"
-          min-width="20"
-        />
-        <el-table-column
-          prop="monthlyAmount"
-          :label="monthlyAmountLabel"
-          align="right"
-          min-width="100"
-          :show-overflow-tooltip="true"
-        >
+          <el-table-column
+            prop="itemName"
+            label="项目"
+            align="left"
+            min-width="220"
+            :show-overflow-tooltip="true"
+          >
+            <template #default="scope">
+              <span :class="{ 'indented-item': scope.row.isTitle !== 1 }">{{ scope.row.itemName }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="sortIndex"
+            label="行次"
+            align="center"
+            width="56"
+            class-name="cell-nowrap"
+          />
+          <el-table-column
+            prop="monthlyAmount"
+            :label="monthlyAmountLabel"
+            align="right"
+            min-width="120"
+            :show-overflow-tooltip="true"
+          >
           <template #default="{ row }">
             <template
               v-if="['1-jy-xjll', '12-tz-xjll', '25-cz-xjll', '39-xj-bczl',
@@ -228,7 +230,7 @@
           prop="currentAmount"
           label="本年累计金额"
           align="right"
-          min-width="100"
+          min-width="120"
           :show-overflow-tooltip="true"
         >
           <template #default="scope">
@@ -246,7 +248,8 @@
             </template>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
     </el-card>
     <el-dialog
       v-model="dialogOpen"
@@ -652,6 +655,13 @@ getList();
 
 .indented-item {
   padding-left: 32px; /* 或者使用 margin-left */
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+:deep(.cell-nowrap .cell) {
+  white-space: nowrap;
+  word-break: keep-all;
 }
 
 .clickable-amount {

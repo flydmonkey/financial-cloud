@@ -56,7 +56,7 @@
           <template #prepend>
             <svg-icon
               icon-class="password2"
-              color="#ffd700"
+              color="#000000"
             />
           </template>
         </el-input>

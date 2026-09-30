@@ -76,7 +76,9 @@
 .el-table {
 	.el-table__header-wrapper, .el-table__fixed-header-wrapper {
 		th {
-			word-break: break-word;
+			/* keep-all + nowrap：避免窄屏把中文表头压成单字竖排 */
+			word-break: keep-all;
+			white-space: nowrap;
 			background-color: #f8f8f9 !important;
 			color: #515a6e;
 			height: 40px !important;

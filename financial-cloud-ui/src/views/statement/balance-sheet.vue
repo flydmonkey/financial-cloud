@@ -153,7 +153,10 @@
         </div>
       </div>
 
-      <div ref="printArea">
+      <div
+        ref="printArea"
+        class="table-scroll-x table-scroll-x--wide"
+      >
         <el-table
           id="export-table"
           v-loading="loading"
@@ -169,11 +172,14 @@
             align="left"
             header-align="left"
             prop="itemName"
+            min-width="180"
+            class-name="bs-name-col"
           >
             <template #default="scope">
               <span
+                class="bs-name-cell"
                 :style="{'text-indent': scope.row.level + 'em',
-                         display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.level === 1 ? 'bold' : ''}"
+                         fontWeight: scope.row.level === 1 ? 'bold' : ''}"
               >
                 {{ scope.row.symbol === '-' ? '减：' : '' }}
                 <el-link
@@ -194,35 +200,36 @@
             label="行次"
             align="center"
             prop="sortIndex"
-            width="100"
+            width="64"
+            class-name="cell-nowrap"
           />
           <el-table-column
             label="期末余额"
             align="right"
             header-align="center"
-            width="140"
+            min-width="120"
             prop="currentBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.currentBalance, '') }}
+              {{ formatAmount(scope.row.currentBalance) }}
             </template>
           </el-table-column>
           <el-table-column
             label="年初余额"
             align="right"
             header-align="center"
-            width="140"
+            min-width="120"
             prop="initialBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.initialBalance, '') }}
+              {{ formatAmount(scope.row.initialBalance) }}
             </template>
           </el-table-column>
           <el-table-column
             v-if="ableEdit"
             label="操作"
             align="center"
-            width="100"
+            width="72"
           >
             <template #default="scope">
               <div v-if="scope.row.itemName !='' ">
@@ -245,11 +252,14 @@
             header-align="left"
             align="left"
             prop="liabilityItemName"
+            min-width="180"
+            class-name="bs-name-col"
           >
             <template #default="scope">
               <span
+                class="bs-name-cell"
                 :style="{'text-indent': scope.row.liabilityLevel + 'em',
-                         display: 'inline-block', 'margin-right': '30px', fontWeight: scope.row.liabilityLevel === 1 ? 'bold' : ''}"
+                         fontWeight: scope.row.liabilityLevel === 1 ? 'bold' : ''}"
               >
                 {{ scope.row.liabilitySymbol === '-' ? '减：' : '' }}
                 <el-link
@@ -269,29 +279,30 @@
           <el-table-column
             label="行次"
             align="center"
-            width="100"
+            width="64"
             prop="liabilitySortIndex"
+            class-name="cell-nowrap"
           />
           <el-table-column
             label="期末余额"
             align="right"
             header-align="center"
-            width="140"
+            min-width="120"
             prop="liabilityCurrentBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.liabilityCurrentBalance, '') }}
+              {{ formatAmount(scope.row.liabilityCurrentBalance) }}
             </template>
           </el-table-column>
           <el-table-column
             label="年初余额"
             align="right"
             header-align="center"
-            width="140"
+            min-width="120"
             prop="liabilityInitialBalance"
           >
             <template #default="scope">
-              {{ formatAmount(scope.row.liabilityInitialBalance, '') }}
+              {{ formatAmount(scope.row.liabilityInitialBalance) }}
             </template>
           </el-table-column>
 
@@ -299,7 +310,7 @@
             v-if="ableEdit"
             label="操作"
             align="center"
-            width="100"
+            width="72"
           >
             <template #default="scope">
               <div v-if="scope.row.liabilityItemName !='' ">
@@ -506,7 +517,7 @@
               prop="closingBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.closingBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.closingBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -516,7 +527,7 @@
               prop="openingYearBalance"
             >
               <template #default="scope">
-                <span>{{ formatAmount(scope.row.openingYearBalance, '') }}</span>
+                <span>{{ formatAmount(scope.row.openingYearBalance) }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -808,7 +819,7 @@ function openDrill(row: any, side: 'asset' | 'liability') {
 /** 打印：新窗口渲染简洁表格并自动唤起打印（可另存 PDF） */
 function handlePrint() {
   const esc = (v: any) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const amt = (v: any) => formatAmount(v, '')
+  const amt = (v: any) => formatAmount(v)
   const name = (level: any, itemName: any, symbol: any) =>
     '　'.repeat(Math.max(0, (level || 1) - 1)) + (symbol === '-' ? '减：' : '') + (itemName || '')
   const body = balanceSheetList.value.map((row: any) => `<tr>
@@ -950,4 +961,16 @@ getList();
   background-color: #f5f7fa;
 }
 
+.bs-name-cell {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  word-break: keep-all;
+  vertical-align: middle;
+}
+
+:deep(.bs-name-col .cell) {
+  white-space: nowrap;
+  word-break: keep-all;
+}
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="app-container fixed-asset-card">
-    <el-row :gutter="12">
-      <el-col :span="4">
+    <el-row :gutter="12" class="fixed-asset-layout">
+      <el-col :xs="24" :sm="6" :md="4">
         <el-card class="common-card category-side">
           <div class="side-title">
             资产类别
@@ -23,7 +23,7 @@
           </el-menu>
         </el-card>
       </el-col>
-      <el-col :span="20">
+      <el-col :xs="24" :sm="18" :md="20">
         <el-card class="common-card query-box">
           <el-form
             :model="queryParams"
@@ -72,7 +72,7 @@
                 />
               </el-select>
             </el-form-item>
-            <el-form-item>
+            <el-form-item class="card-actions">
               <el-button @click="handleQuery">
                 查询
               </el-button>
@@ -93,7 +93,7 @@
                 :http-request="importExcel"
                 :before-upload="beforeImportUpload"
                 accept=".xls,.xlsx"
-                style="display: inline-block; margin: 0 8px"
+                class="card-upload"
               >
                 <el-button>
                   导入
@@ -107,6 +107,7 @@
         </el-card>
 
         <el-card class="common-card">
+          <div class="table-scroll-x table-scroll-x--wide">
           <el-table
             v-loading="loading"
             border
@@ -269,6 +270,7 @@
               </template>
             </el-table-column>
           </el-table>
+          </div>
           <pagination
             v-show="total > 0"
             v-model:page="queryParams.pageNumber"
@@ -1477,8 +1479,26 @@ getList()
 </script>
 
 <style scoped>
+.fixed-asset-layout {
+  align-items: flex-start;
+}
+.card-actions :deep(.el-form-item__content) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.card-upload {
+  display: inline-flex;
+}
 .category-side {
   min-height: 520px;
+}
+@media (max-width: 768px) {
+  .category-side {
+    min-height: auto;
+    margin-bottom: 12px;
+  }
 }
 .side-title {
   font-weight: 600;

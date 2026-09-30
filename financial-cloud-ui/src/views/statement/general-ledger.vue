@@ -168,12 +168,13 @@
           ／ 贷方余额合计 {{ formatAmount(closingCreditTotal, '') }}
         </div>
       </div>
-      <el-table
-        v-loading="loading"
-        :data="recordsList"
-        border
-        :span-method="spanMethod"
-      >
+      <div class="table-scroll-x table-scroll-x--wide">
+        <el-table
+          v-loading="loading"
+          :data="recordsList"
+          border
+          :span-method="spanMethod"
+        >
         <el-table-column
           prop="subjectCode"
           label="科目编码"
@@ -242,6 +243,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
       <div class="footer-count">
         共 {{ subjectCount }} 条
       </div>

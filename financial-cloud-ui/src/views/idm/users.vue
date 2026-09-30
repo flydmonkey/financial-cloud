@@ -656,7 +656,16 @@ getList();
 
 .button-top {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 10px;
+}
+.button-top > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 </style>

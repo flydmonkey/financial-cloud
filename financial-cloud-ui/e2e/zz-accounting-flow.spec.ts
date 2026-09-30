@@ -77,14 +77,20 @@ test.describe.serial('accounting lifecycle', () => {
     })
 
     test('settlement verify (结账试算) passes', async ({request}) => {
-        await fixVoucherNumbering(request, ctx.headers)
         await cleanupBlockingVouchersForSettlement(request, ctx.headers)
         await prepareRequiredCarryForClose(request, ctx.headers, ctx.bookId)
+        await fixVoucherNumbering(request, ctx.headers)
         const res = await request.get('/api/settlement/verify', {headers: ctx.headers})
         expect(res.ok()).toBeTruthy()
         const body = await res.json()
-        expect(body.code, body.message || 'verify failed').toBe(0)
         const checks = body.data || []
+        if (body.code !== 0) {
+            const failed = checks
+                .filter((item: any) => item.hard !== false && item.applicable !== false && !item.result)
+                .map((item: any) => `${item.item}:${item.reason || 'fail'}`)
+                .join(' | ')
+            expect(body.code, `${body.message || 'verify failed'}; ${failed}`).toBe(0)
+        }
         expect(checks.length).toBeGreaterThan(0)
         for (const item of checks) {
             expect(item.result, `结账检查未通过: ${item.item}`).toBeTruthy()

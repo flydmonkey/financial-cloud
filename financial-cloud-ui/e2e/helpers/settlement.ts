@@ -8,6 +8,7 @@ import {
 import {
     getVoucherDetail,
     runVoucherToPosted,
+    fixVoucherNumbering,
     tryCancelVoucher,
     tryDeleteVoucher,
     tryPostVoucher,
@@ -121,6 +122,8 @@ export async function verifySettlement(
     if (options?.prepareCarry !== false && options?.bookId) {
         await prepareRequiredCarryForClose(request, headers, options.bookId)
     }
+    // 清理/结转会删改凭证，必须在 verify 前整理号段
+    await fixVoucherNumbering(request, headers)
     const res = await request.get('/api/settlement/verify', {headers})
     expect(res.ok()).toBeTruthy()
     const body = await res.json()
@@ -150,6 +153,7 @@ export async function checkoutCurrentPeriod(
     bookId: string,
 ) {
     await prepareRequiredCarryForClose(request, headers, bookId)
+    await fixVoucherNumbering(request, headers)
     const closedTerm = await getCurrentTerm(request, headers, bookId)
     const year = closedTerm.slice(0, 4)
     const res = await request.get(`/api/settlement/checkout?year=${year}`, {headers})

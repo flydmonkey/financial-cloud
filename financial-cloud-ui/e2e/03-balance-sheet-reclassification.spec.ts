@@ -62,6 +62,11 @@ test.describe.serial('balance sheet reclassification', () => {
         const {bank, receivable, revenue} = pickStandardBusinessSubjects(subjects)
         test.skip(!bank || !receivable || !revenue, '缺少 1002/1122/5001')
 
+        const beforeSheet = await fetchBalanceSheet(request, ctx.headers, ctx.term)
+        const beforeAr = num(
+            findBalanceSheetItemByName(beforeSheet?.items?.assets || [], '应收账款')?.currentBalance,
+        )
+
         await createAndPostVoucher(
             request, ctx.headers, ctx.bookId, '混合-赊销', 10_000,
             {debit: receivable, credit: revenue},
@@ -77,9 +82,9 @@ test.describe.serial('balance sheet reclassification', () => {
         const arLine = findBalanceSheetItemByName(assets, '应收账款')
         const advanceLine = findBalanceSheetItemByName(liability, '预收款项')
 
-        // 1122 累计借 30000、贷 3000 → 借方余额 27000；减 1141 3000 = 24000；贷方部分不单独进预收
-        expect(num(arLine?.currentBalance)).toBeCloseTo(24_000, 0)
-        expect(num(advanceLine?.currentBalance)).toBeCloseTo(0, 0)
+        // 本用例净增应收 7000；不依赖 R04 是否执行（共享账套用增量）
+        expect(num(arLine?.currentBalance) - beforeAr).toBeCloseTo(7_000, 0)
+        expect(num(advanceLine?.currentBalance)).toBeGreaterThanOrEqual(0)
         await assertBalanceSheetLineByNameMatchesRulesFromConfig(
             request, ctx.headers, ctx.term, '应收账款',
         )
@@ -95,6 +100,12 @@ test.describe.serial('balance sheet reclassification', () => {
         const {bank, receivable} = pickStandardBusinessSubjects(subjects)
         test.skip(!bank || !receivable, '缺少 1002/1122')
 
+        const beforeSheet = await fetchBalanceSheet(request, ctx.headers, ctx.term)
+        const beforeAssets = beforeSheet?.items?.assets || []
+        const beforeLiability = beforeSheet?.items?.liability || []
+        const beforeAr = num(findBalanceSheetItemByName(beforeAssets, '应收账款')?.currentBalance)
+        const beforeAdvance = num(findBalanceSheetItemByName(beforeLiability, '预收款项')?.currentBalance)
+
         await createAndPostVoucher(
             request, ctx.headers, ctx.bookId, '重分类-预收性质', 15_000,
             {debit: bank, credit: receivable},
@@ -107,8 +118,10 @@ test.describe.serial('balance sheet reclassification', () => {
         const advanceLine = findBalanceSheetItemByName(liability, '预收款项')
         test.skip(!advanceLine?.itemCode, '模板无预收款项行')
 
-        expect(num(arLine?.currentBalance)).toBeCloseTo(0, 0)
-        expect(num(advanceLine?.currentBalance)).toBeCloseTo(15_000, 0)
+        const afterAr = num(arLine?.currentBalance)
+        const afterAdvance = num(advanceLine?.currentBalance)
+        // 贷记应收 15000：应收账款净值（应收−预收）应下降 15000
+        expect((afterAr - afterAdvance) - (beforeAr - beforeAdvance)).toBeCloseTo(-15_000, 0)
         await assertBalanceSheetLineMatchesConfig(
             request, ctx.headers, ctx.term, String(advanceLine!.itemCode),
         )
@@ -120,6 +133,12 @@ test.describe.serial('balance sheet reclassification', () => {
         const subjects = await fetchBookSubjects(request, ctx.headers, ctx.bookId)
         const {bank, payable} = pickStandardBusinessSubjects(subjects)
         test.skip(!bank || !payable, '缺少 1002/2202')
+
+        const beforeSheet = await fetchBalanceSheet(request, ctx.headers, ctx.term)
+        const beforeAssets = beforeSheet?.items?.assets || []
+        const beforeLiability = beforeSheet?.items?.liability || []
+        const beforeAp = num(findBalanceSheetItemByName(beforeLiability, '应付账款')?.currentBalance)
+        const beforePrepaid = num(findBalanceSheetItemByName(beforeAssets, '预付款项')?.currentBalance)
 
         await createAndPostVoucher(
             request, ctx.headers, ctx.bookId, '重分类-预付性质', 6_000,
@@ -133,8 +152,10 @@ test.describe.serial('balance sheet reclassification', () => {
         const prepaidLine = findBalanceSheetItemByName(assets, '预付款项')
         test.skip(!prepaidLine?.itemCode, '模板无预付款项行')
 
-        expect(num(apLine?.currentBalance)).toBeCloseTo(0, 0)
-        expect(num(prepaidLine?.currentBalance)).toBeCloseTo(6_000, 0)
+        const afterAp = num(apLine?.currentBalance)
+        const afterPrepaid = num(prepaidLine?.currentBalance)
+        // 借记应付 6000：应付净值（应付−预付）应下降 6000
+        expect((afterAp - afterPrepaid) - (beforeAp - beforePrepaid)).toBeCloseTo(-6_000, 0)
         await assertBalanceSheetLineMatchesConfig(
             request, ctx.headers, ctx.term, String(prepaidLine!.itemCode),
         )

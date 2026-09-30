@@ -5,7 +5,57 @@ import {
     findCarryTemplate,
     generateAndPostCarryByCode,
 } from './settlement-carry'
-import {getVoucherDetail, runVoucherToPosted} from './voucher'
+import {
+    getVoucherDetail,
+    runVoucherToPosted,
+    tryCancelVoucher,
+    tryDeleteVoucher,
+    tryPostVoucher,
+} from './voucher'
+
+/**
+ * 清理会阻断结账硬检的凭证：撤回待审、删除暂存、过账已审未过账。
+ * accounting 套件共享账套，前期用例会留下 reviewing/draft。
+ */
+export async function cleanupBlockingVouchersForSettlement(
+    request: APIRequestContext,
+    headers: Record<string, string>,
+) {
+    const term = await getCurrentTerm(request, headers, '')
+    const year = term.slice(0, 4)
+    const month = Number(term.slice(5, 7))
+    const res = await request.get(
+        `/api/voucher/fetch?pageNumber=1&pageSize=200&year=${year}&month=${month}`,
+        {headers},
+    )
+    if (!res.ok()) {
+        return
+    }
+    const body = await res.json()
+    const records = (body.data?.records || body.data || []) as Array<{
+        id: string
+        status?: string
+        senderId?: string | null
+    }>
+    for (const row of records) {
+        if (!row?.id) continue
+        if (row.status === 'reviewing') {
+            await tryCancelVoucher(request, headers, row.id)
+            await tryDeleteVoucher(request, headers, row.id)
+            continue
+        }
+        if (row.status === 'draft' || row.status === 'rejected') {
+            await tryDeleteVoucher(request, headers, row.id)
+            continue
+        }
+        if (row.status === 'completed' && !row.senderId) {
+            const posted = await tryPostVoucher(request, headers, row.id)
+            if (posted.code !== 0) {
+                await tryDeleteVoucher(request, headers, row.id)
+            }
+        }
+    }
+}
 
 /** Ensure required month-end hard gates can pass (损益结转 posted). */
 export async function prepareRequiredCarryForClose(
@@ -13,6 +63,7 @@ export async function prepareRequiredCarryForClose(
     headers: Record<string, string>,
     bookId: string,
 ) {
+    await cleanupBlockingVouchersForSettlement(request, headers)
     const term = await getCurrentTerm(request, headers, bookId)
     const codes = ['qm_jz_sr', 'qm_jz_cbfy']
     if (term.endsWith('-12')) {
@@ -65,6 +116,7 @@ export async function verifySettlement(
     headers: Record<string, string>,
     options?: {prepareCarry?: boolean; bookId?: string},
 ) {
+    await cleanupBlockingVouchersForSettlement(request, headers)
     if (options?.prepareCarry !== false && options?.bookId) {
         await prepareRequiredCarryForClose(request, headers, options.bookId)
     }

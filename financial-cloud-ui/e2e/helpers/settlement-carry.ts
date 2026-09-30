@@ -74,6 +74,13 @@ export async function generateAndPostCarryByCode(
     const template = findCarryTemplate(templates, templateCode)
     expect(template, `缺少结转模板 ${templateCode}`).toBeTruthy()
     const gen = await generateCarryVoucher(request, headers, template!)
+    // 共享账套下损益可能已被前期用例结转完
+    if (gen.code !== 0) {
+        const msg = String(gen.message || '')
+        if (/无需结转|无.*余额|已结转/.test(msg)) {
+            return null
+        }
+    }
     expect(gen.code, gen.message || `${templateCode} generate failed`).toBe(0)
     expect(gen.data).toBeTruthy()
 

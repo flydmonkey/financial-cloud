@@ -120,6 +120,6 @@ test.describe.serial('no-review voucher flow', () => {
 
     test('settlement verify passes with no-review voucher', async ({request}) => {
         await fixVoucherNumbering(request, ctx.headers)
-        await verifySettlement(request, ctx.headers)
+        await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
     })
 })

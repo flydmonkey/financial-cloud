@@ -9,6 +9,7 @@ import {
     getVoucherDetail,
     postVoucher,
     submitVoucher,
+    tryCancelVoucher,
     unauditVoucher,
     unpostVoucher,
     updateVoucher,
@@ -98,6 +99,9 @@ test.describe.serial('voucher reverse flow', () => {
 
     test('update voucher amount after reverse', async ({request}) => {
         test.skip(!ctx.voucherId, '前置凭证未创建')
+        // 反审核后回到 reviewing，需先撤回再改
+        const cancel = await tryCancelVoucher(request, ctx.headers, ctx.voucherId)
+        expect(cancel.code, cancel.message || 'cancel before update failed').toBe(0)
         await updateVoucher(request, ctx.headers, ctx.voucherId, (payload) => {
             payload.items[0].debitAmount = revisedAmount
             payload.items[1].creditAmount = revisedAmount
@@ -109,6 +113,32 @@ test.describe.serial('voucher reverse flow', () => {
 
     test('re-audit and repost with new amount', async ({request}) => {
         test.skip(!ctx.voucherId, '前置凭证未创建')
+        const detailBefore = await getVoucherDetail(request, ctx.headers, ctx.voucherId)
+        if (detailBefore.status === 'draft') {
+            await submitVoucher(
+                request,
+                ctx.headers,
+                {
+                    bookId: detailBefore.bookId,
+                    word: detailBefore.word,
+                    wordHead: detailBefore.wordHead,
+                    wordNum: detailBefore.wordNum,
+                    companyName: detailBefore.companyName,
+                    receiptNum: detailBefore.receiptNum ?? 0,
+                    voucherDate: detailBefore.voucherDate,
+                    voucherYear: detailBefore.voucherYear,
+                    voucherMonth: detailBefore.voucherMonth,
+                    items: detailBefore.items.map((item: any) => ({
+                        subjectId: item.subjectId,
+                        subjectName: item.subjectName,
+                        summary: item.summary,
+                        debitAmount: Number(item.debitAmount ?? 0),
+                        creditAmount: Number(item.creditAmount ?? 0),
+                    })),
+                },
+                ctx.voucherId,
+            )
+        }
         await auditVoucher(request, ctx.headers, ctx.voucherId)
         await postVoucher(request, ctx.headers, ctx.voucherId)
 

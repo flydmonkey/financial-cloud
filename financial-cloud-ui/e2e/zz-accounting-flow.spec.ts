@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/test'
 import {assertBalanceSheetTrial, assertIncomeFormulaChain} from './helpers/reports'
 import {getCurrentTerm, getCurrentUser, loginViaApi, loginViaUi} from './helpers/auth'
+import {cleanupBlockingVouchersForSettlement, prepareRequiredCarryForClose} from './helpers/settlement'
 import {
     auditVoucher,
     buildBalancedVoucherPayload,
@@ -77,6 +78,8 @@ test.describe.serial('accounting lifecycle', () => {
 
     test('settlement verify (结账试算) passes', async ({request}) => {
         await fixVoucherNumbering(request, ctx.headers)
+        await cleanupBlockingVouchersForSettlement(request, ctx.headers)
+        await prepareRequiredCarryForClose(request, ctx.headers, ctx.bookId)
         const res = await request.get('/api/settlement/verify', {headers: ctx.headers})
         expect(res.ok()).toBeTruthy()
         const body = await res.json()

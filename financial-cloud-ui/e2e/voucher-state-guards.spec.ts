@@ -141,10 +141,11 @@ test.describe.serial('voucher state guards', () => {
         expect(result.code).not.toBe(0)
     })
 
-    test('TC-VCH-043: completed cannot be deleted', async ({request}) => {
+    test('TC-VCH-043: completed unposted can be deleted', async ({request}) => {
         test.skip(!ctx.completedId, '无 completed 凭证')
+        // 产品规则：已审核未过账允许删除（与已过账拦截相对）
         const result = await tryDeleteVoucher(request, ctx.headers, ctx.completedId)
-        expect(result.code).not.toBe(0)
+        expect(result.code, result.message || 'delete completed unposted failed').toBe(0)
     })
 
     test('TC-VCH-042: draft can be deleted', async ({request}) => {

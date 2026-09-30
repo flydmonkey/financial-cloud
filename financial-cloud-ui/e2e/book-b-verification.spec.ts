@@ -33,7 +33,7 @@ test.describe.serial('book B verification', () => {
         headers: Record<string, string>
         bookId: string
         term: string
-        step0: {assetTotal: number | null; incomeCumulative: number; bankBalance: number}
+        step0: {assetTotal: number | null; incomeCumulative: number; incomeCurrent: number; bankBalance: number}
         baselinePeriod: {revenue: number; expense: number}
         step3Income: {current: number; cumulative: number} | null
         afterPostBank: number | null
@@ -42,7 +42,7 @@ test.describe.serial('book B verification', () => {
         headers: {},
         bookId: '',
         term: '',
-        step0: {assetTotal: null, incomeCumulative: 0, bankBalance: 0},
+        step0: {assetTotal: null, incomeCumulative: 0, incomeCurrent: 0, bankBalance: 0},
         baselinePeriod: {revenue: 0, expense: 0},
         step3Income: null,
         afterPostBank: null,
@@ -64,6 +64,7 @@ test.describe.serial('book B verification', () => {
         ctx.step0 = {
             assetTotal: balance.assetTotal,
             incomeCumulative: income.cumulative,
+            incomeCurrent: income.current,
             bankBalance: getSubjectBalance(subjectBalances, '1002'),
         }
         // 套件内可能已有其它用例写入收入/费用，验算用增量
@@ -170,8 +171,9 @@ test.describe.serial('book B verification', () => {
             description: `公式链: 收入=${formula.revenue}, 营业利润=${formula.operatingProfit}, 利润总额=${formula.totalProfit}, 净利润=${netFromLine}; 科目增量净利=${netDelta}`,
         })
         expect(netDelta).toBeCloseTo(70000, 0)
-        expect(netFromLine).toBeCloseTo(70000, 0)
-        expect(ctx.step3Income!.current).toBeCloseTo(70000, 0)
+        // 共享账套：利润表绝对值含前期业务，按登录基线做增量断言
+        expect(netFromLine - ctx.step0.incomeCurrent).toBeCloseTo(70000, 0)
+        expect(ctx.step3Income!.current - ctx.step0.incomeCurrent).toBeCloseTo(70000, 0)
         expect(formula.operatingProfit).toBeCloseTo(formula.totalProfit, 0)
     })
 

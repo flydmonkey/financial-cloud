@@ -150,7 +150,7 @@
           </el-button>
         </div>
       </div>
-      <div class="table-scroll-x table-scroll-x--wide">
+      <div class="table-scroll-x table-scroll-x--fixed">
         <el-table
           v-loading="loading"
           :data="cashFlowStatementList"
@@ -162,8 +162,10 @@
             prop="itemName"
             label="项目"
             align="left"
-            min-width="220"
+            fixed="left"
+            min-width="180"
             :show-overflow-tooltip="true"
+            class-name="cf-name-col"
           >
             <template #default="scope">
               <span :class="{ 'indented-item': scope.row.isTitle !== 1 }">{{ scope.row.itemName }}</span>
@@ -173,7 +175,7 @@
             prop="sortIndex"
             label="行次"
             align="center"
-            width="56"
+            width="64"
             class-name="cell-nowrap"
           />
           <el-table-column
@@ -182,6 +184,7 @@
             align="right"
             min-width="120"
             :show-overflow-tooltip="true"
+            class-name="cell-nowrap"
           >
           <template #default="{ row }">
             <template
@@ -232,6 +235,7 @@
           align="right"
           min-width="120"
           :show-overflow-tooltip="true"
+          class-name="cell-nowrap"
         >
           <template #default="scope">
             <template
@@ -655,6 +659,11 @@ getList();
 
 .indented-item {
   padding-left: 32px; /* 或者使用 margin-left */
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+:deep(.cf-name-col .cell) {
   white-space: nowrap;
   word-break: keep-all;
 }

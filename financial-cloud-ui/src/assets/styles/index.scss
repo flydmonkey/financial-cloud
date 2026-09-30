@@ -217,15 +217,34 @@ aside {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
 }
 
 .table-scroll-x .el-table {
   min-width: 720px;
+  width: max-content;
+  max-width: none;
 }
 
 .table-scroll-x.table-scroll-x--wide .el-table {
   min-width: 960px;
+}
+
+.table-scroll-x.table-scroll-x--xwide .el-table {
+  min-width: 1280px;
+}
+
+/* 使用 el-table fixed 列时：由表格内部横滑，外层不再抢滚动 */
+.table-scroll-x.table-scroll-x--fixed {
+  overflow-x: hidden;
+
+  .el-table {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .toolbar-wrap {

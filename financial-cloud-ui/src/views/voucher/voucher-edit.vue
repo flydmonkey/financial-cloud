@@ -215,7 +215,7 @@
         </div>
         <!--  中间表格区域  -->
         <div
-          class="voucher-sheet"
+          class="voucher-sheet table-scroll-x table-scroll-x--wide"
           @click.stop
         >
           <table
@@ -2854,12 +2854,15 @@ onBeforeUpdate(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
+      flex-wrap: wrap;
+      gap: 8px 12px;
       min-width: 0;
+      width: 100%;
 
       &-left {
-        flex: 1 1 auto;
-        min-width: 0;
+        flex: 1 1 140px;
+        min-width: 140px;
+        max-width: 100%;
         overflow: hidden;
       }
 
@@ -2867,7 +2870,9 @@ onBeforeUpdate(() => {
         display: flex;
         justify-content: flex-end;
         align-items: center;
-        flex: 0 0 auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 100%;
         white-space: nowrap;
       }
 
@@ -2889,19 +2894,43 @@ onBeforeUpdate(() => {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: stretch;
+
+        &-left,
+        &-right {
+          flex: 0 0 auto;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        &-right {
+          justify-content: flex-start;
+        }
+
+        .company-info-item {
+          margin-right: 0;
+        }
+      }
     }
 
     .voucher-sheet {
       width: 100%;
+      max-width: 100%;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
 
       .rv-table {
-        min-width: 720px;
+        min-width: 960px;
+        width: max-content;
+        max-width: none;
 
         :deep(.el-table__body-wrapper),
         :deep(.el-scrollbar__wrap) {
-          overflow-x: auto !important;
+          overflow-x: hidden !important;
         }
 
         :deep(.el-table__inner-wrapper::before) {
@@ -2976,12 +3005,27 @@ onBeforeUpdate(() => {
     }
 
     &.input-number {
-      display: flex;
-      justify-content: flex-end;
+      display: inline-flex;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
       align-items: center;
+      max-width: 100%;
+      white-space: nowrap;
 
       &.voucher-word-num {
-        gap: 8px;
+        gap: 6px;
+
+        > span {
+          display: inline-block;
+          flex: 0 0 auto;
+          white-space: nowrap;
+          writing-mode: horizontal-tb;
+        }
+
+        :deep(.el-input-number) {
+          flex: 0 0 auto;
+          width: 90px !important;
+        }
       }
 
       .voucher-page-indicator {

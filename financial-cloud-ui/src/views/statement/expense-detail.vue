@@ -116,7 +116,10 @@
         </div>
       </div>
 
-      <div class="table-scroll-x table-scroll-x--wide">
+      <div
+        class="table-scroll-x table-scroll-x--wide"
+        :class="{ 'table-scroll-x--xwide': periods.length > 6 }"
+      >
       <el-table
         :key="tableKey"
         v-loading="loading"
@@ -128,6 +131,7 @@
         show-summary
         :summary-method="summaryMethod"
         height="590"
+        :style="{ minWidth: tableMinWidth + 'px' }"
       >
         <el-table-column
           label="编码"
@@ -246,6 +250,12 @@ const showTreeAll = computed(() => {
   return allIds.length > 0 && expandsIds.value.length >= allIds.length
 })
 
+/** 按筛选期间列数撑开表宽，避免 8/9 期被挤出可视区后看起来像「只到 7 期」 */
+const tableMinWidth = computed(() => {
+  const periodCols = Math.max(periods.value.length, 1)
+  return 140 + 200 + periodCols * 120 + 130
+})
+
 function isExpenseSubjectCode(code?: string) {
   if (!code) {
     return false
@@ -355,13 +365,21 @@ function getList() {
     return
   }
 
+  // 先按筛选期间生成表头列，避免接口 periods 缺月时只渲染到 7 期
+  const fromFilter = expandMonths(queryParams.dateRange as string[])
+  if (fromFilter.length) {
+    periods.value = fromFilter
+  }
+
   loading.value = true
   getExpenseDetail(buildQuery()).then((response: { data?: ExpenseDetailReport }) => {
     const report = response.data || {}
     recordsList.value = report.items || []
-    // 表头期间与筛选期间同步，避免仅依赖接口 periods 导致缺列
-    const fromFilter = expandMonths(queryParams.dateRange)
-    periods.value = fromFilter.length ? fromFilter : (report.periods || [])
+    const filterPeriods = expandMonths(queryParams.dateRange as string[])
+    // 筛选期间优先；若筛选为空再回退接口 periods
+    periods.value = filterPeriods.length
+      ? filterPeriods
+      : (report.periods || [])
     yearLabel.value = report.yearLabel || '区间合计'
     totals.value = report.totals || {}
     applyExpandState()

@@ -37,8 +37,9 @@
           <div class="settle-steps">
           <el-steps
             :active="active"
+            :direction="stepsDirection"
             finish-status="success"
-            align-center
+            :align-center="stepsDirection === 'horizontal'"
           >
             <el-step title="人工确认" />
             <el-step title="凭证整理" />
@@ -151,7 +152,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, getCurrentInstance, onActivated, ref } from 'vue'
+import { computed, getCurrentInstance, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { TabsPaneContext } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import bookStore from '@/store/modules/bookStore'
@@ -166,6 +167,22 @@ const proxy: any = getCurrentInstance()!.proxy
 const currBookStore = bookStore()
 const currentTerm = computed(() => currBookStore.termCurrent)
 const activeName = ref('settle-period')
+const stepsDirection = ref<'horizontal' | 'vertical'>(
+  typeof window !== 'undefined' && window.innerWidth <= 768 ? 'vertical' : 'horizontal'
+)
+
+function updateStepsDirection() {
+  stepsDirection.value = window.innerWidth <= 768 ? 'vertical' : 'horizontal'
+}
+
+onMounted(() => {
+  updateStepsDirection()
+  window.addEventListener('resize', updateStepsDirection)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateStepsDirection)
+})
 
 const {
   active,
@@ -397,20 +414,27 @@ onActivated(() => {
 }
 .settle-steps :deep(.el-step__title) {
   white-space: nowrap;
+  word-break: keep-all;
   font-size: 13px;
   line-height: 1.2;
+  writing-mode: horizontal-tb;
+}
+.settle-steps :deep(.el-steps--vertical) {
+  height: auto;
+}
+.settle-steps :deep(.el-steps--vertical .el-step__main) {
+  padding-left: 12px;
+}
+.settle-steps :deep(.el-steps--vertical .el-step__title) {
+  max-width: none;
+  padding-right: 0;
+}
+.settle-steps :deep(.el-steps--vertical .el-step__description) {
+  padding-right: 0;
 }
 @media (max-width: 768px) {
-  .settle-steps :deep(.el-steps) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .settle-steps :deep(.el-step) {
-    flex-basis: auto !important;
-  }
-  .settle-steps :deep(.el-step__head),
-  .settle-steps :deep(.el-step__main) {
-    text-align: left;
+  .settle-steps :deep(.el-step__title) {
+    font-size: 12px;
   }
 }
 .wizard-footer {

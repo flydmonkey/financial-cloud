@@ -32,7 +32,7 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <div class="table-scroll-x table-scroll-x--wide">
+          <div class="table-scroll-x table-scroll-x--wide carry-table-scroll">
             <el-table
               v-loading="loading"
               :data="vouchertemplateList"
@@ -41,7 +41,7 @@
               row-key="id"
               default-expand-all
               height="650"
-              style="min-width: 1080px"
+              style="min-width: 980px"
               @cell-mouse-enter="cellMouseEnter"
               @cell-mouse-leave="cellMouseLeave"
             >
@@ -50,7 +50,7 @@
                 align="left"
                 header-align="center"
                 prop="code"
-                min-width="120"
+                width="110"
                 class-name="cell-nowrap"
               />
               <el-table-column
@@ -58,66 +58,37 @@
                 align="left"
                 header-align="center"
                 prop="name"
-                min-width="140"
+                width="130"
                 class-name="cell-nowrap"
               />
               <el-table-column
                 label="字头"
                 align="center"
                 prop="wordHead"
-                width="72"
+                width="64"
                 class-name="cell-nowrap"
               />
               <el-table-column
                 label="备注"
                 align="left"
                 prop="remark"
-                min-width="100"
+                width="200"
+                class-name="cell-nowrap"
+                :show-overflow-tooltip="true"
               />
               <el-table-column
                 label="排序"
                 align="left"
                 prop="sortIndex"
-                width="72"
+                width="64"
                 class-name="cell-nowrap"
               />
-              <el-table-column
-                :label="$t('jbx.voucher.voucher')"
-                align="center"
-                prop="voucherId"
-                min-width="180"
-                class-name="cell-nowrap"
-              >
-                <template #default="scope">
-                  <el-button
-                    v-if="scope.row.voucherId === null ||scope.row.voucherId ===''"
-                    type="primary"
-                    @click="newVoucher(scope.row)"
-                  >
-                    生成
-                  </el-button>
-                  <el-button
-                    v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
-                    type="primary"
-                    @click="viewVoucher(scope.row.voucherId)"
-                  >
-                    查看
-                  </el-button>
-                  <el-button
-                    v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
-                    type="danger"
-                    @click="deleteVoucher(scope.row.voucherId)"
-                  >
-                    删除
-                  </el-button>
-                </template>
-              </el-table-column>
               <el-table-column
                 label="模板"
                 align="center"
                 header-align="center"
-                min-width="140"
-                prop="sortIndex"
+                width="120"
+                prop="templateOps"
               >
                 <template #default="scope">
                   <el-tooltip content="新增/编辑">
@@ -144,6 +115,40 @@
                       @click="handleDel(scope.row, 'asset')"
                     />
                   </el-tooltip>
+                </template>
+              </el-table-column>
+              <el-table-column
+                :label="$t('jbx.voucher.voucher')"
+                align="center"
+                prop="voucherId"
+                width="120"
+                class-name="cell-nowrap carry-action-col"
+              >
+                <template #default="scope">
+                  <el-button
+                    v-if="scope.row.voucherId === null ||scope.row.voucherId ===''"
+                    type="primary"
+                    size="small"
+                    @click="newVoucher(scope.row)"
+                  >
+                    生成
+                  </el-button>
+                  <el-button
+                    v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
+                    type="primary"
+                    size="small"
+                    @click="viewVoucher(scope.row.voucherId)"
+                  >
+                    查看
+                  </el-button>
+                  <el-button
+                    v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"
+                    type="danger"
+                    size="small"
+                    @click="deleteVoucher(scope.row.voucherId)"
+                  >
+                    删除
+                  </el-button>
                 </template>
               </el-table-column>
               <template #empty>

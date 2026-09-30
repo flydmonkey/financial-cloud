@@ -212,7 +212,7 @@ aside {
 
 }
 
-/* 宽表区域横滑：仅表内横滑，避免整页出现横向滚动条 */
+/* 宽表区域横滑：外层为唯一横滑容器（与凭证编辑 B1 一致） */
 .table-scroll-x {
   width: 100%;
   max-width: 100%;
@@ -236,15 +236,27 @@ aside {
   min-width: 1280px;
 }
 
-/* 使用 el-table fixed 列时：由表格内部横滑，外层不再抢滚动 */
+/*
+ * 禁止再走「外层 overflow:hidden + 压扁表宽」的 --fixed：
+ * 窄屏下 el-table 内部横滑经常不生效，scrollLeft 外层也无变化。
+ * 保留类名仅作兼容，行为与默认外层横滑一致，并关掉表内横向滚动。
+ */
 .table-scroll-x.table-scroll-x--fixed {
-  overflow-x: hidden;
+  overflow-x: auto;
 
   .el-table {
-    min-width: 0;
-    width: 100%;
-    max-width: 100%;
+    min-width: 720px;
+    width: max-content;
+    max-width: none;
   }
+}
+
+/* 外层横滑时关掉 el-table / scrollbar 内部横向滚动，避免双滚动或假横滑 */
+.table-scroll-x .el-table__body-wrapper,
+.table-scroll-x .el-table__header-wrapper,
+.table-scroll-x .el-table__footer-wrapper,
+.table-scroll-x .el-scrollbar__wrap {
+  overflow-x: hidden !important;
 }
 
 .toolbar-wrap {

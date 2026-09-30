@@ -70,37 +70,67 @@ def strip_leading_sql_comments(chunk: str) -> str:
 
 
 def execute_sql_script(cursor, sql: str) -> None:
+    """Execute a multi-statement SQL script.
+
+    Splits on ';' outside of single-quoted strings. Line comments starting with
+    '--' (MySQL) are ignored so a ';' inside a comment does not end a statement.
+    """
     statement: list[str] = []
     in_string = False
     escape = False
-    for char in sql:
+    i = 0
+    n = len(sql)
+    while i < n:
+        char = sql[i]
+        # Start of line/end-of-whitespace line comment: -- ...\\n
+        if (
+            not in_string
+            and char == "-"
+            and i + 1 < n
+            and sql[i + 1] == "-"
+            and (i == 0 or sql[i - 1] in "\n\r\t ")
+        ):
+            # skip until newline (keep newline for readability of next chunk)
+            while i < n and sql[i] not in "\n\r":
+                i += 1
+            continue
         if escape:
             statement.append(char)
             escape = False
+            i += 1
             continue
         if char == "\\" and in_string:
             escape = True
             statement.append(char)
+            i += 1
             continue
         if char == "'":
             in_string = not in_string
             statement.append(char)
+            i += 1
             continue
         if char == ";" and not in_string:
             chunk = strip_leading_sql_comments("".join(statement).strip())
             statement = []
+            i += 1
             if not chunk:
                 continue
             try:
                 cursor.execute(chunk)
                 drain_results(cursor)
             except pymysql.Error as exc:
-                code = exc.args[0] if exc.args else None
+                code = exc.args[0] if getattr(exc, "args", None) else None
                 if code in (1060, 1061, 1050, 1051, 1091):
                     continue
                 raise RuntimeError(f"SQL failed ({code}): {exc}\n---\n{chunk[:500]}") from exc
             continue
         statement.append(char)
+        i += 1
+    # trailing statement without semicolon
+    chunk = strip_leading_sql_comments("".join(statement).strip())
+    if chunk:
+        cursor.execute(chunk)
+        drain_results(cursor)
 
 
 def verify_init(cursor) -> None:

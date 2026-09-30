@@ -4256,7 +4256,7 @@ INSERT INTO `standard_statement_rules` VALUES
 -- ==================================================================
 -- Menu end-state alignment (2026-09-30 nest + 2026-10-01 trim)
 -- Spec: docs/superpowers/specs/2026-10-01-menu-trim-sys-audit-icons-design.md
--- Idempotent; safe after earlier seed INSERTs in this file.
+-- Idempotent and safe after earlier seed INSERTs in this file.
 -- ==================================================================
 
 -- 仪表盘嵌套（首页 + 代账工作台）+ 功能图标对齐 + 空壳菜单清理（幂等可重复执行）

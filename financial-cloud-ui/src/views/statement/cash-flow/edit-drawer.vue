@@ -224,6 +224,10 @@ import {getSelectItem} from "@/api/config/cash-flow-balance";
 import modal from "@/plugins/modal";
 import {formatAmount} from "@/utils";
 import {getCashFlowItems, saveItemCodes} from "@/api/statement/statement-cash-flow";
+import {
+  defaultCashFlowBalance,
+  isCashFlowAssignmentBalanced,
+} from "@/utils/cashFlowAssign";
 import {Action, ElMessage, ElMessageBox} from 'element-plus'
 
 
@@ -384,48 +388,9 @@ function getList() {
 }
 
 function submitForm(isChange: boolean): Promise<any> {
-  // 创建已处理的分录号集合，用于追踪哪些分录已经被计算过
-  const processedEntries = new Set();
-
-  // 计算借方金额和贷方金额总和（每个分录只计算一次）
-  const { totalDebit, totalCredit } = recordsList.value.reduce((acc: { totalDebit: number; totalCredit: number }, row: any) => {
-    // 如果这个分录号还没处理过，那么计算它的借贷金额
-    if (!processedEntries.has(row.entryNo)) {
-      // 将分录号添加到已处理集合
-      processedEntries.add(row.entryNo);
-
-      // 确保金额是数字并加总
-      const debitAmount = parseFloat(row.debitAmount || 0);
-      const creditAmount = parseFloat(row.creditAmount || 0);
-
-      return {
-        totalDebit: acc.totalDebit + debitAmount,
-        totalCredit: acc.totalCredit + creditAmount
-      };
-    }
-    // 如果已经处理过这个分录号，则不重复计算
-    return acc;
-  }, { totalDebit: 0, totalCredit: 0 });
-
-  // 计算现金流量金额总和（每一行都要计算）
-  const totalCashFlow = recordsList.value.reduce((sum: number, row: any) => {
-    // 只计算已指定现金流量项的行
-    if (row.cashFlowItemCode && row.cashFlowItemCode !== 'no-select') {
-      let cashFlowAmount = parseFloat(row.cashFlowBalance || 0);
-      if (directionMap.value.get(row.cashFlowItemCode) === 2) {
-        cashFlowAmount = -cashFlowAmount;
-      }
-      return sum + cashFlowAmount;
-    }
-    return sum;
-  }, 0);
-
-  // 计算差值
-  const difference = totalDebit - totalCredit;
-
-  // 比较差值与现金流量金额总和是否相等
-  // 使用小数点精度容差处理浮点数精度问题
-  isBalance.value = Math.abs(difference + totalCashFlow) < 0.01;
+  // Stored balances are absolute (positive) CF amounts — same as API/report.
+  // Direction is applied once in the balance check: outflow(dir=1) is negated.
+  isBalance.value = isCashFlowAssignmentBalanced(recordsList.value, directionMap.value);
 
   //是否平衡
   if (isBalance.value) {
@@ -596,7 +561,14 @@ const formatBalance = (value: number | string) => {
 function handleSelect(row: any) {
   if (row.cashFlowItemCode === 'no-select') {
     row.cashFlowBalance = ""
+    row.inputBalance = ""
+  } else if (row.cashFlowItemCode) {
+    // Auto-fill absolute CF amount so save matches report (positive inflow/outflow).
+    const amount = defaultCashFlowBalance(row)
+    row.cashFlowBalance = amount
+    row.inputBalance = amount
   }
+  isBalance.value = isCashFlowAssignmentBalanced(recordsList.value, directionMap.value)
 }
 
 </script>

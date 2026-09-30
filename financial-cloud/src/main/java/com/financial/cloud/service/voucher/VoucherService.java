@@ -30,6 +30,8 @@ import com.financial.cloud.repository.voucher.VoucherItemMapper;
 import com.financial.cloud.repository.voucher.VoucherWordMapper;
 import com.financial.cloud.repository.voucher.VoucherItemAuxiliaryMapper;
 import com.financial.cloud.repository.voucher.VoucherItemCashFlowMapper;
+import com.financial.cloud.repository.book.SettlementCarryforwardMapper;
+import com.financial.cloud.domain.book.SettlementCarryforward;
 import com.financial.cloud.enums.book.SubjectDirectionEnum;
 import com.financial.cloud.enums.common.YesNoEnum;
 import com.financial.cloud.enums.error.VoucherErrorCode;
@@ -102,6 +104,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     private final StandardSubjectCashFlowMapper standardSubjectCashFlowMapper;
     private final VoucherItemCashFlowMapper voucherItemCashFlowMapper;
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
+    private final SettlementCarryforwardMapper settlementCarryforwardMapper;
     private final BookSealGuard bookSealGuard;
     /** 延迟获取，避免与 JournalEntryService 循环依赖 */
     private final ObjectProvider<JournalEntryService> journalEntryServiceProvider;
@@ -1685,6 +1688,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         if (update == ids.size()) {
             journalEntryServiceProvider.ifAvailable(journal -> journal.clearLinksByVoucherIds(ids));
+            // OBS-CARRY-STALE-POINTER: clear carryforward rows that pointed at deleted vouchers
+            settlementCarryforwardMapper.delete(
+                    Wrappers.<SettlementCarryforward>lambdaQuery()
+                            .in(SettlementCarryforward::getVoucherId, ids));
             return new Message<>(Message.SUCCESS, "删除成功");
         }
         return new Message<>(Message.FAIL, "删除失败");

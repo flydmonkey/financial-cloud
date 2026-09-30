@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "test:unit": "tsx --test src/utils/voucherWorkspace.test.ts src/utils/voucherPrint.test.ts src/utils/booksBoard.test.ts",
+    "test:unit": "tsx --test src/utils/voucherWorkspace.test.ts src/utils/voucherPrint.test.ts src/utils/booksBoard.test.ts src/utils/cashFlowAssign.test.ts",
     "lint": "eslint .",
     "test:e2e": "playwright test",
     "test:e2e:balance-sheet-golden": "playwright test e2e/04-balance-sheet-golden-dataset.spec.ts",

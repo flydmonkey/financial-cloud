@@ -56,7 +56,7 @@ financial-cloud **不是**单一的 4 态模型，而是审核状态 + 过账状
 | 资产负债表 | `financial-cloud.statement.balance-sheet.strict-trial-balance` | 513013 | 试算不平则 API 抛错 |
 | 利润表 | `financial-cloud.statement.income.strict-formula-validation` | 513014 | 公式链 1→2→3→4 不平则 API 抛错 |
 
-本地默认关闭；`.github/workflows/ci.yml` 启动后端时两项均为 `true`。结账写入利润表快照前同样走 `generateIncomeStatement`，strict 开启时不平会阻断结账。
+本地默认关闭。CI accounting 套件关闭资产负债表 `strict-trial-balance`（未结转损益时套件仍断言试算平衡，依赖总计行静默调平）；利润表 `strict-formula-validation` 与现金流量 `strict-reconciliation` 仍为 `true`。`513013` 由 Golden 套件覆盖。结账写入利润表快照前同样走 `generateIncomeStatement`，利润表公式 strict 开启时不平会阻断结账。
 
 ### 0.4 已知系统限制（不测为 BUG）
 

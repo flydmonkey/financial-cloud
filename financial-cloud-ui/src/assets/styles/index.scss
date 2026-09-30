@@ -268,13 +268,17 @@ aside {
 
 /*
  * 等效 sticky 左/右列：与外层 .table-scroll-x 真横滑共存。
- * 需打开中间层 overflow，否则 sticky 会被 body-wrapper 截断；
+ * 需打开中间层 overflow（含 .el-table / .el-scrollbar），否则 sticky
+ * 会相对表内盒子定位，外层横滑时整列一起滚走。
  * 使用本类的表勿再设 el-table height（否则 overflow-y:auto 会破坏 left sticky）。
  */
 .table-scroll-x.table-scroll-x--sticky {
+  .el-table,
+  .el-table__inner-wrapper,
   .el-table__body-wrapper,
   .el-table__header-wrapper,
   .el-table__footer-wrapper,
+  .el-scrollbar,
   .el-scrollbar__wrap,
   .el-scrollbar__view {
     overflow: visible !important;
@@ -312,6 +316,12 @@ aside {
   .el-table--striped .el-table__body tr.el-table__row--striped td.col-sticky-right {
     background-color: var(--el-fill-color-lighter, #fafafa);
   }
+}
+
+/* 卡片 body 若自带 overflow:auto 会抢走 sticky 参照；sticky 表外层保持可见 */
+.el-card__body:has(> .table-scroll-x--sticky),
+.el-card__body:has(.table-scroll-x--sticky) {
+  overflow: visible;
 }
 
 .toolbar-wrap {

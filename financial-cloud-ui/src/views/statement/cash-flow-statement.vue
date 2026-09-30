@@ -162,7 +162,7 @@
             prop="itemName"
             label="项目"
             align="left"
-            width="180"
+            width="130"
             :show-overflow-tooltip="true"
             class-name="cf-name-col col-sticky-left"
           >

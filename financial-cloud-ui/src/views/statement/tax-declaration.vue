@@ -98,13 +98,13 @@
             <el-table-column
               label="项目"
               prop="item"
-              width="180"
+              width="140"
               class-name="tax-item-col col-sticky-left-2"
               :show-overflow-tooltip="true"
             />
             <el-table-column
               label="金额"
-              width="140"
+              width="120"
               align="right"
               class-name="cell-nowrap"
             >

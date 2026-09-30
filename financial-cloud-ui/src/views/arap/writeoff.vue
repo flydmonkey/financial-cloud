@@ -146,12 +146,12 @@
       <el-table
         :data="history"
         border
-        style="min-width: 560px"
+        style="min-width: 420px"
       >
         <el-table-column
           prop="writeoffDate"
           label="日期"
-          width="120"
+          width="100"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         />
@@ -159,20 +159,20 @@
           prop="amount"
           label="金额"
           align="right"
-          width="120"
+          width="100"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         />
         <el-table-column
           prop="status"
           label="状态"
-          width="100"
+          width="88"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         />
         <el-table-column
           label="操作"
-          width="100"
+          width="88"
           class-name="cell-nowrap"
           label-class-name="cell-nowrap"
         >

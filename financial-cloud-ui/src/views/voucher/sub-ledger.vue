@@ -121,33 +121,52 @@
         <el-button @click="handleExportPdf">导出 PDF</el-button>
       </div>
       <div class="sub-ledger-layout">
-        <div class="sub-ledger-tree">
-          <el-input
-            v-model="filterSubject"
-            style="width: 95%;margin-bottom: 10px"
-            placeholder="快速搜索"
-            suffix-icon="Search"
-          />
-          <el-tree
-            v-if="subjectList.length > 0"
-            ref="treeRef"
-            class="sub-ledger-tree-panel"
-            :data="subjectList"
-            :props="defaultProps"
-            node-key="code"
-            highlight-current
-            :current-node-key="currentSubjectKey"
-            :default-expanded-keys="expandedKeys"
-            :filter-node-method="filterNodeMethod"
-            :expand-on-click-node="false"
-            @node-click="handleTreeNodeClick"
-          />
+        <div
+          class="sub-ledger-tree"
+          :class="{ 'is-collapsed': mobileTreeCollapsed }"
+        >
+          <div
+            v-if="mobileTreeCollapsed"
+            class="sub-ledger-tree-summary"
+            @click="mobileTreeCollapsed = false"
+          >
+            <span>{{ currentSubjectLabel }}</span>
+            <el-button
+              link
+              type="primary"
+              size="small"
+            >
+              切换科目
+            </el-button>
+          </div>
+          <template v-else>
+            <el-input
+              v-model="filterSubject"
+              style="width: 95%;margin-bottom: 10px"
+              placeholder="快速搜索"
+              suffix-icon="Search"
+            />
+            <el-tree
+              v-if="subjectList.length > 0"
+              ref="treeRef"
+              class="sub-ledger-tree-panel"
+              :data="subjectList"
+              :props="defaultProps"
+              node-key="code"
+              highlight-current
+              :current-node-key="currentSubjectKey"
+              :default-expanded-keys="expandedKeys"
+              :filter-node-method="filterNodeMethod"
+              :expand-on-click-node="false"
+              @node-click="handleTreeNodeClick"
+            />
+          </template>
         </div>
         <div class="sub-ledger-table table-scroll-x table-scroll-x--wide">
           <el-table
             v-loading="loading"
             :data="recordsList"
-            height="570"
+            :height="subLedgerTableHeight"
             row-key="id"
             show-summary
             :summary-method="handleSummaryMethod2"
@@ -246,7 +265,7 @@
 import * as subjectApi from "@/api/standard/standard-subject"
 import * as apis from "@/api/voucher/voucher";
 import {parseTime, getCurrentQuarter, handleTree} from '@/utils/financialCloud'
-import {h, ref, shallowRef, reactive, toRefs, watch, nextTick, onMounted, onActivated} from 'vue'
+import {h, ref, shallowRef, reactive, toRefs, watch, nextTick, onMounted, onActivated, computed} from 'vue'
 import {formatAmount, downloadData} from "@/utils"
 import {useRouter, useRoute} from "vue-router";
 import booksSetStore from "@/store/modules/bookStore";
@@ -279,6 +298,33 @@ const treeRef = ref<TreeInstance>()
 const currentSubjectKey = ref<string>('')
 const expandedKeys = ref<string[]>([])
 const treeReady = ref(false)
+const mobileTreeCollapsed = ref(false)
+
+/** 窄屏取消固定表高，避免表体被算在视口外导致假横滑 */
+const subLedgerTableHeight = computed(() => {
+  if (typeof window !== 'undefined' && window.innerWidth <= 900) {
+    return undefined
+  }
+  return 570
+})
+
+const currentSubjectLabel = computed(() => {
+  const code = currentSubjectKey.value
+  if (!code) {
+    return '所有科目'
+  }
+  const find = (nodes: any[]): string => {
+    for (const n of nodes || []) {
+      if (String(n.code) === String(code)) {
+        return n.displayName || `${n.code}-${n.name}` || code
+      }
+      const hit = find(n.children || [])
+      if (hit) return hit
+    }
+    return ''
+  }
+  return find(subjectList.value) || code
+})
 
 const defaultProps = {
   children: 'children',
@@ -490,9 +536,10 @@ const handleTreeNodeClick = (data: Tree) => {
   queryParams.value.subjectCode = code
   currentSubjectKey.value = code
   handleQuery()
-  // 窄屏：点选后把明细表滚入视口，避免只见科目树
+  // 窄屏：点选后折叠科目树，保证明细表进入首屏
   nextTick(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 900) {
+      mobileTreeCollapsed.value = true
       document.querySelector('.sub-ledger-table')?.scrollIntoView({
         block: 'nearest',
         behavior: 'smooth'
@@ -641,13 +688,25 @@ onActivated(() => {
   }
   .sub-ledger-tree-panel {
     height: auto;
-    max-height: 180px;
+    max-height: 140px;
     overflow-y: auto;
     border: 1px solid var(--el-border-color-lighter, #ebeef5);
     border-radius: 4px;
   }
+  .sub-ledger-tree-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--el-border-color-lighter, #ebeef5);
+    border-radius: 4px;
+    background: #f5f7fa;
+    font-size: 13px;
+    cursor: pointer;
+  }
   .sub-ledger-table {
-    min-height: 280px;
+    min-height: 240px;
   }
 }
 

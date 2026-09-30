@@ -2719,12 +2719,14 @@ onBeforeUpdate(() => {
   }
 
   @media (max-width: 900px) {
+    padding: 16px 12px;
+
     .workspace-toolbar {
       flex-direction: row;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       gap: 8px;
-      padding: 6px 0 8px;
+      padding: 4px 0 8px;
     }
 
     .workspace-toolbar-spacer {
@@ -2742,35 +2744,38 @@ onBeforeUpdate(() => {
       display: inline-flex;
     }
 
-    .workspace-toolbar-main,
-    .workspace-toolbar-status {
-      justify-content: flex-start;
-      flex: 1 1 auto;
-    }
-
     .workspace-toolbar-main {
-      flex: 1 1 100%;
+      flex: 1 1 auto;
+      min-width: 0;
       justify-content: flex-start;
-      gap: 8px;
+      gap: 0;
     }
 
     .workspace-toolbar-actions {
       flex-wrap: nowrap;
       gap: 6px;
-      width: 100%;
+      width: auto;
+      align-items: center;
     }
 
     .workspace-toolbar-status {
-      flex: 1 1 100%;
-      justify-content: flex-start;
-      gap: 6px;
-      flex-wrap: wrap;
+      flex: 0 0 auto;
+      justify-content: flex-end;
+      gap: 4px;
+      flex-wrap: nowrap;
+      margin-left: 0;
     }
 
     .workspace-balance,
     .workspace-status-pill {
       font-size: 12px;
-      padding: 2px 8px;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+
+    .workspace-balance em,
+    .workspace-status-pill em {
+      display: none;
     }
   }
 

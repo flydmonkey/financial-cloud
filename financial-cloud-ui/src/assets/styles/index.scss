@@ -212,7 +212,10 @@ aside {
 
 }
 
-/* 宽表区域横滑：外层为唯一横滑容器（与凭证编辑 B1 一致） */
+/* 宽表区域横滑：外层为唯一横滑容器（与凭证编辑 B1 一致）
+ * 桌面：表宽拉满内容区（width:100%），避免右侧大片留白；
+ * 窄屏：min-width 保底触发外层真横滑，列不被压扁。
+ */
 .table-scroll-x {
   width: 100%;
   max-width: 100%;
@@ -223,20 +226,20 @@ aside {
 }
 
 .table-scroll-x .el-table {
-  min-width: 720px;
-  width: max-content;
+  width: 100%;
+  min-width: max(100%, 720px);
   max-width: none;
 }
 
 .table-scroll-x.table-scroll-x--wide .el-table {
-  min-width: 960px;
+  min-width: max(100%, 960px);
 }
 
 .table-scroll-x.table-scroll-x--xwide .el-table {
-  min-width: 1280px;
+  min-width: max(100%, 1280px);
 }
 
-/* 桌面拉满内容区宽度；窄屏仍保底 min-width 以启用外层真横滑 */
+/* --fill 与默认行为一致，保留类名兼容已有页面 */
 .table-scroll-x.table-scroll-x--fill .el-table {
   width: 100%;
   min-width: max(100%, 720px);
@@ -252,8 +255,8 @@ aside {
   overflow-x: auto;
 
   .el-table {
-    min-width: 720px;
-    width: max-content;
+    width: 100%;
+    min-width: max(100%, 720px);
     max-width: none;
   }
 }

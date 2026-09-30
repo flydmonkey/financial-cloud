@@ -65,6 +65,23 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-tooltip
+            :disabled="canToolbarDelete"
+            content="仅暂存/待过账且当期及以后凭证可删"
+            placement="top"
+          >
+            <span class="toolbar-delete-wrap">
+              <el-button
+                v-hasRole="['ROLE_ADMINISTRATORS','ROLE_BOOKKEEPER','ROLE_REVIEWER']"
+                type="danger"
+                plain
+                :disabled="!canToolbarDelete"
+                @click="handleDelete()"
+              >
+                删除
+              </el-button>
+            </span>
+          </el-tooltip>
           <el-dropdown trigger="click">
             <el-button>
               更多
@@ -1054,6 +1071,9 @@ function isDeletable(voucher) {
   return currBookStore.termCurrent <= voucher.voucherDate.substring(0, 7)
 }
 
+/** 工具栏一级删除：所选中至少一条可删凭证 */
+const canToolbarDelete = computed(() => getSelectedVouchers().some(isDeletable))
+
 function showActionResult(res, fallback = "操作成功") {
   proxy.$modal.msgSuccess(res?.message || fallback)
 }
@@ -1371,6 +1391,11 @@ getList();
       padding-left: 6px;
       padding-right: 6px;
     }
+  }
+
+  .toolbar-delete-wrap {
+    display: inline-flex;
+    vertical-align: middle;
   }
 }
 

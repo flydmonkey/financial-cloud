@@ -32,7 +32,7 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <div class="table-scroll-x table-scroll-x--wide carry-table-scroll">
+          <div class="table-scroll-x table-scroll-x--wide table-scroll-x--sticky carry-table-scroll">
             <el-table
               v-loading="loading"
               :data="vouchertemplateList"
@@ -40,7 +40,6 @@
               :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
               row-key="id"
               default-expand-all
-              height="650"
               style="min-width: 980px"
               @cell-mouse-enter="cellMouseEnter"
               @cell-mouse-leave="cellMouseLeave"
@@ -59,7 +58,7 @@
                 header-align="center"
                 prop="name"
                 width="130"
-                class-name="cell-nowrap"
+                class-name="cell-nowrap col-sticky-left"
               />
               <el-table-column
                 label="字头"
@@ -122,7 +121,7 @@
                 align="center"
                 prop="voucherId"
                 width="120"
-                class-name="cell-nowrap carry-action-col"
+                class-name="cell-nowrap carry-action-col col-sticky-right"
               >
                 <template #default="scope">
                   <el-button

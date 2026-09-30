@@ -111,6 +111,13 @@ defineComponent({
     /* 窄屏顶栏账期/账套两行时预留高度，避免主区被遮挡 */
     margin-top: calc(#{$base-navbar-height} + 28px);
   }
+
+  /* 避免 el-main 与 app-main 双层滚动，保证首页可自然滚到资金卡 */
+  :deep(.el-main) {
+    overflow: hidden;
+    height: calc(100vh - #{$base-navbar-height} - 28px);
+    padding: 0;
+  }
 }
 
 .app-wrapper {

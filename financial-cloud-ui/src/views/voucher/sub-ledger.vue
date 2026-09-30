@@ -131,7 +131,7 @@
           <el-tree
             v-if="subjectList.length > 0"
             ref="treeRef"
-            style="height: 60vh;overflow-y: auto"
+            class="sub-ledger-tree-panel"
             :data="subjectList"
             :props="defaultProps"
             node-key="code"
@@ -490,6 +490,15 @@ const handleTreeNodeClick = (data: Tree) => {
   queryParams.value.subjectCode = code
   currentSubjectKey.value = code
   handleQuery()
+  // 窄屏：点选后把明细表滚入视口，避免只见科目树
+  nextTick(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 900) {
+      document.querySelector('.sub-ledger-table')?.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      })
+    }
+  })
 }
 
 /**
@@ -611,16 +620,34 @@ onActivated(() => {
   width: 300px;
   flex: 0 0 300px;
 }
+.sub-ledger-tree-panel {
+  height: 60vh;
+  overflow-y: auto;
+}
 .sub-ledger-table {
   flex: 1 1 360px;
   min-width: 0;
   width: calc(100% - 320px);
 }
 @media (max-width: 900px) {
+  .sub-ledger-layout {
+    flex-direction: column;
+    gap: 10px;
+  }
   .sub-ledger-tree,
   .sub-ledger-table {
     width: 100%;
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+  }
+  .sub-ledger-tree-panel {
+    height: auto;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--el-border-color-lighter, #ebeef5);
+    border-radius: 4px;
+  }
+  .sub-ledger-table {
+    min-height: 280px;
   }
 }
 

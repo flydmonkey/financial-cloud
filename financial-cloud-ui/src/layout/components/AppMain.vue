@@ -57,6 +57,13 @@ const tagsViewStore = useTagsViewStore()
   }
 }
 
+@media (max-width: 768px) {
+  .app-main {
+    /* 与 layout 窄屏顶栏两行高度对齐 */
+    height: calc(100vh - #{$base-navbar-height} - 28px);
+  }
+}
+
 .fixed-header + .app-main {
   padding-top: 50px;
 }

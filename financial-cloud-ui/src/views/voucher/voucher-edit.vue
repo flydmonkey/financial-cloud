@@ -10,7 +10,7 @@
     >
       <div class="workspace-toolbar-spacer" aria-hidden="true" />
       <div class="workspace-toolbar-main">
-        <div class="workspace-toolbar-nav">
+        <div class="workspace-toolbar-nav workspace-toolbar-nav--desktop">
           <el-button @click="onBackToList">
             返回列表
           </el-button>
@@ -36,6 +36,12 @@
           </el-button>
         </div>
         <div class="workspace-toolbar-actions">
+          <el-button
+            class="workspace-toolbar-back-mobile"
+            @click="onBackToList"
+          >
+            返回
+          </el-button>
           <el-tooltip
             v-if="showMutableActions"
             :content="draftButtonTip"
@@ -65,15 +71,65 @@
               </el-button>
             </span>
           </el-tooltip>
-          <el-button @click="onPrint">
+          <el-button
+            class="workspace-toolbar-print-desktop"
+            @click="onPrint"
+          >
             打印
           </el-button>
           <el-button
             v-if="formData.id"
+            class="workspace-toolbar-attach-desktop"
             @click="attachmentOpen = true"
           >
             附件
           </el-button>
+          <el-dropdown
+            class="workspace-toolbar-more"
+            trigger="click"
+            @command="onToolbarMoreCommand"
+          >
+            <el-button>
+              更多
+              <el-icon class="el-icon--right">
+                <ArrowDown />
+              </el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  command="prev"
+                  :disabled="!neighborIds.prevId || navLoading"
+                >
+                  上一张
+                </el-dropdown-item>
+                <el-dropdown-item
+                  command="next"
+                  :disabled="!neighborIds.nextId || navLoading"
+                >
+                  下一张
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="showMutableActions"
+                  command="new"
+                >
+                  新建凭证
+                </el-dropdown-item>
+                <el-dropdown-item
+                  divided
+                  command="print"
+                >
+                  打印
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="formData.id"
+                  command="attach"
+                >
+                  附件
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
       <div class="workspace-toolbar-status">
@@ -780,6 +836,7 @@
 
 <script lang="ts" setup>
 import {computed, nextTick, onBeforeUpdate, onMounted, reactive, ref, watch} from 'vue'
+import {ArrowDown} from '@element-plus/icons-vue'
 import SelectAuxiliary from "./SelectAuxiliary/index.vue"
 import VoucherAttachments from "./VoucherAttachments.vue"
 import {ElLoading, ElMessage, ElMessageBox, ElSelect, TableColumnCtx} from 'element-plus'
@@ -2164,6 +2221,28 @@ const onBackToList = async () => {
   router.push({ path: '/voucher/voucher-index' })
 }
 
+const onToolbarMoreCommand = async (command: string) => {
+  if (command === 'prev') {
+    await onGoNeighbor('prev')
+    return
+  }
+  if (command === 'next') {
+    await onGoNeighbor('next')
+    return
+  }
+  if (command === 'new') {
+    await onNewVoucher()
+    return
+  }
+  if (command === 'print') {
+    await onPrint()
+    return
+  }
+  if (command === 'attach') {
+    attachmentOpen.value = true
+  }
+}
+
 const onNewVoucher = async () => {
   if (!(await confirmDiscardIfDirty())) {
     return
@@ -2634,20 +2713,64 @@ onBeforeUpdate(() => {
     background: #fff;
   }
 
+  .workspace-toolbar-back-mobile,
+  .workspace-toolbar-more {
+    display: none;
+  }
+
   @media (max-width: 900px) {
     .workspace-toolbar {
-      flex-direction: column;
-      align-items: stretch;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0 8px;
     }
 
     .workspace-toolbar-spacer {
       display: none;
     }
 
+    .workspace-toolbar-nav--desktop,
+    .workspace-toolbar-print-desktop,
+    .workspace-toolbar-attach-desktop {
+      display: none !important;
+    }
+
+    .workspace-toolbar-back-mobile,
+    .workspace-toolbar-more {
+      display: inline-flex;
+    }
+
     .workspace-toolbar-main,
     .workspace-toolbar-status {
       justify-content: flex-start;
       flex: 1 1 auto;
+    }
+
+    .workspace-toolbar-main {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+      gap: 8px;
+    }
+
+    .workspace-toolbar-actions {
+      flex-wrap: nowrap;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .workspace-toolbar-status {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .workspace-balance,
+    .workspace-status-pill {
+      font-size: 12px;
+      padding: 2px 8px;
     }
   }
 

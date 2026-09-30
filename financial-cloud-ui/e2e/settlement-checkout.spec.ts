@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
+import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
 import {
     checkoutCurrentPeriod,
     countClosedSettlements,
@@ -11,6 +11,7 @@ import {
 import {
     createAndPostVoucher,
     fixVoucherNumbering,
+    pickStandardBusinessSubjects,
 } from './helpers/voucher'
 import {assertIncomeFormulaChain, fetchIncomeStatement} from './helpers/reports'
 
@@ -94,7 +95,14 @@ test.describe.serial('settlement checkout guards', () => {
         const headers = auth.headers
         const bookId = user.bookId
 
-        await createAndPostVoucher(request, headers, bookId, '硬检拒绝-凭证', 20)
+        const subjects = await fetchBookSubjects(request, headers, bookId)
+        const {bank, expense} = pickStandardBusinessSubjects(subjects)
+        test.skip(!bank || !expense, '缺少 1002/5602')
+        // 显式费用凭证，确保必做结转未生成时硬检拦截
+        await createAndPostVoucher(
+            request, headers, bookId, '硬检拒绝-凭证', 20,
+            {debit: expense, credit: bank},
+        )
         await fixVoucherNumbering(request, headers)
 
         const blocked = await tryCheckoutCurrentPeriod(request, headers, bookId)

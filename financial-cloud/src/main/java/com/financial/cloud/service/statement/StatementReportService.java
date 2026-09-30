@@ -556,11 +556,11 @@ public class StatementReportService{
         Map<String, BigDecimal> yearlyResults = StatementCashFlowRules.calculateSubtotalsAndNetAmounts(
                 statementCashFlows, false, amountYear);
 
-        // 第三步：更新小计和净额值
+        // 第三步：更新小计、净额、期初/期末等计算结果行
         for (StatementCashFlow flow : statementCashFlows) {
             String code = flow.getItemCode();
-            // 检查项目是否为小计或净额
-            if (flow.getIsResult() == 1 || "56-xj-qita".equals(flow.getItemCode())) {
+            // calculateSubtotalsAndNetAmounts 只写入汇总/勾稽项；期初行 is_result=0 也必须回写
+            if (monthlyResults.containsKey(code)) {
                 flow.setMonthlyAmount(monthlyResults.get(code));
                 flow.setCurrentAmount(yearlyResults.get(code));
             }

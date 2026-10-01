@@ -57,5 +57,6 @@ cd financial-cloud-ui && npm run test:e2e:smoke
 | `AI_UI_REQUIRE_BOOKS=0` 子集夹具门闸 | **PASS（SKIPPED，见 ai-ui-ci-subset-report）** |
 | AI-UI 5 套件全量 | **未跑通宣称**：本环境 MySQL 为空库，无 `AI-UI-20260930` 夹具；CI 为 fixture-gated SKIP/有夹具再跑 |
 | 完整 Playwright accounting | **未宣称通过**：仅修审核员授权并开 PR 冒烟；完整套件仍走 push job |
+| GitHub Actions PR CI（`0c51ffa`） | **PASS**：`backend-test` / `frontend-check` / `e2e-smoke`；完整 `e2e` 在 PR 上仍为 skip（仅 push） |
 
 > 不宣称「全系统全部通过」。本轮支持：CI 接线、三条产品口径收口、e2e SKIPPED 原因说明与 PR 最小冒烟、审核员账套授权修复。

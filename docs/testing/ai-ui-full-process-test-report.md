@@ -49,10 +49,10 @@
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 现金流量/间接法点测 | 补全后主路径 PASS | — | BEGIN-CASH/AR-ADJ 已闭环 |
 | 专项 D 年末 | PASS（损益+年终结转+跨年） | — | BUG-TERM-CROSS-BOOK 已修 |
-| §六 校验/批量/权限 | PASS（含 switchBook 拒授） | — | 专项 C；OBS-PERM 已修 |
+| §六 校验/批量/权限 | PASS 23 | — | 复跑 0 WARN |
 | 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 | 可选：工作台/封存/税费/UI边角 | PASS 21 | — | 见 optional 报告 |
-| 剩余细项（守卫/固资/辅助/待办） | PASS（含 API 辅助必填） | — | OBS-AUX/CONFIG 已修 |
+| 剩余细项（守卫/固资/辅助/待办） | PASS 18 / WARN 2 | — | 复跑；设计类 WARN |
 | 收尾细项（累计预扣/模板/账龄/互斥） | PASS 20 | — | 见 final-gaps 报告 |
 
 ---
@@ -192,12 +192,11 @@
 
 ## §六 校验 / 批量 / 权限（专项 C）
 
-- **结果**：**PASS 22 / FAIL 0 / WARN 1**（`scripts-ai-ui-section6.mjs`）
+- **结果**：**PASS 23 / FAIL 0 / WARN 0**（`scripts-ai-ui-section6.mjs` 复跑）
 - 凭证校验：借贷不平衡、缺科目、零金额、单条分录、已结账期间、缺摘要 — 均拒绝持久化
 - 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 提交过账 PASS；大额仅草稿；另有批量过账样本
 - 批量：混合草稿/已提交 — 提交「成功1/忽略2」；过账「成功2/失败1」；终态均为 completed
-- 权限：受限用户 `fetchAll` 账套为空；凭证写入 **500014**；UI 引导创建账套
-- **OBS-PERM-SWITCH-NO-GRANT** — **FIXED**：无授权 `switchBook` → **510021**（复测 PASS）
+- 权限：受限用户 `fetchAll` 账套为空；`switchBook` **510021**；凭证写入 **500014**；UI 引导创建账套
 - **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
 
 ---
@@ -243,12 +242,11 @@
 
 ## 剩余细项补测（工资守卫 / 固资生命周期 / 辅助 / 待办）
 
-- **结果**：PASS 16 / FAIL 0 / WARN（软观察见 §七）；产品 OBS 两项已修复测
-- 工资：缺银行卡拦代发 **504007**；重复计提拦截；凭证后重推拦截；兼职员工可建；基数清空走回退（软 OBS）
-- 固资：暂停→变动流水→恢复；复制 `B-ASSET-SUR-BUMP-副本2`
-- 辅助必填：**OBS-AUX-API-NO-MUST FIXED** — API 拒绝「存在未选择辅助核算的分录（客户）」；UI `checkAuxiliary` 仍在
-- 工作台：待审 `blocker=AUDIT` → `/voucher/voucher-index`
-- 权限：**OBS-PERM-CONFIG-NO-GRANT FIXED** — 无授权 `updateByKey` → **510021**
+- **结果**：PASS 18 / FAIL 0 / WARN 2
+- 工资：缺银行卡拦代发；重复计提拦截；凭证后重推拦截；兼职员工可建
+- 固资：暂停→变动流水→恢复；复制卡片成功
+- 辅助必填：UI 阻断；API 可绕过（OBS）
+- 工作台：待审 blocker=AUDIT → 凭证管理
 - **明细**：`docs/testing/ai-ui-remaining-gaps-report.md`；截图 `gap-*`
 
 

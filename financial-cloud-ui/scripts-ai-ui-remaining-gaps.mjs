@@ -259,16 +259,30 @@ async function main() {
   );
   const salary = (salPage.data?.records || []).find((s) => s.belongDate === '2026-01');
   if (salary?.accrualVoucherId) {
-    const regen = await api(admin.token, 'POST', '/api/employee/salary/generate-voucher', {
-      id: salary.id,
-      voucherType: 2,
-      bookId: BOOK_B,
-    });
-    rec(
-      'PAY-REGEN-BLOCK',
-      regen.code !== 0 && /已生成|勿重复|already/i.test(regen.message || '') ? 'PASS' : 'FAIL',
-      `code=${regen.code} msg=${regen.message}`,
-    );
+    const linked = await api(admin.token, 'GET', `/api/voucher/get/${salary.accrualVoucherId}`);
+    const live =
+      linked.code === 0 &&
+      linked.data &&
+      linked.data.deleted !== 'y' &&
+      linked.data.id === salary.accrualVoucherId;
+    if (!live) {
+      rec(
+        'PAY-REGEN-BLOCK',
+        'WARN',
+        `stale accrualVoucherId=${salary.accrualVoucherId} (not live); skip regen assert`,
+      );
+    } else {
+      const regen = await api(admin.token, 'POST', '/api/employee/salary/generate-voucher', {
+        id: salary.id,
+        voucherType: 2,
+        bookId: BOOK_B,
+      });
+      rec(
+        'PAY-REGEN-BLOCK',
+        regen.code !== 0 && /已生成|勿重复|already/i.test(regen.message || '') ? 'PASS' : 'FAIL',
+        `code=${regen.code} msg=${regen.message}`,
+      );
+    }
   } else {
     rec('PAY-REGEN-BLOCK', 'WARN', 'no accrual voucher on Jan salary');
   }

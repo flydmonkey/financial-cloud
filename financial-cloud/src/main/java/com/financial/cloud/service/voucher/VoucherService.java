@@ -1816,11 +1816,12 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         VoucherVo vo = voResult.getData();
 
-        // 冲销凭证落在当前开放账期（今天早于开放账期时取账期首日）
+        // 冲销凭证必须落在当前开放账期：系统日早于或晚于开放账期时，均钳到该账期首日
+        // （BUG-JEXT-REVERSE-POST：仅处理「系统日 < 开放账期」时，历史账套回测会把冲销落到未来月）
         String currentTerm = configSysService.getCurrentTerm(bookId);
         Date reversalDate = new Date();
         String todayTerm = DateUtils.format(reversalDate, DateUtils.FORMAT_DATE_YYYY_MM);
-        if (StringUtils.isNotBlank(currentTerm) && currentTerm.compareTo(todayTerm) > 0) {
+        if (StringUtils.isNotBlank(currentTerm) && !currentTerm.equals(todayTerm)) {
             int y = Integer.parseInt(currentTerm.substring(0, 4));
             int m = Integer.parseInt(currentTerm.substring(5, 7));
             reversalDate = new java.util.GregorianCalendar(y, m - 1, 1).getTime();

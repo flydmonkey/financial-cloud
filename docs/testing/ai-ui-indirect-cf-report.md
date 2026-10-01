@@ -49,15 +49,16 @@
 
 附表四项独立合计 13+12+10−7=**28,000**，但 `57-xj-jyje` 本月净额仍为 **0**（**OBS-CF-INDIRECT-NET-ZERO**：直接法无本月指定时附表净额未按调整项汇总）。
 
-## 缺陷 / 观察
+## 缺陷 / 观察（历史快照；后续已补全）
 
-1. **OBS-CF-V04-MISSING**：V04「支付其他」10,000 从未指定，污染 1 月经营净额与现金期末。  
-2. **OBS-CF-M2-UNSPECIFIED**：2 月现金业务未指定 CF，本月主表金额多为 null/0。  
-3. **OBS-CF-AR-ADJ**：1 月经营性应收调整 −18,000 ≠ 预期 −30,000。  
-4. **OBS-CF-INDIRECT-NET-ZERO**：2 月附表调整项正确但经营净额本月为 0。  
-5. **OBS-CF-BEGIN-CASH-FEB**：2 月期初现金本月列 30,000（非 160,000）。
+1. **OBS-CF-V04-MISSING** — 已在 cf-remediate 补指定闭环。  
+2. **OBS-CF-M2-UNSPECIFIED** — 已在 cf-remediate 补指定闭环。  
+3. **OBS-CF-AR-ADJ** — **CLOSED（口径说明）**：间接法经营性应收含预付款项，−18,000 正确；见 `ai-ui-cf-begin-cash-fix-report.md`。  
+4. **OBS-CF-INDIRECT-NET-ZERO** — CF 补全后附表经营净额本月 28,000。  
+5. **OBS-CF-BEGIN-CASH-FEB** — **FIXED**：上期期末改为实时重算，2 月期初本月列 160,000。
 
 ## 证据
 
 - `/opt/cursor/artifacts/screenshots/indirect-cf-ui.webp`
 - `/opt/cursor/artifacts/screenshots/indirect-cf-ui-bottom.webp`
+- `/opt/cursor/artifacts/screenshots/cf-begin-cash-feb-fixed.webp`

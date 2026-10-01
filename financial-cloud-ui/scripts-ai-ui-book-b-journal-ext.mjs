@@ -36,6 +36,11 @@ const RECON_OUTSTANDING = 500;
 const REMARK_EDIT = `${MARK}-JEXT-EDIT`;
 const REMARK_REV = `${MARK}-JEXT-REV`;
 const REMARK_RECON = `${MARK}-JEXT-RECON500`;
+/** Offsetting income so book stays at baseline while 企业已付银行未付 500 is outstanding. */
+const REMARK_RECON_IN = `${MARK}-JEXT-RECON500-IN`;
+/** Prompt numbers: stmt 12,500 − 企业已付银行未付 500 → adj 12,000 (= book). */
+const RECON_STMT = 12500;
+const RECON_ADJ = 12000;
 
 const results = [];
 const blockers = [];
@@ -53,7 +58,17 @@ const block = (id, detail) => {
 
 async function shot(page, name) {
   fs.mkdirSync(SHOT, { recursive: true });
-  await page.screenshot({ path: `${SHOT}/${name}.webp`, fullPage: false });
+  const path = `${SHOT}/${name}.webp`;
+  await page.screenshot({ path, fullPage: false });
+  // Also keep legacy jext alias when writing bookb-ext-* names
+  if (name.startsWith('bookb-ext-')) {
+    const alias = name.replace('bookb-ext-', 'bookb-jext-');
+    try {
+      fs.copyFileSync(path, `${SHOT}/${alias}.webp`);
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 function num(v) {
@@ -373,6 +388,29 @@ async function getRecon(token, accId) {
   return view.data;
 }
 
+async function openReconUi(page, accId, accNameHint) {
+  await page.goto(`${BASE}/journal/reconciliation`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  const select = page.locator('.recon-acc-select').first();
+  await select.click();
+  await page.waitForTimeout(300);
+  // Prefer exact option label containing account name/code
+  const opt = page.locator('.el-select-dropdown__item').filter({
+    hasText: accNameHint || ACC_NAME,
+  });
+  if ((await opt.count()) > 0) {
+    await opt.first().click();
+  } else {
+    // Fallback: first option
+    await page.locator('.el-select-dropdown__item').first().click();
+  }
+  await page.waitForTimeout(800);
+  // Ensure query fires
+  const queryBtn = page.getByRole('button', { name: '查询' });
+  if (await queryBtn.count()) await queryBtn.click();
+  await page.waitForTimeout(900);
+}
+
 async function restoreZeroDiffRecon(token, accId, bookBalance) {
   const save = await api(token, 'PUT', '/api/journal/reconciliation/statement', {
     accId,
@@ -417,6 +455,15 @@ function writeExtReport() {
     '',
     `## 结论：${conclusion}（PASS ${pass} / FAIL ${fail} / WARN ${warn} / BLOCK ${blocked}）`,
     '',
+    '## 场景验收（§5.1 扩展）',
+    '',
+    '| # | 场景 | 结果 | 证据要点 |',
+    '|---|---|---|---|',
+    `| 1 | 未过账关联凭证改额 → 流水回写+余额重算 | ${results.find((r) => r.id === 'EDIT-REWRITE')?.status || '—'} | ${EDIT_FROM}→${EDIT_TO}；日记账 ${figures.editJournalBal} |`,
+    `| 2 | 草稿凭证删除 → 流水解绑 | ${results.find((r) => r.id === 'UNBIND-DELETE')?.status || '—'} | voucherId=${figures.unbindVoucherId}；流水保留 |`,
+    `| 3 | 已过账凭证红字冲销 → 反向流水+余额 | ${results.find((r) => r.id === 'REV-JOURNAL')?.status || '—'} | 反向收入 ${REV_AMT}；日记账回 ${figures.revJournalBal}；冲销过账 ${results.find((r) => r.id === 'REV-POST')?.status || '—'} |`,
+    `| 4 | 企业已付银行未付 500 未达项 | ${results.find((r) => r.id === 'RECON-OUTSTANDING-500')?.status || '—'} | 对账单 ${figures.reconStmt} − 500 → 调节后 ${figures.reconAdj}；账面 ${figures.reconBook}；差额 ${figures.reconDiff} |`,
+    '',
     '## 基线快照（变更前）',
     '',
     '| 项目 | 值 |',
@@ -441,15 +488,15 @@ function writeExtReport() {
     `| 删草稿后 voucherId | null | ${figures.unbindVoucherId ?? ''} |`,
     `| 红冲后日记账余额 | ${figures.journalBaseline ?? ''} | ${figures.revJournalBal ?? ''} |`,
     `| 红冲过账后总账1002 | ${figures.glBaseline ?? ''} | ${figures.revGlAfter ?? ''} |`,
-    `| 未达项支出 | ${RECON_OUTSTANDING} | ${figures.reconUe ?? ''} |`,
-    `| 对账单 | ${(figures.journalBaseline ?? 0)} | ${figures.reconStmt ?? ''} |`,
-    `| 账面（含未达支出） | ${(figures.journalBaseline ?? 0) - RECON_OUTSTANDING} | ${figures.reconBook ?? ''} |`,
-    `| 调节后银行 | ${(figures.journalBaseline ?? 0) - RECON_OUTSTANDING} | ${figures.reconAdj ?? ''} |`,
+    `| 未达项支出（企业已付银行未付） | ${RECON_OUTSTANDING} | ${figures.reconUe ?? ''} |`,
+    `| 对账单 | ${RECON_STMT} | ${figures.reconStmt ?? ''} |`,
+    `| 账面（日记账基线） | ${RECON_ADJ} | ${figures.reconBook ?? ''} |`,
+    `| 调节后银行（${RECON_STMT}−${RECON_OUTSTANDING}） | ${RECON_ADJ} | ${figures.reconAdj ?? ''} |`,
     `| 调节差额 | 0 | ${figures.reconDiff ?? ''} |`,
     `| 终态日记账余额 | ${figures.journalBaseline ?? ''} | ${figures.journalFinal ?? ''} |`,
     `| 终态总账1002 | ${figures.glBaseline ?? ''} | ${figures.glFinal ?? ''} |`,
     '',
-    '## 阻塞项',
+    '## 阻塞 / 缺陷',
     '',
     blockers.length
       ? blockers.map((b) => `- **${b.id}**：${b.detail}`).join('\n')
@@ -457,12 +504,12 @@ function writeExtReport() {
     '',
     '## 证据截图',
     '',
-    '- `/opt/cursor/artifacts/screenshots/bookb-jext-baseline.webp`',
-    '- `/opt/cursor/artifacts/screenshots/bookb-jext-edit-rewrite.webp`',
-    '- `/opt/cursor/artifacts/screenshots/bookb-jext-unbind.webp`',
-    '- `/opt/cursor/artifacts/screenshots/bookb-jext-reverse.webp`',
-    '- `/opt/cursor/artifacts/screenshots/bookb-jext-recon-outstanding.webp`',
-    '- `/opt/cursor/artifacts/screenshots/bookb-jext-final.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookb-ext-baseline.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookb-ext-edit-rewrite.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookb-ext-unbind.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookb-ext-reverse.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookb-ext-recon-outstanding.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookb-ext-final.webp`',
     '',
   ];
   const text = lines.join('\n');
@@ -486,8 +533,8 @@ function patchMainReports(summary) {
       `- **改额回写**：草稿凭证 ${EDIT_FROM}→${EDIT_TO}，流水与日记账余额同步`,
       `- **草稿删除解绑**：\`voucherId\` 清空，流水保留`,
       `- **红字冲销**：金额 ${REV_AMT}，生成反向流水并恢复日记账；冲销凭证过账见阻塞项（负金额回写/跨期）`,
-      `- **未达项**：企业已付银行未付 ${RECON_OUTSTANDING}；对账单=${figures.journalBaseline}，账面=${(figures.journalBaseline ?? 0) - RECON_OUTSTANDING}，调节后两侧一致差额 0`,
-      `- **截图**：\`bookb-jext-*\``,
+      `- **未达项**：企业已付银行未付 ${RECON_OUTSTANDING}；对账单=${RECON_STMT}，调减后=${RECON_ADJ}，账面=${RECON_ADJ}，差额 0`,
+      `- **截图**：\`bookb-ext-*\``,
       '',
     ].join('\n');
     if (md.includes('## 5.1 扩展')) {
@@ -505,9 +552,9 @@ function patchMainReports(summary) {
       '### 5.1 出纳日记账 — PASS（含扩展）',
       '- **账套**：`AI-UI-20260930-专项B`，**bookId** `2105448444973871105`，启用 `2026-01`，凭证审核开启',
       '- **核心**：期初 10,000；收入 3,000+支出 1,000 → 日记账 **12,000**；过账后总账曾对齐；后经工资/报销/固资，**总账1002 现基线见扩展报告**',
-      `- **扩展**：未过账改额回写（${EDIT_FROM}→${EDIT_TO}）；草稿删除解绑；红冲 ${REV_AMT} 反向流水；企业已付银行未付 ${RECON_OUTSTANDING} 未达项（对账单=日记账基线，调减后两侧一致）`,
+      `- **扩展**：未过账改额回写（${EDIT_FROM}→${EDIT_TO}）；草稿删除解绑；红冲 ${REV_AMT} 反向流水；企业已付银行未付 ${RECON_OUTSTANDING}（对账单 ${RECON_STMT} → 调节后 ${RECON_ADJ}）`,
       `- **基线（扩展前）**：日记账 ${figures.journalBaseline} / 总账1002 ${figures.glBaseline}`,
-      '- **明细**：`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`；截图 `bookb-*` / `bookb-jext-*`',
+      '- **明细**：`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`；截图 `bookb-*` / `bookb-ext-*`',
       '',
     ].join('\n');
     if (md.includes('### 5.1 出纳日记账')) {
@@ -598,9 +645,17 @@ async function main() {
     await fetch(`/api/users/switchBook/${bookId}`);
   }, BOOK_ID);
 
+  if (!approx(journalBaseline, RECON_ADJ)) {
+    rec(
+      'BASELINE-EXPECT-12000',
+      'WARN',
+      `journal baseline ${journalBaseline} ≠ prompt 12000；对账将按实际基线 +500 对账单验算`,
+    );
+  }
+
   await page.goto(`${BASE}/journal/journalentry`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(900);
-  await shot(page, 'bookb-jext-baseline');
+  await shot(page, 'bookb-ext-baseline');
 
   // ---- 2. Edit draft voucher amount → journal rewrite ----
   let editEntry = await findEntry(adminAuth.token, REMARK_EDIT);
@@ -643,7 +698,7 @@ async function main() {
 
   await page.goto(`${BASE}/journal/journalentry`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  await shot(page, 'bookb-jext-edit-rewrite');
+  await shot(page, 'bookb-ext-edit-rewrite');
 
   // ---- 3. Delete draft → unbind ----
   editEntry = await findEntry(adminAuth.token, REMARK_EDIT);
@@ -671,7 +726,7 @@ async function main() {
 
   await page.goto(`${BASE}/journal/journalentry`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  await shot(page, 'bookb-jext-unbind');
+  await shot(page, 'bookb-ext-unbind');
 
   // Clean edit entry so reverse/recon start from baseline
   editEntry = await findEntry(adminAuth.token, REMARK_EDIT);
@@ -747,10 +802,32 @@ async function main() {
         `reverse entry dir=${hit?.direction} income=${hit?.income} tradeDate=${hit?.tradeDate}; journal=${jAfter}（期望基线 ${journalBaseline}）`,
       );
 
-      // Attempt natural submit/post of reverse draft
+      // Attempt submit/post: first rewrite voucherDate into open term if reverse landed on system today
       await ensureOnBook(adminAuth.token, BOOK_ID, TERM);
       let postOk = false;
-      const submitTry = await api(adminAuth.token, 'POST', `/api/voucher/submit/${reverseId}`);
+      let dateFixMsg = '';
+      if (!revDate.startsWith(TERM)) {
+        const detailForDate = await api(adminAuth.token, 'GET', `/api/voucher/get/${reverseId}`);
+        if (detailForDate.code === 0 && detailForDate.data) {
+          const v = detailForDate.data;
+          const fix = await api(adminAuth.token, 'PUT', '/api/voucher/update', {
+            ...v,
+            voucherDate: `${TERM}-18`,
+            voucherYear: 2026,
+            voucherMonth: 1,
+          });
+          dateFixMsg = `dateFix ${revDate}→${TERM}-18: ${fix.message || fix.code}`;
+          rec('REV-DATE-FIX', fix.code === 0 ? 'PASS' : 'WARN', dateFixMsg);
+        }
+      }
+      let submitTry = await api(adminAuth.token, 'POST', `/api/voucher/submit/${reverseId}`);
+      // Prefer body submit if path-style fails
+      if (submitTry.code !== 0) {
+        const d = await api(adminAuth.token, 'GET', `/api/voucher/get/${reverseId}`);
+        if (d.code === 0 && d.data) {
+          submitTry = await api(adminAuth.token, 'POST', '/api/voucher/submit', { ...d.data, id: reverseId });
+        }
+      }
       if (submitTry.code === 0) {
         const auditTry = await api(reviewerAuth.token, 'PUT', `/api/voucher/audit/${reverseId}`);
         const postTry = await api(adminAuth.token, 'PUT', `/api/voucher/sender/${reverseId}`);
@@ -763,7 +840,7 @@ async function main() {
       } else {
         block(
           'REV-POST',
-          `冲销凭证无法提交过账：${submitTry.message}（负金额分录触发流水回写 508010；且 voucherDate=${revDate} 可能非开放账期 ${TERM}）。日记账反向流水已在 reverse 时生成。`,
+          `冲销凭证无法提交过账：${submitTry.message}（${dateFixMsg || `voucherDate=${revDate}`}；负金额分录提交会触发 syncLinkedEntriesFromVoucher 拒绝非正金额 / JournalErrorCode 508010）。日记账反向流水已在 reverse() 时生成并重算余额。`,
         );
       }
 
@@ -779,7 +856,7 @@ async function main() {
 
       await page.goto(`${BASE}/journal/journalentry`, { waitUntil: 'networkidle' });
       await page.waitForTimeout(800);
-      await shot(page, 'bookb-jext-reverse');
+      await shot(page, 'bookb-ext-reverse');
 
       figures.revSourceVoucherId = revVoucherId;
       figures.revVoucherId = reverseId;
@@ -811,17 +888,31 @@ async function main() {
     rec('REV-BAL-CHECK', 'WARN', `journal=${acc.balance} vs baseline ${journalBaseline} before recon`);
   }
 
-  // ---- 5. Bank recon outstanding 500 (企业已付银行未付) ----
+  // ---- 5. Bank recon outstanding 500 (企业已付银行未付)
+  // Prompt: 对账单 12,500 调减 企业已付银行未付 500 → 调节后 12,000 = 账面。
+  // Keep book at baseline by adding offsetting income(+500, reconciled) + expense(500, unreconciled).
   try {
-    // Remove prior recon test entry if any
-    const oldRecon = await findEntry(adminAuth.token, REMARK_RECON);
-    if (oldRecon?.id) {
-      if (oldRecon.voucherId) {
-        await cancelToDraftAndDeleteVoucher(adminAuth.token, reviewerAuth.token, String(oldRecon.voucherId));
+    for (const rk of [REMARK_RECON, REMARK_RECON_IN]) {
+      const old = await findEntry(adminAuth.token, rk);
+      if (old?.id) {
+        if (old.voucherId) {
+          await cancelToDraftAndDeleteVoucher(adminAuth.token, reviewerAuth.token, String(old.voucherId));
+        }
+        await deleteEntries(adminAuth.token, [old.id]);
       }
-      await deleteEntries(adminAuth.token, [oldRecon.id]);
     }
 
+    const expectBook = journalBaseline; // 12,000
+    const expectStmt = journalBaseline + RECON_OUTSTANDING; // 12,500
+    const expectAdj = journalBaseline; // 12,000
+
+    const reconIn = await addEntry(adminAuth.token, {
+      direction: 'i',
+      amount: RECON_OUTSTANDING,
+      subjectId: revenueSub.id,
+      remark: REMARK_RECON_IN,
+      description: '对账净额对冲收入（保持账面基线）',
+    });
     const reconEntry = await addEntry(adminAuth.token, {
       direction: 'e',
       amount: RECON_OUTSTANDING,
@@ -831,10 +922,11 @@ async function main() {
     });
 
     acc = await getJournalAccount(adminAuth.token);
-    const bookBal = num(acc.balance); // baseline - 500
-    const stmtBal = journalBaseline; // bank statement still at pre-payment (= book + 500)
+    if (!approx(acc.balance, expectBook)) {
+      throw new Error(`recon prep journal=${acc.balance} want ${expectBook}`);
+    }
 
-    // Mark all except recon entry + opening as reconciled
+    // Mark all except recon expense + opening as reconciled
     const view1 = await getRecon(adminAuth.token, ACC_ID);
     const markIds = (view1.entries || [])
       .filter((e) => !e.opening && e.id && String(e.id) !== String(reconEntry.id))
@@ -845,17 +937,21 @@ async function main() {
         reconciled: true,
       });
     }
-    // Ensure recon entry unreconciled
     await api(adminAuth.token, 'PUT', '/api/journal/reconciliation/mark', {
       entryIds: [reconEntry.id],
       reconciled: false,
+    });
+    // Ensure offsetting income is reconciled (not an outstanding)
+    await api(adminAuth.token, 'PUT', '/api/journal/reconciliation/mark', {
+      entryIds: [reconIn.id],
+      reconciled: true,
     });
 
     const save = await api(adminAuth.token, 'PUT', '/api/journal/reconciliation/statement', {
       accId: ACC_ID,
       yearPeriod: TERM,
-      statementBalance: stmtBal,
-      remark: `${MARK} 企业已付银行未付 ${RECON_OUTSTANDING}`,
+      statementBalance: expectStmt,
+      remark: `${MARK} 企业已付银行未付 ${RECON_OUTSTANDING}；对账单 ${expectStmt}→调节后 ${expectAdj}`,
     });
     if (save.code !== 0) throw new Error(`recon statement save: ${save.message}`);
 
@@ -867,33 +963,31 @@ async function main() {
     figures.reconAdj = num(view.adjustedStatement);
     figures.reconDiff = num(view.difference);
 
-    const expectBook = journalBaseline - RECON_OUTSTANDING;
     const ok =
       approx(view.bookBalance, expectBook) &&
-      approx(view.statementBalance, journalBaseline) &&
+      approx(view.statementBalance, expectStmt) &&
       approx(view.unreconciledExpenditure, RECON_OUTSTANDING) &&
       approx(view.unreconciledIncome, 0) &&
-      approx(view.adjustedStatement, expectBook) &&
+      approx(view.adjustedStatement, expectAdj) &&
       approx(view.difference, 0);
 
     rec(
       'RECON-OUTSTANDING-500',
       ok ? 'PASS' : 'FAIL',
-      `book=${view.bookBalance} stmt=${view.statementBalance} ue=${view.unreconciledExpenditure} adj=${view.adjustedStatement} diff=${view.difference}（适应基线 journal=${journalBaseline}）`,
+      `book=${view.bookBalance} stmt=${view.statementBalance} ue=${view.unreconciledExpenditure} ui=${view.unreconciledIncome} adj=${view.adjustedStatement} diff=${view.difference}（期望 book/adj=${expectBook} stmt=${expectStmt} ue=${RECON_OUTSTANDING}）`,
     );
 
-    await page.goto(`${BASE}/journal/reconciliation`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1000);
-    await shot(page, 'bookb-jext-recon-outstanding');
+    await openReconUi(page, ACC_ID, ACC_NAME);
+    await shot(page, 'bookb-ext-recon-outstanding');
 
-    // Restore: delete recon entry + zero-diff recon
-    await deleteEntries(adminAuth.token, [reconEntry.id]);
+    // Restore: delete recon entries + zero-diff recon at baseline
+    await deleteEntries(adminAuth.token, [reconEntry.id, reconIn.id]);
     acc = await getJournalAccount(adminAuth.token);
     const restored = await restoreZeroDiffRecon(adminAuth.token, ACC_ID, num(acc.balance));
     rec(
       'RECON-RESTORE',
       approx(restored.difference, 0) && approx(acc.balance, journalBaseline) ? 'PASS' : 'FAIL',
-      `journal=${acc.balance} diff=${restored.difference}`,
+      `journal=${acc.balance} stmt=${restored.statementBalance} diff=${restored.difference}`,
     );
   } catch (err) {
     block('RECON-PATH', String(err.message || err));
@@ -904,15 +998,15 @@ async function main() {
   const glFinal = getBankGl(await subjectBalance(adminAuth.token));
   figures.journalFinal = num(acc.balance);
   figures.glFinal = glFinal;
-    rec(
-      'FINAL-BASELINE',
-      approx(acc.balance, journalBaseline) && approx(glFinal, glBaseline) ? 'PASS' : 'FAIL',
-      `journal=${acc.balance}（基线 ${journalBaseline}） gl=${glFinal}（基线 ${glBaseline}）`,
-    );
+  rec(
+    'FINAL-BASELINE',
+    approx(acc.balance, journalBaseline) && approx(glFinal, glBaseline) ? 'PASS' : 'FAIL',
+    `journal=${acc.balance}（基线 ${journalBaseline}） gl=${glFinal}（基线 ${glBaseline}）`,
+  );
 
   await page.goto(`${BASE}/journal/journalentry`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  await shot(page, 'bookb-jext-final');
+  await shot(page, 'bookb-ext-final');
 
   await browser.close();
 

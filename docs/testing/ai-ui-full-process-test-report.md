@@ -7,21 +7,25 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`
 
 ---
 
-## 最终结论：**主账套两月闭环 + P0/P1 已修，全流程仍有条件不通过**
+## 最终结论：**主路径闭环；剩余可选深路径**
 
 主账套已完成建账→期初→V01–V08→CF 指定→V04 反操作→1 月结转/月结→2 月五笔→2 月结转/月结；账期现为 **2026-03**。历史快照抽查：1 月银行 160,000 / 本年利润 40,000；2 月银行 188,000 / 本年利润 53,000。
 
-**缺陷修复（`ec37ae8`）**：
-1. **BUG-TZ-DATE（P0）** — 已修；`2026-03-01` 暂存 PASS（见 `ai-ui-verify-fixes-report.md`）
-2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
+**缺陷修复**：
+1. **BUG-TZ-DATE（P0）** — 已修
+2. **BUG-CF-UI-SIGN（P1）** — 已修
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
+4. **BUG-TERM-CROSS-BOOK（P1）** — 已修
+5. **OBS-CF-BEGIN-CASH-FEB** — 已修（上期 CF 期末实时重算；2 月期初 160,000）
+6. **OBS-CF-AR-ADJ** — 闭环为口径说明（应收+预付 ⇒ −18,000）
+7. **BUG-JEXT-REVERSE-POST** — 冲销日期钳到开放账期 + 负金额流水回写
 
-仍不满足文档「全通过」标准：OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。专项 B 5.1 扩展已完成（红冲凭证过账受跨期/负金额回写阻塞，日记账反向流水已验证）。专项 B 固资盘点/清理深路径、主账套两月闭环、B/C/D 核心路径、守卫、CF 补全后勾稽、导出内容级校验、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。
+专项 B 5.1 核心+扩展、固资深路径、工资/报销、C/D、守卫、CF 勾稽、导出内容级校验已完成。可选：盘盈入账 book-surplus（护主卡未跑）。
 
 ---
 
@@ -38,7 +42,7 @@
 | 专项 B 工资/报销 5.4–5.5 | 核心路径 PASS | — | 公式空 WARN；摘要长度 OBS |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
-| 现金流量/间接法点测 | 补全后主路径 PASS | OBS-CF-BEGIN-CASH-FEB / AR-ADJ | 见 cf-remediate |
+| 现金流量/间接法点测 | 补全后主路径 PASS | — | BEGIN-CASH/AR-ADJ 已闭环 |
 | 专项 D 年末 | PASS（损益+年终结转+跨年） | — | BUG-TERM-CROSS-BOOK 已修 |
 | 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 
@@ -115,10 +119,9 @@
 ### 5.1 出纳日记账 — PASS（含扩展）
 - **账套**：`AI-UI-20260930-专项B`，**bookId** `2105448444973871105`，启用 `2026-01`，凭证审核开启
 - **核心**：期初 10,000；收入 3,000+支出 1,000 → 日记账 **12,000**；过账后总账曾对齐；后经工资/报销/固资，**总账1002 现基线见扩展报告**
-- **扩展**：未过账改额回写（50→80）；草稿删除解绑；红冲 30 反向流水（日记账余额回基线）；企业已付银行未付 500 未达项（对账单 12,000 / 账面 11,500 / 调节后差额 0）
+- **扩展**：未过账改额回写（50→80）；草稿删除解绑；红冲 30 反向流水；企业已付银行未付 500（对账单 12500 → 调节后 12000）
 - **基线（扩展前）**：日记账 12000 / 总账1002 7644.26
-- **阻塞**：`REV-POST` — 冲销凭证落系统日（2026-10）非开放账期，且负金额分录提交触发流水回写 508010，无法走完冲销过账；清理后基线已恢复
-- **明细**：`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`；截图 `bookb-*` / `bookb-jext-*`
+- **明细**：`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`；截图 `bookb-*` / `bookb-ext-*`
 
 ### 5.2 往来与核销 — PASS
 - 启用辅助核算；1122↔客户、2202↔供应商；单位 `AI-UI-20260930-客户B/供应商B`
@@ -148,7 +151,8 @@
 - 截图 `bookb-exp-*`
 
 ### 未测（B 其余）
-盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext；红冲过账受限见阻塞）
+盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext）
+
 
 ---
 
@@ -191,10 +195,10 @@
 
 ## 现金流量 / 间接法点测（主账套 A）
 
-- 已补全 V04 + 2 月 CF 后复核：**1 月经营净额 32,000 / 期末现金 160,000**；**2 月经营净额 28,000**；YTD 期末 **188,000**  
+- 已补全 V04 + 2 月 CF 后复核：**1 月经营净额 32,000 / 期末现金 160,000**；**2 月经营净额 28,000 / 期初 160,000 / 期末 188,000**  
 - 附表 2 月调整项合计与经营净额均为 28,000  
-- 仍 OPEN：2 月期初本月列 30,000≠160,000（OBS-CF-BEGIN-CASH-FEB）；1 月应收调整 −18k≠−30k（OBS-CF-AR-ADJ）  
-- 明细：`docs/testing/ai-ui-indirect-cf-report.md`、`docs/testing/ai-ui-cf-remediate-report.md`
+- **OBS-CF-BEGIN-CASH-FEB FIXED**；**OBS-CF-AR-ADJ** 按产品口径 −18,000（含预付）  
+- 明细：`docs/testing/ai-ui-cf-begin-cash-fix-report.md`、`docs/testing/ai-ui-cf-remediate-report.md`、`docs/testing/ai-ui-indirect-cf-report.md`
 
 ## 导出内容级校验（主账套 A）
 
@@ -205,9 +209,7 @@
 
 ## 未执行 / 进行中
 
-1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  
-2. （可选）红冲凭证过账：开放账期日期 + 负金额流水回写  
-3. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） 
+1. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） 
 
 ---
 

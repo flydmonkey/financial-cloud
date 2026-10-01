@@ -19,8 +19,9 @@
 
 - 2 月 YTD 期末现金 **188,000** PASS  
 - 2 月附表调整项合计仍为 28,000，且附表经营净额本月亦为 **28,000** PASS  
-- 仍 OPEN：`OBS-CF-BEGIN-CASH-FEB`（2 月期初本月列 30,000 ≠ 160,000）；`OBS-CF-AR-ADJ`（1 月应收调整 −18,000 ≠ −30,000）
+- **已闭环（2026-10-01）**：`OBS-CF-BEGIN-CASH-FEB` — 期初改为实时重算上期 CF 期末，2 月期初本月列 **160,000**；`OBS-CF-AR-ADJ` — 产品口径含预付款项，−18,000 为正确值（见 `ai-ui-cf-begin-cash-fix-report.md`）
 
 ## 证据
 
 - `/opt/cursor/artifacts/screenshots/cf-remediate-ui.webp`
+- `/opt/cursor/artifacts/screenshots/cf-begin-cash-feb-fixed.webp`

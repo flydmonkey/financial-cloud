@@ -517,7 +517,10 @@ class VoucherServiceTest {
                 dto.getItems().stream().allMatch(i ->
                         (i.getDebitAmount() == null || i.getDebitAmount().signum() <= 0)
                                 && (i.getCreditAmount() == null || i.getCreditAmount().signum() <= 0))
-                        && dto.getItems().stream().allMatch(i -> i.getSummary().startsWith("冲销："))));
+                        && dto.getItems().stream().allMatch(i -> i.getSummary().startsWith("冲销："))
+                        // 开放账期与系统日不同时，冲销日期钳到开放账期
+                        && TERM.equals(com.financial.cloud.util.DateUtils.format(
+                                dto.getVoucherDate(), com.financial.cloud.util.DateUtils.FORMAT_DATE_YYYY_MM))));
     }
 
     @Test

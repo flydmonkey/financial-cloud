@@ -41,9 +41,10 @@
 ## 观察
 
 - OBS-PERM-SWITCH-NO-GRANT：无 permission_book 授权时 switchBook 仍成功写入 current bookId
+- UI 证据路由：凭证列表应为 `/voucher/voucher-index`（曾误用 `/voucher/voucher` 导致 404；已修正脚本并重截图）
 
 ## 证据截图
 
-- `/opt/cursor/artifacts/screenshots/s6-voucher-list.webp`
+- `/opt/cursor/artifacts/screenshots/s6-voucher-list.webp`（专项 C 凭证管理：边角金额/大额草稿/已过账）
 - `/opt/cursor/artifacts/screenshots/s6-batch.webp`
-- `/opt/cursor/artifacts/screenshots/s6-limited-denied.webp`
+- `/opt/cursor/artifacts/screenshots/s6-limited-denied.webp`（受限用户 → onboarding 创建账套）

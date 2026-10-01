@@ -775,9 +775,15 @@ async function main() {
   await page.evaluate(async (bookId) => {
     await fetch(`/api/users/switchBook/${bookId}`);
   }, BOOK_ID);
-  await page.goto(`${BASE}/voucher/voucher`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1000);
+  await page.goto(`${BASE}/voucher/voucher-index`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1200);
   await shot(page, 's6-voucher-list');
+  // Prefer batch toolbar if present
+  const batchBtn = page.getByRole('button', { name: /批量/ }).first();
+  if (await batchBtn.count()) {
+    await batchBtn.click().catch(() => null);
+    await page.waitForTimeout(400);
+  }
   await shot(page, 's6-batch');
   await browser.close();
 

@@ -7,8 +7,8 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`、`scripts-ai-ui-section6.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`、`docs/testing/ai-ui-section6-report.md`
 
 ---
 
@@ -150,8 +150,8 @@
 - **OBS-EXP-SUMMARY-LEN**：长摘要曾触发 truncation，缩短后通过
 - 截图 `bookb-exp-*`
 
-### 未测（B 其余）
-§六 凭证校验/金额边角/批量/无账套权限已测（见 `ai-ui-section6-report.md`）。
+### B 其余
+专项 B 主路径与深路径已闭环；§六（校验/批量/权限）见专项 C 节与 `ai-ui-section6-report.md`。
 
 ---
 
@@ -184,40 +184,12 @@
 
 ## §六 校验 / 批量 / 权限（专项 C）
 
-- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
-- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
-- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
-- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
-- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
-
----
-
-## §六 校验 / 批量 / 权限（专项 C）
-
-- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
-- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
-- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
-- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
-- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
-
----
-
-## §六 校验 / 批量 / 权限（专项 C）
-
-- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
-- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
-- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
-- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
-- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
-
----
-
-## §六 校验 / 批量 / 权限（专项 C）
-
-- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
-- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
-- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
-- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
+- **结果**：**PASS 22 / FAIL 0 / WARN 1**（`scripts-ai-ui-section6.mjs`）
+- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、已结账期间、缺摘要 — 均拒绝持久化
+- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 提交过账 PASS；大额仅草稿；另有批量过账样本
+- 批量：混合草稿/已提交 — 提交「成功1/忽略2」；过账「成功2/失败1」；终态均为 completed
+- 权限：受限用户 `fetchAll` 账套为空；凭证写入 **500014**；UI 引导创建账套
+- **OBS-PERM-SWITCH-NO-GRANT**：无 `permission_book` 时 `switchBook` 仍成功（写入仍被角色拦截）
 - **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
 
 ---
@@ -253,7 +225,7 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*`、`s6-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
@@ -263,6 +235,7 @@
 - `docs/testing/ai-ui-book-b-fa-surplus-report.md`  
 - `docs/testing/ai-ui-book-b-payroll-exp-report.md`  
 - `docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`  
+- `docs/testing/ai-ui-section6-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
 - `docs/testing/ai-ui-indirect-cf-report.md`  
 - `docs/testing/ai-ui-cf-remediate-report.md`  

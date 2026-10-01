@@ -30,15 +30,15 @@
 | AUX-UI-HINT | PASS | UI 凭证编辑含辅助核算列；提交路径 checkAuxiliary+must（见 voucher-edit.vue） |
 | WB-PENDING-AUDIT | PASS | pendingAudit=1 blocker=AUDIT close=OPEN |
 | WB-AUDIT-DRILL | PASS | url=http://127.0.0.1:3154/voucher/voucher-index |
-| PERM-LIMITED-CONFIG | WARN | limited fetchAll=[] 但仍可读/写 config（含 term→2026-99，已由 admin 恢复） |
+| PERM-LIMITED-CONFIG | WARN→**PASS（复测）** | 初测无授权仍可 updateByKey；修复后 → **510021** |
 | PERM-ADMIN-CONFIG | PASS | admin config/sys/books code=0 n=7 |
 
 ## 观察
 
 - OBS-PAY-BASE-FALLBACK：缴费基数清空后 createTable 仍用回退基数算薪，无「基数缺失」硬拒
 - 固资复制卡保留：id=2105475526428766210 code=B-ASSET-SUR-BUMP-副本2
-- OBS-AUX-API-NO-MUST：科目 1122 配置 must 辅助，但 /voucher/draft|submit API 不校验，仅 UI checkAuxiliary 阻断
-- OBS-PERM-CONFIG-NO-GRANT：无 permission_book 时仍可 `updateByKey` 改当前会话账套配置（与 OBS-PERM-SWITCH-NO-GRANT 同源）；测后已把 C/B 账期恢复 2026-01
+- **OBS-AUX-API-NO-MUST FIXED**：`VoucherService.validateRequiredAuxiliary`；无辅助 draft →「存在未选择辅助核算的分录（客户）」（2026-10-01 复测）
+- **OBS-PERM-CONFIG-NO-GRANT FIXED**：`ConfigSysController.update|updateByKey` 校验 `permission_book` → **510021**
 - 月结工资计提互斥：未强制重复生成（避免污染）
 
 ## 证据截图

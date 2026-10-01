@@ -12,9 +12,11 @@
 
 ---
 
-## 最终结论：**主财务闭环通过（有条件）；专项 / §六 / 可选与收尾细项均已补测**
+## 最终结论：**有条件通过**（主财务闭环通过；专项 / §六 / 可选与收尾细项均已补测）
 
 主账套已完成建账→期初→V01–V08→CF 指定→V04 反操作→1 月结转/月结→2 月五笔→2 月结转/月结；账期现为 **2026-03**。历史快照抽查：1 月银行 160,000 / 本年利润 40,000；2 月银行 188,000 / 本年利润 53,000。
+
+**支持范围**：主账套两月完整闭环、三表勾稽、反操作与快照、专项 B/C/D、§六校验/批量/权限、可选工作台/封存/税费、收尾细项。不宣称「全系统全部通过」——软观察见 §七。
 
 **缺陷修复**：
 1. **BUG-TZ-DATE（P0）** — 已修
@@ -24,6 +26,8 @@
 5. **OBS-CF-BEGIN-CASH-FEB** — 已修（上期 CF 期末实时重算；2 月期初 160,000）
 6. **OBS-CF-AR-ADJ** — 闭环为口径说明（应收+预付 ⇒ −18,000）
 7. **BUG-JEXT-REVERSE-POST** — 冲销日期钳到开放账期 + 负金额流水回写；复测冲销过账 **PASS**（19/19）
+8. **OBS-PERM-SWITCH / CONFIG-NO-GRANT（P1）** — `switchBook` / `config update|updateByKey` 校验 `permission_book`，无授权返回 **510021**
+9. **OBS-AUX-API-NO-MUST（P1）** — 启用辅助核算时，draft/submit 服务端校验科目 `must` 辅助
 
 专项 B 5.1 核心+扩展（含红冲过账/未达 500）、固资深路径、工资/报销、C/D、守卫、CF 勾稽、导出内容级校验已完成。盘盈入账 book-surplus（拆卡/累加/禁 bump）已补测，见 `ai-ui-book-b-fa-surplus-report.md`。
 
@@ -44,10 +48,10 @@
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 现金流量/间接法点测 | 补全后主路径 PASS | — | BEGIN-CASH/AR-ADJ 已闭环 |
 | 专项 D 年末 | PASS（损益+年终结转+跨年） | — | BUG-TERM-CROSS-BOOK 已修 |
-| §六 校验/批量/权限 | PASS | — | 专项 C |
+| §六 校验/批量/权限 | PASS（含 switchBook 拒授） | — | 专项 C；OBS-PERM 已修 |
 | 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 | 可选：工作台/封存/税费/UI边角 | PASS 21 | — | 见 optional 报告 |
-| 剩余细项（守卫/固资/辅助/待办） | PASS | — | 见 remaining-gaps 报告 |
+| 剩余细项（守卫/固资/辅助/待办） | PASS（含 API 辅助必填） | — | OBS-AUX/CONFIG 已修 |
 | 收尾细项（累计预扣/模板/账龄/互斥） | PASS 20 | — | 见 final-gaps 报告 |
 
 ---
@@ -192,7 +196,7 @@
 - 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 提交过账 PASS；大额仅草稿；另有批量过账样本
 - 批量：混合草稿/已提交 — 提交「成功1/忽略2」；过账「成功2/失败1」；终态均为 completed
 - 权限：受限用户 `fetchAll` 账套为空；凭证写入 **500014**；UI 引导创建账套
-- **OBS-PERM-SWITCH-NO-GRANT**：无 `permission_book` 时 `switchBook` 仍成功（写入仍被角色拦截）
+- **OBS-PERM-SWITCH-NO-GRANT** — **FIXED**：无授权 `switchBook` → **510021**（复测 PASS）
 - **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
 
 ---
@@ -238,12 +242,12 @@
 
 ## 剩余细项补测（工资守卫 / 固资生命周期 / 辅助 / 待办）
 
-- **结果**：PASS 16 / FAIL 0 / WARN 4
-- 工资：缺银行卡拦代发 **504007**；重复计提拦截；凭证后重推拦截；兼职员工可建；基数清空走回退（OBS）
+- **结果**：PASS 16 / FAIL 0 / WARN（软观察见 §七）；产品 OBS 两项已修复测
+- 工资：缺银行卡拦代发 **504007**；重复计提拦截；凭证后重推拦截；兼职员工可建；基数清空走回退（软 OBS）
 - 固资：暂停→变动流水→恢复；复制 `B-ASSET-SUR-BUMP-副本2`
-- 辅助必填：UI `checkAuxiliary`；API 可绕过（**OBS-AUX-API-NO-MUST**）
+- 辅助必填：**OBS-AUX-API-NO-MUST FIXED** — API 拒绝「存在未选择辅助核算的分录（客户）」；UI `checkAuxiliary` 仍在
 - 工作台：待审 `blocker=AUDIT` → `/voucher/voucher-index`
-- 权限：**OBS-PERM-CONFIG-NO-GRANT**（无账套授权仍可改 config；已恢复）
+- 权限：**OBS-PERM-CONFIG-NO-GRANT FIXED** — 无授权 `updateByKey` → **510021**
 - **明细**：`docs/testing/ai-ui-remaining-gaps-report.md`；截图 `gap-*`
 
 
@@ -256,6 +260,83 @@
 - UI 边角：无权限页、凭证筛选/分页可见
 - **明细**：`docs/testing/ai-ui-optional-workbench-tax-report.md`；截图 `opt-*`
 
+
+---
+
+## §七 完成标准（汇总）
+
+### 1. 环境与约束
+见文首：FE `:3154` / BE `:2154` / MySQL `:3307`；标识 `AI-UI-20260930`；允许脚本注入写入；月结向导与报表截图走 UI。
+
+### 2. 用例计数（按分类；未执行不计通过）
+
+| 分类 | 通过 | 失败 | 阻塞 | 未执行 | 不适用/软观察 |
+|---|---:|---:|---:|---:|---|
+| 登录建账期初 | 8 | 0 | 0 | 0 | 1 |
+| 凭证/账簿/报表/月结/反操作/跨月（主 A） | 主路径 | 0 | 0 | 0 | — |
+| 业务专项 B/C/D | 各专项主路径 | 0 | 0 | 0 | 软 OBS 见下 |
+| §六 校验/批量/权限 | 22+复测 | 0 | 0 | 0 | — |
+| 可选工作台/封存/税费 | 21 | 0 | 0 | 0 | — |
+| 剩余/收尾细项 | 16+20 | 0 | 0 | 0 | 软 OBS |
+
+### 3. 主账套两月金额（摘要）
+见上文「第一月 / 第二月」：银行 160k→188k；本年利润 40k→53k；CF 1 月经营净额 32k / 2 月 28k；差额均为 0。独立验算与导出见各 CF/export 明细报告。
+
+### 4. 缺陷表
+
+| ID | 优先级 | 状态 | 账套/期间 | 影响 | 阻断后续？ |
+|---|---|---|---|---|---|
+| BUG-TZ-DATE | P0 | FIXED | A 开放账期 | 首日凭证被拒 | 否（已修） |
+| BUG-CF-UI-SIGN | P1 | FIXED | A CF | 流出符号错误 | 否（已修） |
+| BUG-TERM-CROSS-BOOK | P1 | FIXED | 结账 | 账期串账套 | 否（已修） |
+| BUG-FA-SQL-DATE | P1 | FIXED | B 固资 | 建卡崩溃 | 否（已修） |
+| BUG-FA-CHECK-DEFICIT-SUMMARY | P1 | FIXED | B 盘点 | 摘要超长 | 否（已修） |
+| BUG-FA-DISPOSE-VOUCHER-DATE | P1 | FIXED | B 清理 | 凭证日期 | 否（已修） |
+| BUG-JEXT-REVERSE-POST | P1 | FIXED | B 日记账 | 冲销过账 | 否（已修） |
+| OBS-PERM-SWITCH-NO-GRANT | P1 | FIXED | C 权限 | 无授权可切换账套 | 否（复测 510021） |
+| OBS-PERM-CONFIG-NO-GRANT | P1 | FIXED | 权限 | 无授权可改配置 | 否（复测 510021） |
+| OBS-AUX-API-NO-MUST | P1 | FIXED | B 辅助 | API 绕过 must | 否（复测拒绝） |
+| OBS-CF-BEGIN-CASH-FEB | — | FIXED | A CF | 2 月期初现金 | 否 |
+| OBS-EXP-SUMMARY-LEN | P2 | OPEN | B 报销 | summary varchar(64) | 否（缩短后可用） |
+| OBS-PAY-BASE-FALLBACK | — | OPEN | B 工资 | 基数清空回退 | 否 |
+| OBS-PAY-HIST-NO-CASCADE | — | OPEN | B 工资 | 历史改额不级联 | 否（产品现状） |
+| OBS-PAY-TEMPLATE-SI-TAX | — | OPEN | B 模板 | 社保/个税模板口径 | 否 |
+| OBS-UNAUDIT-TO-REVIEWING | — | OPEN | 凭证 | 反审路径 | 否 |
+| OBS-CF-AR-ADJ | — | 口径说明 | A 间接法 | 含预付 | 否 |
+
+### 5. 入口 / 权限证据边界
+- **真实业务操作验证**：主路径凭证录审过、结转月结、CF 指定、专项 B/C/D、批量提交/过账、受限用户凭证写入 500014、switchBook/config **510021**、辅助 API 拒绝。
+- **按钮/UI 防护为主**：部分菜单可见性、凭证编辑辅助列提示（另有 API 服务端校验）。
+- **无阻塞入口缺失**（提示词范围内）。
+
+### 6. 测试资产清单与恢复
+
+| 资产 | 状态 |
+|---|---|
+| 主账套 A `2105377998655979522` | **保留**；开放账期 **2026-03**；01/02 已结 |
+| 专项 B `2105448444973871105` | **保留**；2026-01 开放；往来/固资/工资/报销数据在 |
+| 专项 C `2105453230146252802` | **保留**；免审核；§六样本凭证在 |
+| 专项 D `2105456763365081090` | **保留**；曾跨至 2027-01 后按测试需要回写 |
+| 封存探针 `2105473362390200321` | **保留**；已解封恢复 |
+| 用户 `ai_s6_limited` / `ai_reviewer` | **保留**；limited 无 `permission_book` |
+| 污染性探测（term 2026-99、无辅助草稿、核销探针） | **已恢复/删除** |
+| 截图与明细报告 | **保留**于 `docs/testing/` 与 `/opt/cursor/artifacts/screenshots/` |
+
+默认不清空测试账套，供复核。
+
+### 7. 最终结论（重申）
+**有条件通过**：主财务两月闭环与确定性金额/三表勾稽/反操作快照通过；专项与 §六/可选/收尾已补测；P0/P1 已闭环。剩余为非阻断软观察（摘要长度、工资基数回退、历史工资不级联等），不支持宣称「全系统全部通过」。
+
+---
+
+## 产品修复复测（权限授予 + 辅助必填）
+
+- **时间**：2026-10-01（UTC）重启后端后 API 复测
+- `ai_s6_limited` → `switchBook(专项C)` → **510021**「无权访问该账套」
+- `ai_s6_limited` → `config/sys/updateByKey` → **510021**
+- admin → `switchBook(专项B)` → 成功
+- 专项 B、`sys.assist.acc.enabled=true`、1122 must 客户：无辅助 `POST /voucher/draft` → 拒绝「存在未选择辅助核算的分录（客户）」
+- 无 must 科目（1001/1002）草稿仍成功，测后已删
 
 ---
 

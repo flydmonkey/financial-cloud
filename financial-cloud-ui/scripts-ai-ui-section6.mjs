@@ -707,13 +707,12 @@ async function main() {
 
     const sw = await api(limited.token, 'GET', `/api/users/switchBook/${BOOK_ID}`);
     if (sw.code !== 0) {
-      rec('PERM-SWITCH', 'PASS', `switchBook denied: ${sw.message}`);
+      rec('PERM-SWITCH', 'PASS', `switchBook denied: code=${sw.code} ${sw.message}`);
     } else {
-      // Product: switchBook does not enforce book-grant list (OBS)
       rec(
         'PERM-SWITCH',
-        'WARN',
-        'switchBook 成功但无账套授权（OBS-PERM-SWITCH-NO-GRANT）',
+        'FAIL',
+        'switchBook 无 permission_book 仍成功（预期 510021）',
       );
       observations.push(
         'OBS-PERM-SWITCH-NO-GRANT：无 permission_book 授权时 switchBook 仍成功写入 current bookId',

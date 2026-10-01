@@ -8,7 +8,7 @@
 - **执行时间**：2026-10-01T01:33:40.648Z
 - **脚本**：`financial-cloud-ui/scripts-ai-ui-section6.mjs`
 
-## 结论：**PASS**（PASS 22 / FAIL 0 / WARN 1）
+## 结论：**PASS**（初测 PASS 22 / FAIL 0 / WARN 1；产品修复后 PERM-SWITCH 复测 PASS）
 
 ## 结果表
 
@@ -34,13 +34,13 @@
 | USER-CREATE | PASS | exists id=2105470937037012992 |
 | USER-REVOKE-BOOK | PASS | no book C grant |
 | PERM-BOOK-LIST | PASS | fetchAll books n=0 |
-| PERM-SWITCH | WARN | switchBook 成功但无账套授权（OBS-PERM-SWITCH-NO-GRANT） |
+| PERM-SWITCH | WARN→**PASS（复测）** | 初测无授权仍可切换；修复后 `switchBook` → **510021** |
 | PERM-VOUCHER-WRITE | PASS | draft code=500014 msg=Your role is not allowed to perform this action. |
 | PERM-UI | PASS | uiHint=true |
 
 ## 观察
 
-- OBS-PERM-SWITCH-NO-GRANT：无 permission_book 授权时 switchBook 仍成功写入 current bookId
+- **OBS-PERM-SWITCH-NO-GRANT FIXED**：`PermissionBookService.userHasBook` + `UserInfoController.switchBook` 无授权返回 **510021**（2026-10-01 复测）
 - UI 证据路由：凭证列表应为 `/voucher/voucher-index`（曾误用 `/voucher/voucher` 导致 404；已修正脚本并重截图）
 
 ## 证据截图

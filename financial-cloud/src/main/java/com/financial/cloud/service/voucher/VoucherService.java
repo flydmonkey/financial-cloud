@@ -6,6 +6,7 @@ import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.idm.UserInfoMapper;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -16,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.common.SubjectAuxiliary;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.book.BookSubject;
 import com.financial.cloud.domain.statement.StatementSubjectBalance;
@@ -506,7 +508,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return Message.failed("已暂存，非当前期不允许提交凭证");
         }
 
-        Message<String> validationResult = validateItemsForSubmit(dto.getItems());
+        Message<String> validationResult = validateItemsForSubmit(dto.getBookId(), dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
@@ -588,7 +590,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> save(VoucherChangeDto dto) {
-        Message<String> validationResult = validateItemsForSave(dto.getItems());
+        Message<String> validationResult = validateItemsForSave(dto.getBookId(), dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
@@ -660,7 +662,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> update(VoucherChangeDto dto) {
-        Message<String> validationResult = validateItemsForSave(dto.getItems());
+        Message<String> validationResult = validateItemsForSave(dto.getBookId(), dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
@@ -1277,7 +1279,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                     .creditAmount(nz(line.creditAmount))
                     .build());
         }
-        Message<String> itemValidation = validateItemsForSave(items);
+        Message<String> itemValidation = validateItemsForSave(book.getId(), items);
         if (itemValidation.getCode() != Message.SUCCESS) {
             return itemValidation;
         }
@@ -2063,8 +2065,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
     }
 
-    private Message<String> validateItemsForSubmit(List<VoucherItemChangeDto> items) {
-        Message<String> saveValidation = validateItemsForSave(items);
+    private Message<String> validateItemsForSubmit(String bookId, List<VoucherItemChangeDto> items) {
+        Message<String> saveValidation = validateItemsForSave(bookId, items);
         if (saveValidation.getCode() != Message.SUCCESS) {
             return saveValidation;
         }
@@ -2074,7 +2076,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         return new Message<>(Message.SUCCESS);
     }
 
-    private Message<String> validateItemsForSave(List<VoucherItemChangeDto> items) {
+    private Message<String> validateItemsForSave(String bookId, List<VoucherItemChangeDto> items) {
         List<VoucherItemChangeDto> validItems = filterValidVoucherItems(items);
         if (validItems.isEmpty()) {
             return Message.failed("凭证明细不能为空");
@@ -2091,6 +2093,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         BigDecimal debitTotal = BigDecimal.ZERO;
         BigDecimal creditTotal = BigDecimal.ZERO;
+        boolean assistEnabled = StringUtils.isNotBlank(bookId) && configSysService.isAssistAccEnabled(bookId);
         for (VoucherItemChangeDto item : validItems) {
             prepareVoucherItem(item);
             if (StringUtils.isBlank(item.getSubjectId())) {
@@ -2098,6 +2101,12 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             }
             if (isBlankAmount(item.getDebitAmount()) && isBlankAmount(item.getCreditAmount())) {
                 return Message.failed("存在未填写金额的分录");
+            }
+            if (assistEnabled) {
+                Message<String> auxCheck = validateRequiredAuxiliary(item);
+                if (auxCheck.getCode() != Message.SUCCESS) {
+                    return auxCheck;
+                }
             }
             if (item.getDebitAmount() != null) {
                 debitTotal = debitTotal.add(item.getDebitAmount());
@@ -2108,6 +2117,48 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         if (debitTotal.compareTo(creditTotal) != 0 || debitTotal.signum() == 0) {
             return Message.failed("借贷不平衡");
+        }
+        return new Message<>(Message.SUCCESS);
+    }
+
+    /**
+     * When subject auxiliary config marks {@code must=true}, require a non-empty selection
+     * (matches voucher-edit UI {@code checkAuxiliary}).
+     */
+    private Message<String> validateRequiredAuxiliary(VoucherItemChangeDto item) {
+        BookSubject subject = bookSubjectService.getById(item.getSubjectId());
+        if (subject == null || StringUtils.isBlank(subject.getAuxiliary())
+                || "[]".equals(subject.getAuxiliary().trim())) {
+            return new Message<>(Message.SUCCESS);
+        }
+        List<SubjectAuxiliary> cfg;
+        try {
+            cfg = JSONUtil.toList(subject.getAuxiliary(), SubjectAuxiliary.class);
+        } catch (Exception ex) {
+            return new Message<>(Message.SUCCESS);
+        }
+        if (CollUtil.isEmpty(cfg)) {
+            return new Message<>(Message.SUCCESS);
+        }
+        List<VoucherItemAuxiliaryDto> selected = item.getAuxiliary() == null ? List.of() : item.getAuxiliary();
+        for (SubjectAuxiliary aux : cfg) {
+            if (aux == null || !Boolean.TRUE.equals(aux.getMust())) {
+                continue;
+            }
+            String typeId = StringUtils.isNotBlank(aux.getValue()) ? aux.getValue() : aux.getId();
+            if (StringUtils.isBlank(typeId)) {
+                continue;
+            }
+            boolean present = selected.stream().anyMatch(sel ->
+                    sel != null
+                            && typeId.equals(sel.getId())
+                            && CollUtil.isNotEmpty(sel.getValue())
+                            && sel.getValue().stream().anyMatch(v ->
+                                    v != null && StringUtils.isNotBlank(v.getValue())));
+            if (!present) {
+                String label = StringUtils.defaultIfBlank(aux.getLabel(), typeId);
+                return Message.failed("存在未选择辅助核算的分录（" + label + "）");
+            }
         }
         return new Message<>(Message.SUCCESS);
     }

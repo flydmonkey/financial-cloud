@@ -424,10 +424,15 @@ public class ConfigSysService{
     }
 
     /**
-     * 账套是否启用辅助核算
+     * 账套是否启用辅助核算。
+     * Calls {@link #selectConfigByKey} directly (same pattern as {@link #getCurrentTerm})
+     * to avoid {@code AopContext.currentProxy()} which requires exposeProxy=true.
      */
     public boolean isAssistAccEnabled(String bookId) {
-        return "true".equalsIgnoreCase(getConfigValue(bookId, ConstsSysConfig.SYS_ASSIST_ACC_ENABLED));
+        if (StringUtils.isBlank(bookId)) {
+            return false;
+        }
+        return "true".equalsIgnoreCase(selectConfigByKey(bookId, ConstsSysConfig.SYS_ASSIST_ACC_ENABLED));
     }
 
 

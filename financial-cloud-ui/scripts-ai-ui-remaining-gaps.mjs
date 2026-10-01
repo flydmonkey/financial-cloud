@@ -464,13 +464,17 @@ async function main() {
   };
   const auxDraft = await api(admin.token, 'POST', '/api/voucher/draft', auxPayload);
   if (auxDraft.code === 0) {
-    rec('AUX-API-DRAFT', 'WARN', `API 允许无辅助暂存 id=${auxDraft.data}`);
+    rec('AUX-API-DRAFT', 'FAIL', `API 允许无辅助暂存 id=${auxDraft.data}（预期拒绝）`);
     observations.push(
       'OBS-AUX-API-NO-MUST：科目 1122 配置 must 辅助，但 /voucher/draft|submit API 不校验，仅 UI checkAuxiliary 阻断',
     );
     await api(admin.token, 'DELETE', `/api/voucher/delete/${auxDraft.data}`);
   } else {
-    rec('AUX-API-DRAFT', 'PASS', `API 拒绝: ${auxDraft.message}`);
+    rec(
+      'AUX-API-DRAFT',
+      /辅助/.test(auxDraft.message || '') ? 'PASS' : 'WARN',
+      `API 拒绝: ${auxDraft.message}`,
+    );
   }
 
   // UI: open new voucher and try save without aux
@@ -595,10 +599,12 @@ async function main() {
   }
   const adminCfg = await api(admin.token, 'GET', '/api/config/sys/books');
   const emptyGrant = Array.isArray(limBooks.data) && limBooks.data.length === 0;
+  const configDenied =
+    limSettle.code === 510021 || /无权|授权|denied/i.test(limSettle.message || '');
   rec(
     'PERM-LIMITED-CONFIG',
-    emptyGrant && limSettle.code === 0 ? 'WARN' : emptyGrant && limSettle.code !== 0 ? 'PASS' : 'WARN',
-    `fetchAll n=${Array.isArray(limBooks.data) ? limBooks.data.length : '?'} updateByKey code=${limSettle.code}`,
+    emptyGrant && configDenied ? 'PASS' : emptyGrant && limSettle.code !== 0 ? 'PASS' : 'FAIL',
+    `fetchAll n=${Array.isArray(limBooks.data) ? limBooks.data.length : '?'} updateByKey code=${limSettle.code} ${limSettle.message || ''}`,
   );
   rec(
     'PERM-ADMIN-CONFIG',

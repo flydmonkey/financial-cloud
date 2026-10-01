@@ -35,7 +35,10 @@ import com.financial.cloud.domain.security.ConfigPasswordPolicy;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.idm.UserInfoPageDto;
 import com.financial.cloud.service.auth.LoginService;
+import com.financial.cloud.service.permissions.PermissionBookService;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
 import com.financial.cloud.context.WebContext;
@@ -80,6 +83,8 @@ public class UserInfoController {
 
 	private final SessionManager sessionManager;
 
+	private final PermissionBookService permissionBookService;
+
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<UserInfo>> fetch(UserInfoPageDto dto, @CurrentUser UserInfo currentUser) {
 		log.debug("fetch {}",dto);
@@ -114,6 +119,9 @@ public class UserInfoController {
 			jakarta.servlet.http.HttpServletRequest request) {
 		if (Objects.isNull(currentUser)|| StringUtils.isBlank(bookId)) {
 			return new Message<>(Message.FAIL);
+		}
+		if (!permissionBookService.userHasBook(currentUser.getId(), bookId)) {
+			throw new BusinessException(BookBusinessExceptionEnum.BOOK_ACCESS_DENIED);
 		}
 		currentUser.setBookId(bookId);
 		SignedPrincipal principal  = AuthorizationUtils.getPrincipal();

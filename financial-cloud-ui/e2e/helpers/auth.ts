@@ -138,6 +138,18 @@ export async function ensureReviewerSession(
         }
     }
 
+    // switchBook 现要求 permission_book 显式授权；仅加全局角色不够
+    const grant = await request.post('/api/book/members/grant', {
+        headers: adminHeaders,
+        data: {
+            bookId,
+            userId,
+            roleId: 'ROLE_ADMINISTRATORS',
+        },
+    })
+    const grantBody = await grant.json()
+    expect(grantBody.code, grantBody.message || 'grant reviewer book access failed').toBe(0)
+
     const session = await loginViaApiAs(request, reviewerUsername, reviewerPassword)
     const switched = await request.get(`/api/users/switchBook/${bookId}`, {headers: session.headers})
     const switchBody = await switched.json()

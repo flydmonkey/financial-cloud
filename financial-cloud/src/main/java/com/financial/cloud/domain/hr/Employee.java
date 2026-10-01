@@ -119,8 +119,9 @@ public class Employee extends BaseEntity implements Serializable {
     private Integer payBaseRule;
 
     /**
-     * 缴费基数
+     * 缴费基数（允许清空为 null，避免 MyBatis-Plus 默认跳过 null 导致“清空无效”）
      */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private BigDecimal payBaseNumber;
 
     /**

@@ -11,8 +11,9 @@ import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.hr.Employee;
 import com.financial.cloud.dto.hr.EmployeeChangeDto;
 import com.financial.cloud.dto.hr.EmployeePageDto;
+import com.financial.cloud.enums.error.HrErrorCode;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.repository.hr.EmployeeMapper;
-import com.financial.cloud.service.hr.EmployeeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class EmployeeService extends ServiceImpl<EmployeeMapper, Employee>{
     public Message<String> save(EmployeeChangeDto dto) {
         Employee employee = Employee.builder().build();
         BeanUtil.copyProperties(dto, employee);
+        rejectIncompleteCustomPayBase(employee);
         String currentId = identifierGenerator.nextId(employee).toString();
         employee.setId(currentId);
         boolean save = super.save(employee);
@@ -63,9 +65,18 @@ public class EmployeeService extends ServiceImpl<EmployeeMapper, Employee>{
     public Message<String> update(EmployeeChangeDto dto) {
         Employee employee = Employee.builder().build();
         BeanUtil.copyProperties(dto, employee);
+        rejectIncompleteCustomPayBase(employee);
         String currentId = dto.getId();
         boolean update = super.updateById(employee);
         return update ? new Message<>(Message.SUCCESS, "修改成功", currentId) : new Message<>(Message.FAIL, "修改失败");
+    }
+
+    /** 自定义基数未填正数时在员工保存阶段明确拒绝，避免算薪时静默回退。 */
+    static void rejectIncompleteCustomPayBase(Employee employee) {
+        String incomplete = SalaryContributionBaseRules.incompleteCustomBaseLabel(employee);
+        if (incomplete != null) {
+            throw new BusinessException(HrErrorCode.CUSTOM_PAY_BASE_REQUIRED, incomplete);
+        }
     }
 
 

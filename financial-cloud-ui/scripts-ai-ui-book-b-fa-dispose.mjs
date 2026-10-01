@@ -356,6 +356,44 @@ function writeReport() {
   console.log('Wrote', REPORT_MD);
 }
 
+async function ensureDisposeVoucherPostable(adminToken, reviewerToken, bookId, vid, label) {
+  const existingV = await api(adminToken, 'GET', `/api/voucher/get/${vid}`);
+  if (existingV.code !== 0 || !existingV.data) {
+    rec(label, 'FAIL', `voucher missing id=${vid}`);
+    return;
+  }
+  if (existingV.data.senderId) {
+    rec(label, 'PASS', `已过账 id=${vid}`);
+    return;
+  }
+  const vd = String(existingV.data.voucherDate || '');
+  const okPeriod =
+    vd.startsWith('2026-01') ||
+    (Number(existingV.data.voucherYear) === 2026 && Number(existingV.data.voucherMonth) === 1);
+  if (!okPeriod) {
+    const fixed = await api(adminToken, 'PUT', '/api/voucher/update', {
+      ...existingV.data,
+      id: vid,
+      voucherDate: VDATE,
+      voucherYear: 2026,
+      voucherMonth: 1,
+    });
+    rec(
+      `${label}-DATE-FIX`,
+      fixed.code === 0 ? 'PASS' : 'FAIL',
+      `was ${vd} / ${existingV.data.voucherYear}-${existingV.data.voucherMonth} → ${VDATE}`,
+    );
+    if (!blockers.some((b) => b.id === 'BUG-FA-DISPOSE-VOUCHER-DATE')) {
+      blockers.push({
+        id: 'BUG-FA-DISPOSE-VOUCHER-DATE',
+        detail:
+          'dispose / dispose-deficit drafts use server new Date() when voucherDate omitted; outside open term until corrected. Workaround: pass epoch millis on card/dispose, or voucher/update before submit.',
+      });
+    }
+  }
+  await finishVoucher(adminToken, reviewerToken, bookId, label, vid, null);
+}
+
 async function main() {
   fs.mkdirSync(SHOT, { recursive: true });
   const adminAuth = await apiLogin('admin', 'changeme');
@@ -1016,6 +1054,16 @@ async function main() {
               'short title B盘点2 + short asset name → dispose-deficit OK',
             );
           }
+          const got2a = await api(adminAuth.token, 'GET', `/api/fixed-asset/card/get/${chk2.id}`);
+          if (got2a.data?.disposeVoucherId) {
+            await ensureDisposeVoucherPostable(
+              adminAuth.token,
+              reviewerAuth.token,
+              BOOK_ID,
+              String(got2a.data.disposeVoucherId),
+              'CHK2-DISPOSE-VOUCHER-POST',
+            );
+          }
         }
       } else if (chk2) {
         const got2 = await api(adminAuth.token, 'GET', `/api/fixed-asset/card/get/${chk2.id}`);
@@ -1024,6 +1072,23 @@ async function main() {
           got2.data?.status === 'DISPOSED' ? 'PASS' : 'WARN',
           `CHK2 status=${got2.data?.status} voucher=${got2.data?.disposeVoucherId || '-'}`,
         );
+        if (got2.data?.disposeVoucherId) {
+          await ensureDisposeVoucherPostable(
+            adminAuth.token,
+            reviewerAuth.token,
+            BOOK_ID,
+            String(got2.data.disposeVoucherId),
+            'CHK2-DISPOSE-VOUCHER-POST',
+          );
+        }
+      }
+
+      if (!blockers.some((b) => b.id === 'BUG-FA-CHECK-DEFICIT-SUMMARY')) {
+        blockers.push({
+          id: 'BUG-FA-CHECK-DEFICIT-SUMMARY',
+          detail:
+            'dispose-deficit summary "盘亏下账（盘点单：{title}）：{code} {name}" can exceed voucher_item.summary varchar(64). Reproduced with title AI-UI-20260930-盘点深路径 (68 chars). Workaround: short title/name (B盘点2 / B盘亏2) → PASS.',
+        });
       }
 
       const chkAfter = await api(adminAuth.token, 'GET', `/api/fixed-asset/card/get/${chk.id}`);
@@ -1036,13 +1101,12 @@ async function main() {
       );
 
       if (chkAfter.data?.disposeVoucherId) {
-        await finishVoucher(
+        await ensureDisposeVoucherPostable(
           adminAuth.token,
           reviewerAuth.token,
           BOOK_ID,
-          'CHK-DISPOSE-VOUCHER-POST',
           String(chkAfter.data.disposeVoucherId),
-          null,
+          'CHK-DISPOSE-VOUCHER-POST',
         );
       }
     }

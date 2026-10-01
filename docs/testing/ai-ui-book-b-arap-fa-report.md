@@ -65,7 +65,7 @@
 
 - **BUG-FA-SQL-DATE（P1）— FIXED + 重启复测 PASS**：原 `java.sql.Date.toInstant` 崩溃；`299caec` 改为 `java.util.Date`（Asia/Shanghai）。重启后端后以 `startUseDate=2025-12-15` + `entryPeriod=2026-01` 建卡成功并生成购入凭证；探测卡已清理。本报告主路径仍可能走同月绕过（历史执行）。
 - **OBS-BOOK-B-TERM**：并发代理曾把专项 B 的 `sys.payment.term.current` 误写成 `2026-03`；脚本每次写入前 `ensureOnBook` 恢复为 `2026-01`。
-- **SKIP-FA-CHECK-DISPOSE**：任务允许跳过盘点/清理深路径；未执行盘亏盘盈/清理处置用例。
+- **SKIP-FA-CHECK-DISPOSE** — **已补测**：见 `docs/testing/ai-ui-book-b-fa-dispose-report.md`（独立探测卡清理/盘点深路径 PASS；盘盈未入账）。
 
 ## 证据截图
 

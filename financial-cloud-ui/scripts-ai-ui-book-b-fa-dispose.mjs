@@ -1147,20 +1147,24 @@ async function main() {
   try {
     await injectSession(page, adminAuth);
     await page.goto(`${BASE}/fixed-asset/card`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(800);
+    try {
+      const statusSelect = page.locator('.el-form-item').filter({ hasText: '状态' }).locator('.el-select');
+      await statusSelect.click();
+      await page.getByRole('option', { name: '已清理', exact: true }).click();
+      await page.getByRole('button', { name: '查询' }).click();
+      await page.waitForTimeout(1000);
+    } catch {
+      /* keep default list */
+    }
     await shot(page, 'bookb-fa-disp-cards');
     rec('SHOT-CARDS', 'PASS', 'bookb-fa-disp-cards.webp');
 
     if (disposeVoucherId) {
-      await page.goto(`${BASE}/voucher/list`, { waitUntil: 'networkidle' });
-      await page.waitForTimeout(800);
-      // try open voucher detail if route exists
-      try {
-        await page.goto(`${BASE}/voucher/edit/${disposeVoucherId}`, { waitUntil: 'networkidle' });
-        await page.waitForTimeout(1000);
-      } catch {
-        /* keep list */
-      }
+      await page.goto(`${BASE}/voucher/voucher-edit?id=${disposeVoucherId}`, {
+        waitUntil: 'networkidle',
+      });
+      await page.waitForTimeout(1200);
       await shot(page, 'bookb-fa-disp-voucher');
       rec('SHOT-DISP-VOUCHER', 'PASS', 'bookb-fa-disp-voucher.webp');
     }
@@ -1176,25 +1180,24 @@ async function main() {
     rec('SHOT-CHECK-LIST', 'PASS', 'bookb-fa-check-list.webp');
 
     if (checkId) {
-      // UI may open drawer from list; try query or click
-      try {
-        await page.goto(`${BASE}/fixed-asset/check?id=${checkId}`, { waitUntil: 'networkidle' });
+      const deep = page.locator('.el-table__row').filter({ hasText: '盘点深路径' });
+      if (await deep.count()) {
+        await deep.locator('button, a').filter({ hasText: '明细' }).click();
         await page.waitForTimeout(1000);
-        // click first row if present
-        const row = page.locator('.el-table__row').first();
-        if (await row.count()) {
-          await row.click();
-          await page.waitForTimeout(800);
-        }
-      } catch {
-        /* ignore */
+        await shot(page, 'bookb-fa-check-detail');
+        rec('SHOT-CHECK-DETAIL', 'PASS', 'bookb-fa-check-detail.webp');
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(400);
+        await deep.locator('button, a').filter({ hasText: '盘盈入账' }).click();
+        await page.waitForTimeout(900);
+        await shot(page, 'bookb-fa-check-surplus-preview');
+        rec('SHOT-SURPLUS', 'PASS', 'bookb-fa-check-surplus-preview.webp (preview dialog; not booked)');
+        await page.getByRole('button', { name: '取消' }).click().catch(() => {});
+      } else {
+        await shot(page, 'bookb-fa-check-detail');
+        await shot(page, 'bookb-fa-check-surplus-preview');
+        rec('SHOT-CHECK-DETAIL', 'WARN', 'deep-path row not found');
       }
-      await shot(page, 'bookb-fa-check-detail');
-      rec('SHOT-CHECK-DETAIL', 'PASS', 'bookb-fa-check-detail.webp');
-
-      // surplus preview is dialog — capture list again as evidence of completed check with surplus count
-      await shot(page, 'bookb-fa-check-surplus-preview');
-      rec('SHOT-SURPLUS', 'PASS', 'bookb-fa-check-surplus-preview.webp (list/detail evidence)');
     }
   } catch (e) {
     rec('SCREENSHOTS', 'WARN', String(e.message || e));

@@ -39,7 +39,7 @@
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 现金流量/间接法点测 | 部分 PASS | V04/M2 CF、应收调整、2 月净额 0 | 见 indirect 报告 |
-| 专项 D 年末 | PASS（损益+年终结转+跨年） | BUG-TERM-CROSS-BOOK | — |
+| 专项 D 年末 | PASS（损益+年终结转+跨年） | — | BUG-TERM-CROSS-BOOK 已修 |
 | 导出细查 | 0 | 0 | 未执行 |
 
 ---
@@ -104,8 +104,8 @@
 `voucher_item.summary` 仅 64 字符；报销一键生成摘要过长时 `Data truncation`。缩短报销人/事由后 PASS（见 B 5.5）。
 
 
-### BUG-TERM-CROSS-BOOK（P1）— **OPEN**
-结账 `termToNext`→`updateCurrentTerm`→`getBookConfigList` 未选 `bookId`/`configId`，`update()` 按 `configKey` 全表更新 `sys.payment.term.current`（含 template 与其他账套）。专项 D 结账后曾污染 A/C；脚本已写回。需后端按 bookId 更新。
+### BUG-TERM-CROSS-BOOK（P1）— **FIXED**
+结账 `termToNext`→`updateCurrentTerm` 曾因 `getBookConfigList` 未带 `bookId`/`configId` 按 key 全表更新。已改为 `updateCurrentTerm` 始终带 `bookId` 更新；`getBookConfigList` 补选 id/bookId。`ConfigSysServiceTest.updateCurrentTermAlwaysScopesToBookId` 覆盖。
 
 
 ---

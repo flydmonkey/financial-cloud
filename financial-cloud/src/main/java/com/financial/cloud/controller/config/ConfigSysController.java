@@ -6,9 +6,13 @@ import com.financial.cloud.common.PageQuery;
 import com.financial.cloud.domain.config.ConfigSys;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.config.ConfigSysService;
+import com.financial.cloud.service.permissions.PermissionBookService;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api/config/sys")
 public class ConfigSysController {
     private final ConfigSysService configService;
+    private final PermissionBookService permissionBookService;
 
     /**
      * 获取账簿配置参数
@@ -76,7 +81,13 @@ public class ConfigSysController {
      */
     @PutMapping("/update")
     public Message<String> update(@Validated @RequestBody ConfigSys config, @CurrentUser UserInfo userInfo) {
-        config.setBookId(userInfo.getBookId());
+        String bookId = userInfo != null ? userInfo.getBookId() : null;
+        if (StringUtils.isBlank(bookId)
+                || userInfo == null
+                || !permissionBookService.userHasBook(userInfo.getId(), bookId)) {
+            throw new BusinessException(BookBusinessExceptionEnum.BOOK_ACCESS_DENIED);
+        }
+        config.setBookId(bookId);
         if (!configService.checkConfigKeyUnique(config)) {
             return Message.failed("修改参数'" + config.getConfigName() + "'失败，参数键名已存在");
         }
@@ -89,7 +100,13 @@ public class ConfigSysController {
      */
     @PutMapping("/updateByKey")
     public Message<String> updateByKey(@RequestBody ConfigSys config, @CurrentUser UserInfo userInfo) {
-        config.setBookId(userInfo.getBookId());
+        String bookId = userInfo != null ? userInfo.getBookId() : null;
+        if (StringUtils.isBlank(bookId)
+                || userInfo == null
+                || !permissionBookService.userHasBook(userInfo.getId(), bookId)) {
+            throw new BusinessException(BookBusinessExceptionEnum.BOOK_ACCESS_DENIED);
+        }
+        config.setBookId(bookId);
         configService.update(config);
         return Message.ok("成功");
     }

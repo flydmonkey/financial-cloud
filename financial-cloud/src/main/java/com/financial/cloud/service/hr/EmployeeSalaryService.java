@@ -393,11 +393,27 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         String tplCode = SalaryVoucherTemplateRules.resolveTemplateCode(employeeType, voucherType);
         if (salary.getBelongDate() != null && StringUtils.isNotBlank(salary.getEmployeeId())) {
             String belongDate = salary.getBelongDate().toString();
-            String existingId = (voucherType != null && (voucherType == 2 || voucherType == 0))
-                    ? employeeSalaryMapper.findAnyAccrualVoucherId(bookId, salary.getEmployeeId(), belongDate)
-                    : employeeSalaryMapper.findAnySalaryVoucherId(bookId, salary.getEmployeeId(), belongDate);
+            boolean accrualType = voucherType != null && (voucherType == 2 || voucherType == 0);
+            // Prefer the row's own FK first (same transaction visibility), then any peer row.
+            String existingId = accrualType ? salary.getAccrualVoucherId() : salary.getSalaryVoucherId();
+            if (StringUtils.isBlank(existingId)) {
+                existingId = accrualType
+                        ? employeeSalaryMapper.findAnyAccrualVoucherId(bookId, salary.getEmployeeId(), belongDate)
+                        : employeeSalaryMapper.findAnySalaryVoucherId(bookId, salary.getEmployeeId(), belongDate);
+            }
             if (StringUtils.isNotBlank(existingId) && isLiveVoucher(existingId)) {
                 return Message.failed(SalaryVoucherDedupeRules.generateBlockedMessage(employeeType, voucherType));
+            }
+            // Stale FK to a soft-deleted voucher: clear so the link cannot mask a later duplicate.
+            if (StringUtils.isNotBlank(existingId) && !isLiveVoucher(existingId)) {
+                LambdaUpdateWrapper<EmployeeSalary> clearStale = Wrappers.lambdaUpdate();
+                if (accrualType) {
+                    clearStale.set(EmployeeSalary::getAccrualVoucherId, null);
+                } else {
+                    clearStale.set(EmployeeSalary::getSalaryVoucherId, null);
+                }
+                clearStale.eq(EmployeeSalary::getId, salary.getId());
+                super.update(clearStale);
             }
         }
         

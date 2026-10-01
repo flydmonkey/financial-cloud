@@ -468,10 +468,20 @@ public class JournalEntryService extends ServiceImpl<JournalEntryMapper, Journal
 			if (fundLine == null) {
 				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
 			}
-			BigDecimal debit = nullToZero(fundLine.getDebitAmount());
-			BigDecimal credit = nullToZero(fundLine.getCreditAmount());
-			boolean incomeSide = debit.compareTo(BigDecimal.ZERO) > 0;
-			BigDecimal amount = incomeSide ? debit : credit;
+			BigDecimal rawDebit = nullToZero(fundLine.getDebitAmount());
+			BigDecimal rawCredit = nullToZero(fundLine.getCreditAmount());
+			// 红字冲销凭证资金行为负借/负贷：按绝对值回写，负借=支出、负贷=收入
+			boolean incomeSide;
+			BigDecimal amount;
+			if (rawDebit.compareTo(BigDecimal.ZERO) != 0) {
+				amount = rawDebit.abs();
+				incomeSide = rawDebit.compareTo(BigDecimal.ZERO) > 0;
+			} else if (rawCredit.compareTo(BigDecimal.ZERO) != 0) {
+				amount = rawCredit.abs();
+				incomeSide = rawCredit.compareTo(BigDecimal.ZERO) < 0;
+			} else {
+				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
+			}
 			if (amount.compareTo(BigDecimal.ZERO) <= 0) {
 				throw new BusinessException(JournalErrorCode.VOUCHER_SYNC_STRUCTURE);
 			}

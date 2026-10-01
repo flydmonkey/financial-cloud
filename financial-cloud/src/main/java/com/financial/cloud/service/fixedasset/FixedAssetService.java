@@ -46,6 +46,7 @@ import com.financial.cloud.util.FixedAssetDepreciationRules;
 import com.financial.cloud.util.FixedAssetDisposalRules;
 import com.financial.cloud.util.FixedAssetPurchaseRules;
 import com.financial.cloud.util.SubjectCodeCompat;
+import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.VoucherUtils;
 import com.financial.cloud.util.excel.ExcelExporter;
 import jakarta.servlet.http.HttpServletResponse;
@@ -84,6 +85,7 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
     private static final String DEFAULT_WORD = "记";
     private static final String DEFAULT_DISPOSE_SUMMARY = "固定资产清理";
     private static final String DEFAULT_PURCHASE_SUMMARY = "购入固定资产";
+    private static final ZoneId ACCOUNTING_ZONE = ZoneId.of("Asia/Shanghai");
     private static final String[] CARD_EXPORT_HEADERS = {
             "编码", "名称", "类别编码", "类别名称", "部门", "启用日期", "数量", "规格型号", "存放地点",
             "折旧方法", "使用月数", "预计总工作量", "残值率%", "原值", "税额", "减值",
@@ -196,7 +198,10 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
             // 凭证日期必须落在入账期间内：期间锁按 voucherDate 判定，
             // 开始使用日期早于入账期间时(次月起提的常见场景)落在期间首日
             if (!period.equals(FixedAssetDepreciationRules.periodOf(voucherDate))) {
-                voucherDate = java.sql.Date.valueOf(period + "-01");
+                // Must be java.util.Date: java.sql.Date.toInstant() throws UnsupportedOperationException
+                // (DateUtils.format → rejectClosedPeriodWrite during voucher save).
+                voucherDate = Date.from(LocalDate.parse(period + "-01")
+                        .atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
             }
         } else {
             java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -273,7 +278,9 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
             year = Integer.parseInt(period.split("-")[0]);
             month = Integer.parseInt(period.split("-")[1]);
             if (!period.equals(FixedAssetDepreciationRules.periodOf(voucherDate))) {
-                voucherDate = java.sql.Date.valueOf(period + "-01");
+                // Must be java.util.Date: java.sql.Date.toInstant() throws UnsupportedOperationException
+                voucherDate = Date.from(LocalDate.parse(period + "-01")
+                        .atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
             }
         } else {
             java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -921,9 +928,10 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
 
         String currentTerm = configSysService.getCurrentTerm(bookId);
         String word = StringUtils.defaultIfBlank(dto.getVoucherWord(), DEFAULT_WORD);
-        String summary = StringUtils.defaultIfBlank(dto.getSummary(),
-                DEFAULT_DISPOSE_SUMMARY + "：" + entity.getCode() + " " + entity.getName());
-        Date voucherDate = dto.getVoucherDate() != null ? dto.getVoucherDate() : new Date();
+        String summary = truncateVoucherSummary(StringUtils.defaultIfBlank(dto.getSummary(),
+                DEFAULT_DISPOSE_SUMMARY + "：" + entity.getCode() + " " + entity.getName()));
+        // Defaulting to wall-clock "now" can land outside the open term (BUG-FA-DISPOSE-VOUCHER-DATE).
+        Date voucherDate = clampVoucherDateToPeriod(dto.getVoucherDate(), currentTerm);
 
         Book book = bookMapper.selectById(bookId);
         Message<String> voucherMsg = createDisposeVoucher(book, bookId, currentTerm, voucherDate, word, summary,
@@ -1035,9 +1043,28 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
         return voucherService.save(voucherDto);
     }
 
+    private static String truncateVoucherSummary(String summary) {
+        return SubjectDisplayNameUtils.truncateVoucherSummary(summary);
+    }
+
+    /** Prefer provided date when it falls in {@code period}; otherwise first day of period (Asia/Shanghai). */
+    private static Date clampVoucherDateToPeriod(Date voucherDate, String period) {
+        if (StringUtils.isBlank(period)) {
+            return voucherDate != null ? voucherDate : new Date();
+        }
+        LocalDate periodStart = LocalDate.parse(period + "-01");
+        if (voucherDate != null) {
+            LocalDate local = voucherDate.toInstant().atZone(ACCOUNTING_ZONE).toLocalDate();
+            if (YearMonth.from(local).toString().equals(period)) {
+                return Date.from(local.atStartOfDay(ACCOUNTING_ZONE).toInstant());
+            }
+        }
+        return Date.from(periodStart.atStartOfDay(ACCOUNTING_ZONE).toInstant());
+    }
+
     private VoucherItemChangeDto createItem(BookSubject subject, String summary, BigDecimal amount, boolean debit) {
         VoucherItemChangeDto item = new VoucherItemChangeDto();
-        item.setSummary(summary);
+        item.setSummary(truncateVoucherSummary(summary));
         item.setSubjectId(subject.getId());
         item.setSubjectCode(subject.getCode());
         item.setSubjectName(subject.getCode() + "-" + subject.getName());

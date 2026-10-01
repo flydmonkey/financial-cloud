@@ -42,6 +42,15 @@ class SubjectDisplayNameUtilsTest {
     }
 
     @Test
+    void normalizeSummaryTruncatesToVoucherColumn() {
+        String longSummary = "费用报销 BX202601-0001 AI-UI-20260930-长摘要测试-" + "测".repeat(40);
+        assertTrue(longSummary.length() > SubjectDisplayNameUtils.VOUCHER_SUMMARY_MAX);
+        String normalized = SubjectDisplayNameUtils.normalizeSummary(longSummary);
+        assertEquals(SubjectDisplayNameUtils.VOUCHER_SUMMARY_MAX, normalized.length());
+        assertEquals(longSummary.substring(0, SubjectDisplayNameUtils.VOUCHER_SUMMARY_MAX), normalized);
+    }
+
+    @Test
     void needsSubjectNameFixDetectsNullLiteral() {
         assertTrue(SubjectDisplayNameUtils.needsSubjectNameFix("1001 null"));
         assertFalse(SubjectDisplayNameUtils.needsSubjectNameFix("1001-库存现金"));

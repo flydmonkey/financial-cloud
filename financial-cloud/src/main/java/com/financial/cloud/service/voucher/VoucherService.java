@@ -6,6 +6,7 @@ import com.financial.cloud.repository.book.BookMapper;
 import com.financial.cloud.repository.idm.UserInfoMapper;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -16,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.financial.cloud.common.ExcelImport;
 import com.financial.cloud.common.Message;
+import com.financial.cloud.common.SubjectAuxiliary;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.book.BookSubject;
 import com.financial.cloud.domain.statement.StatementSubjectBalance;
@@ -30,6 +32,8 @@ import com.financial.cloud.repository.voucher.VoucherItemMapper;
 import com.financial.cloud.repository.voucher.VoucherWordMapper;
 import com.financial.cloud.repository.voucher.VoucherItemAuxiliaryMapper;
 import com.financial.cloud.repository.voucher.VoucherItemCashFlowMapper;
+import com.financial.cloud.repository.book.SettlementCarryforwardMapper;
+import com.financial.cloud.domain.book.SettlementCarryforward;
 import com.financial.cloud.enums.book.SubjectDirectionEnum;
 import com.financial.cloud.enums.common.YesNoEnum;
 import com.financial.cloud.enums.error.VoucherErrorCode;
@@ -102,6 +106,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
     private final StandardSubjectCashFlowMapper standardSubjectCashFlowMapper;
     private final VoucherItemCashFlowMapper voucherItemCashFlowMapper;
     private final EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
+    private final SettlementCarryforwardMapper settlementCarryforwardMapper;
     private final BookSealGuard bookSealGuard;
     /** 延迟获取，避免与 JournalEntryService 循环依赖 */
     private final ObjectProvider<JournalEntryService> journalEntryServiceProvider;
@@ -503,7 +508,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             return Message.failed("已暂存，非当前期不允许提交凭证");
         }
 
-        Message<String> validationResult = validateItemsForSubmit(dto.getItems());
+        Message<String> validationResult = validateItemsForSubmit(dto.getBookId(), dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
@@ -585,7 +590,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> save(VoucherChangeDto dto) {
-        Message<String> validationResult = validateItemsForSave(dto.getItems());
+        Message<String> validationResult = validateItemsForSave(dto.getBookId(), dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
@@ -657,7 +662,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> update(VoucherChangeDto dto) {
-        Message<String> validationResult = validateItemsForSave(dto.getItems());
+        Message<String> validationResult = validateItemsForSave(dto.getBookId(), dto.getItems());
         if (validationResult.getCode() != Message.SUCCESS) {
             return validationResult;
         }
@@ -738,12 +743,16 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         boolean update = super.updateById(booksVoucher);
         if (update) {
+            // 红字冲销凭证：保留日记账对冲流水原备注（冲销：…），勿用凭证备注覆盖
+            final String journalSyncRemark = StringUtils.isNotBlank(currentVoucher.getSourceVoucherId())
+                    ? null
+                    : booksVoucher.getRemark();
             journalEntryServiceProvider.ifAvailable(journal ->
                     journal.syncLinkedEntriesFromVoucher(
                             currentId,
                             dto.getBookId(),
                             booksVoucher.getVoucherDate(),
-                            booksVoucher.getRemark(),
+                            journalSyncRemark,
                             insertItems));
         }
         return update
@@ -1270,7 +1279,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
                     .creditAmount(nz(line.creditAmount))
                     .build());
         }
-        Message<String> itemValidation = validateItemsForSave(items);
+        Message<String> itemValidation = validateItemsForSave(book.getId(), items);
         if (itemValidation.getCode() != Message.SUCCESS) {
             return itemValidation;
         }
@@ -1685,6 +1694,10 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         if (update == ids.size()) {
             journalEntryServiceProvider.ifAvailable(journal -> journal.clearLinksByVoucherIds(ids));
+            // OBS-CARRY-STALE-POINTER: clear carryforward rows that pointed at deleted vouchers
+            settlementCarryforwardMapper.delete(
+                    Wrappers.<SettlementCarryforward>lambdaQuery()
+                            .in(SettlementCarryforward::getVoucherId, ids));
             return new Message<>(Message.SUCCESS, "删除成功");
         }
         return new Message<>(Message.FAIL, "删除失败");
@@ -1809,11 +1822,12 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         VoucherVo vo = voResult.getData();
 
-        // 冲销凭证落在当前开放账期（今天早于开放账期时取账期首日）
+        // 冲销凭证必须落在当前开放账期：系统日早于或晚于开放账期时，均钳到该账期首日
+        // （BUG-JEXT-REVERSE-POST：仅处理「系统日 < 开放账期」时，历史账套回测会把冲销落到未来月）
         String currentTerm = configSysService.getCurrentTerm(bookId);
         Date reversalDate = new Date();
         String todayTerm = DateUtils.format(reversalDate, DateUtils.FORMAT_DATE_YYYY_MM);
-        if (StringUtils.isNotBlank(currentTerm) && currentTerm.compareTo(todayTerm) > 0) {
+        if (StringUtils.isNotBlank(currentTerm) && !currentTerm.equals(todayTerm)) {
             int y = Integer.parseInt(currentTerm.substring(0, 4));
             int m = Integer.parseInt(currentTerm.substring(5, 7));
             reversalDate = new java.util.GregorianCalendar(y, m - 1, 1).getTime();
@@ -2051,8 +2065,8 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
     }
 
-    private Message<String> validateItemsForSubmit(List<VoucherItemChangeDto> items) {
-        Message<String> saveValidation = validateItemsForSave(items);
+    private Message<String> validateItemsForSubmit(String bookId, List<VoucherItemChangeDto> items) {
+        Message<String> saveValidation = validateItemsForSave(bookId, items);
         if (saveValidation.getCode() != Message.SUCCESS) {
             return saveValidation;
         }
@@ -2062,7 +2076,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         return new Message<>(Message.SUCCESS);
     }
 
-    private Message<String> validateItemsForSave(List<VoucherItemChangeDto> items) {
+    private Message<String> validateItemsForSave(String bookId, List<VoucherItemChangeDto> items) {
         List<VoucherItemChangeDto> validItems = filterValidVoucherItems(items);
         if (validItems.isEmpty()) {
             return Message.failed("凭证明细不能为空");
@@ -2079,6 +2093,7 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
 
         BigDecimal debitTotal = BigDecimal.ZERO;
         BigDecimal creditTotal = BigDecimal.ZERO;
+        boolean assistEnabled = StringUtils.isNotBlank(bookId) && configSysService.isAssistAccEnabled(bookId);
         for (VoucherItemChangeDto item : validItems) {
             prepareVoucherItem(item);
             if (StringUtils.isBlank(item.getSubjectId())) {
@@ -2086,6 +2101,12 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
             }
             if (isBlankAmount(item.getDebitAmount()) && isBlankAmount(item.getCreditAmount())) {
                 return Message.failed("存在未填写金额的分录");
+            }
+            if (assistEnabled) {
+                Message<String> auxCheck = validateRequiredAuxiliary(item);
+                if (auxCheck.getCode() != Message.SUCCESS) {
+                    return auxCheck;
+                }
             }
             if (item.getDebitAmount() != null) {
                 debitTotal = debitTotal.add(item.getDebitAmount());
@@ -2096,6 +2117,48 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         if (debitTotal.compareTo(creditTotal) != 0 || debitTotal.signum() == 0) {
             return Message.failed("借贷不平衡");
+        }
+        return new Message<>(Message.SUCCESS);
+    }
+
+    /**
+     * When subject auxiliary config marks {@code must=true}, require a non-empty selection
+     * (matches voucher-edit UI {@code checkAuxiliary}).
+     */
+    private Message<String> validateRequiredAuxiliary(VoucherItemChangeDto item) {
+        BookSubject subject = bookSubjectService.getById(item.getSubjectId());
+        if (subject == null || StringUtils.isBlank(subject.getAuxiliary())
+                || "[]".equals(subject.getAuxiliary().trim())) {
+            return new Message<>(Message.SUCCESS);
+        }
+        List<SubjectAuxiliary> cfg;
+        try {
+            cfg = JSONUtil.toList(subject.getAuxiliary(), SubjectAuxiliary.class);
+        } catch (Exception ex) {
+            return new Message<>(Message.SUCCESS);
+        }
+        if (CollUtil.isEmpty(cfg)) {
+            return new Message<>(Message.SUCCESS);
+        }
+        List<VoucherItemAuxiliaryDto> selected = item.getAuxiliary() == null ? List.of() : item.getAuxiliary();
+        for (SubjectAuxiliary aux : cfg) {
+            if (aux == null || !Boolean.TRUE.equals(aux.getMust())) {
+                continue;
+            }
+            String typeId = StringUtils.isNotBlank(aux.getValue()) ? aux.getValue() : aux.getId();
+            if (StringUtils.isBlank(typeId)) {
+                continue;
+            }
+            boolean present = selected.stream().anyMatch(sel ->
+                    sel != null
+                            && typeId.equals(sel.getId())
+                            && CollUtil.isNotEmpty(sel.getValue())
+                            && sel.getValue().stream().anyMatch(v ->
+                                    v != null && StringUtils.isNotBlank(v.getValue())));
+            if (!present) {
+                String label = StringUtils.defaultIfBlank(aux.getLabel(), typeId);
+                return Message.failed("存在未选择辅助核算的分录（" + label + "）");
+            }
         }
         return new Message<>(Message.SUCCESS);
     }

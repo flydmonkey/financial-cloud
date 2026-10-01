@@ -7,8 +7,8 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`、`scripts-ai-ui-section6.mjs`、`scripts-ai-ui-optional-workbench-tax.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`、`docs/testing/ai-ui-section6-report.md`、`docs/testing/ai-ui-optional-workbench-tax-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`、`scripts-ai-ui-section6.mjs`、`scripts-ai-ui-optional-workbench-tax.mjs`、`scripts-ai-ui-remaining-gaps.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`、`docs/testing/ai-ui-section6-report.md`、`docs/testing/ai-ui-optional-workbench-tax-report.md`、`docs/testing/ai-ui-remaining-gaps-report.md`
 
 ---
 
@@ -47,6 +47,7 @@
 | §六 校验/批量/权限 | PASS | — | 专项 C |
 | 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 | 可选：工作台/封存/税费/UI边角 | PASS 21 | — | 见 optional 报告 |
+| 剩余细项（守卫/固资/辅助/待办） | PASS | — | 见 remaining-gaps 报告 |
 
 ---
 
@@ -221,7 +222,18 @@
 
 ## 未执行 / 进行中
 
-1. （无阻塞项；产品模块若后续新增再补测）
+1. 连续两月累计预扣、历史工资级联、凭证模板套用、账龄精确表、月结工资计提互斥（若入口另测）
+
+## 剩余细项补测（工资守卫 / 固资生命周期 / 辅助 / 待办）
+
+- **结果**：PASS 16 / FAIL 0 / WARN 4
+- 工资：缺银行卡拦代发 **504007**；重复计提拦截；凭证后重推拦截；兼职员工可建；基数清空走回退（OBS）
+- 固资：暂停→变动流水→恢复；复制 `B-ASSET-SUR-BUMP-副本2`
+- 辅助必填：UI `checkAuxiliary`；API 可绕过（**OBS-AUX-API-NO-MUST**）
+- 工作台：待审 `blocker=AUDIT` → `/voucher/voucher-index`
+- 权限：**OBS-PERM-CONFIG-NO-GRANT**（无账套授权仍可改 config；已恢复）
+- **明细**：`docs/testing/ai-ui-remaining-gaps-report.md`；截图 `gap-*`
+
 
 ## 可选深路径：工作台 / 封存 / 税费
 
@@ -237,7 +249,7 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*`、`s6-*`、`opt-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*`、`s6-*`、`opt-*`、`gap-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  

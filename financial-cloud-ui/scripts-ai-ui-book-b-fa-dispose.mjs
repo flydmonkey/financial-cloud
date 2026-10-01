@@ -19,14 +19,22 @@ const REPORT_MD = '/workspace/docs/testing/ai-ui-book-b-fa-dispose-report.md';
 const ARTIFACT_REPORT = '/opt/cursor/artifacts/reports/ai-ui-book-b-fa-dispose-report.md';
 
 const CAT_CODE = 'B-FA-01';
-const DISP_CODE = 'B-ASSET-DISP-001';
+// DISP-001 was an early probe with orphan dispose-voucher delete; use DISP-002 as canonical dispose card.
+const DISP_CODE = 'B-ASSET-DISP-002';
 const DISP_NAME = `${MARK}-清理探测设备`;
 const DISP_COST = 2000;
+const DISP_ORPHAN_CODE = 'B-ASSET-DISP-001'; // disposed without voucher — compensate if still on GL
 const CHK_DEF_CODE = 'B-ASSET-CHK-001';
 const CHK_DEF_NAME = `${MARK}-盘亏探测设备`;
 const CHK_DEF_COST = 1500;
 const MAIN_CODE = 'B-ASSET-001';
 const CHECK_TITLE = `${MARK}-盘点深路径`;
+
+/** Jackson Date for FixedAssetDisposeDto — yyyy-MM-dd string is rejected; epoch millis works. */
+function voucherDateMillis(ymd = VDATE) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return Date.UTC(y, m - 1, d, 4, 0, 0); // keep calendar day stable vs GMT+8
+}
 
 const results = [];
 const blockers = [];
@@ -445,17 +453,51 @@ async function main() {
     disposeVoucherId = dispGot.data?.disposeVoucherId ? String(dispGot.data.disposeVoucherId) : null;
     amounts.dispVoucherId = disposeVoucherId;
     amounts.dispGainOrLoss = DISP_COST; // expected; already disposed
-    rec(
-      'DISP-DISPOSE',
-      'PASS',
-      `已清理 status=DISPOSED disposeVoucher=${disposeVoucherId || '-'}`,
-    );
+    if (disposeVoucherId) {
+      const existingV = await api(adminAuth.token, 'GET', `/api/voucher/get/${disposeVoucherId}`);
+      if (existingV.code !== 0 || !existingV.data) {
+        disposeVoucherId = null;
+        rec('DISP-DISPOSE', 'WARN', 'DISPOSED but dispose voucher missing — see orphan compensate');
+      } else {
+        const vd = String(existingV.data.voucherDate || '');
+        const okPeriod =
+          vd.startsWith('2026-01') ||
+          (Number(existingV.data.voucherYear) === 2026 && Number(existingV.data.voucherMonth) === 1);
+        if (!okPeriod && !existingV.data.senderId) {
+          const fixed = await api(adminAuth.token, 'PUT', '/api/voucher/update', {
+            ...existingV.data,
+            id: disposeVoucherId,
+            voucherDate: VDATE,
+            voucherYear: 2026,
+            voucherMonth: 1,
+          });
+          rec(
+            'DISP-VOUCHER-DATE-FIX',
+            fixed.code === 0 ? 'PASS' : 'FAIL',
+            `was ${vd} → ${VDATE} code=${fixed.code} ${fixed.message || ''}`,
+          );
+          blockers.push({
+            id: 'BUG-FA-DISPOSE-VOUCHER-DATE',
+            detail:
+              'dispose() used server new Date() outside open term; draft voucherDate corrected via voucher/update before submit.',
+          });
+        }
+        rec(
+          'DISP-DISPOSE',
+          'PASS',
+          `已清理 status=DISPOSED disposeVoucher=${disposeVoucherId} date=${vd || VDATE}`,
+        );
+      }
+    } else {
+      rec('DISP-DISPOSE', 'WARN', 'DISPOSED without disposeVoucherId');
+    }
   } else {
-    // Avoid voucherDate string — Jackson Date parse can reject yyyy-MM-dd and yield "缺少请求体"
+    // voucherDate must be epoch millis — string dates make Spring reject the whole body
     const dispose = await api(adminAuth.token, 'POST', `/api/fixed-asset/card/dispose/${disp.id}`, {
       summary: `${MARK}-清理探测`,
       lossSubjectId: SUB['5711.02'].id,
       disposalSubjectId: SUB['1606'].id,
+      voucherDate: voucherDateMillis(VDATE),
     });
     if (dispose.code !== 0) {
       blockers.push({
@@ -467,11 +509,121 @@ async function main() {
       disposeVoucherId = String(dispose.data?.voucherId || '');
       amounts.dispVoucherId = disposeVoucherId;
       amounts.dispGainOrLoss = num(dispose.data?.gainOrLoss);
+      const vcheck = await api(adminAuth.token, 'GET', `/api/voucher/get/${disposeVoucherId}`);
+      const vd = vcheck.data?.voucherDate;
+      const okPeriod =
+        String(vd || '').startsWith('2026-01') ||
+        (Number(vcheck.data?.voucherYear) === 2026 && Number(vcheck.data?.voucherMonth) === 1);
       rec(
         'DISP-DISPOSE',
-        Math.abs(num(dispose.data?.gainOrLoss) - DISP_COST) < 0.01 ? 'PASS' : 'WARN',
-        `voucher=${disposeVoucherId} bookValue=${dispose.data?.bookValue} gainOrLoss=${dispose.data?.gainOrLoss} word=${dispose.data?.voucherWord}`,
+        Math.abs(num(dispose.data?.gainOrLoss) - DISP_COST) < 0.01 && okPeriod ? 'PASS' : 'WARN',
+        `voucher=${disposeVoucherId} date=${vd} ym=${vcheck.data?.voucherYear}-${vcheck.data?.voucherMonth} bookValue=${dispose.data?.bookValue} gainOrLoss=${dispose.data?.gainOrLoss}`,
       );
+      if (!okPeriod) {
+        blockers.push({
+          id: 'BUG-FA-DISPOSE-VOUCHER-DATE',
+          detail:
+            'dispose() defaults voucherDate to new Date() when omitted; outside open term → submit rejected. Workaround: pass voucherDate as epoch millis in open term.',
+        });
+      }
+    }
+  }
+
+  // Orphan probe card DISP-001: DISPOSED but dispose voucher deleted during date experiments
+  const orphan = await findCard(adminAuth.token, DISP_ORPHAN_CODE);
+  if (orphan && orphan.status === 'DISPOSED') {
+    let orphanVidOk = false;
+    if (orphan.disposeVoucherId) {
+      const ov = await api(adminAuth.token, 'GET', `/api/voucher/get/${orphan.disposeVoucherId}`);
+      orphanVidOk = ov.code === 0 && !!ov.data;
+    }
+    if (!orphanVidOk) {
+      const glPre = await snapshotGl(adminAuth.token);
+      // Compensating posted entry to clear orphaned 1601 from DISP-001 purchase
+      const wordNum = await api(
+        adminAuth.token,
+        'GET',
+        `/api/voucher/able-word-num?head=${encodeURIComponent('记')}&year=2026&month=1`,
+      );
+      const payload = {
+        bookId: BOOK_ID,
+        wordHead: '记',
+        wordNum: Number(wordNum.data || 1),
+        companyName,
+        receiptNum: 0,
+        voucherDate: VDATE,
+        voucherYear: 2026,
+        voucherMonth: 1,
+        items: [
+          {
+            subjectId: SUB['5711.02'].id,
+            subjectName: SUB['5711.02'].name,
+            summary: `${MARK}-DISP001孤儿清理`,
+            debitAmount: DISP_COST,
+            creditAmount: null,
+          },
+          {
+            subjectId: SUB['1601'].id,
+            subjectName: SUB['1601'].name,
+            summary: `${MARK}-DISP001孤儿清理`,
+            debitAmount: null,
+            creditAmount: DISP_COST,
+          },
+        ],
+      };
+      // idempotent: search existing
+      const list = await api(adminAuth.token, 'GET', '/api/voucher/fetch?pageNumber=1&pageSize=100');
+      let foundOrphanVid = null;
+      for (const row of list.data?.records || []) {
+        const det = await api(adminAuth.token, 'GET', `/api/voucher/get/${row.id}`);
+        if ((det.data?.items || []).some((it) => String(it.summary || '').includes('DISP001孤儿清理'))) {
+          foundOrphanVid = String(row.id);
+          break;
+        }
+      }
+      if (foundOrphanVid) {
+        await finishVoucher(
+          adminAuth.token,
+          reviewerAuth.token,
+          BOOK_ID,
+          'DISP-ORPHAN-COMPENSATE',
+          foundOrphanVid,
+          null,
+        );
+      } else if (Math.abs(num(glPre.fa) - 12000) < 0.01) {
+        rec('DISP-ORPHAN-COMPENSATE', 'PASS', 'GL already at 12000 — skip');
+      } else {
+        const draft = await api(adminAuth.token, 'POST', '/api/voucher/draft', payload);
+        if (draft.code !== 0) {
+          blockers.push({
+            id: 'BLOCK-DISP-ORPHAN',
+            detail: `orphan compensate draft failed: ${draft.message}`,
+          });
+          rec('DISP-ORPHAN-COMPENSATE', 'FAIL', draft.message);
+        } else {
+          const submit = await api(adminAuth.token, 'POST', '/api/voucher/submit', {
+            ...payload,
+            id: String(draft.data),
+          });
+          if (submit.code !== 0) {
+            rec('DISP-ORPHAN-COMPENSATE', 'FAIL', submit.message);
+          } else {
+            await finishVoucher(
+              adminAuth.token,
+              reviewerAuth.token,
+              BOOK_ID,
+              'DISP-ORPHAN-COMPENSATE',
+              String(draft.data),
+              null,
+            );
+          }
+        }
+      }
+      blockers.push({
+        id: 'OBS-DISP001-ORPHAN',
+        detail:
+          'Probe B-ASSET-DISP-001 left DISPOSED after dispose voucher delete; compensated with Dr5711.02/Cr1601. Canonical dispose path uses B-ASSET-DISP-002.',
+      });
     }
   }
 

@@ -41,8 +41,8 @@
 
 ## 阻塞 / 缺陷
 
-- **BUG-FA-CHECK-DEFICIT-SUMMARY（P1）**：`dispose-deficit` 拼摘要 `盘亏下账（盘点单：{title}）：{code} {name}`，长 MARK 标题实测 68 字符 → `voucher_item.summary varchar(64)` truncation，MyBatis batch flush 失败，`processedCount=0`。短标题 `B盘点2` + 短卡名 `B盘亏2` → **PASS**。
-- **BUG-FA-DISPOSE-VOUCHER-DATE（P1）**：`dispose` / `dispose-deficit` 省略 `voucherDate` 时用 `new Date()`；环境日为 2026-10-01 时草稿落在 10 月，开放账期 2026-01 下提交报「非当前期」。Workaround：`voucherDate` 传 epoch millis，或 `voucher/update` 纠期后再审核过账。`yyyy-MM-dd` 字符串会被 Jackson 拒收整包（「缺少请求体」）。
+- **BUG-FA-CHECK-DEFICIT-SUMMARY（P1）— FIXED**：`dispose-deficit` 长摘要曾超 `varchar(64)`。`FixedAssetService.createItem` / dispose 路径现截断至 64 字。
+- **BUG-FA-DISPOSE-VOUCHER-DATE（P1）— FIXED**：省略 `voucherDate` 时不再用墙钟 `new Date()`，改为钳到当前开放账期首日（Asia/Shanghai）。
 - **OBS-DISP001-ORPHAN**：探测中误删 DISP-001 清理凭证后卡仍 DISPOSED；已用 Dr5711.02/Cr1601 补偿。正式路径以 **DISP-002** 为准。
 
 ## 证据截图

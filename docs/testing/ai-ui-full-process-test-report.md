@@ -34,7 +34,7 @@
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
 | 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | — |
-| 专项 B 往来/固资 5.2–5.3 | 核心+清理/盘点深路径 PASS | 盘亏摘要/清理凭证日期 | 盘盈入账未跑（护主卡） |
+| 专项 B 往来/固资 5.2–5.3 | 核心+清理/盘点深路径 PASS | — | 盘盈入账未跑（护主卡）；两 P1 已修 |
 | 专项 B 工资/报销 5.4–5.5 | 核心路径 PASS | — | 公式空 WARN；摘要长度 OBS |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
@@ -130,7 +130,7 @@
 - 类别+卡片原值 12,000 / 残值 0% / 12 月直线法 / 费用 5602.02；UI 购入凭证过账（1601/1002）
 - 2026-01 计提折旧 1,000 过账后：原值 12,000 / 累计折旧 1,000 / 净值 **11,000**
 - **深路径补测**（独立卡，主卡未动）：`B-ASSET-DISP-002` 清理→DISPOSED+处置净损失凭证；盘点单完成（盘盈 preview / 盘亏下账）；终总账 **1601=12,000**
-- 缺陷：**BUG-FA-CHECK-DEFICIT-SUMMARY**（盘亏摘要超 64 字）、**BUG-FA-DISPOSE-VOUCHER-DATE**（默认 `new Date()` 跨期）；均有 workaround
+- 缺陷：**BUG-FA-CHECK-DEFICIT-SUMMARY** / **BUG-FA-DISPOSE-VOUCHER-DATE** 已在 `FixedAssetService` 修复（摘要截断 + 凭证日期钳到开放账期）
 - **明细**：`docs/testing/ai-ui-book-b-fa-dispose-report.md`；截图 `bookb-fa-disp-*` / `bookb-fa-check-*`
 - 截图 `bookb-fa-*`（核心折旧）+ 深路径截图见上
 
@@ -213,12 +213,13 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
 - `docs/testing/ai-ui-book-b-report.md`  
 - `docs/testing/ai-ui-book-b-arap-fa-report.md`  
+- `docs/testing/ai-ui-book-b-fa-dispose-report.md`  
 - `docs/testing/ai-ui-book-b-payroll-exp-report.md`  
 - `docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  

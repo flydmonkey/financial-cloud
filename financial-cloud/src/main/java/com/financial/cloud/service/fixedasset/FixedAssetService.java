@@ -84,6 +84,9 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
     private static final String DEFAULT_WORD = "记";
     private static final String DEFAULT_DISPOSE_SUMMARY = "固定资产清理";
     private static final String DEFAULT_PURCHASE_SUMMARY = "购入固定资产";
+    /** Matches voucher_item.summary varchar(64). */
+    private static final int VOUCHER_SUMMARY_MAX = 64;
+    private static final ZoneId ACCOUNTING_ZONE = ZoneId.of("Asia/Shanghai");
     private static final String[] CARD_EXPORT_HEADERS = {
             "编码", "名称", "类别编码", "类别名称", "部门", "启用日期", "数量", "规格型号", "存放地点",
             "折旧方法", "使用月数", "预计总工作量", "残值率%", "原值", "税额", "减值",
@@ -926,9 +929,10 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
 
         String currentTerm = configSysService.getCurrentTerm(bookId);
         String word = StringUtils.defaultIfBlank(dto.getVoucherWord(), DEFAULT_WORD);
-        String summary = StringUtils.defaultIfBlank(dto.getSummary(),
-                DEFAULT_DISPOSE_SUMMARY + "：" + entity.getCode() + " " + entity.getName());
-        Date voucherDate = dto.getVoucherDate() != null ? dto.getVoucherDate() : new Date();
+        String summary = truncateVoucherSummary(StringUtils.defaultIfBlank(dto.getSummary(),
+                DEFAULT_DISPOSE_SUMMARY + "：" + entity.getCode() + " " + entity.getName()));
+        // Defaulting to wall-clock "now" can land outside the open term (BUG-FA-DISPOSE-VOUCHER-DATE).
+        Date voucherDate = clampVoucherDateToPeriod(dto.getVoucherDate(), currentTerm);
 
         Book book = bookMapper.selectById(bookId);
         Message<String> voucherMsg = createDisposeVoucher(book, bookId, currentTerm, voucherDate, word, summary,
@@ -1040,9 +1044,31 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
         return voucherService.save(voucherDto);
     }
 
+    private static String truncateVoucherSummary(String summary) {
+        if (summary == null) {
+            return "";
+        }
+        return summary.length() <= VOUCHER_SUMMARY_MAX ? summary : summary.substring(0, VOUCHER_SUMMARY_MAX);
+    }
+
+    /** Prefer provided date when it falls in {@code period}; otherwise first day of period (Asia/Shanghai). */
+    private static Date clampVoucherDateToPeriod(Date voucherDate, String period) {
+        if (StringUtils.isBlank(period)) {
+            return voucherDate != null ? voucherDate : new Date();
+        }
+        LocalDate periodStart = LocalDate.parse(period + "-01");
+        if (voucherDate != null) {
+            LocalDate local = voucherDate.toInstant().atZone(ACCOUNTING_ZONE).toLocalDate();
+            if (YearMonth.from(local).toString().equals(period)) {
+                return Date.from(local.atStartOfDay(ACCOUNTING_ZONE).toInstant());
+            }
+        }
+        return Date.from(periodStart.atStartOfDay(ACCOUNTING_ZONE).toInstant());
+    }
+
     private VoucherItemChangeDto createItem(BookSubject subject, String summary, BigDecimal amount, boolean debit) {
         VoucherItemChangeDto item = new VoucherItemChangeDto();
-        item.setSummary(summary);
+        item.setSummary(truncateVoucherSummary(summary));
         item.setSubjectId(subject.getId());
         item.setSubjectCode(subject.getCode());
         item.setSubjectName(subject.getCode() + "-" + subject.getName());

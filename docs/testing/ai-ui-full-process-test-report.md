@@ -7,8 +7,8 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-c.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-c-report.md`
 
 ---
 
@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 其余模块（往来/固资/工资/报销）、专项 C/D、导出内容级细查、2 月 CF 补全与间接法附表未齐。反结账/闭账期守卫与导出入口已点测（见 `ai-ui-guards-report.md`）。
+仍不满足文档「全通过」标准：专项 B 其余模块（往来/固资/工资/报销）、专项 D、导出内容级细查、2 月 CF 补全与间接法附表未齐。反结账/闭账期守卫与导出入口已点测（见 `ai-ui-guards-report.md`）。专项 C（关闭审核）已 PASS。
 
 ---
 
@@ -34,8 +34,9 @@
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
 | 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | 往来/固资等未测 |
+| 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
-| 专项 C/D / 导出细查 | 进行中/0 | 0 | C agent；D 未测 |
+| 专项 D / 导出细查 | 0 | 0 | D 未测 |
 
 ---
 
@@ -106,6 +107,18 @@
 
 ---
 
+## 专项账套 C 进度（关闭凭证审核 §六）
+
+- **账套**：`AI-UI-20260930-专项C`，**bookId** `2105453230146252802`，启用 `2026-01`，**voucherReviewed=0**
+- **期初**：银行/实收资本各 10,000
+- **凭证**：费用 100 / 银行 100（摘要含 `AI-UI-20260930-C-V01`）
+- **状态流**：`draft` → `submit` → **`completed`（无审核人）** → `sender` 过账 → `unsender` 反过账 → `unaudit` → `draft` → 删除
+- **余额**：提交未过账银行仍 10,000；过账后 **9,900**；反过账恢复 10,000；利润表管理费用过账后 100
+- **观察**：新建账套当前账期可能继承创建者账套（曾为 2026-03），脚本强制回启用月；工具栏仍显示「审核」split-button，但提交后无需 reviewer
+- **明细**：`docs/testing/ai-ui-book-c-report.md`；截图 `bookc-*`
+
+---
+
 ## 反结账 / 闭账期守卫 / 导出（主账套 A）
 
 - 闭账期修改与反过账均被拦截（开放账期 2026-03）  
@@ -118,7 +131,7 @@
 ## 未执行 / 进行中
 
 1. 专项账套 B 往来/固资/工资/报销（agent 进行中）及 5.1 扩展场景  
-2. 专项 C（免审核，agent 进行中）、D（年末）  
+2. 专项 D（年末）  
 3. 导出 Excel/PDF 内容级校验、间接法附表  
 4. 补全 V04 / 2 月现金流量指定后的完整勾稽  
 
@@ -126,11 +139,12 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*`、`guards-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*`、`bookc-*`、`guards-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
 - `docs/testing/ai-ui-book-b-report.md`  
+- `docs/testing/ai-ui-book-c-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
 
 

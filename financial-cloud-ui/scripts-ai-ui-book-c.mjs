@@ -506,18 +506,60 @@ async function deleteDraft(token, voucher) {
 
 async function checkUiButtons(page, voucherId, phase) {
   await page.goto(`${BASE}/voucher/voucher-index`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(800);
-  // open more/batch action menus if present
-  for (const name of ['更多', '批量', '操作']) {
-    const btn = page.getByRole('button', { name: new RegExp(name) }).first();
-    if (await btn.isVisible().catch(() => false)) {
-      await btn.click().catch(() => {});
-      await page.waitForTimeout(200);
+  await page.waitForTimeout(900);
+  // Select first data row so split-button dropdowns enable
+  const rowCheck = page.locator('.el-table__body .el-checkbox').first();
+  if (await rowCheck.isVisible().catch(() => false)) {
+    await rowCheck.click({ force: true }).catch(() => {});
+    await page.waitForTimeout(300);
+  }
+  let hasUnaudit = false;
+  let hasUnpost = false;
+  // 反审核 is under 审核 split-button dropdown
+  const auditSplit = page.locator('.toolbar-right .toolbar-split-btn').filter({ hasText: /^审核$/ }).first();
+  const auditBtn = page.getByRole('button', { name: /^审核$/ }).first();
+  const auditCaret = page.locator('.toolbar-right .el-dropdown').filter({ hasText: /审核/ }).locator('.el-dropdown__caret-button, .el-icon--right, .el-icon').first();
+  if (await auditCaret.isVisible().catch(() => false)) {
+    await auditCaret.click().catch(() => {});
+  } else if (await auditBtn.isVisible().catch(() => false)) {
+    // try hover/click caret area on split button
+    await auditBtn.click({ button: 'right' }).catch(() => {});
+  }
+  await page.waitForTimeout(300);
+  hasUnaudit = await page.locator('.el-dropdown-menu:visible').getByText('反审核').isVisible().catch(() => false);
+  if (!hasUnaudit) {
+    // click the dropdown arrow next to 审核
+    const arrows = page.locator('.toolbar-right .el-dropdown .el-button');
+    const count = await arrows.count();
+    for (let i = 0; i < count; i++) {
+      const t = (await arrows.nth(i).innerText().catch(() => '')).trim();
+      if (!t || t === '审核') {
+        await arrows.nth(i).click().catch(() => {});
+        await page.waitForTimeout(250);
+        hasUnaudit = await page.locator('.el-dropdown-menu:visible').getByText('反审核').isVisible().catch(() => false);
+        if (hasUnaudit) break;
+      }
     }
   }
+  await page.keyboard.press('Escape').catch(() => {});
+  await page.waitForTimeout(200);
+
+  // 反过账 under 过账 split-button
+  const postArrows = page.locator('.toolbar-right .el-dropdown .el-button');
+  const pcount = await postArrows.count();
+  for (let i = 0; i < pcount; i++) {
+    const t = (await postArrows.nth(i).innerText().catch(() => '')).trim();
+    if (!t || t === '过账') {
+      await postArrows.nth(i).click().catch(() => {});
+      await page.waitForTimeout(250);
+      hasUnpost = await page.locator('.el-dropdown-menu:visible').getByText('反过账').isVisible().catch(() => false);
+      if (hasUnpost) break;
+    }
+  }
+  await page.keyboard.press('Escape').catch(() => {});
+
   const bodyText = await page.locator('body').innerText();
-  const hasUnpost = bodyText.includes('反过账');
-  const hasUnaudit = bodyText.includes('反审核');
+  const hasAuditToolbar = /\b审核\b/.test(bodyText);
   const hasSubmitAudit = /提交审核/.test(bodyText);
   const shotName =
     phase === 'posted'
@@ -526,23 +568,27 @@ async function checkUiButtons(page, voucherId, phase) {
         ? 'bookc-voucher-list-unposted'
         : 'bookc-voucher-list';
   await shot(page, shotName);
+
   const expectUnpost = phase === 'posted';
   const expectUnaudit = phase === 'unposted';
   let status = 'PASS';
-  let detail = `phase=${phase} 反过账=${hasUnpost} 反审核=${hasUnaudit} 提交审核=${hasSubmitAudit}`;
+  let detail = `phase=${phase} 反过账下拉=${hasUnpost} 反审核下拉=${hasUnaudit} 工具栏审核=${hasAuditToolbar}`;
   if (expectUnpost && !hasUnpost) {
     status = 'WARN';
-    detail += '（过账后列表未看到反过账文案，API 路径已验证）';
+    detail += '（过账后未展开到反过账，API 已验证）';
   }
   if (expectUnaudit && !hasUnaudit) {
     status = 'WARN';
-    detail += '（未过账已审核列表未看到反审核文案，API 路径已验证）';
+    detail += '（未过账已审核未展开到反审核，API 已验证）';
+  }
+  if (hasAuditToolbar) {
+    observations.push('关闭审核账套工具栏仍显示「审核」split-button（反审核在其下拉中；提交后无需审核人即可 completed）');
   }
   if (hasSubmitAudit) {
-    observations.push('关闭审核账套列表仍可见「提交审核」文案（可能为共用工具栏）');
+    observations.push('关闭审核账套仍可见「提交审核」文案');
   }
   rec(`UI-REVERSE-${phase.toUpperCase()}`, status, `${detail} voucher=${voucherId}`);
-  return { hasUnpost, hasUnaudit, hasSubmitAudit };
+  return { hasUnpost, hasUnaudit, hasAuditToolbar };
 }
 
 function almost(a, b, eps = 0.01) {
@@ -643,6 +689,12 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   await injectSession(page, adminAuth);
+  // Ensure browser session book matches book C
+  await page.evaluate(async (bookId) => {
+    await fetch(`/api/users/switchBook/${bookId}`);
+  }, bookId);
+  await page.goto(`${BASE}/index`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
 
   // settings screenshot
   await page.goto(`${BASE}/setting/voucher-settlement`, { waitUntil: 'networkidle' }).catch(() => null);

@@ -55,3 +55,14 @@
 - `/opt/cursor/artifacts/screenshots/bookb-subject-balance-before.webp`
 - `/opt/cursor/artifacts/screenshots/bookb-subject-balance-after.webp`
 - `/opt/cursor/artifacts/screenshots/bookb-reconciliation.webp`
+
+## 5.1 扩展（回写 / 解绑 / 红冲 / 未达项）
+
+- **结论**：PASS（详见 `docs/testing/ai-ui-book-b-journal-ext-report.md`）
+- **基线**：日记账 12000 / 总账1002 7644.26
+- **改额回写**：草稿凭证 50→80，流水与日记账余额同步
+- **草稿删除解绑**：`voucherId` 清空，流水保留
+- **红字冲销**：金额 30，生成反向流水并恢复日记账；冲销凭证过账见阻塞项（负金额回写/跨期）
+- **未达项**：企业已付银行未付 500；对账单=12000，账面=11500，调节后两侧一致差额 0
+- **截图**：`bookb-jext-*`
+

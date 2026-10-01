@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 的 5.1 扩展、OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。专项 B 固资盘点/清理深路径、主账套两月闭环、B/C/D 核心路径、守卫、CF 补全后勾稽、导出内容级校验、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。
+仍不满足文档「全通过」标准：OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。专项 B 5.1 扩展已完成（红冲凭证过账受跨期/负金额回写阻塞，日记账反向流水已验证）。专项 B 固资盘点/清理深路径、主账套两月闭环、B/C/D 核心路径、守卫、CF 补全后勾稽、导出内容级校验、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。
 
 ---
 
@@ -33,7 +33,7 @@
 | 1 月凭证/报表/反操作/月结 | 主路径通过 | — | V04 CF 项待补 |
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
-| 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | — |
+| 专项 B 出纳日记账 5.1 | 核心+扩展 PASS | — | 见 journal-ext 报告 |
 | 专项 B 往来/固资 5.2–5.3 | 核心+清理/盘点深路径 PASS | — | 盘盈入账未跑（护主卡）；两 P1 已修 |
 | 专项 B 工资/报销 5.4–5.5 | 核心路径 PASS | — | 公式空 WARN；摘要长度 OBS |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
@@ -112,13 +112,13 @@
 
 ## 专项账套 B 进度
 
-### 5.1 出纳日记账 — PASS
+### 5.1 出纳日记账 — PASS（含扩展）
 - **账套**：`AI-UI-20260930-专项B`，**bookId** `2105448444973871105`，启用 `2026-01`，凭证审核开启
-- **期初**：总账 1002 / 日记账均为 10,000（期初流水 `direction=o`，不生成凭证）
-- **流水**：收入 3,000 + 支出 1,000 → 日记账余额 **12,000**
-- **生成凭证→过账**：过账前总账 1002=10,000；过账后 **12,000**
-- **银行对账**：对账单 12,000，勾对后差额 **0**
-- **明细**：`docs/testing/ai-ui-book-b-report.md`；截图 `bookb-*`
+- **核心**：期初 10,000；收入 3,000+支出 1,000 → 日记账 **12,000**；过账后总账曾对齐；后经工资/报销/固资，**总账1002 现基线见扩展报告**
+- **扩展**：未过账改额回写（50→80）；草稿删除解绑；红冲 30 反向流水（日记账余额回基线）；企业已付银行未付 500 未达项（对账单 12,000 / 账面 11,500 / 调节后差额 0）
+- **基线（扩展前）**：日记账 12000 / 总账1002 7644.26
+- **阻塞**：`REV-POST` — 冲销凭证落系统日（2026-10）非开放账期，且负金额分录提交触发流水回写 508010，无法走完冲销过账；清理后基线已恢复
+- **明细**：`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`；截图 `bookb-*` / `bookb-jext-*`
 
 ### 5.2 往来与核销 — PASS
 - 启用辅助核算；1122↔客户、2202↔供应商；单位 `AI-UI-20260930-客户B/供应商B`
@@ -148,7 +148,7 @@
 - 截图 `bookb-exp-*`
 
 ### 未测（B 其余）
-日记账回写/红冲/未达项 500；盘盈入账（book-surplus）故意未跑以保护主卡
+盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext；红冲过账受限见阻塞）
 
 ---
 
@@ -205,15 +205,15 @@
 
 ## 未执行 / 进行中
 
-1. 专项账套 B：5.1 扩展  
-2. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  
+1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  
+2. （可选）红冲凭证过账：开放账期日期 + 负金额流水回写  
 3. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） 
 
 ---
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-jext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  

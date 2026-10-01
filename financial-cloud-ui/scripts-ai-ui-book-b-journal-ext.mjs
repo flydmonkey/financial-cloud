@@ -527,16 +527,32 @@ function patchMainReports(summary) {
     );
 
     md = md.replace(
-      /仍不满足文档「全通过」标准：专项 B 的 5\.1 扩展、OBS-CF-BEGIN-CASH-FEB \/ OBS-CF-AR-ADJ。/,
+      /仍不满足文档「全通过」标准：.*?`BUG-TERM-CROSS-BOOK` 已修。/,
       summary.ok
-        ? '仍不满足文档「全通过」标准：OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。专项 B 5.1 扩展已完成。'
-        : '仍不满足文档「全通过」标准：专项 B 的 5.1 扩展（部分失败）、OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。',
+        ? '仍不满足文档「全通过」标准：OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。专项 B 5.1 扩展已完成（红冲凭证过账受跨期/负金额回写阻塞，日记账反向流水已验证）。专项 B 固资盘点/清理深路径、主账套两月闭环、B/C/D 核心路径、守卫、CF 补全后勾稽、导出内容级校验、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。'
+        : '仍不满足文档「全通过」标准：专项 B 的 5.1 扩展（部分失败）、OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。专项 B 固资盘点/清理深路径、主账套两月闭环、B/C/D 核心路径、守卫、CF 补全后勾稽、导出内容级校验、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。',
     );
 
     md = md.replace(
-      /1\. 专项账套 B：5\.1 扩展\s*\n/,
-      summary.ok ? '1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ\n' : '1. 专项账套 B：5.1 扩展（修复失败项）\n',
+      /### 未测（B 其余）\n[\s\S]*?(?=\n---)/,
+      summary.ok
+        ? '### 未测（B 其余）\n盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext；红冲过账受限见阻塞）\n\n'
+        : '### 未测（B 其余）\n日记账回写/红冲/未达项 500 扩展未全过；盘盈入账（book-surplus）故意未跑以保护主卡\n\n',
     );
+
+    if (summary.ok) {
+      md = md.replace(
+        /## 未执行 \/ 进行中\n\n[\s\S]*?(?=\n---)/,
+        [
+          '## 未执行 / 进行中',
+          '',
+          '1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  ',
+          '2. （可选）红冲凭证过账：开放账期日期 + 负金额流水回写  ',
+          '3. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） ',
+          '',
+        ].join('\n'),
+      );
+    }
 
     fs.writeFileSync(MAIN_REPORT, md);
   }

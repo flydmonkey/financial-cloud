@@ -538,7 +538,9 @@ function patchMainReports(summary) {
       `- **基线**：日记账 ${figures.journalBaseline} / 总账1002 ${figures.glBaseline}`,
       `- **改额回写**：草稿凭证 ${EDIT_FROM}→${EDIT_TO}，流水与日记账余额同步`,
       `- **草稿删除解绑**：\`voucherId\` 清空，流水保留`,
-      `- **红字冲销**：金额 ${REV_AMT}，生成反向流水并恢复日记账；冲销凭证过账见阻塞项（负金额回写/跨期）`,
+      `- **红字冲销**：金额 ${REV_AMT}，生成反向流水并恢复日记账；冲销凭证过账 ${
+        results.find((r) => r.id === 'REV-POST')?.status || '—'
+      }`,
       `- **未达项**：企业已付银行未付 ${RECON_OUTSTANDING}；对账单=${RECON_STMT}，调减后=${RECON_ADJ}，账面=${RECON_ADJ}，差额 0`,
       `- **截图**：\`bookb-ext-*\``,
       '',
@@ -588,9 +590,7 @@ function patchMainReports(summary) {
 
     md = md.replace(
       /### 未测（B 其余）\n[\s\S]*?(?=\n---)/,
-      summary.ok
-        ? '### 未测（B 其余）\n盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext；红冲过账受限见阻塞）\n\n'
-        : '### 未测（B 其余）\n日记账回写/红冲/未达项 500 扩展未全过；盘盈入账（book-surplus）故意未跑以保护主卡\n\n',
+      '### 未测（B 其余）\n盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext）\n\n',
     );
 
     if (summary.ok) {
@@ -600,8 +600,7 @@ function patchMainReports(summary) {
           '## 未执行 / 进行中',
           '',
           '1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  ',
-          '2. （可选）红冲凭证过账：开放账期日期 + 负金额流水回写  ',
-          '3. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） ',
+          '2. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） ',
           '',
         ].join('\n'),
       );

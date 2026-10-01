@@ -5,7 +5,7 @@
 - **bookId**：`2105448444973871105`
 - **启用期间**：`2026-01`（凭证审核开启）
 - **环境**：前端 `http://127.0.0.1:3154` / 后端 `http://127.0.0.1:2154`
-- **执行时间**：2026-10-01T01:17:18.216Z
+- **执行时间**：2026-10-01T01:19:26.179Z
 - **脚本**：`financial-cloud-ui/scripts-ai-ui-book-b-journal-ext.mjs`
 
 ## 结论：**5.1 扩展 PASS**（PASS 19 / FAIL 0 / WARN 0 / BLOCK 0）
@@ -25,8 +25,8 @@
 |---|---:|
 | 日记账账户余额 | 12000 |
 | 总账 1002 | 7644.26 |
-| 对账单余额 | 12500 |
-| 对账差额 | -500 |
+| 对账单余额 | 12000 |
+| 对账差额 | 0 |
 
 ## 结果表
 
@@ -36,14 +36,14 @@
 | SWITCH-BOOK | PASS | bookId=2105448444973871105 term=2026-01 |
 | CLEANUP-PRIOR | PASS | no prior JEXT leftovers |
 | SUBJECTS | PASS | revenue=5001 expense=5602.01 |
-| BASELINE | PASS | journal=12000 gl1002=7644.26 stmt=12500 diff=-500 |
+| BASELINE | PASS | journal=12000 gl1002=7644.26 stmt=12000 diff=0 |
 | EDIT-REWRITE | PASS | entry income 50→80（期望 80）；journal 12080（期望 12080） |
 | UNBIND-DELETE | PASS | del=删除成功; voucherId=null; income=80; journal=12080 |
 | EDIT-CLEAN | PASS | restored journal=12000（期望 12000） |
-| CF-9265 | PASS | 无待指定 CF 行（跳过） |
+| CF-6306 | PASS | 无待指定 CF 行（跳过） |
 | REV-SRC-POST | PASS | sender=true |
 | REV-PRE | PASS | journal=11970 gl=7614.26 |
-| REV-CREATE | PASS | reverseVoucherId=2105467013312851969 voucherDate=2026-01-01 |
+| REV-CREATE | PASS | reverseVoucherId=2105467552046034945 voucherDate=2026-01-01 |
 | REV-JOURNAL | PASS | reverse entry dir=i income=30 tradeDate=2026-01-01 08:00:00; journal=12000（期望基线 12000） |
 | REV-POST | PASS | submit=成功提交1条凭证, 忽略0条; audit=操作总数：1; 成功：1; 失败：0; 不存在项：0; post=操作总数：1; 成功：1; 失败：0 |
 | REV-GL-RESTORE | PASS | gl1002=7644.26（基线 7644.26；若冲销落在其他账期则本期总账不回滚） |

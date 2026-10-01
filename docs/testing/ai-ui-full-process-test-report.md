@@ -151,7 +151,7 @@
 - 截图 `bookb-exp-*`
 
 ### 未测（B 其余）
-盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext；红冲过账受限见阻塞）
+盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext）
 
 
 ---
@@ -210,8 +210,7 @@
 ## 未执行 / 进行中
 
 1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  
-2. （可选）红冲凭证过账：开放账期日期 + 负金额流水回写  
-3. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） 
+2. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） 
 
 ---
 

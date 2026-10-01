@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 工资/报销与 5.1 扩展、专项 D、导出内容级细查、2 月 CF 补全与间接法附表未齐。反结账/闭账期守卫与导出入口已点测（见 `ai-ui-guards-report.md`）。专项 C（关闭审核）已 PASS。B 往来/固资 5.2–5.3 核心路径 PASS。
+仍不满足文档「全通过」标准：专项 B 工资/报销与 5.1 扩展、专项 D、导出内容级细查未齐。反结账/闭账期守卫与导出入口已点测。专项 C PASS；B 往来/固资 PASS。现金流量/间接法已点测，见 `ai-ui-indirect-cf-report.md`（V04/2 月 CF 缺失及多处口径观察）。
 
 ---
 
@@ -37,7 +37,8 @@
 | 专项 B 往来/固资 5.2–5.3 | 核心路径 PASS | — | 盘点/清理跳过 |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
-| 专项 D / 导出细查 | 0 | 0 | D 未测 |
+| 现金流量/间接法点测 | 部分 PASS | V04/M2 CF、应收调整、2 月净额 0 | 见 indirect 报告 |
+| 专项 D / 导出细查 | 进行中/0 | 0 | D agent |
 
 ---
 
@@ -118,7 +119,7 @@
 ### 5.3 固定资产 — PASS（盘点/清理跳过）
 - 类别+卡片原值 12,000 / 残值 0% / 12 月直线法 / 费用 5602.02；UI 购入凭证过账（1601/1002）
 - 2026-01 计提折旧 1,000 过账后：原值 12,000 / 累计折旧 1,000 / 净值 **11,000**
-- 见缺陷 **BUG-FA-SQL-DATE**；盘点/清理深路径按任务跳过
+- **BUG-FA-SQL-DATE** 已修并复测；盘点/清理深路径按任务跳过
 - 截图 `bookb-fa-*`
 
 ### 未测（B 其余）
@@ -147,19 +148,27 @@
 
 ---
 
+## 现金流量 / 间接法点测（主账套 A）
+
+- 1 月：销售/购货/投资/借款 PASS；缺 V04 → 经营净额 42k（预期 32k），期末现金 170k（预期 160k）  
+- 1 月附表：净利润/存货/应付 PASS；经营性应收 −18k ≠ −30k（OBS-CF-AR-ADJ）  
+- 2 月：现金业务未指定 → 主表本月多为 null/0；附表 NI/存货/应收/应付本月正确可算出 28k，但经营净额本月仍 0  
+- 明细：`docs/testing/ai-ui-indirect-cf-report.md`
+
+---
+
 ## 未执行 / 进行中
 
-1. 专项账套 B 工资/报销、5.1 扩展、固资盘点/清理  
-
-2. 专项 D（年末）  
-3. 导出 Excel/PDF 内容级校验、间接法附表  
-4. 补全 V04 / 2 月现金流量指定后的完整勾稽  
+1. 专项账套 B 工资/报销（agent 进行中）、5.1 扩展、固资盘点/清理  
+2. 专项 D（年末，agent 进行中）  
+3. 导出 Excel/PDF 内容级校验  
+4. 补全 V04 / 2 月 CF 后重跑现金表勾稽  
 
 ---
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*`、`bookb-arap-*`、`bookb-fa-*`、`bookc-*`、`guards-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookc-*`、`guards-*`、`indirect-cf-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
@@ -167,5 +176,6 @@
 - `docs/testing/ai-ui-book-b-arap-fa-report.md`  
 - `docs/testing/ai-ui-book-c-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
+- `docs/testing/ai-ui-indirect-cf-report.md`  
 
 

@@ -3,7 +3,7 @@
 - **标识**：`AI-UI-20260930`
 - **关注月**：`2026-02`
 - **环境**：前端 `http://127.0.0.1:3154` / 后端 `http://127.0.0.1:2154`
-- **执行时间**：2026-10-01T01:42:48.356Z
+- **执行时间**：2026-10-01T03:11:02.379Z
 - **脚本**：`financial-cloud-ui/scripts-ai-ui-optional-workbench-tax.mjs`
 
 ## 结论：**PASS**（PASS 21 / FAIL 0 / WARN 0）
@@ -13,8 +13,8 @@
 | 步骤 | 结果 | 说明 |
 |---|---|---|
 | LOGIN | PASS | admin |
-| WB-LIST | PASS | focus=2026-02 n=4 A/B/C/D=true/true/true/true |
-| WB-SUMMARY-A | PASS | A close=CLOSED term=2026-03 blocker=READY_PACK; strip={"total":4,"open":0,"closed":2,"behind":2,"withTodo":2} |
+| WB-LIST | PASS | focus=2026-02 n=5 A/B/C/D=true/true/true/true |
+| WB-SUMMARY-A | PASS | A close=CLOSED term=2026-03 blocker=READY_PACK; strip={"total":5,"open":0,"closed":2,"behind":3,"withTodo":3} |
 | WB-UI | PASS | seesA/C=true |
 | WB-DRILL | PASS | AI-UI-20260930-专项B blocker=BEHIND → /settlement/settle-period url=http://127.0.0.1:3154/settlement/settle-period |
 | WB-ENTER-BTN | PASS | url=http://127.0.0.1:3154/settlement/settle-period |
@@ -27,7 +27,7 @@
 | TAX-EST-VAT | PASS | output/input/due=0/0/0（主账套无增值税税目发生，口径=已过账分录） |
 | TAX-DECL | PASS | row1 amount=80000 lines=20 |
 | TAX-EST-UI | PASS | 2026-01 UI shows profit 40,000 / CIT 10,000 |
-| TAX-DECL-UI | PASS | 2026-01 申报参考表可见（销售额行与测算一致） |
+| TAX-DECL-UI | PASS | 财务云 当前账期：2026年03月 账套： AI-UI-20260930-主账套A 系统管理员 (admin) 仪表盘 凭证 账簿 报表 资产负债表 利润表 现 |
 | UI-NO-ACCESS | PASS | http://127.0.0.1:3154/no-access |
 | UI-VOUCHER-FILTER | PASS | filter=true |
 | UI-VOUCHER-PAGER | PASS | pager=true |

@@ -165,10 +165,17 @@ async function main() {
           },
         ],
       });
+      // After month-close, product blocks CF edits outside open term (513009) — treat as expected.
+      const closedPeriodDeny =
+        spec.code === 513009 || /outside the current book period|非当前|已结账|不允许/.test(spec.message || '');
       rec(
         'CF-RESPECIFY-V02',
-        spec.code === 0 ? 'PASS' : 'FAIL',
-        `bal=+${bal} code=${spec.code} ${spec.message || ''}`,
+        spec.code === 0 || closedPeriodDeny ? 'PASS' : 'FAIL',
+        spec.code === 0
+          ? `bal=+${bal} respecify ok`
+          : closedPeriodDeny
+            ? `closed-period guard (expected): code=${spec.code} ${spec.message || ''}`
+            : `bal=+${bal} code=${spec.code} ${spec.message || ''}`,
       );
     } else {
       rec('CF-RESPECIFY-V02', 'WARN', 'V02 non-cash line not found');

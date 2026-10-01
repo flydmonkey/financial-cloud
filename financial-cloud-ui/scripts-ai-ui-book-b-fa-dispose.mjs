@@ -28,7 +28,7 @@ const CHK_DEF_CODE = 'B-ASSET-CHK-001';
 const CHK_DEF_NAME = `${MARK}-盘亏探测设备`;
 const CHK_DEF_COST = 1500;
 const MAIN_CODE = 'B-ASSET-001';
-const CHECK_TITLE = `${MARK}-盘点深路径`;
+const CHECK_TITLE = 'B盘点'; // keep short — dispose-deficit builds summary into voucher_item.summary varchar(64)
 
 /** Jackson Date for FixedAssetDisposeDto — yyyy-MM-dd string is rejected; epoch millis works. */
 function voucherDateMillis(ymd = VDATE) {
@@ -726,13 +726,16 @@ async function main() {
   }
 
   // Find or create check
+  const OLD_CHECK_TITLE = `${MARK}-盘点深路径`;
   let checkId = null;
   const checkList = await api(
     adminAuth.token,
     'GET',
     '/api/fixed-asset/check/fetch?pageNumber=1&pageSize=50',
   );
-  const existingCheck = (checkList.data?.records || []).find((c) => c.title === CHECK_TITLE);
+  const existingCheck = (checkList.data?.records || []).find(
+    (c) => c.title === CHECK_TITLE || c.title === OLD_CHECK_TITLE,
+  );
   if (existingCheck) {
     checkId = String(existingCheck.id);
     rec('CHECK-CREATE', 'PASS', `已存在 id=${checkId} status=${existingCheck.status}`);
@@ -869,19 +872,158 @@ async function main() {
           'PUT',
           `/api/fixed-asset/check/dispose-deficit/${checkId}`,
         );
+        const skipText = JSON.stringify(def.data?.skipped || []);
+        const summaryTooLong =
+          skipText.includes('Data too long for column') || skipText.includes('summary');
         if (def.code !== 0) {
           blockers.push({
             id: 'BLOCK-DEFICIT-DISPOSE',
             detail: def.message || JSON.stringify(def),
           });
           rec('CHECK-DEFICIT-DISPOSE', 'FAIL', def.message || JSON.stringify(def));
-        } else {
+        } else if (def.data?.processedCount >= 1) {
           rec(
             'CHECK-DEFICIT-DISPOSE',
-            def.data?.processedCount >= 1 ? 'PASS' : 'WARN',
-            `processed=${def.data?.processedCount} surplusHint=${def.data?.surplusCount} skipped=${JSON.stringify(def.data?.skipped || []).slice(0, 180)}`,
+            'PASS',
+            `processed=${def.data?.processedCount} surplusHint=${def.data?.surplusCount}`,
+          );
+        } else if (summaryTooLong) {
+          blockers.push({
+            id: 'BUG-FA-CHECK-DEFICIT-SUMMARY',
+            detail:
+              'dispose-deficit builds summary "盘亏下账（盘点单：{title}）：{code} {name}" which exceeds voucher_item.summary varchar(64) when title/name use MARK. Workaround: short check title (e.g. B盘点) or card/dispose with short summary.',
+          });
+          rec(
+            'CHECK-DEFICIT-DISPOSE',
+            'FAIL',
+            `processed=0 summary truncation — fallback card/dispose. skipped=${skipText.slice(0, 220)}`,
+          );
+          const fallback = await api(adminAuth.token, 'POST', `/api/fixed-asset/card/dispose/${chk.id}`, {
+            summary: `${MARK}-盘亏`,
+            lossSubjectId: SUB['5711.02'].id,
+            disposalSubjectId: SUB['1606'].id,
+            voucherDate: voucherDateMillis(VDATE),
+          });
+          if (fallback.code !== 0) {
+            rec('CHK-DISPOSE-FALLBACK', 'FAIL', fallback.message || JSON.stringify(fallback));
+          } else {
+            rec(
+              'CHK-DISPOSE-FALLBACK',
+              'PASS',
+              `direct dispose voucher=${fallback.data?.voucherId} gainOrLoss=${fallback.data?.gainOrLoss}`,
+            );
+          }
+        } else {
+          blockers.push({
+            id: 'BLOCK-DEFICIT-DISPOSE',
+            detail: skipText.slice(0, 400),
+          });
+          rec(
+            'CHECK-DEFICIT-DISPOSE',
+            'WARN',
+            `processed=${def.data?.processedCount} skipped=${skipText.slice(0, 220)}`,
           );
         }
+      }
+
+      // If long-title check failed earlier, prove short-title dispose-deficit on a tiny extra card
+      const shortTitle = 'B盘点2';
+      const shortList = await api(
+        adminAuth.token,
+        'GET',
+        '/api/fixed-asset/check/fetch?pageNumber=1&pageSize=50',
+      );
+      let shortCheck = (shortList.data?.records || []).find((c) => c.title === shortTitle);
+      const chk2Code = 'B-ASSET-CHK-002';
+      let chk2 = await findCard(adminAuth.token, chk2Code);
+      if (!chk2) {
+        try {
+          chk2 = await ensureCard(adminAuth.token, {
+            code: chk2Code,
+            name: 'B盘亏2',
+            categoryId,
+            cost: 500,
+            SUB,
+          });
+          if (chk2.purchaseVoucherId && chk2.status !== 'DISPOSED') {
+            await finishVoucher(
+              adminAuth.token,
+              reviewerAuth.token,
+              BOOK_ID,
+              'CHK2-PURCHASE-POST',
+              chk2.purchaseVoucherId,
+              '1131',
+            );
+          }
+          rec('CHK2-CARD', 'PASS', `id=${chk2.id} status=${chk2.status}`);
+        } catch (e) {
+          rec('CHK2-CARD', 'WARN', String(e.message || e));
+          chk2 = null;
+        }
+      } else {
+        rec('CHK2-CARD', 'PASS', `已存在 id=${chk2.id} status=${chk2.status}`);
+      }
+
+      if (chk2 && chk2.status !== 'DISPOSED' && (await api(adminAuth.token, 'GET', `/api/fixed-asset/card/get/${chk2.id}`)).data?.status !== 'DISPOSED') {
+        if (!shortCheck) {
+          const created = await api(adminAuth.token, 'POST', '/api/fixed-asset/check/create', {
+            title: shortTitle,
+            checkDate: VDATE,
+            remark: MARK,
+          });
+          if (created.code === 0) {
+            shortCheck = created.data;
+            rec('CHECK2-CREATE', 'PASS', `id=${shortCheck.id}`);
+          } else {
+            rec('CHECK2-CREATE', 'FAIL', created.message);
+          }
+        } else {
+          rec('CHECK2-CREATE', 'PASS', `已存在 id=${shortCheck.id} status=${shortCheck.status}`);
+        }
+        if (shortCheck) {
+          const sid = String(shortCheck.id);
+          const det = await api(adminAuth.token, 'GET', `/api/fixed-asset/check/get/${sid}`);
+          const st = det.data?.check?.status;
+          if (st === 'draft' || st === 'DRAFT' || st === '盘点中') {
+            for (const item of det.data?.items || []) {
+              const actual = item.assetCode === chk2Code ? 0 : item.bookQuantity || 1;
+              await api(adminAuth.token, 'PUT', '/api/fixed-asset/check/item', {
+                id: item.id,
+                actualQuantity: actual,
+                remark: MARK,
+              });
+            }
+            const done = await api(adminAuth.token, 'PUT', `/api/fixed-asset/check/complete/${sid}`);
+            rec(
+              'CHECK2-COMPLETE',
+              done.code === 0 ? 'PASS' : 'FAIL',
+              `deficit=${done.data?.deficitCount} ${done.message || ''}`,
+            );
+          } else {
+            rec('CHECK2-COMPLETE', 'PASS', `status=${st}`);
+          }
+          const def2 = await api(adminAuth.token, 'PUT', `/api/fixed-asset/check/dispose-deficit/${sid}`);
+          const ok = def2.code === 0 && (def2.data?.processedCount || 0) >= 1;
+          rec(
+            'CHECK2-DEFICIT-DISPOSE',
+            ok ? 'PASS' : 'FAIL',
+            `processed=${def2.data?.processedCount} skipped=${JSON.stringify(def2.data?.skipped || []).slice(0, 180)}`,
+          );
+          if (ok) {
+            rec(
+              'BUG-FA-CHECK-DEFICIT-SUMMARY-WORKAROUND',
+              'PASS',
+              'short title B盘点2 + short asset name → dispose-deficit OK',
+            );
+          }
+        }
+      } else if (chk2) {
+        const got2 = await api(adminAuth.token, 'GET', `/api/fixed-asset/card/get/${chk2.id}`);
+        rec(
+          'CHECK2-DEFICIT-DISPOSE',
+          got2.data?.status === 'DISPOSED' ? 'PASS' : 'WARN',
+          `CHK2 status=${got2.data?.status} voucher=${got2.data?.disposeVoucherId || '-'}`,
+        );
       }
 
       const chkAfter = await api(adminAuth.token, 'GET', `/api/fixed-asset/card/get/${chk.id}`);

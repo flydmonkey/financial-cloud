@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 其余模块（往来/固资/工资/报销）、专项 C/D、导出细查、反结账守卫、2 月 CF 补全与间接法附表未齐。
+仍不满足文档「全通过」标准：专项 B 其余模块（往来/固资/工资/报销）、专项 C/D、导出内容级细查、2 月 CF 补全与间接法附表未齐。反结账/闭账期守卫与导出入口已点测（见 `ai-ui-guards-report.md`）。
 
 ---
 
@@ -34,7 +34,8 @@
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
 | 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | 往来/固资等未测 |
-| 专项 C/D / 导出细查 | 0 | 0 | 全部 |
+| 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
+| 专项 C/D / 导出细查 | 进行中/0 | 0 | C agent；D 未测 |
 
 ---
 
@@ -105,21 +106,31 @@
 
 ---
 
+## 反结账 / 闭账期守卫 / 导出（主账套 A）
+
+- 闭账期修改与反过账均被拦截（开放账期 2026-03）  
+- 非最近已结月反结账被拒；最近已结月（2026-02）可反结账，UI 有入口  
+- 资产负债表导出可下载非空 xlsx（内容级行列校验未做）  
+- 明细：`docs/testing/ai-ui-guards-report.md`；账期已恢复为 **2026-03** 开放  
+
+---
+
 ## 未执行 / 进行中
 
-1. 专项账套 B 其余模块（往来/固资/工资/报销）及 5.1 扩展场景  
-2. 专项 C（免审核）、D（年末）  
+1. 专项账套 B 往来/固资/工资/报销（agent 进行中）及 5.1 扩展场景  
+2. 专项 C（免审核，agent 进行中）、D（年末）  
 3. 导出 Excel/PDF 内容级校验、间接法附表  
-4. 反结账守卫与结账后旧期修改拦截的专项点测  
-5. 补全 V04 / 2 月现金流量指定后的完整勾稽  
+4. 补全 V04 / 2 月现金流量指定后的完整勾稽  
 
 ---
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*`、`guards-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
 - `docs/testing/ai-ui-book-b-report.md`  
+- `docs/testing/ai-ui-guards-report.md`  
+
 

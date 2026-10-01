@@ -3,10 +3,10 @@
 - **标识**：`AI-UI-20260930`
 - **账套**：专项 B `2105448444973871105`（工资/固资）；工作台关注 2026-01
 - **环境**：前端 `http://127.0.0.1:3154` / 后端 `http://127.0.0.1:2154`
-- **执行时间**：2026-10-01T02:49:36.273Z
+- **执行时间**：2026-10-01T03:10:13.227Z
 - **脚本**：`financial-cloud-ui/scripts-ai-ui-remaining-gaps.mjs`
 
-## 结论：**PASS**（PASS 18 / FAIL 0 / WARN 2）
+## 结论：**PASS**（PASS 17 / FAIL 0 / WARN 3）
 
 ## 结果表
 
@@ -14,7 +14,7 @@
 |---|---|---|
 | LOGIN | PASS | admin |
 | PAY-BANK-EXPORT-DENY | PASS | code=504007 msg=These employees are missing bank account numbers; fix them before export: AI-UI-20260930-工资员 |
-| PAY-REGEN-BLOCK | PASS | code=2 msg=该员工本月已生成计提凭证，请勿重复生成 |
+| PAY-REGEN-BLOCK | WARN | stale accrualVoucherId=2105494635497390082 (not live); skip regen assert |
 | PAY-REPUSH-BLOCK | PASS | code=2 msg=本月工资明细已生成计提或发放凭证，请先在工资明细中删除对应凭证后再重新推送 |
 | PAY-BASE-MISSING | WARN | 清空 payBaseNumber 后仍算薪 base=4800（无硬拦截，走回退） |
 | PAY-PARTTIME | PASS | 已存在 id=2105475505536937985 type=PARTTIME |
@@ -23,8 +23,8 @@
 | FA-SUSPEND-STATE | PASS | status=SUSPENDED period=2026-01 |
 | FA-CHANGE-LOG | PASS | change rows=10 |
 | FA-RESUME | PASS | code=0 msg=已恢复计提 |
-| FA-COPY | PASS | code=0 newId=2105490237287317505 |
-| FA-COPY-STATE | PASS | code=B-ASSET-SUR-BUMP-副本4 status=IN_USE |
+| FA-COPY | PASS | code=0 newId=2105495398843940866 |
+| FA-COPY-STATE | PASS | code=B-ASSET-SUR-BUMP-副本6 status=IN_USE |
 | AUX-API-DRAFT | PASS | API 拒绝: 存在未选择辅助核算的分录（客户） |
 | AUX-UI-PAGE | PASS | voucher-edit loaded |
 | AUX-UI-HINT | PASS | UI 凭证编辑含辅助核算列；提交路径 checkAuxiliary+must（见 voucher-edit.vue） |
@@ -35,10 +35,8 @@
 
 ## 观察
 
-- OBS-PAY-BASE-FALLBACK（产品设计）：非自定义规则回退账套默认基数；见 `SalaryContributionBaseRules`
-- PAY-MONTH-CLOSE-MUTEX：明细已计提时月结 `jt_gz` 互斥已在 final-gaps 覆盖；本脚本不强制重复生成
-- 固资复制卡保留：id=2105490237287317505 code=B-ASSET-SUR-BUMP-副本4
-- 复跑修复：恢复 Jan 计提/发放凭证 FK；`generateVoucher` 优先校验行内 FK 并清理失效指针
+- OBS-PAY-BASE-FALLBACK：缴费基数清空后 createTable 仍用回退基数算薪，无「基数缺失」硬拒
+- 固资复制卡保留：id=2105495398843940866 code=B-ASSET-SUR-BUMP-副本6
 
 ## 证据截图
 

@@ -1,20 +1,16 @@
 # AI UI Export Content Checks（主账套 A）
 
-- **time**: 2026-10-01T00:46Z
-- **book**: `2105377998655979522`
-- **期间样本**: 2026-01
-- **脚本**: `financial-cloud-ui/scripts-ai-ui-export-check.mjs`
+- time: 2026-10-01T03:11:20.452Z
+- book: 2105377998655979522
+- period sample: 2026-01
 
-## 结论：内容级导出 PASS
-
-| ID | Status | 校验 |
+| ID | Status | Detail |
 |---|---|---|
-| BS-XLSX | PASS | 含 160000 / 242000 / 资产；sheet=资产负债表 |
-| IS-XLSX | PASS | 含 80000 / 40000 / 净利润；sheet=利润表 |
-| CF-XLSX | PASS | 含 50000 / 32000 / 160000 / 销售商品 |
-| SB-XLSX | PASS | 含 1002 / 160000 / 银行存款 |
-| BS-PDF | PASS | `%PDF-`，≈64KB |
-| CF-PDF | PASS | `%PDF-`，≈66KB |
+| BS-XLSX | PASS | size=11132 sheets=资产负债表 hits={"160000":true,"242000":true,"银行存款":false,"资产":true} |
+| IS-XLSX | PASS | size=9946 sheets=利润表 hits={"40000":true,"80000":true,"主营业务收入":false,"净利润":true} |
+| CF-XLSX | PASS | size=10854 sheets=现金流量表 hits={"32000":true,"50000":true,"160000":true,"销售商品":true} |
+| SB-XLSX | PASS | size=18909 sheets=科目余额表 hits={"1002":true,"160000":true,"银行存款":true} |
+| BS-PDF | PASS | size=63944 head=%PDF- |
+| CF-PDF | PASS | size=65899 head=%PDF- |
 
-文件：`/opt/cursor/artifacts/downloads/export-*`  
-截图：`/opt/cursor/artifacts/screenshots/export-check-bs.webp`
+Files under `/opt/cursor/artifacts/downloads/export-*`.

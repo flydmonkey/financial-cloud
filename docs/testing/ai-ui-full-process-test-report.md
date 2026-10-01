@@ -7,8 +7,8 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`
 
 ---
 
@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 的 5.1 扩展/盘点清理、专项 D、导出内容级细查未齐。反结账/闭账期守卫与导出入口已点测。专项 C PASS；B 日记账/往来/固资/工资/报销核心路径 PASS。现金流量/间接法已点测，见 `ai-ui-indirect-cf-report.md`。
+仍不满足文档「全通过」标准：专项 B 的 5.1 扩展/盘点清理、导出内容级细查未齐。专项 D 年末路径 PASS（见下；存在 BUG-TERM-CROSS-BOOK）。反结账/闭账期守卫与导出入口已点测。专项 C PASS；B 日记账/往来/固资/工资/报销核心路径 PASS。现金流量/间接法已点测，见 `ai-ui-indirect-cf-report.md`。
 
 ---
 
@@ -39,7 +39,8 @@
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 现金流量/间接法点测 | 部分 PASS | V04/M2 CF、应收调整、2 月净额 0 | 见 indirect 报告 |
-| 专项 D / 导出细查 | 进行中/0 | 0 | D agent |
+| 专项 D 年末 | PASS（损益+年终结转+跨年） | BUG-TERM-CROSS-BOOK | — |
+| 导出细查 | 0 | 0 | 未执行 |
 
 ---
 
@@ -102,6 +103,11 @@
 ### OBS-EXP-SUMMARY-LEN（P2）
 `voucher_item.summary` 仅 64 字符；报销一键生成摘要过长时 `Data truncation`。缩短报销人/事由后 PASS（见 B 5.5）。
 
+
+### BUG-TERM-CROSS-BOOK（P1）— **OPEN**
+结账 `termToNext`→`updateCurrentTerm`→`getBookConfigList` 未选 `bookId`/`configId`，`update()` 按 `configKey` 全表更新 `sys.payment.term.current`（含 template 与其他账套）。专项 D 结账后曾污染 A/C；脚本已写回。需后端按 bookId 更新。
+
+
 ---
 
 ## 专项账套 B 进度
@@ -156,6 +162,21 @@
 
 ---
 
+
+
+## 专项账套 D 进度（年末结转 §六）
+
+- **账套**：`AI-UI-20260930-专项D`，**bookId** `2105456763365081090`，启用 **2026-12**，凭证审核开启
+- **期初**：银行/实收资本各 50,000
+- **12 月业务**：收入 10,000 + 管理费用 3,000 → 净利润 **7,000**（审核人 `ai_reviewer`）
+- **损益结转**：`qm_jz_sr` + `qm_jz_cbfy` 过账后收入/费用归零，本年利润 = 7,000；利润表本期仍 7,000
+- **年末结转**：`qm_jz_bnlr` 借 3103 / 贷 3104.02 = 7,000 → 本年利润 0、未分配利润 +7,000；利润表本期净利润仍 7,000
+- **结账跨年**：2026-12 → **2027-01**；银行期初继承 57,000；收入本年累计清零
+- **非 12 月拦截**：账套 C（2026-01）生成 `qm_jz_bnlr` →「非年末，无需结转本年利润」
+- **缺陷**：`BUG-TERM-CROSS-BOOK`（结账 `termToNext` 全表更新 current term）；已写回 A=2026-03、C=2026-01
+- **明细**：`docs/testing/ai-ui-book-d-report.md`；截图 `bookd-*`
+
+
 ## 反结账 / 闭账期守卫 / 导出（主账套 A）
 
 - 闭账期修改与反过账均被拦截（开放账期 2026-03）  
@@ -177,22 +198,21 @@
 ## 未执行 / 进行中
 
 1. 专项账套 B：5.1 扩展、固资盘点/清理  
-2. 专项 D（年末）  
-3. 导出 Excel/PDF 内容级校验  
-4. 补全 V04 / 2 月 CF 后重跑现金表勾稽  
+2. 导出 Excel/PDF 内容级校验  
+3. 补全 V04 / 2 月 CF 后重跑现金表勾稽  
 
 ---
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`guards-*`、`indirect-cf-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
 - `docs/testing/ai-ui-book-b-report.md`  
 - `docs/testing/ai-ui-book-b-arap-fa-report.md`  
 - `docs/testing/ai-ui-book-b-payroll-exp-report.md`  
-- `docs/testing/ai-ui-book-c-report.md`  
+- `docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
 - `docs/testing/ai-ui-indirect-cf-report.md`  
 

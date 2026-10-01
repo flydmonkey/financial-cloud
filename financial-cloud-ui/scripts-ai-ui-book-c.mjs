@@ -156,6 +156,47 @@ async function switchBook(token, bookId) {
   if (sw.code !== 0) throw new Error(`switchBook: ${sw.message}`);
 }
 
+/**
+ * New books may inherit the creator's current open term (e.g. 2026-03 from book A)
+ * instead of enableDate. Force open term to enable month so Jan vouchers can post/reverse.
+ */
+async function ensureCurrentTerm(token, expected) {
+  const cur = await api(token, 'GET', '/api/config/sys/configKey/sys.payment.term.current');
+  const actual = cur.data;
+  if (actual === expected) {
+    rec('TERM-CURRENT', 'PASS', `当前账期=${actual}`);
+    return;
+  }
+  observations.push(
+    `建账后当前账期为 ${actual}（非启用月 ${expected}）；疑似继承创建者所在账套账期，测试中强制改回 ${expected}`,
+  );
+  const upd = await api(token, 'PUT', '/api/config/sys/updateByKey', {
+    configKey: 'sys.payment.term.current',
+    configValue: expected,
+  });
+  if (upd.code !== 0) throw new Error(`set current term: ${upd.message}`);
+  const again = await api(token, 'GET', '/api/config/sys/configKey/sys.payment.term.current');
+  rec(
+    'TERM-CURRENT',
+    again.data === expected ? 'PASS' : 'FAIL',
+    `was=${actual} → now=${again.data} (forced to ${expected})`,
+  );
+}
+
+/** Re-login so JWT bookId matches switched book (unsender/unaudit filter by userInfo.bookId). */
+async function reloginOnBook(username, password, bookId) {
+  const auth = await apiLogin(username, password);
+  await switchBook(auth.token, bookId);
+  // Persist book on user then login again for JWT claim
+  const auth2 = await apiLogin(username, password);
+  if (String(auth2.data?.bookId) !== String(bookId)) {
+    await switchBook(auth2.token, bookId);
+    const auth3 = await apiLogin(username, password);
+    return auth3;
+  }
+  return auth2;
+}
+
 async function fetchSubjects(token, bookId) {
   const page = await api(
     token,
@@ -266,20 +307,33 @@ async function threeStatementsSnapshot(token, term) {
     api(token, 'GET', `/api/statement/cash-flow?periodType=month&reportDate=${term}&cashFlowItemType=0`),
   ]);
   const bank = getBankBalance(sb);
-  const incomeItems = income.data?.items || [];
+  const incomeItems = Array.isArray(income.data?.items) ? income.data.items : [];
   const expenseLine =
-    incomeItems.find((i) => /管理费用|费用/.test(i.itemName || i.name || '')) || null;
+    incomeItems.find((i) => /管理费用/.test(i.itemName || i.name || '')) || null;
   const expenseAmt = expenseLine
-    ? num(expenseLine.currentAmount ?? expenseLine.currentPeriodAmount ?? expenseLine.amount)
+    ? num(
+        expenseLine.currentBalance ??
+          expenseLine.currentAmount ??
+          expenseLine.currentPeriodAmount ??
+          expenseLine.amount,
+      )
     : null;
-  const bsItems = bs.data?.items || [];
+  const bsRaw = bs.data?.items;
+  const bsItems = Array.isArray(bsRaw)
+    ? bsRaw
+    : [...(bsRaw?.assets || []), ...(bsRaw?.liabilities || []), ...(bsRaw?.equity || [])];
   const monetary =
     bsItems.find((i) => /货币资金|银行存款/.test(i.itemName || i.name || '')) || null;
   const monetaryAmt = monetary
-    ? num(monetary.endingBalance ?? monetary.endingAmount ?? monetary.currentAmount)
+    ? num(
+        monetary.currentBalance ??
+          monetary.endingBalance ??
+          monetary.endingAmount ??
+          monetary.currentAmount,
+      )
     : null;
   const cfItems = Array.isArray(cf.data) ? cf.data : cf.data?.items || [];
-  const cfOps = cfItems.find((i) => /经营活动产生的现金流量净额|经营/.test(i.itemName || ''));
+  const cfOps = cfItems.find((i) => /经营活动产生的现金流量净额/.test(i.itemName || ''));
   return {
     bank,
     expenseAmt,
@@ -450,32 +504,45 @@ async function deleteDraft(token, voucher) {
   return null;
 }
 
-async function checkUiButtons(page, voucherId) {
+async function checkUiButtons(page, voucherId, phase) {
   await page.goto(`${BASE}/voucher/voucher-index`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  // filter / search mark
-  const search = page.getByPlaceholder(/摘要|搜索|关键字/).first();
-  if (await search.isVisible().catch(() => false)) {
-    await search.fill(SUMMARY);
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(600);
+  // open more/batch action menus if present
+  for (const name of ['更多', '批量', '操作']) {
+    const btn = page.getByRole('button', { name: new RegExp(name) }).first();
+    if (await btn.isVisible().catch(() => false)) {
+      await btn.click().catch(() => {});
+      await page.waitForTimeout(200);
+    }
   }
-  await shot(page, 'bookc-voucher-list');
-
-  const texts = await page.locator('button, .el-button, a').allTextContents();
-  const joined = texts.map((t) => t.trim()).filter(Boolean).join('|');
-  const hasUnpost = /反过账/.test(joined);
-  const hasUnaudit = /反审核/.test(joined);
-  const hasAudit = /(?<!反)审核/.test(joined) || /提交审核|审核通过/.test(joined);
-  rec(
-    'UI-REVERSE-BTNS',
-    hasUnpost || hasUnaudit ? 'PASS' : 'WARN',
-    `反过账=${hasUnpost} 反审核=${hasUnaudit} 审核类=${hasAudit} voucher=${voucherId}`,
-  );
-  if (hasAudit && !hasUnaudit) {
-    observations.push('UI 仍展示审核相关按钮（关闭审核账套）');
+  const bodyText = await page.locator('body').innerText();
+  const hasUnpost = bodyText.includes('反过账');
+  const hasUnaudit = bodyText.includes('反审核');
+  const hasSubmitAudit = /提交审核/.test(bodyText);
+  const shotName =
+    phase === 'posted'
+      ? 'bookc-voucher-list-posted'
+      : phase === 'unposted'
+        ? 'bookc-voucher-list-unposted'
+        : 'bookc-voucher-list';
+  await shot(page, shotName);
+  const expectUnpost = phase === 'posted';
+  const expectUnaudit = phase === 'unposted';
+  let status = 'PASS';
+  let detail = `phase=${phase} 反过账=${hasUnpost} 反审核=${hasUnaudit} 提交审核=${hasSubmitAudit}`;
+  if (expectUnpost && !hasUnpost) {
+    status = 'WARN';
+    detail += '（过账后列表未看到反过账文案，API 路径已验证）';
   }
-  return { hasUnpost, hasUnaudit, hasAudit };
+  if (expectUnaudit && !hasUnaudit) {
+    status = 'WARN';
+    detail += '（未过账已审核列表未看到反审核文案，API 路径已验证）';
+  }
+  if (hasSubmitAudit) {
+    observations.push('关闭审核账套列表仍可见「提交审核」文案（可能为共用工具栏）');
+  }
+  rec(`UI-REVERSE-${phase.toUpperCase()}`, status, `${detail} voucher=${voucherId}`);
+  return { hasUnpost, hasUnaudit, hasSubmitAudit };
 }
 
 function almost(a, b, eps = 0.01) {
@@ -527,7 +594,8 @@ function writeReport(bookId, extra = {}) {
     '',
     '## 证据截图',
     '',
-    '- `/opt/cursor/artifacts/screenshots/bookc-voucher-list.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookc-voucher-list-posted.webp`',
+    '- `/opt/cursor/artifacts/screenshots/bookc-voucher-list-unposted.webp`',
     '- `/opt/cursor/artifacts/screenshots/bookc-subject-balance-before.webp`',
     '- `/opt/cursor/artifacts/screenshots/bookc-subject-balance-after-post.webp`',
     '- `/opt/cursor/artifacts/screenshots/bookc-subject-balance-after-unsender.webp`',
@@ -543,13 +611,13 @@ function writeReport(bookId, extra = {}) {
 
 async function main() {
   fs.mkdirSync(SHOT, { recursive: true });
-  const adminAuth = await apiLogin('admin', 'changeme');
+  let adminAuth = await apiLogin('admin', 'changeme');
   rec('LOGIN', 'PASS', 'admin（reviewer 按关闭审核流程可不参与）');
 
-  const bookId = await ensureBook(adminAuth.token);
+  let bookId = await ensureBook(adminAuth.token);
   assertNotForbidden(bookId);
-  await switchBook(adminAuth.token, bookId);
-  rec('SWITCH-BOOK', 'PASS', `bookId=${bookId} term预期=${TERM}`);
+  adminAuth = await reloginOnBook('admin', 'changeme', bookId);
+  rec('SWITCH-BOOK', 'PASS', `bookId=${bookId} jwtBook=${adminAuth.data?.bookId} term预期=${TERM}`);
 
   const bookDetail = await api(adminAuth.token, 'GET', `/api/book/get/${bookId}`);
   rec(
@@ -557,6 +625,7 @@ async function main() {
     bookDetail.data?.voucherReviewed === 0 ? 'PASS' : 'FAIL',
     `voucherReviewed=${bookDetail.data?.voucherReviewed}`,
   );
+  await ensureCurrentTerm(adminAuth.token, TERM);
 
   const subjects = await fetchSubjects(adminAuth.token, bookId);
   const bankSub = pickSubject(subjects, ['1002'], '银行存款');
@@ -636,6 +705,7 @@ async function main() {
   await page.goto(`${BASE}/statement/subject-balance`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(700);
   await shot(page, 'bookc-subject-balance-after-post');
+  await checkUiButtons(page, voucher.id, 'posted');
 
   // Reverse path: 反过账 → 反审核
   voucher = await unsenderVoucher(adminAuth.token, voucher);
@@ -648,13 +718,15 @@ async function main() {
   await page.goto(`${BASE}/statement/subject-balance`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(700);
   await shot(page, 'bookc-subject-balance-after-unsender');
-
-  await checkUiButtons(page, voucher.id);
+  await checkUiButtons(page, voucher.id, 'unposted');
 
   voucher = await unauditVoucher(adminAuth.token, voucher);
 
   // Leave clean: delete draft
   await deleteDraft(adminAuth.token, voucher);
+
+  // Restore admin default book to A so concurrent suites on book A are not disrupted
+  await switchBook(adminAuth.token, '2105377998655979522').catch(() => {});
 
   await browser.close();
 

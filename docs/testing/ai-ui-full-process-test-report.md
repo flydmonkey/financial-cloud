@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 的 5.1 扩展/盘点清理、导出内容级细查、现金流量 V04/2 月 CF 补全未齐。专项 B/C/D 核心路径与主账套两月闭环、守卫、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。
+仍不满足文档「全通过」标准：专项 B 的 5.1 扩展/固资盘点清理（进行中）、OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ。主账套两月闭环、B/C/D 核心路径、守卫、CF 补全后勾稽、导出内容级校验、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。
 
 ---
 
@@ -38,9 +38,9 @@
 | 专项 B 工资/报销 5.4–5.5 | 核心路径 PASS | — | 公式空 WARN；摘要长度 OBS |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
-| 现金流量/间接法点测 | 部分 PASS | V04/M2 CF、应收调整、2 月净额 0 | 见 indirect 报告 |
+| 现金流量/间接法点测 | 补全后主路径 PASS | OBS-CF-BEGIN-CASH-FEB / AR-ADJ | 见 cf-remediate |
 | 专项 D 年末 | PASS（损益+年终结转+跨年） | — | BUG-TERM-CROSS-BOOK 已修 |
-| 导出细查 | 0 | 0 | 未执行 |
+| 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 
 ---
 
@@ -173,7 +173,7 @@
 - **年末结转**：`qm_jz_bnlr` 借 3103 / 贷 3104.02 = 7,000 → 本年利润 0、未分配利润 +7,000；利润表本期净利润仍 7,000
 - **结账跨年**：2026-12 → **2027-01**；银行期初继承 57,000；收入本年累计清零
 - **非 12 月拦截**：账套 C（2026-01）生成 `qm_jz_bnlr` →「非年末，无需结转本年利润」
-- **缺陷**：`BUG-TERM-CROSS-BOOK`（结账 `termToNext` 全表更新 current term）；已写回 A=2026-03、C=2026-01
+- **缺陷**：`BUG-TERM-CROSS-BOOK` 已修；测试时数据已写回 A=2026-03、C=2026-01  
 - **明细**：`docs/testing/ai-ui-book-d-report.md`；截图 `bookd-*`
 
 
@@ -181,25 +181,30 @@
 
 - 闭账期修改与反过账均被拦截（开放账期 2026-03）  
 - 非最近已结月反结账被拒；最近已结月（2026-02）可反结账，UI 有入口  
-- 资产负债表导出可下载非空 xlsx（内容级行列校验未做）  
+- 资产负债表导出已做内容级校验（见导出节）  
+
 - 明细：`docs/testing/ai-ui-guards-report.md`；账期已恢复为 **2026-03** 开放  
 
 ---
 
 ## 现金流量 / 间接法点测（主账套 A）
 
-- 1 月：销售/购货/投资/借款 PASS；缺 V04 → 经营净额 42k（预期 32k），期末现金 170k（预期 160k）  
-- 1 月附表：净利润/存货/应付 PASS；经营性应收 −18k ≠ −30k（OBS-CF-AR-ADJ）  
-- 2 月：现金业务未指定 → 主表本月多为 null/0；附表 NI/存货/应收/应付本月正确可算出 28k，但经营净额本月仍 0  
-- 明细：`docs/testing/ai-ui-indirect-cf-report.md`
+- 已补全 V04 + 2 月 CF 后复核：**1 月经营净额 32,000 / 期末现金 160,000**；**2 月经营净额 28,000**；YTD 期末 **188,000**  
+- 附表 2 月调整项合计与经营净额均为 28,000  
+- 仍 OPEN：2 月期初本月列 30,000≠160,000（OBS-CF-BEGIN-CASH-FEB）；1 月应收调整 −18k≠−30k（OBS-CF-AR-ADJ）  
+- 明细：`docs/testing/ai-ui-indirect-cf-report.md`、`docs/testing/ai-ui-cf-remediate-report.md`
+
+## 导出内容级校验（主账套 A）
+
+- 2026-01 资产负债表/利润表/现金流量表/科目余额表 xlsx 含关键金额与标题；BS/CF PDF 为合法 `%PDF-`  
+- 明细：`docs/testing/ai-ui-export-check-report.md`
 
 ---
 
 ## 未执行 / 进行中
 
-1. 专项账套 B：5.1 扩展、固资盘点/清理  
-2. 导出 Excel/PDF 内容级校验  
-3. 补全 V04 / 2 月 CF 后重跑现金表勾稽  
+1. 专项账套 B：5.1 扩展、固资盘点/清理（agent 进行中）  
+2. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  
 
 ---
 
@@ -215,5 +220,8 @@
 - `docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
 - `docs/testing/ai-ui-indirect-cf-report.md`  
+- `docs/testing/ai-ui-cf-remediate-report.md`  
+- `docs/testing/ai-ui-export-check-report.md`  
+
 
 

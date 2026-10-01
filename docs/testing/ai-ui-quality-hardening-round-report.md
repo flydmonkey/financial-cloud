@@ -53,6 +53,8 @@ cd financial-cloud-ui && npm run test:e2e:smoke
 | `EmployeeServicePayBaseTest`（4）+ `SalaryContributionBaseRulesTest`（4） | **PASS** |
 | `npm run test:unit`（含 `voucherSummary`，31 tests） | **PASS** |
 | `npm run test:ai-ui:scripts-check` | **PASS** |
+| OBS-PAY-BASE-FALLBACK API（保存/清空自定义基数 → `504005`） | **PASS** |
+| `AI_UI_REQUIRE_BOOKS=0` 子集夹具门闸 | **PASS（SKIPPED，见 ai-ui-ci-subset-report）** |
 | AI-UI 5 套件全量 | **未跑通宣称**：本环境 MySQL 为空库，无 `AI-UI-20260930` 夹具；CI 为 fixture-gated SKIP/有夹具再跑 |
 | 完整 Playwright accounting | **未宣称通过**：仅修审核员授权并开 PR 冒烟；完整套件仍走 push job |
 

@@ -245,25 +245,25 @@ async function cancelToDraftAndDeleteVoucher(adminToken, reviewerToken, voucherI
   return del;
 }
 
+function isJextRemark(rk) {
+  const s = String(rk || '');
+  return (
+    s.includes('JEXT') ||
+    s.includes(`冲销：${MARK}-JEXT`) ||
+    // syncLinkedEntriesFromVoucher overwrites reverse entry remark with voucher remark
+    s.includes('红字冲销')
+  );
+}
+
 async function cleanupPriorJext(adminToken, reviewerToken) {
-  const all = await listEntries(adminToken, 'JEXT');
   const ids = [];
-  for (const e of all) {
+  const all2 = await listEntries(adminToken);
+  for (const e of all2) {
+    if (!isJextRemark(e.remark)) continue;
     if (e.voucherId) {
       await cancelToDraftAndDeleteVoucher(adminToken, reviewerToken, String(e.voucherId));
     }
     ids.push(String(e.id));
-  }
-  // Also reverse-linked remarks starting with 冲销：
-  const all2 = await listEntries(adminToken);
-  for (const e of all2) {
-    const rk = String(e.remark || '');
-    if (rk.includes('JEXT') || rk.includes(`冲销：${MARK}-JEXT`)) {
-      if (e.voucherId) {
-        await cancelToDraftAndDeleteVoucher(adminToken, reviewerToken, String(e.voucherId));
-      }
-      ids.push(String(e.id));
-    }
   }
   const uniq = [...new Set(ids)];
   if (uniq.length) {
@@ -389,26 +389,32 @@ async function getRecon(token, accId) {
 }
 
 async function openReconUi(page, accId, accNameHint) {
-  await page.goto(`${BASE}/journal/reconciliation`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(600);
-  const select = page.locator('.recon-acc-select').first();
-  await select.click();
-  await page.waitForTimeout(300);
-  // Prefer exact option label containing account name/code
-  const opt = page.locator('.el-select-dropdown__item').filter({
-    hasText: accNameHint || ACC_NAME,
-  });
-  if ((await opt.count()) > 0) {
-    await opt.first().click();
-  } else {
-    // Fallback: first option
-    await page.locator('.el-select-dropdown__item').first().click();
+  await page.goto(`${BASE}/journal/reconciliation`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForTimeout(500);
+  try {
+    const select = page.locator('.recon-acc-select').first();
+    await select.click({ timeout: 5000 });
+    await page.waitForTimeout(250);
+    const opt = page.locator('.el-select-dropdown__item').filter({
+      hasText: accNameHint || ACC_CODE,
+    });
+    if ((await opt.count()) > 0) {
+      await opt.first().click({ timeout: 5000 });
+    } else {
+      const any = page.locator('.el-select-dropdown__item').first();
+      if ((await any.count()) > 0) await any.click({ timeout: 5000 });
+    }
+    await page.waitForTimeout(500);
+    const queryBtn = page.getByRole('button', { name: '查询' });
+    if ((await queryBtn.count()) > 0) {
+      await queryBtn.click({ timeout: 5000 });
+    }
+    // Wait for summary panel (企业日记账余额)
+    await page.getByText('企业日记账余额').waitFor({ timeout: 8000 });
+    await page.waitForTimeout(400);
+  } catch (err) {
+    rec('RECON-UI', 'WARN', `UI select account failed: ${err.message || err}`);
   }
-  await page.waitForTimeout(800);
-  // Ensure query fires
-  const queryBtn = page.getByRole('button', { name: '查询' });
-  if (await queryBtn.count()) await queryBtn.click();
-  await page.waitForTimeout(900);
 }
 
 async function restoreZeroDiffRecon(token, accId, bookBalance) {
@@ -866,7 +872,13 @@ async function main() {
       await cancelToDraftAndDeleteVoucher(adminAuth.token, reviewerAuth.token, revVoucherId);
       const leftRev = (await listEntries(adminAuth.token)).filter((e) => {
         const rk = String(e.remark || '');
-        return rk === REMARK_REV || rk === `冲销：${REMARK_REV}`;
+        return (
+          rk === REMARK_REV ||
+          rk === `冲销：${REMARK_REV}` ||
+          rk.includes('红字冲销') ||
+          String(e.voucherId || '') === reverseId ||
+          String(e.voucherId || '') === String(revVoucherId)
+        );
       });
       if (leftRev.length) await deleteEntries(adminAuth.token, leftRev.map((e) => e.id));
       await ensureOnBook(adminAuth.token, BOOK_ID, TERM);

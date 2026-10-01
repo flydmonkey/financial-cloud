@@ -741,12 +741,16 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
         boolean update = super.updateById(booksVoucher);
         if (update) {
+            // 红字冲销凭证：保留日记账对冲流水原备注（冲销：…），勿用凭证备注覆盖
+            final String journalSyncRemark = StringUtils.isNotBlank(currentVoucher.getSourceVoucherId())
+                    ? null
+                    : booksVoucher.getRemark();
             journalEntryServiceProvider.ifAvailable(journal ->
                     journal.syncLinkedEntriesFromVoucher(
                             currentId,
                             dto.getBookId(),
                             booksVoucher.getVoucherDate(),
-                            booksVoucher.getRemark(),
+                            journalSyncRemark,
                             insertItems));
         }
         return update

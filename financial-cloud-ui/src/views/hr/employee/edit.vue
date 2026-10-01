@@ -365,6 +365,7 @@
               </el-radio-group>
               <div class="form-hint">
                 本期算薪按「统一基数」计算（账套默认或本员工自定义）；分险种自定义基数暂未启用。
+                选择「自定义」时必须填写正数基数，清空不会回退到账套默认。
               </div>
             </el-form-item>
             <el-form-item
@@ -382,6 +383,9 @@
                   <span>元</span>
                 </template>
               </el-input-number>
+              <div class="form-hint">
+                必填；未填或 ≤0 时保存与算薪都会被拒绝，不会静默使用账套默认基数。
+              </div>
             </el-form-item>
             <el-form-item
               label="银行名称"
@@ -512,7 +516,21 @@ const data: any = reactive({
     ],
     idType: [
       {required: true, message: "证件类型不能为空", trigger: ["blur", "change"]},
-    ]
+    ],
+    payBaseNumber: [
+      {
+        validator: (_rule: any, value: any, callback: any) => {
+          if (data.form.payBaseRule === 1 && data.form.employeeType === 'NORMAL') {
+            if (value == null || Number(value) <= 0) {
+              callback(new Error('自定义缴费基数必须填写大于 0 的金额'))
+              return
+            }
+          }
+          callback()
+        },
+        trigger: ['blur', 'change'],
+      },
+    ],
   }
 })
 

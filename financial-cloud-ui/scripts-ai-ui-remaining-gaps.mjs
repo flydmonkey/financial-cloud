@@ -296,42 +296,41 @@ async function main() {
     `code=${repush.code} msg=${repush.message}`,
   );
 
-  // Base missing: clear custom base — product may fall back; record actual
+  // Base missing: clear custom base — expect hard reject on save (no silent fallback)
   const baseBak = { payBaseNumber: emp.payBaseNumber, payBaseRule: emp.payBaseRule };
-  await api(admin.token, 'PUT', '/api/salary/employee/update', {
+  const clearBase = await api(admin.token, 'PUT', '/api/salary/employee/update', {
     ...emp,
     ...bankBak,
     payBaseNumber: null,
     payBaseRule: 1,
   });
-  const tempPage = await api(admin.token, 'GET', '/api/salary/detail/fetch?pageNumber=1&pageSize=100');
-  const tempIds = (tempPage.data?.records || []).map((x) => x.id);
-  if (tempIds.length) {
-    await api(admin.token, 'DELETE', '/api/salary/detail/delete', { ids: tempIds });
-  }
-  const preview = await api(admin.token, 'POST', '/api/salary/detail/createTable', {
-    bookId: BOOK_B,
-  });
-  const temps = (
-    await api(admin.token, 'GET', '/api/salary/detail/fetch?pageNumber=1&pageSize=20')
-  ).data?.records || [];
-  const row = temps.find((t) => /工资员/.test(t.employeeName || t.displayName || ''));
-  const stillHasBase = row && Number(row.effectivePayBase || row.payBaseNumber || 0) > 0;
-  if (stillHasBase) {
+  if (clearBase.code !== 0) {
     rec(
       'PAY-BASE-MISSING',
-      'WARN',
-      `清空 payBaseNumber 后仍算薪 base=${row.effectivePayBase || row.payBaseNumber}（无硬拦截，走回退）`,
-    );
-    observations.push(
-      'OBS-PAY-BASE-FALLBACK：缴费基数清空后 createTable 仍用回退基数算薪，无「基数缺失」硬拒',
+      /基数|504005|custom_pay_base|缴费/i.test(`${clearBase.code} ${clearBase.message || ''}`)
+        ? 'PASS'
+        : 'WARN',
+      `update rejected code=${clearBase.code} msg=${clearBase.message}`,
     );
   } else {
+    const tempPage = await api(admin.token, 'GET', '/api/salary/detail/fetch?pageNumber=1&pageSize=100');
+    const tempIds = (tempPage.data?.records || []).map((x) => x.id);
+    if (tempIds.length) {
+      await api(admin.token, 'DELETE', '/api/salary/detail/delete', { ids: tempIds });
+    }
+    const preview = await api(admin.token, 'POST', '/api/salary/detail/createTable', {
+      bookId: BOOK_B,
+    });
     rec(
       'PAY-BASE-MISSING',
-      preview.code !== 0 ? 'PASS' : 'WARN',
-      `createTable code=${preview.code} msg=${preview.message}`,
+      preview.code !== 0 ? 'PASS' : 'FAIL',
+      `update accepted null custom base; createTable code=${preview.code} msg=${preview.message}`,
     );
+    if (preview.code === 0) {
+      observations.push(
+        'OBS-PAY-BASE-FALLBACK：自定义基数清空后仍可算薪（预期保存或算薪硬拒）',
+      );
+    }
   }
   await api(admin.token, 'PUT', '/api/salary/employee/update', { ...emp, ...bankBak, ...baseBak });
 

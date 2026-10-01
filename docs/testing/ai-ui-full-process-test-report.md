@@ -25,7 +25,7 @@
 6. **OBS-CF-AR-ADJ** — 闭环为口径说明（应收+预付 ⇒ −18,000）
 7. **BUG-JEXT-REVERSE-POST** — 冲销日期钳到开放账期 + 负金额流水回写；复测冲销过账 **PASS**（19/19）
 
-专项 B 5.1 核心+扩展（含红冲过账/未达 500）、固资深路径、工资/报销、C/D、守卫、CF 勾稽、导出内容级校验已完成。可选：盘盈入账 book-surplus（护主卡未跑）。
+专项 B 5.1 核心+扩展（含红冲过账/未达 500）、固资深路径、工资/报销、C/D、守卫、CF 勾稽、导出内容级校验已完成。盘盈入账 book-surplus（拆卡/累加/禁 bump）已补测，见 `ai-ui-book-b-fa-surplus-report.md`。
 
 ---
 
@@ -34,11 +34,11 @@
 | 分类 | 通过 | 失败 | 跳过 |
 |---|---:|---:|---:|
 | 登录建账期初 | 8 | 0 | 1 |
-| 1 月凭证/报表/反操作/月结 | 主路径通过 | — | V04 CF 项待补 |
-| 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
+| 1 月凭证/报表/反操作/月结 | 主路径通过 | — | CF 已补全 |
+| 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | CF 已补全 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
 | 专项 B 出纳日记账 5.1 | 核心+扩展 PASS | — | 见 journal-ext 报告 |
-| 专项 B 往来/固资 5.2–5.3 | 核心+清理/盘点深路径 PASS | — | 盘盈入账未跑（护主卡）；两 P1 已修 |
+| 专项 B 往来/固资 5.2–5.3 | 核心+清理/盘点/盘盈入账 PASS | — | 两 P1 已修 |
 | 专项 B 工资/报销 5.4–5.5 | 核心路径 PASS | — | 公式空 WARN；摘要长度 OBS |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
@@ -129,13 +129,12 @@
 - 部分核销收款 4,000：未清挂账剩余 6,000；核销不改总账；撤销后状态恢复、总账不变
 - **明细**：`docs/testing/ai-ui-book-b-arap-fa-report.md`；截图 `bookb-arap-*`
 
-### 5.3 固定资产 — PASS（含清理/盘点深路径）
+### 5.3 固定资产 — PASS（含清理/盘点/盘盈入账）
 - 类别+卡片原值 12,000 / 残值 0% / 12 月直线法 / 费用 5602.02；UI 购入凭证过账（1601/1002）
 - 2026-01 计提折旧 1,000 过账后：原值 12,000 / 累计折旧 1,000 / 净值 **11,000**
-- **深路径补测**（独立卡，主卡未动）：`B-ASSET-DISP-002` 清理→DISPOSED+处置净损失凭证；盘点单完成（盘盈 preview / 盘亏下账）；终总账 **1601=12,000**
-- 缺陷：**BUG-FA-CHECK-DEFICIT-SUMMARY** / **BUG-FA-DISPOSE-VOUCHER-DATE** 已在 `FixedAssetService` 修复（摘要截断 + 凭证日期钳到开放账期）
-- **明细**：`docs/testing/ai-ui-book-b-fa-dispose-report.md`；截图 `bookb-fa-disp-*` / `bookb-fa-check-*`
-- 截图 `bookb-fa-*`（核心折旧）+ 深路径截图见上
+- **深路径补测**（独立卡，主卡未动）：`B-ASSET-DISP-002` 清理→DISPOSED；盘点盘亏下账；**盘盈入账** split_card / bump_qty / 已折旧禁 bump（见 surplus 报告）
+- 缺陷：**BUG-FA-CHECK-DEFICIT-SUMMARY** / **BUG-FA-DISPOSE-VOUCHER-DATE** 已修
+- **明细**：`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-fa-surplus-report.md`；截图 `bookb-fa-disp-*` / `bookb-fa-check-*` / `bookb-fa-surplus-*`
 
 ### 5.4 工资闭环 — PASS
 - 员工 `AI-UI-20260930-工资员`（B-E01），自定义基数 4,800，银行卡+开户行；专项附加房租 1,000
@@ -151,7 +150,7 @@
 - 截图 `bookb-exp-*`
 
 ### 未测（B 其余）
-盘盈入账（book-surplus）故意未跑以保护主卡；日记账回写/红冲/未达项 500 已测（见 journal-ext）
+盘盈入账 book-surplus 已测（独立探测卡，见 fa-surplus）；日记账扩展见 journal-ext
 
 
 ---
@@ -209,8 +208,7 @@
 
 ## 未执行 / 进行中
 
-1. OBS-CF-BEGIN-CASH-FEB / OBS-CF-AR-ADJ 根因修复  
-2. （可选）盘盈入账 book-surplus 全量（当前仅 preview，护主卡） 
+1. （可选）§六 权限/批量/凭证校验边角若产品需继续补测 
 
 ---
 

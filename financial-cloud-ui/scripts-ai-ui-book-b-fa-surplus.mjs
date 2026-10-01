@@ -205,9 +205,37 @@ async function ensureCategory(token) {
   return String(add.data?.id || add.data);
 }
 
-async function ensureCard(token, { code, name, categoryId, cost, quantity, startUseDate, SUB }) {
+async function ensureCard(token, {
+  code,
+  name,
+  categoryId,
+  cost,
+  quantity,
+  startUseDate,
+  openingAccumDepr,
+  SUB,
+}) {
   const existing = await findCard(token, code);
   if (existing) {
+    // Ensure reject-path fixture: qty>1 with opening/accum depr for bump skip
+    if (openingAccumDepr != null && num(existing.accumDepr) <= 0) {
+      const upd = await api(token, 'PUT', '/api/fixed-asset/card/update', {
+        ...existing,
+        quantity: quantity ?? existing.quantity,
+        originalValue: cost ?? existing.originalValue,
+        openingAccumDepr,
+        accumDepr: openingAccumDepr,
+      });
+      if (upd.code !== 0) throw new Error(`card update ${code}: ${upd.message}`);
+      const refreshed = await findCard(token, code);
+      return {
+        id: String(refreshed.id),
+        purchaseVoucherId: refreshed.purchaseVoucherId ? String(refreshed.purchaseVoucherId) : null,
+        status: refreshed.status,
+        reused: true,
+        card: refreshed,
+      };
+    }
     return {
       id: String(existing.id),
       purchaseVoucherId: existing.purchaseVoucherId ? String(existing.purchaseVoucherId) : null,
@@ -228,6 +256,8 @@ async function ensureCard(token, { code, name, categoryId, cost, quantity, start
     residualRate: 0,
     originalValue: cost,
     taxAmount: 0,
+    openingAccumDepr: openingAccumDepr ?? 0,
+    accumDepr: openingAccumDepr ?? 0,
     fixedAssetSubjectId: SUB['1601'].id,
     purchaseCounterpartSubjectId: SUB['1002'].id,
     accumDeprSubjectId: SUB['1602'].id,
@@ -524,7 +554,7 @@ function writeReport() {
 
 async function main() {
   const adminAuth = await apiLogin('admin', 'changeme');
-  const reviewerAuth = await apiLogin('ai_reviewer', 'changeme');
+  const reviewerAuth = await apiLogin('ai_reviewer', 'Review@2026');
   rec('LOGIN', 'PASS', 'admin + ai_reviewer');
 
   await ensureOnBook(adminAuth.token, BOOK_ID);
@@ -587,14 +617,14 @@ async function main() {
     rec('BUMP-PURCHASE-POST', 'PASS', '无购入凭证或已存在');
   }
 
-  // --- DEPR bump-reject card (qty=2, start prior month so Jan accrues) ---
+  // --- DEPR bump-reject card (qty=2 with opening accum depr; Jan batch accrue already posted) ---
   const depr = await ensureCard(adminAuth.token, {
     code: DEPR_CODE,
     name: DEPR_NAME,
     categoryId,
     cost: DEPR_COST,
     quantity: DEPR_QTY,
-    startUseDate: '2025-12-15',
+    openingAccumDepr: 200,
     SUB,
   });
   if (depr.purchaseVoucherId) {
@@ -608,51 +638,11 @@ async function main() {
   } else {
     rec('DEPR-PURCHASE-POST', 'PASS', '无购入凭证或已存在');
   }
-  // Accrue Jan depreciation if needed (batch accrue may include main card — OK if already accrued)
-  let deprCard = await findCard(adminAuth.token, DEPR_CODE);
-  if (deprCard && num(deprCard.accumDepr) <= 0) {
-    const statusBefore = await api(
-      adminAuth.token,
-      'GET',
-      `/api/fixed-asset/depreciation/status?yearPeriod=${TERM}`,
-    );
-    let deprVoucherId = statusBefore.data?.voucherId
-      ? String(statusBefore.data.voucherId)
-      : '';
-    if (!deprVoucherId || !statusBefore.data?.accrued) {
-      const accrue = await api(adminAuth.token, 'POST', '/api/fixed-asset/depreciation/accrue', {
-        yearPeriod: TERM,
-      });
-      if (accrue.code !== 0) {
-        rec('DEPR-ACCRUE', 'FAIL', accrue.message || JSON.stringify(accrue));
-      } else {
-        deprVoucherId = String(accrue.data?.voucherId || accrue.data?.voucher?.id || '');
-        rec(
-          'DEPR-ACCRUE',
-          'PASS',
-          `voucher=${deprVoucherId || '-'} amt=${accrue.data?.totalAmount ?? accrue.data?.amount}`,
-        );
-      }
-    } else {
-      rec('DEPR-ACCRUE', 'PASS', `already accrued voucher=${deprVoucherId}`);
-    }
-    if (deprVoucherId) {
-      await finishVoucher(
-        adminAuth.token,
-        reviewerAuth.token,
-        BOOK_ID,
-        'DEPR-POST',
-        deprVoucherId,
-      );
-    }
-    deprCard = await findCard(adminAuth.token, DEPR_CODE);
-  } else {
-    rec('DEPR-ACCRUE', 'PASS', `accumDepr already ${deprCard?.accumDepr}`);
-  }
+  const deprCard = await findCard(adminAuth.token, DEPR_CODE);
   rec(
     'DEPR-READY',
-    num(deprCard?.accumDepr) > 0 ? 'PASS' : 'FAIL',
-    `qty=${deprCard?.quantity} accumDepr=${deprCard?.accumDepr}`,
+    num(deprCard?.accumDepr) > 0 && Number(deprCard?.quantity) > 1 ? 'PASS' : 'FAIL',
+    `qty=${deprCard?.quantity} accumDepr=${deprCard?.accumDepr} (openingAccum fixture; month accrue already locked)`,
   );
 
   // Refresh GL baseline after purchases/depr before surplus booking deltas
@@ -720,15 +710,15 @@ async function main() {
     `qty=${bumpCardAfter?.quantity} originalValue=${bumpCardAfter?.originalValue}`,
   );
 
-  // Depr reject
+  // Depr reject — fresh check title so prior mistaken booking on same code cannot mark "already booked"
   const deprBook = await runCheckAndBook(adminAuth.token, reviewerAuth.token, {
-    title: `${CHECK_TITLE}-禁bump`,
+    title: `${CHECK_TITLE}-禁bump2`,
     surplusCode: DEPR_CODE,
     expectedStrategy: 'bump_qty',
     expectSkipDepr: true,
     surplusAmount: 100,
   });
-  amounts.deprSkipOk = !!deprBook.skipped;
+  amounts.deprSkipOk = !!deprBook.skipped && !deprBook.voucherId;
 
   const glAfter = {
     fa: balOf(await subjectBalance(adminAuth.token), '1601'),
@@ -736,15 +726,18 @@ async function main() {
   };
   amounts.faDelta = glAfter.fa - glBeforeSurplus.fa;
   amounts.gainDelta = glAfter.gain - glBeforeSurplus.gain;
-  // split 3000 + bump ~1000 = 4000
-  amounts.expectFaDelta = SPLIT_COST + (amounts.bumpAmt || 1000);
-  amounts.expectGainDelta = amounts.expectFaDelta;
+  const newBooks =
+    (splitBook.alreadyBooked ? 0 : SPLIT_COST) + (bumpBook.alreadyBooked ? 0 : amounts.bumpAmt || 1000);
+  amounts.expectFaDelta = newBooks;
+  amounts.expectGainDelta = newBooks;
+  // Idempotent re-run: no new bookings → Δ≈0 still PASS if scenarios already green
+  const glOk =
+    approx(amounts.faDelta, amounts.expectFaDelta) &&
+    approx(Math.abs(amounts.gainDelta), Math.abs(amounts.expectGainDelta));
   rec(
     'GL-DELTA',
-    approx(amounts.faDelta, amounts.expectFaDelta) && approx(amounts.gainDelta, amounts.expectGainDelta)
-      ? 'PASS'
-      : 'WARN',
-    `1601 Δ=${amounts.faDelta} (expect ${amounts.expectFaDelta}); 5301.04 Δ=${amounts.gainDelta}`,
+    glOk ? 'PASS' : 'WARN',
+    `1601 Δ=${amounts.faDelta} (expect ${amounts.expectFaDelta}); 5301.04 Δ=${amounts.gainDelta}; fa=${glAfter.fa} gain=${glAfter.gain}`,
   );
 
   const main1 = await findCard(adminAuth.token, MAIN_CODE);

@@ -10,7 +10,7 @@
 
 ## 结论：**PASS**（核心清理/盘点深路径完成；主卡净值 11,000 未破坏）
 
-独立探测卡（`B-ASSET-DISP-002` / `B-ASSET-CHK-*`），不改动主卡 `B-ASSET-001`（原值 12,000 / 净值 11,000）。盘盈仅 preview，未执行 `book-surplus`。
+独立探测卡（`B-ASSET-DISP-002` / `B-ASSET-CHK-*`），不改动主卡 `B-ASSET-001`（原值 12,000 / 净值 11,000）。盘盈入账全路径见 `docs/testing/ai-ui-book-b-fa-surplus-report.md`。
 
 ## 结果表（终跑摘要）
 

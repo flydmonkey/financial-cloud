@@ -34,7 +34,7 @@
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
 | 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | — |
-| 专项 B 往来/固资 5.2–5.3 | 核心路径 PASS | BUG-FA-SQL-DATE 已绕过 | 盘点/清理跳过 |
+| 专项 B 往来/固资 5.2–5.3 | 核心路径 PASS | — | 盘点/清理跳过 |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 专项 D / 导出细查 | 0 | 0 | D 未测 |
@@ -94,8 +94,8 @@
 ### OBS-CARRY-STALE-POINTER / 重复生成 — **部分 FIXED**
 删除结转凭证时清理 `settlement_carryforward`。向导重复生成仍可能产生重复件，需操作纪律。
 
-### BUG-FA-SQL-DATE（P1）— **FIXED in tree, restart pending**
-`FixedAssetService` 购入/盘盈凭证日期误用 `java.sql.Date`，触发 `DateUtils.format` → `toInstant` 崩溃。已改为 `Asia/Shanghai` 的 `java.util.Date`；需重启后端后用「起用日早于入账期」路径复测。
+### BUG-FA-SQL-DATE（P1）— **FIXED + 重启后复测 PASS**
+原 `java.sql.Date.toInstant` 崩溃。`299caec` 改为 `java.util.Date`（`Asia/Shanghai`）。重启后端后，`startUseDate=2025-12-15` + `entryPeriod=2026-01` 建卡「新增成功，已生成购入凭证」；探测卡已清理。
 
 ---
 
@@ -149,7 +149,8 @@
 
 ## 未执行 / 进行中
 
-1. 专项账套 B 工资/报销、5.1 扩展、固资盘点/清理；重启后端复测 BUG-FA-SQL-DATE  
+1. 专项账套 B 工资/报销、5.1 扩展、固资盘点/清理  
+
 2. 专项 D（年末）  
 3. 导出 Excel/PDF 内容级校验、间接法附表  
 4. 补全 V04 / 2 月现金流量指定后的完整勾稽  

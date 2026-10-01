@@ -63,7 +63,7 @@
 
 ## 阻塞 / 缺陷
 
-- **BUG-FA-SQL-DATE（P1）**：`FixedAssetService.createPurchaseVoucher` 在 `startUseDate` 所属期 ≠ `entryPeriod` 时把凭证日期设为 `java.sql.Date`，随后 `DateUtils.format` → `toInstant()` 抛 `UnsupportedOperationException`，卡片保存整单回滚。首次建卡用同月 `startUseDate` 绕过并 DB 回调 `2025-12-15` 使 2026-01 成为首个适用折旧月。源码已改为 `java.util.Date`（`Date.from(LocalDate…Asia/Shanghai)`），需重启后端后复测优先路径。
+- **BUG-FA-SQL-DATE（P1）— FIXED + 重启复测 PASS**：原 `java.sql.Date.toInstant` 崩溃；`299caec` 改为 `java.util.Date`（Asia/Shanghai）。重启后端后以 `startUseDate=2025-12-15` + `entryPeriod=2026-01` 建卡成功并生成购入凭证；探测卡已清理。本报告主路径仍可能走同月绕过（历史执行）。
 - **OBS-BOOK-B-TERM**：并发代理曾把专项 B 的 `sys.payment.term.current` 误写成 `2026-03`；脚本每次写入前 `ensureOnBook` 恢复为 `2026-01`。
 - **SKIP-FA-CHECK-DISPOSE**：任务允许跳过盘点/清理深路径；未执行盘亏盘盈/清理处置用例。
 

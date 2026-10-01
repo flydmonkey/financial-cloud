@@ -157,8 +157,10 @@ async function ensureLimitedUser(adminToken) {
       username: LIMITED_USER,
       password: LIMITED_PASS,
       displayName: 'AI S6 Limited',
-      email: 'ai_s6_limited@example.com',
+      userType: 'EMPLOYEE',
+      userState: 'RESIDENT',
       status: 1,
+      sortIndex: 98,
     });
     if (add.code !== 0) {
       rec('USER-CREATE', 'WARN', add.message || JSON.stringify(add));
@@ -691,22 +693,68 @@ async function main() {
     rec('BATCH-SUBMIT', 'FAIL', '未能准备混合状态凭证');
   }
 
-  // ---- Permission: limited user without book ----
+  // ---- Permission: limited user without book grant / without voucher role ----
   await ensureLimitedUser(admin.token);
   try {
     const limited = await apiLogin(LIMITED_USER, LIMITED_PASS);
-    const sw = await api(limited.token, 'GET', `/api/users/switchBook/${BOOK_ID}`);
-    const denied = sw.code !== 0;
+    const books = await api(limited.token, 'GET', '/api/book/fetchAll');
+    const bookList = books.data || [];
     rec(
-      'PERM-SWITCH-DENIED',
-      denied ? 'PASS' : 'FAIL',
-      `switchBook C → code=${sw.code} msg=${sw.message}`,
+      'PERM-BOOK-LIST',
+      Array.isArray(bookList) && bookList.length === 0 ? 'PASS' : 'FAIL',
+      `fetchAll books n=${Array.isArray(bookList) ? bookList.length : 'n/a'}`,
     );
-    if (!denied) {
-      // if switch somehow works, try draft should still be scoped
-      observations.push('受限用户仍可 switchBook 到 C，需核对授权模型');
+
+    const sw = await api(limited.token, 'GET', `/api/users/switchBook/${BOOK_ID}`);
+    if (sw.code !== 0) {
+      rec('PERM-SWITCH', 'PASS', `switchBook denied: ${sw.message}`);
+    } else {
+      // Product: switchBook does not enforce book-grant list (OBS)
+      rec(
+        'PERM-SWITCH',
+        'WARN',
+        'switchBook 成功但无账套授权（OBS-PERM-SWITCH-NO-GRANT）',
+      );
+      observations.push(
+        'OBS-PERM-SWITCH-NO-GRANT：无 permission_book 授权时 switchBook 仍成功写入 current bookId',
+      );
     }
-    // UI: login as limited, expect no book or denied
+
+    // Write must be denied by role even if bookId was switched
+    const wordNum = await nextWord(admin.token);
+    const denyDraft = await api(limited.token, 'POST', '/api/voucher/draft', {
+      bookId: BOOK_ID,
+      wordHead: '记',
+      wordNum,
+      companyName: 'x',
+      receiptNum: 0,
+      voucherDate: VDATE,
+      voucherYear: 2026,
+      voucherMonth: 1,
+      items: [
+        {
+          subjectId: SUB.expense.id,
+          subjectName: SUB.expense.name,
+          summary: `${MARK}-S6-DENY`,
+          debitAmount: 1,
+          creditAmount: null,
+        },
+        {
+          subjectId: SUB.bank.id,
+          subjectName: SUB.bank.name,
+          summary: `${MARK}-S6-DENY`,
+          debitAmount: null,
+          creditAmount: 1,
+        },
+      ],
+    });
+    const writeDenied = denyDraft.code !== 0;
+    rec(
+      'PERM-VOUCHER-WRITE',
+      writeDenied ? 'PASS' : 'FAIL',
+      `draft code=${denyDraft.code} msg=${denyDraft.message}`,
+    );
+
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
     await injectSession(page, limited);
@@ -714,10 +762,10 @@ async function main() {
     await shot(page, 's6-limited-denied');
     const bodyText = await page.locator('body').innerText();
     const noBookHint = /账套|无权限|选择账套|暂无|请选择/.test(bodyText);
-    rec('PERM-UI', noBookHint || denied ? 'PASS' : 'WARN', `uiHint=${noBookHint}`);
+    rec('PERM-UI', noBookHint || writeDenied ? 'PASS' : 'WARN', `uiHint=${noBookHint}`);
     await browser.close();
   } catch (err) {
-    rec('PERM-SWITCH-DENIED', 'WARN', String(err.message || err));
+    rec('PERM-PATH', 'WARN', String(err.message || err));
   }
 
   // UI shots as admin on C

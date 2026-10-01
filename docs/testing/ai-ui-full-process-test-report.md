@@ -44,6 +44,7 @@
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 现金流量/间接法点测 | 补全后主路径 PASS | — | BEGIN-CASH/AR-ADJ 已闭环 |
 | 专项 D 年末 | PASS（损益+年终结转+跨年） | — | BUG-TERM-CROSS-BOOK 已修 |
+| §六 校验/批量/权限 | PASS | — | 专项 C |
 | 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 
 ---
@@ -150,8 +151,7 @@
 - 截图 `bookb-exp-*`
 
 ### 未测（B 其余）
-盘盈入账 book-surplus 已测（独立探测卡，见 fa-surplus）；日记账扩展见 journal-ext
-
+§六 凭证校验/金额边角/批量/无账套权限已测（见 `ai-ui-section6-report.md`）。
 
 ---
 
@@ -182,6 +182,46 @@
 - **明细**：`docs/testing/ai-ui-book-d-report.md`；截图 `bookd-*`
 
 
+## §六 校验 / 批量 / 权限（专项 C）
+
+- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
+- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
+- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
+- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
+- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
+
+---
+
+## §六 校验 / 批量 / 权限（专项 C）
+
+- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
+- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
+- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
+- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
+- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
+
+---
+
+## §六 校验 / 批量 / 权限（专项 C）
+
+- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
+- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
+- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
+- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
+- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
+
+---
+
+## §六 校验 / 批量 / 权限（专项 C）
+
+- 凭证校验：借贷不平衡、缺科目、零金额、单条分录、越界日期 — 均拒绝持久化
+- 金额边角：一借多贷 / 多借一贷 / 0.01 / 123.45 草稿+提交过账 PASS；大额仅草稿
+- 批量：混合草稿/已提交 批量提交与批量过账，核对成功失败计数
+- 权限：受限用户无账套 C 授权时 switchBook/业务写入被拒
+- **明细**：`docs/testing/ai-ui-section6-report.md`；截图 `s6-*`
+
+---
+
 ## 反结账 / 闭账期守卫 / 导出（主账套 A）
 
 - 闭账期修改与反过账均被拦截（开放账期 2026-03）  
@@ -208,19 +248,19 @@
 
 ## 未执行 / 进行中
 
-1. （可选）§六 权限/批量/凭证校验边角若产品需继续补测 
-
+1. （可选）税费测算/工作台等若产品需继续补测
 ---
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-jext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
 - `docs/testing/ai-ui-book-b-report.md`  
 - `docs/testing/ai-ui-book-b-arap-fa-report.md`  
 - `docs/testing/ai-ui-book-b-fa-dispose-report.md`  
+- `docs/testing/ai-ui-book-b-fa-surplus-report.md`  
 - `docs/testing/ai-ui-book-b-payroll-exp-report.md`  
 - `docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  

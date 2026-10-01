@@ -114,8 +114,8 @@
 
 ## 阻塞 / 缺陷 / 观察
 
-- **OBS-EXP-SUMMARY-LEN（P2）**：`voucher_item.summary` 仅 **64** 字符；报销生成凭证摘要为 `费用报销 {单号} {报销人} {事由}（行说明）`。使用带完整 `AI-UI-20260930` 标识的报销人/事由时触发 `Data truncation`，生成失败。缩短字段后可过；生产上长事由/长姓名会踩坑。
-- **OBS-PAY-TEMPLATE-SI-TAX**：SMB 模板 `jt_gz`/`zf_gz` 仅借费用贷应付（应发）与借应付贷银行（实发）；个人社保/公积金/个税残留在 **2211.01=767.71**，未分录到 `2221.14` 或社保负债科目（符合当前模板设计，非阻断）。
+- **OBS-EXP-SUMMARY-LEN（P2）FIXED**：原长摘要 `Data truncation`；现 `normalizeSummary` 截断至 64，凭证保存不再因超长失败（内容可能被截断，属列宽约束）。
+- **OBS-PAY-TEMPLATE-SI-TAX（产品设计）**：SMB 模板 `jt_gz`/`zf_gz` 仅借费用贷应付（应发）与借应付贷银行（实发）；个人社保/公积金/个税残留在 **2211.01=767.71**，未分录到 `2221.14` 或社保负债科目。
 - **OBS-SALARY-FORMULA-EMPTY**：账套 `config_salary_formula` 无自定义行；算薪走内置逻辑（基数×比例 + 累计预扣），WARN 非阻断。
 - **EXP-WITHDRAW**：无撤回 API；拒绝靠 `audit(approve=false)`；删除仅 draft/rejected。重复生成报销凭证为幂等返回原 ID（软防护）。
 - **FUND-BANK**：发薪前银行约 1,000，不足实发 7,232.29；脚本注资实收资本 **20,000**（摘要 `AI-UI-20260930-发薪注资`）后继续闭环。

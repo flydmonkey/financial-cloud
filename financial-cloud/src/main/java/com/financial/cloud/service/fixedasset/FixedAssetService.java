@@ -46,6 +46,7 @@ import com.financial.cloud.util.FixedAssetDepreciationRules;
 import com.financial.cloud.util.FixedAssetDisposalRules;
 import com.financial.cloud.util.FixedAssetPurchaseRules;
 import com.financial.cloud.util.SubjectCodeCompat;
+import com.financial.cloud.util.SubjectDisplayNameUtils;
 import com.financial.cloud.util.VoucherUtils;
 import com.financial.cloud.util.excel.ExcelExporter;
 import jakarta.servlet.http.HttpServletResponse;
@@ -84,8 +85,6 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
     private static final String DEFAULT_WORD = "记";
     private static final String DEFAULT_DISPOSE_SUMMARY = "固定资产清理";
     private static final String DEFAULT_PURCHASE_SUMMARY = "购入固定资产";
-    /** Matches voucher_item.summary varchar(64). */
-    private static final int VOUCHER_SUMMARY_MAX = 64;
     private static final ZoneId ACCOUNTING_ZONE = ZoneId.of("Asia/Shanghai");
     private static final String[] CARD_EXPORT_HEADERS = {
             "编码", "名称", "类别编码", "类别名称", "部门", "启用日期", "数量", "规格型号", "存放地点",
@@ -1045,10 +1044,7 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
     }
 
     private static String truncateVoucherSummary(String summary) {
-        if (summary == null) {
-            return "";
-        }
-        return summary.length() <= VOUCHER_SUMMARY_MAX ? summary : summary.substring(0, VOUCHER_SUMMARY_MAX);
+        return SubjectDisplayNameUtils.truncateVoucherSummary(summary);
     }
 
     /** Prefer provided date when it falls in {@code period}; otherwise first day of period (Asia/Shanghai). */

@@ -112,8 +112,8 @@
 ### BUG-FA-SQL-DATE（P1）— **FIXED + 重启后复测 PASS**
 原 `java.sql.Date.toInstant` 崩溃。`299caec` 改为 `java.util.Date`（`Asia/Shanghai`）。重启后端后，`startUseDate=2025-12-15` + `entryPeriod=2026-01` 建卡「新增成功，已生成购入凭证」；探测卡已清理。
 
-### OBS-EXP-SUMMARY-LEN（P2）
-`voucher_item.summary` 仅 64 字符；报销一键生成摘要过长时 `Data truncation`。缩短报销人/事由后 PASS（见 B 5.5）。
+### OBS-EXP-SUMMARY-LEN（P2）— **FIXED**
+原：`voucher_item.summary` varchar(64)；报销等长摘要触发 `Data truncation`。现：`SubjectDisplayNameUtils.normalizeSummary` 截断至 64（凭证保存边界统一生效）。
 
 
 ### BUG-TERM-CROSS-BOOK（P1）— **FIXED**
@@ -297,11 +297,11 @@
 | OBS-PERM-CONFIG-NO-GRANT | P1 | FIXED | 权限 | 无授权可改配置 | 否（复测 510021） |
 | OBS-AUX-API-NO-MUST | P1 | FIXED | B 辅助 | API 绕过 must | 否（复测拒绝） |
 | OBS-CF-BEGIN-CASH-FEB | — | FIXED | A CF | 2 月期初现金 | 否 |
-| OBS-EXP-SUMMARY-LEN | P2 | OPEN | B 报销 | summary varchar(64) | 否（缩短后可用） |
-| OBS-PAY-BASE-FALLBACK | — | OPEN | B 工资 | 基数清空回退 | 否 |
-| OBS-PAY-HIST-NO-CASCADE | — | OPEN | B 工资 | 历史改额不级联 | 否（产品现状） |
-| OBS-PAY-TEMPLATE-SI-TAX | — | OPEN | B 模板 | 社保/个税模板口径 | 否 |
-| OBS-UNAUDIT-TO-REVIEWING | — | OPEN | 凭证 | 反审路径 | 否 |
+| OBS-EXP-SUMMARY-LEN | P2 | FIXED | B 报销 | summary 超长截断至 64 | 否 |
+| OBS-PAY-BASE-FALLBACK | — | 产品设计 | B 工资 | 非自定义规则回退账套默认基数 | 否 |
+| OBS-PAY-HIST-NO-CASCADE | — | 产品设计 | B 工资 | 历史改额不级联重算 | 否 |
+| OBS-PAY-TEMPLATE-SI-TAX | — | 产品设计 | B 模板 | SMB jt_gz/zf_gz 不含个税/社保分录 | 否 |
+| OBS-UNAUDIT-TO-REVIEWING | — | 产品设计 | 凭证 | 反过账后再反审进「审核中」 | 否 |
 | OBS-CF-AR-ADJ | — | 口径说明 | A 间接法 | 含预付 | 否 |
 
 ### 5. 入口 / 权限证据边界
@@ -325,7 +325,7 @@
 默认不清空测试账套，供复核。
 
 ### 7. 最终结论（重申）
-**有条件通过**：主财务两月闭环与确定性金额/三表勾稽/反操作快照通过；专项与 §六/可选/收尾已补测；P0/P1 已闭环。剩余为非阻断软观察（摘要长度、工资基数回退、历史工资不级联等），不支持宣称「全系统全部通过」。
+**有条件通过**：主财务两月闭环与确定性金额/三表勾稽/反操作快照通过；专项与 §六/可选/收尾已补测；P0/P1/P2（摘要截断）已闭环。剩余条目均为产品设计/口径说明（工资基数回退、历史不级联、模板不含社保个税分录、反审路径），不支持宣称「全系统全部通过」。
 
 ---
 

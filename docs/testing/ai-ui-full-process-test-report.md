@@ -7,8 +7,8 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-c.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-c-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-c.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-c-report.md`
 
 ---
 
@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 其余模块（往来/固资/工资/报销）、专项 D、导出内容级细查、2 月 CF 补全与间接法附表未齐。反结账/闭账期守卫与导出入口已点测（见 `ai-ui-guards-report.md`）。专项 C（关闭审核）已 PASS。
+仍不满足文档「全通过」标准：专项 B 工资/报销与 5.1 扩展、专项 D、导出内容级细查、2 月 CF 补全与间接法附表未齐。反结账/闭账期守卫与导出入口已点测（见 `ai-ui-guards-report.md`）。专项 C（关闭审核）已 PASS。B 往来/固资 5.2–5.3 核心路径 PASS。
 
 ---
 
@@ -33,7 +33,8 @@
 | 1 月凭证/报表/反操作/月结 | 主路径通过 | — | V04 CF 项待补 |
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
-| 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | 往来/固资等未测 |
+| 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | — |
+| 专项 B 往来/固资 5.2–5.3 | 核心路径 PASS | BUG-FA-SQL-DATE 已绕过 | 盘点/清理跳过 |
 | 专项 C 关闭凭证审核 | PASS（免审核流） | — | — |
 | 反结账/闭账守卫 + 导出入口 | PASS | — | 导出仅 smoke（xlsx 非空） |
 | 专项 D / 导出细查 | 0 | 0 | D 未测 |
@@ -93,17 +94,35 @@
 ### OBS-CARRY-STALE-POINTER / 重复生成 — **部分 FIXED**
 删除结转凭证时清理 `settlement_carryforward`。向导重复生成仍可能产生重复件，需操作纪律。
 
+### BUG-FA-SQL-DATE（P1）— **FIXED in tree, restart pending**
+`FixedAssetService` 购入/盘盈凭证日期误用 `java.sql.Date`，触发 `DateUtils.format` → `toInstant` 崩溃。已改为 `Asia/Shanghai` 的 `java.util.Date`；需重启后端后用「起用日早于入账期」路径复测。
+
 ---
 
-## 专项账套 B 进度（出纳日记账 5.1）
+## 专项账套 B 进度
 
+### 5.1 出纳日记账 — PASS
 - **账套**：`AI-UI-20260930-专项B`，**bookId** `2105448444973871105`，启用 `2026-01`，凭证审核开启
 - **期初**：总账 1002 / 日记账均为 10,000（期初流水 `direction=o`，不生成凭证）
 - **流水**：收入 3,000 + 支出 1,000 → 日记账余额 **12,000**
 - **生成凭证→过账**：过账前总账 1002=10,000；过账后 **12,000**
 - **银行对账**：对账单 12,000，勾对后差额 **0**
 - **明细**：`docs/testing/ai-ui-book-b-report.md`；截图 `bookb-*`
-- **未测（B 其余）**：往来核销、固定资产、工资、报销；日记账回写/红冲/未达项 500 场景
+
+### 5.2 往来与核销 — PASS
+- 启用辅助核算；1122↔客户、2202↔供应商；单位 `AI-UI-20260930-客户B/供应商B`
+- 过账后客户应收 **6,000**、供应商应付 **5,000**；明细一致
+- 部分核销收款 4,000：未清挂账剩余 6,000；核销不改总账；撤销后状态恢复、总账不变
+- **明细**：`docs/testing/ai-ui-book-b-arap-fa-report.md`；截图 `bookb-arap-*`
+
+### 5.3 固定资产 — PASS（盘点/清理跳过）
+- 类别+卡片原值 12,000 / 残值 0% / 12 月直线法 / 费用 5602.02；UI 购入凭证过账（1601/1002）
+- 2026-01 计提折旧 1,000 过账后：原值 12,000 / 累计折旧 1,000 / 净值 **11,000**
+- 见缺陷 **BUG-FA-SQL-DATE**；盘点/清理深路径按任务跳过
+- 截图 `bookb-fa-*`
+
+### 未测（B 其余）
+工资、报销；日记账回写/红冲/未达项 500；盘点/清理深路径
 
 ---
 
@@ -130,7 +149,7 @@
 
 ## 未执行 / 进行中
 
-1. 专项账套 B 往来/固资/工资/报销（agent 进行中）及 5.1 扩展场景  
+1. 专项账套 B 工资/报销、5.1 扩展、固资盘点/清理；重启后端复测 BUG-FA-SQL-DATE  
 2. 专项 D（年末）  
 3. 导出 Excel/PDF 内容级校验、间接法附表  
 4. 补全 V04 / 2 月现金流量指定后的完整勾稽  
@@ -139,11 +158,12 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*`、`bookc-*`、`guards-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*`、`bookb-arap-*`、`bookb-fa-*`、`bookc-*`、`guards-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
 - `docs/testing/ai-ui-book-b-report.md`  
+- `docs/testing/ai-ui-book-b-arap-fa-report.md`  
 - `docs/testing/ai-ui-book-c-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
 

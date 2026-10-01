@@ -196,7 +196,10 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
             // 凭证日期必须落在入账期间内：期间锁按 voucherDate 判定，
             // 开始使用日期早于入账期间时(次月起提的常见场景)落在期间首日
             if (!period.equals(FixedAssetDepreciationRules.periodOf(voucherDate))) {
-                voucherDate = java.sql.Date.valueOf(period + "-01");
+                // Must be java.util.Date: java.sql.Date.toInstant() throws UnsupportedOperationException
+                // (DateUtils.format → rejectClosedPeriodWrite during voucher save).
+                voucherDate = Date.from(LocalDate.parse(period + "-01")
+                        .atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
             }
         } else {
             java.util.Calendar cal = java.util.Calendar.getInstance();
@@ -273,7 +276,9 @@ public class FixedAssetService extends ServiceImpl<FixedAssetMapper, FixedAsset>
             year = Integer.parseInt(period.split("-")[0]);
             month = Integer.parseInt(period.split("-")[1]);
             if (!period.equals(FixedAssetDepreciationRules.periodOf(voucherDate))) {
-                voucherDate = java.sql.Date.valueOf(period + "-01");
+                // Must be java.util.Date: java.sql.Date.toInstant() throws UnsupportedOperationException
+                voucherDate = Date.from(LocalDate.parse(period + "-01")
+                        .atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
             }
         } else {
             java.util.Calendar cal = java.util.Calendar.getInstance();

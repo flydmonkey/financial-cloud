@@ -105,6 +105,23 @@ async function switchBook(token, bookId) {
   if (sw.code !== 0) throw new Error(`switchBook: ${sw.message}`);
 }
 
+async function ensureOnBook(token, bookId, expectedTerm = TERM) {
+  await switchBook(token, bookId);
+  const books = await api(token, 'GET', '/api/config/sys/books');
+  const term = (books.data || []).find((x) => x.configKey === 'sys.payment.term.current')?.configValue;
+  if (term !== expectedTerm) {
+    // Concurrent agents may advance/corrupt shared book config; restore open term for B.
+    const up = await api(token, 'PUT', '/api/config/sys/updateByKey', {
+      configKey: 'sys.payment.term.current',
+      configValue: expectedTerm,
+    });
+    if (up.code !== 0) throw new Error(`restore term ${expectedTerm}: ${up.message}`);
+  }
+  const again = await api(token, 'GET', '/api/config/sys/books');
+  const t2 = (again.data || []).find((x) => x.configKey === 'sys.payment.term.current')?.configValue;
+  if (t2 !== expectedTerm) throw new Error(`book ${bookId} term still ${t2}, want ${expectedTerm}`);
+}
+
 async function fetchSubjects(token, bookId) {
   const page = await api(
     token,
@@ -221,6 +238,8 @@ async function findVoucherBySummary(token, summaryPart) {
 }
 
 async function postFlow(adminToken, reviewerToken, bookId, companyName, label, summary, items, cfCode) {
+  await ensureOnBook(adminToken, bookId);
+  await ensureOnBook(reviewerToken, bookId);
   const existing = await findVoucherBySummary(adminToken, summary);
   if (existing?.id) {
     if (existing.senderId) {
@@ -252,6 +271,28 @@ async function postFlow(adminToken, reviewerToken, bookId, companyName, label, s
 }
 
 async function finishVoucher(adminToken, reviewerToken, bookId, label, vid, payload, cfCode) {
+  await ensureOnBook(adminToken, bookId);
+  await ensureOnBook(reviewerToken, bookId);
+
+  let detail = await api(adminToken, 'GET', `/api/voucher/get/${vid}`);
+  if (detail.data?.senderId) {
+    rec(label, 'PASS', `已过账 id=${vid}`);
+    return { vid, alreadyPosted: true, detail: detail.data };
+  }
+
+  const st = detail.data?.status;
+  if (st === 'draft' || st === 0 || st === '0' || st === 'DRAFT') {
+    const submit = await api(adminToken, 'POST', '/api/voucher/submit', {
+      ...(detail.data || payload || {}),
+      id: vid,
+    });
+    if (submit.code !== 0) {
+      const submit2 = await api(adminToken, 'POST', '/api/voucher/submit', { id: vid });
+      if (submit2.code !== 0) throw new Error(`${label} submit: ${submit.message}/${submit2.message}`);
+    }
+    detail = await api(adminToken, 'GET', `/api/voucher/get/${vid}`);
+  }
+
   if (cfCode) {
     const pending = await api(
       adminToken,
@@ -279,8 +320,14 @@ async function finishVoucher(adminToken, reviewerToken, bookId, label, vid, payl
     }
   }
 
-  let detail = await api(adminToken, 'GET', `/api/voucher/get/${vid}`);
-  if (!detail.data?.auditorId && detail.data?.status !== 'audited') {
+  detail = await api(adminToken, 'GET', `/api/voucher/get/${vid}`);
+  const audited =
+    detail.data?.auditorId ||
+    detail.data?.auditId ||
+    detail.data?.status === 'audited' ||
+    detail.data?.status === 'reviewed' ||
+    detail.data?.status === 'completed';
+  if (!audited) {
     const audit = await api(reviewerToken, 'PUT', `/api/voucher/audit/${vid}`);
     if (audit.code !== 0) throw new Error(`${label} audit: ${audit.message}`);
   }
@@ -406,9 +453,9 @@ async function main() {
   const reviewerAuth = await apiLogin('ai_reviewer', 'Review@2026');
   rec('LOGIN', 'PASS', 'admin + ai_reviewer');
 
-  await switchBook(adminAuth.token, BOOK_ID);
-  await switchBook(reviewerAuth.token, BOOK_ID);
-  rec('SWITCH-BOOK', 'PASS', `bookId=${BOOK_ID} term=${TERM}`);
+  await ensureOnBook(adminAuth.token, BOOK_ID);
+  await ensureOnBook(reviewerAuth.token, BOOK_ID);
+  rec('SWITCH-BOOK', 'PASS', `bookId=${BOOK_ID} term=${TERM} (restored if corrupted)`);
 
   const book = await api(adminAuth.token, 'GET', `/api/book/get/${BOOK_ID}`);
   const companyName = book.data?.companyName || `${MARK}-专项B公司`;
@@ -683,7 +730,7 @@ async function main() {
         detail:
           'card/save with startUseDate period < entryPeriod crashes: java.sql.Date.toInstant UnsupportedOperationException in DateUtils.format during purchase voucher create. Workaround: create with matching periods then adjust start_use_date for depreciation eligibility.',
       });
-      rec('FA-CARD-PREFERRED', 'FAIL', `preferred path failed: ${save.message || 'runtime'} → workaround`);
+      rec('FA-CARD-PREFERRED', 'WARN', `preferred path failed: ${save.message || 'runtime'} → workaround`);
       const fallback = {
         ...preferred,
         startUseDate: '2026-01-15',

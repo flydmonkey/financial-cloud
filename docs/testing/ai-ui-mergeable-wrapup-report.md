@@ -53,9 +53,19 @@ cd financial-cloud && ./mvnw test -Dtest='EmployeeServicePayBaseTest,SalaryContr
 cd financial-cloud-ui && AI_UI_REQUIRE_BOOKS=1 npm run test:ai-ui:ci-subset
 ```
 
+## 4) 本收尾 PR CI
+
+| 项 | 结果 |
+|----|------|
+| PR | [#20](https://github.com/flydmonkey/financial-cloud/pull/20) @ `3c6f20e` |
+| Run | [36817151678](https://github.com/flydmonkey/financial-cloud/actions/runs/36817151678) |
+| `backend-test` / `frontend-check` / `e2e-smoke` | **PASS** |
+| 完整 `e2e` | PR 上 SKIP（仅 push→main；完整绿证见上文 §1） |
+
 ## 本轮支持范围（不宣称全系统全绿）
 
 - ✅ main push 完整 Playwright e2e（含 accounting / year-end / golden）在 #19 合入后 **PASS**
+- ✅ 本收尾 PR CI（含 e2e-smoke）**PASS**
 - ✅ 工资自定义基数硬拒口径单测 **PASS**（504005）
 - ✅ AI-UI 子集门闸行为正确（无夹具 SKIP / REQUIRE=1 失败）
 - ❌ AI-UI 5 套件端到端实跑：**未宣称**（无夹具）

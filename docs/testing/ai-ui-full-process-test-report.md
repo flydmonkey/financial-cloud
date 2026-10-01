@@ -7,8 +7,8 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`
 
 ---
 
@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项账套 B/C/D、导出细查、反结账守卫、2 月 CF 补全与间接法附表未齐。
+仍不满足文档「全通过」标准：专项 B 其余模块（往来/固资/工资/报销）、专项 C/D、导出细查、反结账守卫、2 月 CF 补全与间接法附表未齐。
 
 ---
 
@@ -33,7 +33,8 @@
 | 1 月凭证/报表/反操作/月结 | 主路径通过 | — | V04 CF 项待补 |
 | 2 月凭证/结转/月结/历史快照 | 主路径通过 | — | 2 月 CF 指定未齐 |
 | P0/P1 修复验证 | TZ+CF UI | — | — |
-| 专项 B/C/D / 导出细查 | 进行中/0 | 0 | C/D 等 |
+| 专项 B 出纳日记账 5.1 | 核心路径 PASS | CF 指定 WARN×2 | 往来/固资等未测 |
+| 专项 C/D / 导出细查 | 0 | 0 | 全部 |
 
 ---
 
@@ -92,9 +93,21 @@
 
 ---
 
+## 专项账套 B 进度（出纳日记账 5.1）
+
+- **账套**：`AI-UI-20260930-专项B`，**bookId** `2105448444973871105`，启用 `2026-01`，凭证审核开启
+- **期初**：总账 1002 / 日记账均为 10,000（期初流水 `direction=o`，不生成凭证）
+- **流水**：收入 3,000 + 支出 1,000 → 日记账余额 **12,000**
+- **生成凭证→过账**：过账前总账 1002=10,000；过账后 **12,000**
+- **银行对账**：对账单 12,000，勾对后差额 **0**
+- **明细**：`docs/testing/ai-ui-book-b-report.md`；截图 `bookb-*`
+- **未测（B 其余）**：往来核销、固定资产、工资、报销；日记账回写/红冲/未达项 500 场景
+
+---
+
 ## 未执行 / 进行中
 
-1. 专项账套 B（出纳/往来/固资/工资/报销）— agent 进行中  
+1. 专项账套 B 其余模块（往来/固资/工资/报销）及 5.1 扩展场景  
 2. 专项 C（免审核）、D（年末）  
 3. 导出 Excel/PDF 内容级校验、间接法附表  
 4. 反结账守卫与结账后旧期修改拦截的专项点测  
@@ -104,8 +117,9 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`hist-*`、`bookb-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
+- `docs/testing/ai-ui-book-b-report.md`  
 

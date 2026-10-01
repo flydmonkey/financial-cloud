@@ -28,6 +28,7 @@
 7. **BUG-JEXT-REVERSE-POST** — 冲销日期钳到开放账期 + 负金额流水回写；复测冲销过账 **PASS**（19/19）
 8. **OBS-PERM-SWITCH / CONFIG-NO-GRANT（P1）** — `switchBook` / `config update|updateByKey` 校验 `permission_book`，无授权返回 **510021**
 9. **OBS-AUX-API-NO-MUST（P1）** — 启用辅助核算时，draft/submit 服务端校验科目 `must` 辅助
+10. **OBS-EXP-SUMMARY-LEN（P2）** — 凭证摘要统一截断至 64，避免 Data truncation
 
 专项 B 5.1 核心+扩展（含红冲过账/未达 500）、固资深路径、工资/报销、C/D、守卫、CF 勾稽、导出内容级校验已完成。盘盈入账 book-surplus（拆卡/累加/禁 bump）已补测，见 `ai-ui-book-b-fa-surplus-report.md`。
 
@@ -337,6 +338,7 @@
 - admin → `switchBook(专项B)` → 成功
 - 专项 B、`sys.assist.acc.enabled=true`、1122 must 客户：无辅助 `POST /voucher/draft` → 拒绝「存在未选择辅助核算的分录（客户）」
 - 无 must 科目（1001/1002）草稿仍成功，测后已删
+- 长摘要（86 字）draft → 成功；落库摘要长度 **64**（截断）
 
 ---
 

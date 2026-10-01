@@ -35,7 +35,7 @@
 
 ## 观察
 
-- OBS-PAY-BASE-FALLBACK：缴费基数清空后 createTable 仍用回退基数算薪，无「基数缺失」硬拒
+- OBS-PAY-BASE-FALLBACK（产品设计）：`SalaryContributionBaseRules` 非自定义规则回退账套默认基数；仅自定义规则且基数无效时硬拒
 - 固资复制卡保留：id=2105475526428766210 code=B-ASSET-SUR-BUMP-副本2
 - **OBS-AUX-API-NO-MUST FIXED**：`VoucherService.validateRequiredAuxiliary`；无辅助 draft →「存在未选择辅助核算的分录（客户）」（2026-10-01 复测）
 - **OBS-PERM-CONFIG-NO-GRANT FIXED**：`ConfigSysController.update|updateByKey` 校验 `permission_book` → **510021**

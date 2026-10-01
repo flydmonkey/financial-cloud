@@ -7,12 +7,12 @@
 - **测试标识**：`AI-UI-20260930`
 - **账套**：`AI-UI-20260930-主账套A`（小企业会计准则，启用凭证审核）
 - **登录/写入**：用户允许**脚本注入**（登录 + Node/in-page fetch：draft→submit→audit→post、CF specify、结转）；月结向导与报表截图走 UI
-- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`、`scripts-ai-ui-section6.mjs`、`scripts-ai-ui-optional-workbench-tax.mjs`、`scripts-ai-ui-remaining-gaps.mjs`
-- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`、`docs/testing/ai-ui-section6-report.md`、`docs/testing/ai-ui-optional-workbench-tax-report.md`、`docs/testing/ai-ui-remaining-gaps-report.md`
+- **脚本**：`financial-cloud-ui/scripts-ai-ui-continuation.mjs`、`scripts-ai-ui-month2.mjs`、`scripts-ai-ui-book-b.mjs`、`scripts-ai-ui-book-b-journal-ext.mjs`、`scripts-ai-ui-book-b-arap-fa.mjs`、`scripts-ai-ui-book-b-fa-dispose.mjs`、`scripts-ai-ui-book-b-payroll-exp.mjs`、`scripts-ai-ui-book-c.mjs`、`scripts-ai-ui-book-d.mjs`、`scripts-ai-ui-section6.mjs`、`scripts-ai-ui-optional-workbench-tax.mjs`、`scripts-ai-ui-remaining-gaps.mjs`、`scripts-ai-ui-final-gaps.mjs`
+- **明细**：`docs/testing/ai-ui-continuation-report.md`、`docs/testing/ai-ui-month2-report.md`、`docs/testing/ai-ui-book-b-report.md`、`docs/testing/ai-ui-book-b-journal-ext-report.md`、`docs/testing/ai-ui-book-b-arap-fa-report.md`、`docs/testing/ai-ui-book-b-fa-dispose-report.md`、`docs/testing/ai-ui-book-b-payroll-exp-report.md`、`docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`、`docs/testing/ai-ui-cf-begin-cash-fix-report.md`、`docs/testing/ai-ui-section6-report.md`、`docs/testing/ai-ui-optional-workbench-tax-report.md`、`docs/testing/ai-ui-remaining-gaps-report.md`、`docs/testing/ai-ui-final-gaps-report.md`
 
 ---
 
-## 最终结论：**主财务闭环通过（有条件）；专项与可选深路径已补测**
+## 最终结论：**主财务闭环通过（有条件）；专项 / §六 / 可选与收尾细项均已补测**
 
 主账套已完成建账→期初→V01–V08→CF 指定→V04 反操作→1 月结转/月结→2 月五笔→2 月结转/月结；账期现为 **2026-03**。历史快照抽查：1 月银行 160,000 / 本年利润 40,000；2 月银行 188,000 / 本年利润 53,000。
 
@@ -48,6 +48,7 @@
 | 导出内容级校验 | PASS（xlsx+pdf） | — | 2026-01 样本 |
 | 可选：工作台/封存/税费/UI边角 | PASS 21 | — | 见 optional 报告 |
 | 剩余细项（守卫/固资/辅助/待办） | PASS | — | 见 remaining-gaps 报告 |
+| 收尾细项（累计预扣/模板/账龄/互斥） | PASS 20 | — | 见 final-gaps 报告 |
 
 ---
 
@@ -222,7 +223,18 @@
 
 ## 未执行 / 进行中
 
-1. 连续两月累计预扣、历史工资级联、凭证模板套用、账龄精确表、月结工资计提互斥（若入口另测）
+1. （提示词范围内无阻塞未测项）
+
+## 收尾细项（累计预扣 / 模板 / 账龄 / 互斥）
+
+- **结果**：PASS 20 / FAIL 0 / WARN 0
+- 两月累计预扣：2 月应税累计 2540.8，本期个税=累计税−1 月税
+- 历史工资改额：不级联重算后续月（OBS，已恢复）
+- 凭证模板套用：按 jt_gz 模板科目/方向生成草稿并核对
+- 账龄：核销后 OPEN_ITEM，合计=未清 6000；测后已反核销
+- 月结 jt_gz：被明细计提互斥拦截
+- **明细**：`docs/testing/ai-ui-final-gaps-report.md`；截图 `final-*`
+
 
 ## 剩余细项补测（工资守卫 / 固资生命周期 / 辅助 / 待办）
 
@@ -249,7 +261,7 @@
 
 ## 证据
 
-- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*`、`s6-*`、`opt-*`、`gap-*` 等）  
+- `/opt/cursor/artifacts/screenshots/`（`m2-*`、`verify-cf-*`、`bookb-*`、`bookb-ext-*`、`bookb-fa-disp-*`、`bookb-fa-check-*`、`bookb-fa-surplus-*`、`bookb-pay-*`、`bookb-exp-*`、`bookc-*`、`bookd-*`、`guards-*`、`indirect-cf-*`、`s6-*`、`opt-*`、`gap-*`、`final-*` 等）  
 - `docs/testing/ai-ui-continuation-report.md`  
 - `docs/testing/ai-ui-month2-report.md`  
 - `docs/testing/ai-ui-verify-fixes-report.md`  
@@ -261,10 +273,11 @@
 - `docs/testing/ai-ui-book-c-report.md`、`docs/testing/ai-ui-book-d-report.md`  
 - `docs/testing/ai-ui-section6-report.md`  
 - `docs/testing/ai-ui-optional-workbench-tax-report.md`  
+- `docs/testing/ai-ui-remaining-gaps-report.md`
+- `docs/testing/ai-ui-final-gaps-report.md`  
 - `docs/testing/ai-ui-guards-report.md`  
 - `docs/testing/ai-ui-indirect-cf-report.md`  
 - `docs/testing/ai-ui-cf-remediate-report.md`  
 - `docs/testing/ai-ui-export-check-report.md`  
-
 
 

@@ -163,17 +163,21 @@ public class ConfigSysService{
 		String nextTerm =  getNextTerm(bookId);
 		return updateCurrentTerm(bookId,nextTerm);
 	}
-    public Message<String> updateCurrentTerm(String bookId, String currentTerm) {
-        Message<List<ConfigSys>> mlc = getBookConfigList(bookId);
-        Message<String> msg = Message.failed("设置失败");
-        for (ConfigSys configSys : mlc.getData()) {
-            if (ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT.equals(configSys.getConfigKey())) {
-                configSys.setConfigValue(currentTerm);
-                msg = this.update(configSys);
-            }
-        }
 
-        return msg;
+    /**
+     * Advance/set current payment term for one book only.
+     * Must always scope by {@code bookId}: {@link #getBookConfigList} previously omitted
+     * bookId/configId, so update-by-key alone rewrote every book's term (BUG-TERM-CROSS-BOOK).
+     */
+    public Message<String> updateCurrentTerm(String bookId, String currentTerm) {
+        if (StringUtils.isBlank(bookId)) {
+            return Message.failed("账套不能为空");
+        }
+        ConfigSys configSys = new ConfigSys();
+        configSys.setBookId(bookId);
+        configSys.setConfigKey(ConstsSysConfig.SYS_PAYMENT_TERM_CURRENT);
+        configSys.setConfigValue(currentTerm);
+        return this.update(configSys);
     }
 
     /**
@@ -365,10 +369,11 @@ public class ConfigSysService{
         List<ConfigSys> data = baseMapper.selectList(new LambdaQueryWrapper<ConfigSys>()
                 .in(ConfigSys::getConfigKey, BOOKS_KEYS)
                 .eq(ConfigSys::getBookId, bookId)
-                .select(ConfigSys::getConfigKey, ConfigSys::getConfigValue));
+                .select(ConfigSys::getConfigId, ConfigSys::getBookId, ConfigSys::getConfigKey, ConfigSys::getConfigValue));
         ConfigSys bookCfg = new ConfigSys();
         bookCfg.setConfigKey("bookId");
         bookCfg.setConfigValue(bookId);
+        bookCfg.setBookId(bookId);
         data.add(bookCfg);
 
         Map<String, String> maps = new HashMap<>();

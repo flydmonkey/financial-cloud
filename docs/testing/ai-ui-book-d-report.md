@@ -63,12 +63,12 @@
 
 ## OBS / 缺陷
 
-### BUG-TERM-CROSS-BOOK（P1，结账副作用）
+### BUG-TERM-CROSS-BOOK（P1，结账副作用）— **FIXED**
 
-- **现象**：账套 D 结账 `termToNext` 后，`config` 表中 **A / C / template** 的 `sys.payment.term.current` 被一并写成 `2027-01`（同秒 `modified_date`）。
-- **根因**：`ConfigSysService.getBookConfigList` 只 `select(configKey, configValue)`，`updateCurrentTerm` → `update()` 在无 `configId`/`bookId` 时按 `configKey` 全表更新。
-- **影响**：污染其他账套当前账期（本任务已 SQL 写回 A=`2026-03`、B/C/template=`2026-01`；D 保持 `2027-01`）。
-- **脚本防护**：`scripts-ai-ui-book-d.mjs` 结账后调用 `remediateCrossBookTermBleed()`；已结账复跑走校验模式，不再强制回退 `2026-12`。
+- **现象**：账套 D 结账 `termToNext` 后，`config` 表中 **A / C / template** 的 `sys.payment.term.current` 曾被一并写成 `2027-01`。
+- **根因**：`getBookConfigList` 只 `select(configKey, configValue)`，`updateCurrentTerm` → `update()` 无 `bookId` 时按 key 全表更新。
+- **修复**：`ConfigSysService.updateCurrentTerm` 始终设置 `bookId` 再 `update`；`getBookConfigList` 补选 `configId`/`bookId`；单测 `updateCurrentTermAlwaysScopesToBookId`。
+- **数据**：测试脚本已写回 A=`2026-03`、B/C/template=`2026-01`；D=`2027-01`。
 
 ### 其他观察
 

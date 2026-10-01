@@ -66,4 +66,24 @@ class ConfigSysServiceTest {
         // 仅 configKey 一条件 → 3 段
         assertEquals(3, wrapper.getExpression().getNormal().size());
     }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void updateCurrentTermAlwaysScopesToBookId() {
+        when(baseMapper.update(any(ConfigSys.class), any(Wrapper.class))).thenAnswer(inv -> {
+            ConfigSys cfg = inv.getArgument(0);
+            assertEquals("book-d", cfg.getBookId());
+            assertEquals("sys.payment.term.current", cfg.getConfigKey());
+            assertEquals("2027-01", cfg.getConfigValue());
+            AbstractWrapper<?, ?, ?> wrapper = inv.getArgument(1);
+            // bookId + configKey → 7 段（避免仅按 key 更新污染其他账套）
+            assertEquals(7, wrapper.getExpression().getNormal().size());
+            return 1;
+        });
+
+        Message<String> result = configSysService.updateCurrentTerm("book-d", "2027-01");
+        assertEquals(Message.SUCCESS, result.getCode());
+        assertEquals("2027-01", result.getData());
+        verify(baseMapper).update(any(ConfigSys.class), any(Wrapper.class));
+    }
 }

@@ -21,7 +21,7 @@
 2. **BUG-CF-UI-SIGN（P1）** — 已修；UI 正数 autofill/保存 PASS；历史负余额已 ABS remediation，YTD 销售 50,000 等为正
 3. **OBS-CARRY-STALE-POINTER** — 删除凭证时清理结转指针
 
-仍不满足文档「全通过」标准：专项 B 的 5.1 扩展/盘点清理、导出内容级细查未齐。专项 D 年末路径 PASS（见下；存在 BUG-TERM-CROSS-BOOK）。反结账/闭账期守卫与导出入口已点测。专项 C PASS；B 日记账/往来/固资/工资/报销核心路径 PASS。现金流量/间接法已点测，见 `ai-ui-indirect-cf-report.md`。
+仍不满足文档「全通过」标准：专项 B 的 5.1 扩展/盘点清理、导出内容级细查、现金流量 V04/2 月 CF 补全未齐。专项 B/C/D 核心路径与主账套两月闭环、守卫、间接法点测已完成。`BUG-TERM-CROSS-BOOK` 已修。
 
 ---
 

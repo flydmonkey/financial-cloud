@@ -228,10 +228,11 @@ async function snapshotGl(token) {
 }
 
 async function findCard(token, code) {
+  // Default list hides DISPOSED; includeDisposed so idempotent re-runs find cleaned cards.
   const cards = await api(
     token,
     'GET',
-    `/api/fixed-asset/card/fetch?pageNumber=1&pageSize=50&code=${encodeURIComponent(code)}`,
+    `/api/fixed-asset/card/fetch?pageNumber=1&pageSize=50&includeDisposed=true&code=${encodeURIComponent(code)}`,
   );
   return (cards.data?.records || []).find((c) => c.code === code) || null;
 }

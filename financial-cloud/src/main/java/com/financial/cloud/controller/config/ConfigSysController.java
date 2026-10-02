@@ -7,9 +7,13 @@ import com.financial.cloud.common.PageQuery;
 import com.financial.cloud.domain.config.ConfigSys;
 import com.financial.cloud.dto.common.ListIdsDto;
 import com.financial.cloud.domain.idm.UserInfo;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.service.config.ConfigSysService;
+import com.financial.cloud.service.permissions.PermissionBookService;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +26,7 @@ import java.util.List;
 public class ConfigSysController {
     private final BookOwnershipGuard bookOwnershipGuard;
     private final ConfigSysService configService;
+    private final PermissionBookService permissionBookService;
 
     /**
      * 获取账簿配置参数

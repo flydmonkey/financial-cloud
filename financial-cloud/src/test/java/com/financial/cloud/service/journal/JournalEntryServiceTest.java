@@ -414,6 +414,43 @@ class JournalEntryServiceTest {
     }
 
     @Test
+    void syncLinkedEntriesFromVoucher_mapsNegativeDebitToExpense() {
+        JournalEntry linked = baseEntry("e1", "acc1", "i", "100", null);
+        linked.setVoucherId("v-rev");
+        JournalEntry opening = baseEntry("e0", "acc1", "o", "500", null);
+        JournalAccount account = new JournalAccount();
+        account.setId("acc1");
+        account.setSubjectId("fund-sub");
+        when(journalAccountService.getById("acc1")).thenReturn(account);
+
+        // 1st list: linked for sync; later lists: balance rebuild (need opening cover expense)
+        doAnswer(inv -> List.of(linked))
+                .doAnswer(inv -> List.of(opening, linked))
+                .when(journalEntryService)
+                .list(org.mockito.ArgumentMatchers.<Wrapper<JournalEntry>>any());
+        doReturn(true).when(journalEntryService).updateById(any(JournalEntry.class));
+        when(journalAccountService.setBalance(eq("acc1"), any())).thenReturn(true);
+
+        com.financial.cloud.domain.voucher.VoucherItem fund = new com.financial.cloud.domain.voucher.VoucherItem();
+        fund.setSubjectId("fund-sub");
+        fund.setDebitAmount(new BigDecimal("-80"));
+        com.financial.cloud.domain.voucher.VoucherItem counter = new com.financial.cloud.domain.voucher.VoucherItem();
+        counter.setSubjectId("sub-counter-2");
+        counter.setCreditAmount(new BigDecimal("-80"));
+
+        journalEntryService.syncLinkedEntriesFromVoucher(
+                "v-rev", "book1", new Date(), "冲销回写", List.of(fund, counter));
+
+        ArgumentCaptor<JournalEntry> captor = ArgumentCaptor.forClass(JournalEntry.class);
+        verify(journalEntryService, org.mockito.Mockito.atLeastOnce()).updateById(captor.capture());
+        boolean synced = captor.getAllValues().stream().anyMatch(e ->
+                "e".equalsIgnoreCase(e.getDirection())
+                        && e.getExpenditure() != null
+                        && e.getExpenditure().compareTo(new BigDecimal("80")) == 0);
+        assertTrue(synced);
+    }
+
+    @Test
     void syncLinkedEntriesFromVoucher_rejectsMissingFundLine() {
         JournalEntry linked = baseEntry("e1", "acc1", "i", "100", null);
         linked.setVoucherId("v-1");

@@ -41,7 +41,119 @@ jobs:
       - name: Unit tests (voucher workspace)
         working-directory: financial-cloud-ui
         run: npm run test:unit
+      - name: AI UI regression scripts syntax check
+        working-directory: financial-cloud-ui
+        run: npm run test:ai-ui:scripts-check
 
+  # PR 上完整 e2e 曾被 if:push 跳过（省时）。这里开最小冒烟；完整套件仍仅 push→main。
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-check]
+    if: github.event_name == 'pull_request'
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/financial-cloud-ui/.playwright-browsers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: financial-cloud-ui/package.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Install frontend dependencies
+        working-directory: financial-cloud-ui
+        run: npm install
+      - name: Install Playwright
+        working-directory: financial-cloud-ui
+        run: npx playwright install chromium --with-deps
+      - name: Start MySQL
+        run: |
+          docker compose up -d mysql
+          npx --yes wait-on tcp:3307 --timeout 120000
+          for i in $(seq 1 30); do
+            if docker compose exec -T mysql mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; then
+              break
+            fi
+            sleep 2
+          done
+      - name: Install Python deps for E2E book reset
+        run: pip install pymysql
+      - name: Initialize database schema
+        run: python3 tools/run_init_sql.py
+      - name: Build backend
+        working-directory: financial-cloud
+        run: ./mvnw -B -DskipTests package
+      - name: Start backend
+        working-directory: financial-cloud
+        run: |
+          JAR=$(ls target/*.jar | grep -v '\.original$' | head -n1)
+          java -jar "$JAR" --server.port=2154 --financial-cloud.statement.balance-sheet.strict-trial-balance=false --financial-cloud.statement.income.strict-formula-validation=true --financial-cloud.statement.cash-flow.strict-reconciliation=true > ../backend-ci.log 2>&1 &
+          if ! npx --yes wait-on http://localhost:2154/api/login/get --timeout 300000; then
+            tail -n 200 ../backend-ci.log || true
+            exit 1
+          fi
+      - name: Start frontend
+        working-directory: financial-cloud-ui
+        run: |
+          npm run dev > ../frontend-ci.log 2>&1 &
+          if ! npx --yes wait-on http://localhost:3154/api/login/get --timeout 120000; then
+            tail -n 100 ../frontend-ci.log || true
+            exit 1
+          fi
+      - name: Smoke clear books + login
+        run: |
+          python3 tools/clear_books.py
+          python3 - <<'PY'
+          import json, urllib.request
+          def login(base):
+              init = json.load(urllib.request.urlopen(f"{base}/api/login/get?_allow_anonymous=true"))
+              state = init["data"]["state"]
+              req = urllib.request.Request(
+                  f"{base}/api/login/signin?_allow_anonymous=true",
+                  data=json.dumps({
+                      "username": "admin",
+                      "password": "changeme",
+                      "captcha": "",
+                      "state": state,
+                      "authType": "normal",
+                  }).encode(),
+                  headers={"Content-Type": "application/json"},
+                  method="POST",
+              )
+              body = json.load(urllib.request.urlopen(req))
+              assert body.get("code") == 0, body
+              print(f"login ok via {base}")
+          login("http://localhost:2154")
+          login("http://localhost:3154")
+          PY
+      - name: Run E2E smoke (opening-balance suite)
+        working-directory: financial-cloud-ui
+        run: npm run test:e2e:smoke
+        env:
+          E2E_BASE_URL: http://localhost:3154
+          E2E_API_URL: http://localhost:2154
+          E2E_RESET_BOOK: '1'
+      - name: AI UI CI subset (fixture-gated)
+        working-directory: financial-cloud-ui
+        run: |
+          # 空库无 AI-UI-20260930 夹具时跳过并写报告；有夹具则跑 section6+gaps+guards+export
+          AI_UI_REQUIRE_BOOKS=0 npm run test:ai-ui:ci-subset
+          if [ -f ../docs/testing/ai-ui-ci-subset-report.md ]; then
+            {
+              echo '## AI UI CI subset'
+              cat ../docs/testing/ai-ui-ci-subset-report.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          AI_UI_API: http://localhost:2154
+          AI_UI_BASE: http://localhost:3154
+          AI_UI_REQUIRE_BOOKS: '0'
+
+  # 完整 e2e：仅 push（含合入 main）。PR 上见 e2e-smoke。
   e2e:
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-check]
@@ -222,3 +334,17 @@ jobs:
           E2E_BASE_URL: http://localhost:3154
           E2E_API_URL: http://localhost:2154
           E2E_RESET_BOOK: '1'
+      - name: AI UI CI subset (fixture-gated)
+        working-directory: financial-cloud-ui
+        run: |
+          AI_UI_REQUIRE_BOOKS=0 npm run test:ai-ui:ci-subset
+          if [ -f ../docs/testing/ai-ui-ci-subset-report.md ]; then
+            {
+              echo '## AI UI CI subset'
+              cat ../docs/testing/ai-ui-ci-subset-report.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          AI_UI_API: http://localhost:2154
+          AI_UI_BASE: http://localhost:3154
+          AI_UI_REQUIRE_BOOKS: '0'

@@ -47,7 +47,10 @@ public enum BookBusinessExceptionEnum implements ErrorCode {
     SEALED_BOOK_DELETE(510019, MessageKeys.Book.SEALED_BOOK_DELETE),
 
     /** 有凭证等业务数据的账套不可硬删，应封存留存 */
-    BOOK_HAS_DATA_DELETE(510020, MessageKeys.Book.BOOK_HAS_DATA_DELETE);
+    BOOK_HAS_DATA_DELETE(510020, MessageKeys.Book.BOOK_HAS_DATA_DELETE),
+
+    /** 无 permission_book 授权时禁止切换/写入该账套 */
+    BOOK_ACCESS_DENIED(510021, MessageKeys.Book.BOOK_ACCESS_DENIED);
 
     private final int code;
     private final String messageKey;

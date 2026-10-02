@@ -33,6 +33,27 @@ class StatementCashFlowIndirectRulesTest {
         assertEquals(0, BigDecimal.ZERO.compareTo(changes.payableChangePeriod()));
     }
 
+    /**
+     * 经营性应收 = 应收账款 + 预付款项（小企业准则间接法口径）。
+     * 主账套 A 1 月：应收 20→50、预付 12→0 ⇒ 调整 −18,000（非仅应收 −30,000）。
+     * 对应 OBS-CF-AR-ADJ：测试提示简化预期与产品口径差异，非缺陷。
+     */
+    @Test
+    void operatingReceivable_includesPrepaid_explainsAiUiJanAdj() {
+        Map<String, StatementCashFlowIndirectRules.ReportLineBalance> janClose = Map.of(
+                StatementCashFlowIndirectRules.BS_ACCOUNTS_RECEIVABLE,
+                new StatementCashFlowIndirectRules.ReportLineBalance(bd("20000"), bd("50000")),
+                StatementCashFlowIndirectRules.BS_PREPAID,
+                new StatementCashFlowIndirectRules.ReportLineBalance(bd("12000"), bd("0")));
+
+        StatementCashFlowIndirectRules.WorkingCapitalChanges changes =
+                StatementCashFlowIndirectRules.computeWorkingCapitalChanges(janClose, janClose, true);
+
+        // (20k+12k) − (50k+0) = −18k
+        assertEquals(0, bd("-18000").compareTo(changes.receivableChangePeriod()));
+        assertEquals(0, bd("-18000").compareTo(changes.receivableChangeYear()));
+    }
+
     @Test
     void goldenDatasetPurchase_updatesInventoryAndKeepsReceivablePayableFlat() {
         Map<String, StatementCashFlowIndirectRules.ReportLineBalance> opening = Map.of(

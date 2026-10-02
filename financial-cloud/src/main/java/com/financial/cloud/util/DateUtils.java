@@ -1,12 +1,18 @@
 package com.financial.cloud.util;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import cn.hutool.core.date.DateUtil;
 
+/**
+ * Date helpers for bookkeeping. Formatting uses Asia/Shanghai so Instant/Date values
+ * deserialized with GMT+8 (e.g. voucherDate {@code 2026-01-01}) map to the accounting
+ * calendar month, not the JVM default (often UTC).
+ */
 public final class DateUtils {
 	public static final String FORMAT_DATE_DEFAULT = "yyyy-MM-dd";
 
@@ -15,6 +21,9 @@ public final class DateUtils {
 	public static final String FORMAT_DATE_YYYY_MM = "yyyy-MM";
 
 	public static final String FORMAT_DATE_YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH:mm:ss";
+
+	/** Book/account calendar zone — keep in sync with DTO {@code @JsonFormat(timezone = "GMT+8")}. */
+	public static final ZoneId ACCOUNTING_ZONE = ZoneId.of("Asia/Shanghai");
 
 	private DateUtils() {
 	}
@@ -49,7 +58,9 @@ public final class DateUtils {
 		if (date == null) {
 			return "";
 		}
-		return DateUtil.format(date, formatPattern);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatPattern)
+				.withZone(ACCOUNTING_ZONE);
+		return formatter.format(date.toInstant());
 	}
 
 	public static Date parse(String stringValue, String formatPattern) {

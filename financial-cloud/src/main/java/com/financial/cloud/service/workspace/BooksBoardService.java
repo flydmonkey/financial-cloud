@@ -154,11 +154,6 @@ public class BooksBoardService {
     }
 
     public boolean userHasBook(String userId, String bookId) {
-        if (StringUtils.isAnyBlank(userId, bookId)) {
-            return false;
-        }
-        return permissionBookService.count(new LambdaQueryWrapper<PermissionBook>()
-                .eq(PermissionBook::getUserId, userId)
-                .eq(PermissionBook::getBookId, bookId)) > 0;
+        return permissionBookService.userHasBook(userId, bookId);
     }
 }

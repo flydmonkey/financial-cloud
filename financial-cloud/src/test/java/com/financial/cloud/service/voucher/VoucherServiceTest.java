@@ -31,6 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -38,6 +40,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -73,6 +77,8 @@ class VoucherServiceTest {
     private VoucherItemCashFlowMapper voucherItemCashFlowMapper;
     @Mock
     private EmployeeSalarySummaryMapper employeeSalarySummaryMapper;
+    @Mock
+    private com.financial.cloud.repository.book.SettlementCarryforwardMapper settlementCarryforwardMapper;
     @Mock
     private VoucherMapper voucherMapper;
     @Mock
@@ -256,6 +262,43 @@ class VoucherServiceTest {
 
         assertNotEquals(Message.SUCCESS, result.getCode());
         assertTrue(result.getMessage().contains("已结账期间"));
+    }
+
+    /**
+     * BUG-TZ-DATE: Jackson GMT+8 midnight for open-term first day must not look like prior month under UTC JVM.
+     */
+    @Test
+    void rejectClosedPeriodWrite_allowsOpenTermFirstDayInShanghai() {
+        Date firstOfJan = Date.from(
+                LocalDate.of(2026, 1, 1).atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
+        VoucherChangeDto dto = validDraftDto();
+        dto.setVoucherDate(firstOfJan);
+        dto.setVoucherYear(2026);
+        dto.setVoucherMonth(1);
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2026-01");
+
+        Message<String> periodLock = ReflectionTestUtils.invokeMethod(
+                voucherService, "rejectClosedPeriodWrite", dto);
+
+        assertNull(periodLock);
+    }
+
+    @Test
+    void rejectClosedPeriodWrite_rejectsWhenCurrentTermAfterShanghaiFirstDay() {
+        Date firstOfJan = Date.from(
+                LocalDate.of(2026, 1, 1).atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
+        VoucherChangeDto dto = validDraftDto();
+        dto.setVoucherDate(firstOfJan);
+        dto.setVoucherYear(2026);
+        dto.setVoucherMonth(1);
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2026-02");
+
+        Message<String> periodLock = ReflectionTestUtils.invokeMethod(
+                voucherService, "rejectClosedPeriodWrite", dto);
+
+        assertNotNull(periodLock);
+        assertTrue(periodLock.getMessage().contains("已结账期间"));
+        assertTrue(periodLock.getMessage().contains("2026-02"));
     }
 
     @Test
@@ -474,7 +517,10 @@ class VoucherServiceTest {
                 dto.getItems().stream().allMatch(i ->
                         (i.getDebitAmount() == null || i.getDebitAmount().signum() <= 0)
                                 && (i.getCreditAmount() == null || i.getCreditAmount().signum() <= 0))
-                        && dto.getItems().stream().allMatch(i -> i.getSummary().startsWith("冲销："))));
+                        && dto.getItems().stream().allMatch(i -> i.getSummary().startsWith("冲销："))
+                        // 开放账期与系统日不同时，冲销日期钳到开放账期
+                        && TERM.equals(com.financial.cloud.util.DateUtils.format(
+                                dto.getVoucherDate(), com.financial.cloud.util.DateUtils.FORMAT_DATE_YYYY_MM))));
     }
 
     @Test

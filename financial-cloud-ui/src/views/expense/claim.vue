@@ -328,7 +328,9 @@
           <el-input
             v-model="form.summary"
             style="width: 300px"
-            placeholder="报销事由"
+            maxlength="64"
+            show-word-limit
+            placeholder="报销事由（凭证摘要最长 64 字）"
           />
         </el-form-item>
       </el-form>
@@ -384,7 +386,9 @@
           <template #default="scope">
             <el-input
               v-model="scope.row.summary"
-              placeholder="选填"
+              maxlength="64"
+              show-word-limit
+              placeholder="选填（最长 64 字）"
             />
           </template>
         </el-table-column>
@@ -448,6 +452,11 @@ import {
 } from '@/api/expense/expense'
 import bookStore from '@/store/modules/bookStore'
 import {openTablePrintWindow} from '@/utils/tablePrint'
+import {
+  SUMMARY_TRUNCATED_TIP,
+  VOUCHER_SUMMARY_MAX,
+  truncateVoucherSummary,
+} from '@/utils/voucherSummary'
 
 const router = useRouter()
 const {proxy} = getCurrentInstance() as any
@@ -612,6 +621,26 @@ function openForm(row?: any) {
 
 function handleSave() {
   const fundSubjectCode = lastOf(form.value.fundPath)
+  let summaryTruncated = false
+  const headerSummary = truncateVoucherSummary(form.value.summary)
+  if (headerSummary.truncated) {
+    form.value.summary = headerSummary.value
+    summaryTruncated = true
+  }
+  for (const line of form.value.lines) {
+    const lineSummary = truncateVoucherSummary(line.summary)
+    if (lineSummary.truncated) {
+      line.summary = lineSummary.value
+      summaryTruncated = true
+    }
+  }
+  // 后端生成凭证摘要为「费用报销 + 单号 + 报销人 + 事由」，超长会再截断至 64
+  const composedProbe = `费用报销 XX ${form.value.claimant || ''}${
+    form.value.summary ? ` ${form.value.summary}` : ''
+  }`
+  if (composedProbe.length > VOUCHER_SUMMARY_MAX) {
+    summaryTruncated = true
+  }
   const items = form.value.lines
     .filter((line: any) => lastOf(line.path))
     .map((line: any) => ({
@@ -636,6 +665,9 @@ function handleSave() {
     summary: form.value.summary,
     items
   }).then(() => {
+    if (summaryTruncated) {
+      proxy?.$modal?.msgWarning(SUMMARY_TRUNCATED_TIP)
+    }
     proxy?.$modal?.msgSuccess('已保存')
     formVisible.value = false
     getList()

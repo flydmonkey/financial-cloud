@@ -5,6 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 
 public final class SubjectDisplayNameUtils {
 
+    /** Matches {@code voucher_item.summary} column length (varchar(64)). */
+    public static final int VOUCHER_SUMMARY_MAX = 64;
+
     private SubjectDisplayNameUtils() {
     }
 
@@ -54,6 +57,16 @@ public final class SubjectDisplayNameUtils {
         if ("摘要".equals(normalized)) {
             return "";
         }
-        return normalized;
+        return truncateVoucherSummary(normalized);
+    }
+
+    /** Truncate to {@link #VOUCHER_SUMMARY_MAX} to avoid JDBC Data truncation on save. */
+    public static String truncateVoucherSummary(String summary) {
+        if (summary == null) {
+            return "";
+        }
+        return summary.length() <= VOUCHER_SUMMARY_MAX
+                ? summary
+                : summary.substring(0, VOUCHER_SUMMARY_MAX);
     }
 }

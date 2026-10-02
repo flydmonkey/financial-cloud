@@ -513,33 +513,17 @@ public class StatementReportService{
         BigDecimal yearBalanceBeginning = bookInitBalances.stream()
                 .map(BookInitBalance::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        //期末余额
-        BigDecimal endingBalance = BigDecimal.ZERO;
-        if (Boolean.FALSE.equals(isSameMonth)) {
-            endingBalance = Optional.ofNullable(
-                            settlementMapper.selectOne(Wrappers.<Settlement>lambdaQuery()
-                                    .eq(Settlement::getBookId, bookId)
-                                    .eq(Settlement::getYearPeriod, getPreviousMonth(reportDate)))
-                    ).map(Settlement::getEndingBalance)
-                    .orElse(BigDecimal.ZERO);
-
-        }
-
         BigDecimal amountTerm = yearBalanceBeginning;
         BigDecimal amountYear = yearBalanceBeginning;
         //如果为第一期，期初余额和年初余额从科目初始余额中获取
 
         if (Boolean.FALSE.equals(isSameMonth)) {
-            //如果不是第一期但是第一年，期初余额取上一期的期末余额，年初余额保存不变
-            amountTerm = endingBalance;
+            // 非首期：期初现金取上期现金流量表期末（实时重算），避免结账快照在补指定 CF 后仍过时
+            //（OBS-CF-BEGIN-CASH-FEB：settlement.ending_balance 冻结为结账时点值）
+            amountTerm = resolvePriorPeriodCashEnding(bookId, reportDate);
             if (Boolean.FALSE.equals(sameYear)) {
                 //既不是第一期也不是第一年,期初余额是上一月的期末金额，年初余额上一年的最后一期的期末金额
-                amountYear = Optional.ofNullable(
-                                settlementMapper.selectOne(Wrappers.<Settlement>lambdaQuery()
-                                        .eq(Settlement::getBookId, bookId)
-                                        .eq(Settlement::getYearPeriod, getLastMonthOfPreviousYear(reportDate)))
-                        ).map(Settlement::getEndingBalance)
-                        .orElse(BigDecimal.ZERO);
+                amountYear = resolveCashEndingForPeriod(bookId, getLastMonthOfPreviousYear(reportDate));
             }
         }
 
@@ -717,6 +701,33 @@ public class StatementReportService{
         }
 
         return cashFlowMap;
+    }
+
+    /**
+     * 上一期现金流量表期末现金：优先实时重算，结账快照仅作兜底。
+     * 避免补录/修正 CF 指定后仍沿用过期的 settlement.ending_balance。
+     */
+    private BigDecimal resolvePriorPeriodCashEnding(String bookId, String reportDate) {
+        return resolveCashEndingForPeriod(bookId, getPreviousMonth(reportDate));
+    }
+
+    private BigDecimal resolveCashEndingForPeriod(String bookId, String yearPeriod) {
+        StatementParamsDto priorDto = new StatementParamsDto();
+        priorDto.setBookId(bookId);
+        priorDto.setReportDate(yearPeriod);
+        priorDto.setPeriodType("month");
+        BigDecimal liveEnding = getEndingBalance(priorDto);
+        if (liveEnding != null) {
+            return liveEnding;
+        }
+        return Optional.ofNullable(
+                        settlementMapper.selectOne(Wrappers.<Settlement>lambdaQuery()
+                                .eq(Settlement::getBookId, bookId)
+                                .eq(Settlement::getYearPeriod, yearPeriod)
+                                .orderByDesc(Settlement::getCreatedDate)
+                                .last("LIMIT 1"))
+                ).map(Settlement::getEndingBalance)
+                .orElse(BigDecimal.ZERO);
     }
 
     private String getPreviousMonth(String reportDate) {

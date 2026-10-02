@@ -35,7 +35,10 @@ import com.financial.cloud.domain.security.ConfigPasswordPolicy;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.dto.idm.UserInfoPageDto;
 import com.financial.cloud.service.auth.LoginService;
+import com.financial.cloud.service.permissions.PermissionBookService;
 import com.financial.cloud.service.security.PasswordPolicyValidatorService;
+import com.financial.cloud.enums.error.BookBusinessExceptionEnum;
+import com.financial.cloud.exception.BusinessException;
 import com.financial.cloud.validation.AddGroup;
 import com.financial.cloud.validation.EditGroup;
 import com.financial.cloud.context.WebContext;
@@ -81,6 +84,8 @@ public class UserInfoController {
 	private final ConfigPasswordPolicyService configPasswordPolicyService;
 
 	private final SessionManager sessionManager;
+
+	private final PermissionBookService permissionBookService;
 
 	@GetMapping(value = { "/fetch" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<Page<UserInfo>> fetch(UserInfoPageDto dto, @CurrentUser UserInfo currentUser) {

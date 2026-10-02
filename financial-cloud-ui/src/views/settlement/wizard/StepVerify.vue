@@ -1,6 +1,7 @@
 <!-- 月结向导 · 步骤3 系统校验 -->
 <template>
   <div class="step-body">
+    <el-alert v-if="verifyError" type="error" :closable="false" show-icon :title="verifyError" style="margin-bottom: 12px" />
     <el-alert
       v-if="isVerify"
       type="success"
@@ -66,10 +67,16 @@
         </template>
       </el-table-column>
       <el-table-column
-        prop="reason"
         label="说明"
         min-width="180"
-      />
+      >
+        <template #default="scope">
+          <div>{{ scope.row.reason || (scope.row.applicable === false ? '本期不适用' : scope.row.result === true ? '检查通过' : '检查未通过') }}</div>
+          <p v-if="scope.row.applicable !== false && (scope.row.result === false || scope.row.warning)" class="processing-suggestion">
+            {{ closingCheckAction(scope.row.item).suggestion }}
+          </p>
+        </template>
+      </el-table-column>
       <el-table-column
         label="操作"
         width="100"
@@ -91,11 +98,13 @@
 
 <script lang="ts" setup>
 import { Select, CloseBold, WarningFilled } from '@element-plus/icons-vue'
+import { closingCheckAction } from '@/utils/accountingGuide'
 
 defineProps<{
   verifyRows: any[]
   isVerify: boolean
   loadingVerify: boolean
+  verifyError?: string
 }>()
 
 const emit = defineEmits<{
@@ -104,9 +113,8 @@ const emit = defineEmits<{
 
 function needsJump(row: any): boolean {
   if (row?.applicable === false) return false
-  if (row?.result === false) return true
-  if (row?.warning === true && row?.result === true) return false
-  return false
+  const action = closingCheckAction(String(row?.item || ''))
+  return (row?.result === false || row?.warning === true) && (action.step != null || !!action.path)
 }
 </script>
 
@@ -114,4 +122,5 @@ function needsJump(row: any): boolean {
 .step-body {
   margin-top: 16px;
 }
+.processing-suggestion { color: var(--el-text-color-secondary); font-size: 13px; margin: 6px 0 0; }
 </style>

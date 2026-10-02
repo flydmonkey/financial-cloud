@@ -57,7 +57,7 @@
       </div>
       <div
         class="todo-item"
-        @click="go('/settlement/settle-list')"
+        @click="go('/settlement/settle-period')"
       >
         <span class="label">月末结账</span>
         <span class="value">去结账 ›</span>

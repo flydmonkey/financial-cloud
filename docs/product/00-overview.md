@@ -1,5 +1,7 @@
 # 00 · 产品总览
 
+> 当前成熟度（2026-10-02）：主要功能已实现，正在进行稳定性与会计试用验收。自动测试通过不替代真实账期试用与人工签字。下一阶段优先账务可信和做账主流程，见 [操作手册](22-accountant-quick-start.md) 与 [独立验收包](../testing/accounting-acceptance.md)。
+
 > 现状基准文档 · 2026-09-29  
 > 代码证据：`financial-cloud` + `financial-cloud-ui` + `sql/financial_cloud_init.sql`
 

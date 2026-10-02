@@ -44,6 +44,8 @@
 |------|------|
 | [20-gap-analysis.md](20-gap-analysis.md) | 与 PRD 逐条对照 + P0/P1/P2 分级 |
 | [21-roadmap.md](21-roadmap.md) | 迭代建议，对齐 openspec 与 PRD V1.1～V1.3 |
+| [22-accountant-quick-start.md](22-accountant-quick-start.md) | 建账、导入、日常做账、月结与交付操作手册 |
+| [账务可信验收包](../testing/accounting-acceptance.md) | 独立手算案例、隔离验收命令、场景矩阵及人工签字表 |
 
 ## 状态标记约定
 

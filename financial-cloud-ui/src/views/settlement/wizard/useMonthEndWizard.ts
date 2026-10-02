@@ -6,6 +6,7 @@ import {
   getDepreciationStatus,
 } from '@/api/fixed-asset/depreciation'
 import bookStore from '@/store/modules/bookStore'
+import { closingCheckAction } from '@/utils/accountingGuide'
 
 export type WizardStep = 0 | 1 | 2 | 3 | 4
 
@@ -71,23 +72,7 @@ function carryDisplayName(code: string, rowName?: string | null): string {
 }
 
 export function jumpTargetForItem(item: string): WizardStep {
-  const text = String(item || '')
-  if (text.includes('未过账') || text.includes('未完成凭证')) {
-    return 1
-  }
-  if (text.includes('凭证号') || text.includes('断号') || text.includes('连续')) {
-    return 1
-  }
-  if (text.includes('借贷') || text.includes('借贷方') || text.includes('平衡')) {
-    return 1
-  }
-  if (text.includes('结转')) {
-    return 2
-  }
-  if (text.includes('折旧')) {
-    return 2
-  }
-  return 3
+  return closingCheckAction(item).step ?? 3
 }
 
 function currentTerm(): string {
@@ -210,10 +195,12 @@ export function useMonthEndWizard() {
   const deprAccrued = ref(false)
 
   const verifyRows = ref<any[]>([])
+  const verifyError = ref('')
   const isVerify = ref(false)
   const isCheckout = ref(false)
   const checkoutOk = ref(false)
   const checkoutError = ref('')
+  const closedTerm = ref('')
 
   const loadingStep1 = ref(false)
   const loadingStep2 = ref(false)
@@ -483,16 +470,20 @@ export function useMonthEndWizard() {
   async function runVerify(): Promise<void> {
     loadingVerify.value = true
     isVerify.value = false
+    verifyRows.value = []
+    verifyError.value = ''
     try {
       const res: any = await settlementApi.verify({ silentError: true })
-      verifyRows.value = res?.data || []
-      isVerify.value = res?.code === 0 && !hardFailed(verifyRows.value)
+      verifyRows.value = Array.isArray(res?.data) ? res.data : []
+      isVerify.value = res?.code === 0 && verifyRows.value.length > 0 && !hardFailed(verifyRows.value)
+      if (!verifyRows.value.length) verifyError.value = res?.code === 0 ? '未取得检查结果，请重新检查。' : res?.message || '未取得检查结果，请重新检查。'
       const deprItem = verifyRows.value.find((i: any) => i.item === '固定资产折旧')
       if (deprItem) {
         deprNeeded.value = deprItem.applicable !== false
       }
     } catch (err: any) {
-      verifyRows.value = err?.data || []
+      verifyRows.value = Array.isArray(err?.data) ? err.data : []
+      if (!verifyRows.value.length) verifyError.value = err?.message || '检查请求失败，请确认网络后重新检查。'
       isVerify.value = false
     } finally {
       loadingVerify.value = false
@@ -511,8 +502,13 @@ export function useMonthEndWizard() {
       const res: any = await settlementApi.checkout({ year, date: term })
       isCheckout.value = true
       if (res?.code === 0) {
+        closedTerm.value = term
         checkoutOk.value = true
-        bookStore().getBookItem()
+        try {
+          await bookStore().refreshData()
+        } catch {
+          checkoutError.value = '结账已成功，当前账期刷新失败，请刷新页面后继续。'
+        }
       } else {
         checkoutOk.value = false
         checkoutError.value = res?.message || ''
@@ -531,6 +527,9 @@ export function useMonthEndWizard() {
     isCheckout.value = false
     checkoutOk.value = false
     checkoutError.value = ''
+    isVerify.value = false
+    verifyRows.value = []
+    verifyError.value = ''
     active.value = 3
   }
 
@@ -543,10 +542,12 @@ export function useMonthEndWizard() {
     deprNeeded,
     deprAccrued,
     verifyRows,
+    verifyError,
     isVerify,
     isCheckout,
     checkoutOk,
     checkoutError,
+    closedTerm,
     loadingStep1,
     loadingStep2,
     loadingVerify,

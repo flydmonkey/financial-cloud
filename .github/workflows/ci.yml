@@ -51,6 +51,9 @@ jobs:
     needs: [backend-test, frontend-check]
     if: github.event_name == 'pull_request'
     env:
+      FC_DB_NAME: financial_cloud_e2e_ci_smoke
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3307/financial_cloud_e2e_ci_smoke?allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+      FINANCIAL_CLOUD_BACKUP_SCHEDULE_ENABLED: 'false'
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/financial-cloud-ui/.playwright-browsers
     steps:
       - uses: actions/checkout@v4
@@ -159,6 +162,9 @@ jobs:
     needs: [backend-test, frontend-check]
     if: github.event_name == 'push'
     env:
+      FC_DB_NAME: financial_cloud_e2e_ci_full
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3307/financial_cloud_e2e_ci_full?allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+      FINANCIAL_CLOUD_BACKUP_SCHEDULE_ENABLED: 'false'
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/financial-cloud-ui/.playwright-browsers
     steps:
       - uses: actions/checkout@v4
@@ -334,6 +340,20 @@ jobs:
           E2E_BASE_URL: http://localhost:3154
           E2E_API_URL: http://localhost:2154
           E2E_RESET_BOOK: '1'
+      - name: Run independent accounting acceptance (no skips or retries)
+        working-directory: financial-cloud-ui
+        run: npm run test:acceptance:accounting
+        env:
+          E2E_BASE_URL: http://localhost:3154
+          E2E_API_URL: http://localhost:2154
+          E2E_COMPONENT_BASE_URL: http://localhost:3154
+      - name: Save accounting acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accounting-acceptance
+          path: .e2e-run/accounting-acceptance/
+          if-no-files-found: warn
       - name: AI UI CI subset (fixture-gated)
         working-directory: financial-cloud-ui
         run: |

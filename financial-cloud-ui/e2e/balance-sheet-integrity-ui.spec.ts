@@ -8,6 +8,10 @@ if (process.env.E2E_COMPONENT_BASE_URL) {
 
 // Mount the actual report component against isolated responses; no financial data is written.
 test('balance sheet shows actual difference, prints warning and clears stale warnings', async ({page}) => {
+    const compiled = await page.request.get('/src/views/statement/balance-sheet.vue')
+    expect(compiled.ok()).toBeTruthy()
+    const routerModule = (await compiled.text()).match(/["']([^"']*vue-router\.js[^"']*)["']/)?.[1]
+    expect(routerModule).toBeTruthy()
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
     page.on('console', (message) => {
@@ -46,7 +50,7 @@ test('balance sheet shows actual difference, prints warning and clears stale war
         import books from '/src/store/modules/bookStore.ts';
         import i18n from '/src/languages/index.ts';
         import {useDict} from '/src/utils/Dict.ts';
-        import {createRouter, createMemoryHistory} from '/node_modules/.vite/deps/vue-router.js';
+        import {createRouter, createMemoryHistory} from '${routerModule}';
         import Report from '/src/views/statement/balance-sheet.vue';
         const book = books(store);
         Object.assign(book, {bookId: 'qa', termCurrent: '2026-08', termStart: '2026-01', setList: [{id: 'qa', companyName: '验收账套'}]});

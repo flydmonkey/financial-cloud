@@ -81,6 +81,7 @@
             :verify-rows="verifyRows"
             :is-verify="isVerify"
             :loading-verify="loadingVerify"
+            :verify-error="verifyError"
             @jump="onVerifyJump"
           />
           <StepCheckout
@@ -88,7 +89,10 @@
             :is-checkout="isCheckout"
             :checkout-ok="checkoutOk"
             :checkout-error="checkoutError"
+            :closed-term="closedTerm"
             @back-to-verify="backToVerify"
+            @review-reports="openClosedPeriod('/statement/balance-sheet')"
+            @deliver-books="openClosedPeriod('/settlement/settle-list', true)"
           />
 
           <div class="wizard-footer">
@@ -155,6 +159,8 @@
 import { computed, getCurrentInstance, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { TabsPaneContext } from 'element-plus'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { closingCheckAction } from '@/utils/accountingGuide'
 import bookStore from '@/store/modules/bookStore'
 import StepManual from './wizard/StepManual.vue'
 import StepVoucherPrep from './wizard/StepVoucherPrep.vue'
@@ -165,6 +171,7 @@ import { useMonthEndWizard, jumpTargetForItem } from './wizard/useMonthEndWizard
 
 const proxy: any = getCurrentInstance()!.proxy
 const currBookStore = bookStore()
+const router = useRouter()
 const currentTerm = computed(() => currBookStore.termCurrent)
 const activeName = ref('settle-period')
 const stepsDirection = ref<'horizontal' | 'vertical'>(
@@ -193,10 +200,12 @@ const {
   deprNeeded,
   deprAccrued,
   verifyRows,
+  verifyError,
   isVerify,
   isCheckout,
   checkoutOk,
   checkoutError,
+  closedTerm,
   loadingStep1,
   loadingStep2,
   loadingVerify,
@@ -378,12 +387,21 @@ async function onCheckout() {
 }
 
 function onVerifyJump(item: string) {
+  const action = closingCheckAction(item)
+  if (action.path) {
+    router.push(action.path)
+    return
+  }
   active.value = jumpTargetForItem(item)
   if (active.value === 1) {
     refreshStep1()
   } else if (active.value === 2) {
     refreshStep2()
   }
+}
+
+function openClosedPeriod(path: string, deliver = false) {
+  router.push({ path, query: { yearPeriod: closedTerm.value, ...(deliver ? { deliver: '1' } : {}) } })
 }
 
 function goCarryForward() {
@@ -403,6 +421,8 @@ onActivated(() => {
     refreshStep1()
   } else if (active.value === 2) {
     refreshStep2()
+  } else if (active.value === 3 && !isCheckout.value) {
+    runVerify()
   }
 })
 </script>

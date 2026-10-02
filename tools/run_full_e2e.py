@@ -13,6 +13,8 @@ if not env.get("FC_DB_NAME", "").startswith("financial_cloud_e2e_"):
 env["E2E_RESET_BOOK"] = "1"
 env["E2E_ENABLE_UI"] = "1"
 independent = [
+    "independent-accounting-reference.spec.ts",
+    "fixed-asset-accounting-reference.spec.ts",
     "04-balance-sheet-golden-dataset.spec.ts",
     "05-income-statement-golden-dataset.spec.ts",
     "carry-forward-year-end.spec.ts",

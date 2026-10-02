@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <AccountingGuide />
     <el-row :gutter="10">
       <el-col :span="24">
         <el-card class="quick-entry">
@@ -111,6 +112,7 @@ import {useRoute, useRouter} from "vue-router";
 import {EditPen, Tickets, Notebook, Wallet, DataAnalysis, TrendCharts, Checked, Ticket, Document, OfficeBuilding, Monitor} from '@element-plus/icons-vue'
 import Footer from "@/components/Footer/index.vue"
 import TodoPanel from "@/views/dashboard/accounting/TodoPanel.vue";
+import AccountingGuide from "@/views/dashboard/accounting/AccountingGuide.vue";
 import FundBalance from "@/views/dashboard/accounting/fund_balance.vue";
 import receivable from "@/views/dashboard/accounting/receivable.vue";
 import ExpectedAvailableFunds from "@/views/dashboard/accounting/expected_available_funds.vue";

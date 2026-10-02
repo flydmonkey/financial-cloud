@@ -158,7 +158,8 @@
 </template>
 
 <script lang="ts" setup>
-import {getCurrentInstance, ref, toRefs, reactive} from 'vue'
+import {getCurrentInstance, ref, toRefs, reactive, watch} from 'vue'
+import { previousYearPeriod, validYearPeriod } from '@/utils/accountingGuide'
 import type {TabsPaneContext} from 'element-plus'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {useRoute, useRouter} from "vue-router";
@@ -191,6 +192,7 @@ const booksPackForm = reactive({
 
 const activeName = ref('settle-list')
 const router: any = useRouter();
+const route = useRoute();
 
 const data = reactive({
   form: {} as Record<string, any>,
@@ -282,10 +284,18 @@ async function handleUncheckout(row: any) {
 }
 
 function openBooksPackDialog() {
-  booksPackForm.yearPeriod = String(currBookStore.termCurrent || currentTerm.value)
+  const previous = previousYearPeriod(currBookStore.termCurrent || currentTerm.value)
+  const start = validYearPeriod(currBookStore.termStart)
+  booksPackForm.yearPeriod = validYearPeriod(route.query.yearPeriod) || (start && previous < start ? '' : previous)
   booksPackForm.includeVoucherList = true
   booksPackDialogVisible.value = true
 }
+
+watch(() => [route.query.yearPeriod, route.query.deliver], ([term, deliver]) => {
+  if (route.path === '/settlement/settle-list' && deliver === '1' && validYearPeriod(term)) {
+    openBooksPackDialog()
+  }
+}, { immediate: true })
 
 async function exportBooksPack() {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(booksPackForm.yearPeriod)) {

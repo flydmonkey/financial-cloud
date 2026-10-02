@@ -141,6 +141,13 @@
         </el-button>
 
         <div class="btn-form-right">
+          <el-button
+            v-if="validYearPeriod(route.query.yearPeriod) && queryParams.periodType === 'month' && router.getRoutes().some(item => item.path === '/settlement/settle-list')"
+            type="primary"
+            @click="router.push({ path: '/settlement/settle-list', query: { yearPeriod: validYearPeriod(queryParams.date), deliver: '1' } })"
+          >
+            交付所选账期
+          </el-button>
           <el-button @click="handlePrint">
             打印
           </el-button>
@@ -589,7 +596,9 @@
 <script setup name="ReportBalanceSheet" lang="ts">
 import * as reportApis from "@/api/statement/statement";
 import {getCurrentQuarter, parseTime} from '@/utils/financialCloud'
-import {computed, getCurrentInstance, h, ref, shallowRef, reactive, toRefs, VNode, nextTick} from 'vue'
+import {computed, getCurrentInstance, h, ref, shallowRef, reactive, toRefs, VNode, nextTick, watch} from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { validYearPeriod } from '@/utils/accountingGuide'
 import {downloadData, formatAmount} from "@/utils";
 import booksSetStore from "@/store/modules/bookStore";
 import {ElForm, ElTable, FormInstance, TableColumnCtx} from "element-plus";
@@ -612,6 +621,8 @@ const {t} = useI18n()
 const {proxy} = getCurrentInstance()!;
 const {account_balance_type, period_type} = proxy?.useDict("account_balance_type", "period_type");
 const currBookStore = booksSetStore()
+const route = useRoute()
+const router = useRouter()
 const ableEdit = ref(false);
 const cascaderSubjectPropsCopy = ref<any>({...cascaderSubjectProps});
 cascaderSubjectPropsCopy.value.checkStrictly = true
@@ -659,9 +670,9 @@ const data = reactive({
   form: {...initFormData},
   queryParams: {
     periodType: 'month',
-    date: currBookStore.termCurrent,
+    date: validYearPeriod(route.query.yearPeriod) || currBookStore.termCurrent,
     reportQuarter: getCurrentQuarter(),
-    reportDate: currBookStore.termCurrent,
+    reportDate: validYearPeriod(route.query.yearPeriod) || currBookStore.termCurrent,
   },
   rules: {
     yearPeriod: [
@@ -973,6 +984,15 @@ function tableCellClassName({row, column, rowIndex, columnIndex}: any) {
 getSubjectList();
 
 getList();
+watch(() => route.query.yearPeriod, (value) => {
+  const term = validYearPeriod(value)
+  if (route.path === '/statement/balance-sheet' && term) {
+    queryParams.value.periodType = 'month'
+    queryParams.value.date = term
+    queryParams.value.reportDate = term
+    getList()
+  }
+})
 </script>
 
 <style lang="scss" scoped>

@@ -1,0 +1,40 @@
+{
+  "caseId": "ACCOUNTING-REFERENCE-01",
+  "standard": "小企业会计准则",
+  "startPeriod": "2025-11",
+  "opening": { "bank": 100000, "capital": 100000 },
+  "november": {
+    "events": [
+      { "id": "N01", "summary": "赊销收入（不含税的合成案例）", "debit": "receivable", "credit": "revenue", "amount": 20000 },
+      { "id": "N02", "summary": "收客户货款", "debit": "bank", "credit": "receivable", "amount": 12000, "cashFlow": "2-jy-sqxj" },
+      { "id": "N03", "summary": "赊购原材料", "debit": "inventory", "credit": "payable", "amount": 10000 },
+      { "id": "N04", "summary": "付供应商货款", "debit": "payable", "credit": "bank", "amount": 6000, "cashFlow": "6-jy-zfxj" },
+      { "id": "N05", "summary": "购买固定资产", "debit": "asset", "credit": "bank", "amount": 24000, "cashFlow": "19-tz-gzxj" },
+      { "id": "N06", "summary": "本期折旧", "debit": "expense", "credit": "depreciation", "amount": 1000 },
+      { "id": "N07", "summary": "计提工资", "debit": "expense", "credit": "salaryPayable", "amount": 3000 },
+      { "id": "N08", "summary": "发放工资", "debit": "salaryPayable", "credit": "bank", "amount": 3000, "cashFlow": "7-jy-zgzf" },
+      { "id": "N09", "summary": "管理费用支出", "debit": "expense", "credit": "bank", "amount": 2000, "cashFlow": "9-jy-zfqt" },
+      { "id": "N10", "summary": "确认材料销售成本", "debit": "cost", "credit": "inventory", "amount": 4000 }
+    ],
+    "expected": {
+      "bank": 77000, "receivable": 8000, "inventory": 6000, "asset": 24000,
+      "depreciation": -1000, "payable": -4000, "salaryPayable": 0,
+      "profit": 10000, "cumulativeProfit": 10000, "assetTotal": 114000,
+      "cashBeginning": 100000, "cashEnding": 77000, "operatingNet": 1000, "investingNet": -24000, "netIncrease": -23000
+    }
+  },
+  "correction": { "summary": "误计工资及全额红冲", "debit": "expense", "credit": "salaryPayable", "amount": 200, "expectedExpenseChange": 0, "expectedPayableChange": 0 },
+  "december": {
+    "events": [
+      { "id": "D01", "summary": "收回剩余应收", "debit": "bank", "credit": "receivable", "amount": 8000, "cashFlow": "2-jy-sqxj" },
+      { "id": "D02", "summary": "付清剩余应付", "debit": "payable", "credit": "bank", "amount": 4000, "cashFlow": "6-jy-zfxj" },
+      { "id": "D03", "summary": "管理费用支出", "debit": "expense", "credit": "bank", "amount": 1000, "cashFlow": "9-jy-zfqt" }
+    ],
+    "expected": {
+      "bank": 80000, "receivable": 0, "inventory": 6000, "asset": 24000,
+      "depreciation": -1000, "payable": 0, "salaryPayable": 0,
+      "profit": -1000, "cumulativeProfit": 9000, "assetTotal": 109000,
+      "cashBeginning": 77000, "cashEnding": 80000, "operatingNet": 3000, "investingNet": 0, "netIncrease": 3000
+    }
+  }
+}

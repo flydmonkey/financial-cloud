@@ -1,5 +1,11 @@
 import {expect, test} from '@playwright/test'
 
+// This source-component harness requires Vite; deployed application tests use
+// the production base URL independently.
+if (process.env.E2E_COMPONENT_BASE_URL) {
+    test.use({baseURL:process.env.E2E_COMPONENT_BASE_URL})
+}
+
 // Mount the actual report component against isolated responses; no financial data is written.
 test('balance sheet shows actual difference, prints warning and clears stale warnings', async ({page}) => {
     const errors: string[] = []

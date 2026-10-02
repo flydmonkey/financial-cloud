@@ -1,6 +1,9 @@
 """Fake records and read-only snapshots for isolated book-isolation acceptance tests."""
 import json
 import sys
+import base64
+import io
+import zipfile
 import pymysql
 from clear_books import HOST, PORT, USER, PASSWORD, DB
 
@@ -10,7 +13,16 @@ mode, book = sys.argv[1:3]
 connection = pymysql.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DB,
                              cursorclass=pymysql.cursors.DictCursor)
 with connection.cursor() as q:
-    if mode == 'snapshot':
+    if mode == 'empty-tax-import':
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as workbook:
+            workbook.writestr('[Content_Types].xml', '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')
+            workbook.writestr('_rels/.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>')
+            workbook.writestr('xl/workbook.xml', '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Empty import" sheetId="1" r:id="rId1"/></sheets></workbook>')
+            workbook.writestr('xl/_rels/workbook.xml.rels', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>')
+            workbook.writestr('xl/worksheets/sheet1.xml', '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Header</t></is></c></row></sheetData></worksheet>')
+        result = {'file': base64.b64encode(buffer.getvalue()).decode('ascii')}
+    elif mode == 'snapshot':
         q.execute("SELECT TABLE_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=%s AND COLUMN_NAME='book_id' ORDER BY TABLE_NAME", (DB,))
         tables = [r['TABLE_NAME'] for r in q.fetchall()]
         result = {}
@@ -49,7 +61,7 @@ with connection.cursor() as q:
         result['tax'] = prefix + '-tax'
         q.execute('INSERT INTO config_personal_tax(id,level,min_num,max_num,tax_rate,type) VALUES(%s,1,0,100,10,999)',(result['tax'],))
         q.execute('INSERT INTO employee_salary_temp(id,book_id,employee_id,belong_date,pay_basic) VALUES(%s,%s,%s,%s,1234)',(result['salaryTemp'],book,result['employee'],term))
-        q.execute("INSERT INTO employee_tax_deduction(id,book_id,employee_name,id_card_type,id_card_no,year_period,years,periods) VALUES(%s,%s,'Isolation fixture','audit',%s,%s,%s,%s)",(result['taxDeduction'],book,prefix,int(term.replace('-','')),int(term[:4]),int(term[5:7])))
+        q.execute("INSERT INTO employee_tax_deduction(id,book_id,employee_name,id_card_type,id_card_no,year_period,years,periods,deleted) VALUES(%s,%s,'Isolation fixture','audit',%s,%s,%s,%s,'n')",(result['taxDeduction'],book,prefix,int(term.replace('-','')),int(term[:4]),int(term[5:7])))
         q.execute('INSERT INTO journal_account(id,book_id,acc_name,acc_code,balance) VALUES(%s,%s,%s,%s,100)',(result['account'],book,'Isolation fixture',prefix))
         q.execute('INSERT INTO journal_entry(id,book_id,acc_id,remark,income,trade_date) VALUES(%s,%s,%s,%s,100,%s)',(result['entry'],book,result['account'],'Isolation fixture',term+'-01'))
         q.execute('INSERT INTO assist_acc(id,book_id,assist_type,assist_code,assist_name,created_by,created_date) VALUES(%s,%s,%s,%s,%s,%s,NOW())',(result['assist'],book,'1','audit','Isolation fixture','1'))

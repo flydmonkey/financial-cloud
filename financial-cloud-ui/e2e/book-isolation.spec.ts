@@ -178,6 +178,17 @@ test.describe.serial('全模块账套隔离', () => {
         }
         expect(fixture('snapshot',bookA)).toEqual(before)
     })
+    test('抵扣表真实 Excel 导入仅清理 A，只读用户导入不改变数据', async ({request}) => {
+        const upload = {excelFile:{name:'empty-deductions.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(fixture('empty-tax-import',bookA).file,'base64')}}
+        const before = fixture('snapshot',bookA)
+        const rejected = await (await request.post('/api/employee/taxdeduction/import',{headers:viewer,multipart:upload})).json()
+        expect(rejected.code).toBe(500014)
+        expect(fixture('snapshot',bookA)).toEqual(before)
+        const imported = await (await request.post('/api/employee/taxdeduction/import',{headers,multipart:upload})).json()
+        expect(imported.code,imported.message).toBe(0)
+        const rows = fixture('snapshot',bookA).employee_tax_deduction
+        expect(rows.find((row:any) => row.id === own.taxDeduction)?.deleted).toBe('y')
+    })
     test('撤销授权后原会话不能继续读取账套或刷新令牌', async ({request}) => {
         const revoked = await (await request.delete(`/api/book/members/revoke?bookId=${bookA}&userId=${viewerId}`,{headers})).json()
         expect(revoked.code,revoked.message).toBe(0)

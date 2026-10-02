@@ -76,3 +76,8 @@ sql/*.py
 
 # Playwright E2E local output (keep config/specs tracked)
 financial-cloud-ui/playwright-report/
+
+# Local acceptance runs, uploaded test data and recoverable session archives
+/.e2e-run/
+/.local-archive/
+/financial-cloud/data/

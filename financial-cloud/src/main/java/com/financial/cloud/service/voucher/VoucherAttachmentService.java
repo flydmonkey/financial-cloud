@@ -98,7 +98,8 @@ public class VoucherAttachmentService extends ServiceImpl<VoucherAttachmentMappe
         if (attachment == null || !bookId.equals(attachment.getBookId())) {
             throw new BusinessException(404, "附件不存在或无权访问");
         }
-        FileStorage storage = fileStorageService.getById(attachment.getFileId());
+        requireBookVoucher(attachment.getVoucherId(), bookId);
+        FileStorage storage = fileStorageService.requireReadable(attachment.getFileId());
         if (storage == null || storage.getDataStored() == null) {
             throw new BusinessException(404, "附件文件已丢失");
         }
@@ -114,6 +115,7 @@ public class VoucherAttachmentService extends ServiceImpl<VoucherAttachmentMappe
         Voucher voucher = requireBookVoucher(attachment.getVoucherId(), bookId);
         bookSealGuard.assertWritable(bookId);
         requireOpenPeriod(voucher);
+        fileStorageService.requireReadable(attachment.getFileId());
         removeById(attachmentId);
         fileStorageService.removeById(attachment.getFileId());
     }

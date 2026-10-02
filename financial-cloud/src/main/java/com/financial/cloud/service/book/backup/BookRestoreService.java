@@ -70,7 +70,8 @@ public class BookRestoreService {
     public record OverwriteResult(String bookId, String name, int tables, long rows, String preBackupFile) {
     }
 
-    private record ParsedBackup(JsonNode bookMeta, Map<String, List<Map<String, Object>>> tableRows) {
+    private record ParsedBackup(JsonNode bookMeta, Map<String, List<Map<String, Object>>> tableRows,
+                                Map<String, Map<String, Object>> files) {
     }
 
     /**
@@ -78,7 +79,8 @@ public class BookRestoreService {
      */
     @Transactional
     public RestoreResult restore(InputStream zipStream, UserInfo operator) {
-        ParsedBackup backup = parseAndValidate(zipStream);
+        bookService.requireBookAdministrator(operator, operator == null ? null : operator.getBookId());
+        ParsedBackup backup = parseAndValidate(zipStream, operator);
 
         Book book = createBookShell(backup.bookMeta());
         String newBookId = book.getId();
@@ -111,11 +113,13 @@ public class BookRestoreService {
             throw new BusinessException(400, "封存账套不可覆盖恢复，请先解除封存");
         }
 
-        ParsedBackup backup = parseAndValidate(zipStream);
+        ParsedBackup backup = parseAndValidate(zipStream, operator);
         String preBackupFile = writePreOverwriteBackup(targetBookId, operator);
 
         wipeBookBusinessData(targetBookId);
-        applyBookMeta(target, backup.bookMeta(), true);
+        // The destination's identity (including its name) survives overwrite.
+        // Copying the source name creates duplicate names with the still-existing source book.
+        applyBookMeta(target, backup.bookMeta(), false);
         bookMapper.updateById(target);
 
         long totalRows = insertRemappedTables(backup, targetBookId);
@@ -129,6 +133,15 @@ public class BookRestoreService {
 
     private long insertRemappedTables(ParsedBackup backup, String bookId) {
         Map<String, Map<String, String>> idMaps = new HashMap<>();
+        Map<String, String> fileIds = new HashMap<>();
+        // Never share physical file rows with the source book: attachment deletion must be local.
+        for (Map.Entry<String, Map<String, Object>> entry : backup.files().entrySet()) {
+            Map<String, Object> file = new LinkedHashMap<>(entry.getValue());
+            String id = identifierGenerator.nextId("file_storage").toString();
+            file.put("id", id);
+            insertRow("file_storage", file);
+            fileIds.put(entry.getKey(), id);
+        }
         long totalRows = 0;
         for (BackupTableSpec spec : BackupTableRegistry.SPECS) {
             List<Map<String, Object>> rows = backup.tableRows().getOrDefault(spec.table(), List.of());
@@ -143,6 +156,9 @@ public class BookRestoreService {
             }
             for (Map<String, Object> row : rows) {
                 rewriteRow(spec, row, bookId, idMaps);
+                if (isAttachment(spec.table())) {
+                    row.put("file_id", fileIds.get(String.valueOf(row.get("file_id"))));
+                }
                 insertRow(spec.table(), row);
                 totalRows++;
             }
@@ -183,7 +199,7 @@ public class BookRestoreService {
         }
     }
 
-    private ParsedBackup parseAndValidate(InputStream zipStream) {
+    private ParsedBackup parseAndValidate(InputStream zipStream, UserInfo operator) {
         Map<String, byte[]> entries = readZip(zipStream);
         byte[] manifestBytes = entries.get("manifest.json");
         if (manifestBytes == null) {
@@ -234,7 +250,33 @@ public class BookRestoreService {
         if (bookMeta.isMissingNode() || bookMeta.path("name").asText().isBlank()) {
             throw new BusinessException(400, "备份包缺少账套元信息");
         }
-        return new ParsedBackup(bookMeta, tableRows);
+        Map<String, Map<String, Object>> files = new LinkedHashMap<>();
+        for (String table : List.of("voucher_attachment", "expense_claim_attachment")) {
+            for (Map<String, Object> row : tableRows.get(table)) {
+                String fileId = String.valueOf(row.get("file_id"));
+                if (files.containsKey(fileId)) continue;
+                List<Map<String, Object>> owners = jdbcTemplate.queryForList(
+                        "SELECT book_id FROM voucher_attachment WHERE file_id=? UNION SELECT book_id FROM expense_claim_attachment WHERE file_id=?",
+                        fileId, fileId);
+                if (owners.isEmpty()) {
+                    throw new BusinessException(400, "备份附件缺少可验证的来源账套");
+                }
+                for (Map<String, Object> owner : owners) {
+                    bookService.requireBookAdministrator(operator, String.valueOf(owner.get("book_id")));
+                }
+                List<Map<String, Object>> stored = jdbcTemplate.queryForList(
+                        "SELECT * FROM file_storage WHERE id=?", fileId);
+                if (stored.size() != 1 || stored.get(0).get("data_stored") == null) {
+                    throw new BusinessException(400, "备份附件文件已丢失，无法恢复");
+                }
+                files.put(fileId, stored.get(0));
+            }
+        }
+        return new ParsedBackup(bookMeta, tableRows, files);
+    }
+
+    private static boolean isAttachment(String table) {
+        return "voucher_attachment".equals(table) || "expense_claim_attachment".equals(table);
     }
 
     private Map<String, byte[]> readZip(InputStream zipStream) {
@@ -293,7 +335,7 @@ public class BookRestoreService {
 
     private void rewriteRow(BackupTableSpec spec, Map<String, Object> row, String newBookId,
                             Map<String, Map<String, String>> idMaps) {
-        if (spec.scope() == BackupTableSpec.Scope.BOOK_ID && row.containsKey("book_id")) {
+        if (spec.scope() == BackupTableSpec.Scope.BOOK_ID) {
             row.put("book_id", newBookId);
         }
         for (String column : spec.nullOnRestore()) {
@@ -310,7 +352,9 @@ public class BookRestoreService {
             String mapped = refMap.get(String.valueOf(value));
             if (mapped == null) {
                 if (edge.keepOnMiss()) {
-                    // 哨兵值保留
+                    if (!"template".equals(String.valueOf(value))) {
+                        throw new BusinessException(400, "备份报表引用不属于包内数据或 template 哨兵");
+                    }
                 } else if (edge.soft()) {
                     row.put(edge.column(), null);
                 } else {

@@ -45,6 +45,7 @@ public class UserInfoExcelService  extends ServiceImpl<UserInfoMapper,UserInfo>{
     private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private final UserInfoService userInfoService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     private UserInfo buildFromSheetRow(Row row,UserInfo currentUser) {
 		UserInfo userInfo = new UserInfo();
@@ -145,7 +146,13 @@ public class UserInfoExcelService  extends ServiceImpl<UserInfoMapper,UserInfo>{
     	//判断导出模板还是导出用户还是template
 		List<UserInfo> users = null;
 		if (StringUtils.isNotEmpty(exportType) && "user".equalsIgnoreCase(exportType)) {
-			users = userInfoService.list();
+            var caller = com.financial.cloud.authn.support.AuthorizationUtils.getUserInfo();
+            bookOwnershipGuard.requireAdministrator(caller, caller == null ? null : caller.getBookId());
+            List<String> ids = jdbcTemplate.query(
+                    "SELECT DISTINCT user_id FROM permission_book WHERE book_id=? AND deleted='n'",
+                    (rs, index) -> rs.getString(1), caller.getBookId());
+            users = ids.isEmpty() ? List.of() : userInfoService.list(
+                    com.baomidou.mybatisplus.core.toolkit.Wrappers.<UserInfo>lambdaQuery().in(UserInfo::getId, ids));
 		}
 		Workbook workbook = null;
 		try {

@@ -97,7 +97,8 @@ public class ExpenseClaimAttachmentService {
         if (attachment == null || !bookId.equals(attachment.getBookId())) {
             throw new BusinessException(404, "附件不存在或无权访问");
         }
-        FileStorage storage = fileStorageService.getById(attachment.getFileId());
+        requireClaim(attachment.getClaimId(), bookId);
+        FileStorage storage = fileStorageService.requireReadable(attachment.getFileId());
         if (storage == null || storage.getDataStored() == null) {
             throw new BusinessException(404, "附件文件已丢失");
         }
@@ -115,6 +116,7 @@ public class ExpenseClaimAttachmentService {
                 && !ExpenseClaim.STATUS_REJECTED.equals(claim.getClaimStatus())) {
             throw new BusinessException(400, "仅暂存或已拒绝的报销单可删除票据");
         }
+        fileStorageService.requireReadable(attachment.getFileId());
         attachmentMapper.deleteById(attachmentId);
         fileStorageService.removeById(attachment.getFileId());
     }

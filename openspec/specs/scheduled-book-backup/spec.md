@@ -22,6 +22,7 @@ The system SHALL retain only the most recent N scheduled backup files per book (
 #### Scenario: Excess files pruned
 - **WHEN** a book already has more than N scheduled backup ZIPs after a new file is written
 - **THEN** the system SHALL delete the oldest excess files for that book until at most N remain
+- **AND** a different book's files SHALL remain untouched even when its display name contains the target book ID
 
 ### Requirement: Visibility and manual trigger
 The system SHALL allow an authorized instance administrator to view the schedule configuration summary (enabled flag, cron, directory, retain count, last run outcome) and to trigger one backup cycle immediately without changing the cron expression.
@@ -34,3 +35,9 @@ The system SHALL allow an authorized instance administrator to view the schedule
 - **WHEN** an authorized administrator requests an immediate scheduled-backup cycle
 - **THEN** the system SHALL run the same export-and-retain logic as the cron job
 - **AND** the last-run outcome SHALL be updated
+
+#### Scenario: Administrator of only part of the cycle
+- **WHEN** an administrator lacks administrator authorization for any enabled book in a manually requested cycle
+- **THEN** both global status access and manual cycle execution SHALL be denied
+- **AND** no book SHALL be exported and no backup file SHALL be written or pruned by that request
+- **AND** trusted cron execution SHALL continue to operate without an interactive user session

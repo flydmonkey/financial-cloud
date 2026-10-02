@@ -40,6 +40,12 @@ with connection.cursor() as q:
         result['global_tax'] = q.fetchall()
         q.execute('SELECT * FROM roles ORDER BY id')
         result['global_roles'] = q.fetchall()
+    elif mode == 'link-file':
+        attachment, file_id = sys.argv[3:5]
+        q.execute('UPDATE expense_claim_attachment SET file_id=%s WHERE id=%s AND book_id=%s', (file_id, attachment, book))
+        assert q.rowcount == 1
+        connection.commit()
+        result = {'updated': True}
     elif mode == 'link-entry':
         entry, account = sys.argv[3:5]
         q.execute('UPDATE journal_entry SET acc_id=%s WHERE id=%s AND book_id=%s',(account,entry,book))

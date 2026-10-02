@@ -322,6 +322,7 @@ public class UserInfoController {
 									@PathVariable("type") String type,
 									HttpServletResponse response,
 									@CurrentUser UserInfo currentUser)  {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
 		userInfo.setBookId(currentUser.getBookId());
 		userInfoExcelService.exportToExcel(type,userInfo,response);
 	}

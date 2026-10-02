@@ -35,6 +35,7 @@ public class ScheduledBookBackupService {
     private final BookBackupScheduleProperties properties;
     private final BookBackupService bookBackupService;
     private final BookMapper bookMapper;
+    private final com.financial.cloud.service.book.BookService bookService;
 
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicReference<LastRun> lastRun = new AtomicReference<>();
@@ -74,6 +75,30 @@ public class ScheduledBookBackupService {
      * @return true if this call acquired the lock and ran; false if skipped (already running)
      */
     public boolean runCycle(String trigger) {
+        return runCycle(trigger, activeBooks());
+    }
+
+    public ScheduleStatus statusForOperator(com.financial.cloud.domain.idm.UserInfo operator) {
+        authorizedBooks(operator);
+        return status();
+    }
+
+    public boolean runCycleForOperator(com.financial.cloud.domain.idm.UserInfo operator) {
+        return runCycle("manual", authorizedBooks(operator));
+    }
+
+    private List<Book> activeBooks() {
+        return bookMapper.selectList(Wrappers.<Book>lambdaQuery()
+                .eq(Book::getStatus, BookStatusEnum.ACTIVE.getValue()));
+    }
+
+    private List<Book> authorizedBooks(com.financial.cloud.domain.idm.UserInfo operator) {
+        List<Book> books = activeBooks();
+        for (Book book : books) bookService.requireBookAdministrator(operator, book.getId());
+        return books;
+    }
+
+    private boolean runCycle(String trigger, List<Book> books) {
         if (!running.compareAndSet(false, true)) {
             log.info("定时备份跳过：上一轮仍在执行（trigger={}）", trigger);
             return false;
@@ -84,8 +109,6 @@ public class ScheduledBookBackupService {
         String summary;
         try {
             Path dir = ensureDirectory();
-            List<Book> books = bookMapper.selectList(Wrappers.<Book>lambdaQuery()
-                    .eq(Book::getStatus, BookStatusEnum.ACTIVE.getValue()));
             attempted = books.size();
             for (Book book : books) {
                 try {
@@ -128,12 +151,13 @@ public class ScheduledBookBackupService {
     }
 
     void prune(Path dir, String bookId, int retainCount) throws IOException {
-        String marker = "-" + bookId + "-";
+        java.util.regex.Pattern marker = java.util.regex.Pattern.compile(
+                ".*-" + java.util.regex.Pattern.quote(bookId) + "-\\d{8}-\\d{6}\\.zip");
         List<Path> matches = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "scheduled-*.zip")) {
             for (Path p : stream) {
                 String name = p.getFileName().toString();
-                if (name.contains(marker)) {
+                if (marker.matcher(name).matches()) {
                     matches.add(p);
                 }
             }

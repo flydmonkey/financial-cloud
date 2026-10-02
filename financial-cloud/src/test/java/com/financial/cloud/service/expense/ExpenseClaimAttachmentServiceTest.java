@@ -27,6 +27,28 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ExpenseClaimAttachmentServiceTest {
 
+    @Test
+    void sharedForeignFileCannotBeDeletedThroughOwnedAttachment() {
+        var attachment = ExpenseClaimAttachment.builder().id("a-1").bookId(BOOK_ID).claimId("c-1").fileId("foreign-file").build();
+        when(attachmentMapper.selectById("a-1")).thenReturn(attachment);
+        when(expenseClaimMapper.selectById("c-1")).thenReturn(claim(ExpenseClaim.STATUS_DRAFT));
+        org.mockito.Mockito.doThrow(new BusinessException(403, "foreign file"))
+                .when(fileStorageService).requireReadable("foreign-file");
+        assertThrows(BusinessException.class, () -> service.deleteAttachment("a-1", BOOK_ID));
+        verify(attachmentMapper, never()).deleteById("a-1");
+        verify(fileStorageService, never()).removeById("foreign-file");
+    }
+
+    @Test
+    void ownedAttachmentCannotDownloadThroughForeignParent() {
+        var attachment = ExpenseClaimAttachment.builder().id("a-1").bookId(BOOK_ID).claimId("foreign-claim").fileId("foreign-file").build();
+        when(attachmentMapper.selectById("a-1")).thenReturn(attachment);
+        var foreign = claim(ExpenseClaim.STATUS_DRAFT); foreign.setBookId("B");
+        when(expenseClaimMapper.selectById("foreign-claim")).thenReturn(foreign);
+        assertThrows(BusinessException.class, () -> service.download("a-1", BOOK_ID));
+        verify(fileStorageService, never()).requireReadable(any());
+    }
+
     private static final String BOOK_ID = "book-test-1";
 
     @Mock

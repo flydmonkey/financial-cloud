@@ -27,6 +27,7 @@ public class MonthlyBooksPackController {
 
     private final MonthlyBooksPackService booksPackService;
     private final BooksBoardService booksBoardService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @GetMapping("/export")
     public void export(@RequestParam String yearPeriod,
@@ -54,7 +55,7 @@ public class MonthlyBooksPackController {
                 request.getYearPeriod(),
                 request.isIncludeVoucherList(),
                 userInfo.getId(),
-                id -> booksBoardService.userHasBook(userInfo.getId(), id));
+                id -> canExportBook(userInfo.getId(), id));
         writeZip(response, pack);
     }
 
@@ -62,10 +63,17 @@ public class MonthlyBooksPackController {
         if (StringUtils.isBlank(bookId)) {
             return userInfo.getBookId();
         }
-        if (!booksBoardService.userHasBook(userInfo.getId(), bookId.trim())) {
+        if (!canExportBook(userInfo.getId(), bookId.trim())) {
             throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
         }
         return bookId.trim();
+    }
+
+    private boolean canExportBook(String userId, String bookId) {
+        return booksBoardService.userHasBook(userId, bookId)
+                && jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM role_member WHERE member_id=? AND book_id=? AND type='USER' AND role_id IN (?,?,?)",
+                Long.class, userId, bookId, ProductRoles.ADMINISTRATORS, ProductRoles.BOOKKEEPER, ProductRoles.REVIEWER) > 0;
     }
 
     private static void requireExportRole() {

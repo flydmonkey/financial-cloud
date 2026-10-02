@@ -24,6 +24,8 @@ SKIP_TABLES = {
 
 
 def main() -> int:
+    if not DB.startswith("financial_cloud_e2e_"):
+        raise SystemExit("clear_books requires FC_DB_NAME=financial_cloud_e2e_<suffix>")
     conn = pymysql.connect(
         host=HOST,
         port=PORT,

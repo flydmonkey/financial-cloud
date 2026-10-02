@@ -12,6 +12,16 @@ test.describe.serial('全模块账套隔离', () => {
     let viewerToken: string
     const fixture = (mode: string, book: string, ...args: string[]) => JSON.parse(execFileSync(
         'python', ['tools/book_isolation_fixture.py', mode, book, ...args], {cwd:'..', encoding:'utf8'}))
+    const formats = (payload: any) => JSON.parse(execFileSync('python', ['tools/isolation_formats.py'], {
+        cwd:'..', encoding:'utf8', input:JSON.stringify(payload), maxBuffer:32*1024*1024,
+    }))
+    const businessSnapshot = (book: string) => {
+        const snapshot = fixture('snapshot',book)
+        // Successful backup operations append audit records; business data must remain unchanged.
+        for (const key of Object.keys(snapshot)) if (key.startsWith('history_') || key==='session_list' || key==='userinfo') delete snapshot[key]
+        return snapshot
+    }
+    const xlsx = (rows: any[][]) => ({excelFile:{name:'isolation.xlsx', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer:Buffer.from(formats({mode:'xlsx',rows}).file,'base64')}})
     const denied = async (request: APIRequestContext, method: 'get'|'post'|'put'|'delete', url: string, data?: any, auth = headers) => {
         const response = await request[method](url, {headers:auth, ...(data === undefined ? {} : {data})})
         const body = await response.json()
@@ -30,6 +40,16 @@ test.describe.serial('全模块账套隔离', () => {
         foreign = fixture('seed',bookB,term,`foreign-${Date.now()}`)
         expect((await (await request.get(`/api/users/switchBook/${bookB}`, {headers})).json()).code).toBe(0)
         foreign.voucher = await createDraftVoucher(request, headers, await buildBalancedVoucherPayload(request,headers,bookB,'B 隔离回归'))
+        const attachment = await (await request.post(`/api/voucher/attachment/upload?voucherId=${foreign.voucher}`, {
+            headers,multipart:{file:{name:'B-audit.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-B-isolation')}},
+        })).json()
+        expect(attachment.code,attachment.message).toBe(0)
+        foreign.voucherAttachment = attachment.data.id
+        foreign.username = `foreign_only_${Date.now()}`
+        expect((await (await request.post('/api/users/add',{headers,data:{username:foreign.username,password:'Audit@2026!',displayName:'B专用账号',userType:'EMPLOYEE',userState:'RESIDENT',status:1,sortIndex:99}})).json()).code).toBe(0)
+        const foreignUser = (await (await request.get(`/api/users/getByUsername/${foreign.username}`,{headers})).json()).data.id
+        foreign.user = foreignUser
+        expect((await (await request.post('/api/book/members/grant',{headers,data:{bookId:bookB,userId:foreignUser,roleId:'ROLE_VIEWER'}})).json()).code).toBe(0)
         expect((await (await request.get(`/api/users/switchBook/${bookA}`, {headers})).json()).code).toBe(0)
         own.voucher = await createDraftVoucher(request, headers, await buildBalancedVoucherPayload(request,headers,bookA,'A 隔离回归'))
         const username = `isolation_viewer_${Date.now()}`, password = 'Audit@2026!'
@@ -188,6 +208,162 @@ test.describe.serial('全模块账套隔离', () => {
         expect(imported.code,imported.message).toBe(0)
         const rows = fixture('snapshot',bookA).employee_tax_deduction
         expect(rows.find((row:any) => row.id === own.taxDeduction)?.deleted).toBe('y')
+    })
+    test('部门及用户真实 Excel 混合批量、外账套父节点整批拒绝', async ({request}) => {
+        const before = fixture('snapshot',bookA)
+        for (const rows of [
+            [['title'],['header'],['','',own.org,'A','must-not-change'],['','',foreign.org,'B','foreign']],
+            [['title'],['header'],[foreign.org,'',own.org,'A','foreign-parent']],
+        ]) {
+            const body = await (await request.post('/api/orgs/api/import',{headers,multipart:xlsx(rows)})).json()
+            expect(body.code,JSON.stringify(body)).toBe(500014)
+            expect(fixture('snapshot',bookA)).toEqual(before)
+        }
+        const importedUsers = await (await request.post('/api/users/api/import',{headers,multipart:xlsx([
+            ['title'],['header'],
+            [viewerId,'EMPLOYEE','','RESIDENT',`a_${Date.now()}`,'','1','must-not-change'],
+            [foreign.user,'EMPLOYEE','','RESIDENT',foreign.username,'','1','foreign'],
+        ])})).json()
+        expect(importedUsers.code,JSON.stringify(importedUsers)).toBe(500014)
+        expect(fixture('snapshot',bookA)).toEqual(before)
+    })
+    test('凭证、资产和期初真实 Excel 只读导入拒绝且没有部分写入', async ({request}) => {
+        const before = fixture('snapshot',bookA)
+        for (const root of ['/api/voucher','/api/fixed-asset/card','/api/base/init-balance']) {
+            const body = await (await request.post(`${root}/import`,{headers:viewer,multipart:xlsx([['header'],['foreign',foreign.subject]])})).json()
+            expect(body.code).toBe(500014)
+        }
+        expect(fixture('snapshot',bookA)).toEqual(before)
+    })
+    test('资产真实 Excel 混合类别只写入 A 有效行，B 类别不能被引用', async ({request}) => {
+        const prefix = `import-${Date.now()}`
+        const row = (code: string, category: string) => [code,'Isolation import',category,'','',`${term}-01`,'1','','','NONE','60','','0','100','0','0','0','0','1601','1602','','']
+        const body = await (await request.post('/api/fixed-asset/card/import',{headers,multipart:xlsx([
+            ['header'],row(prefix+'-valid',own.category.replace(/-category$/,'')),row(prefix+'-foreign',foreign.category.replace(/-category$/,'')),
+        ])})).json()
+        expect(body.code,JSON.stringify(body)).toBe(0)
+        expect(body.data.success).toBe(1)
+        expect(body.data.failed).toBe(1)
+        const rows = fixture('snapshot',bookA).fixed_asset
+        expect(rows.some((r:any)=>r.code===prefix+'-valid' && r.book_id===bookA && r.category_id===own.category)).toBe(true)
+        expect(rows.some((r:any)=>r.code===prefix+'-foreign')).toBe(false)
+    })
+    test('导出拒绝伪造账套参数，正常文件不包含 B 标记', async ({request}) => {
+        for (const url of ['/api/voucher/export','/api/fixed-asset/card/export','/api/base/init-balance/export']) {
+            await denied(request,'get',`${url}?bookId=${bookB}`)
+            const response = await request.get(url,{headers})
+            const file = await response.body()
+            expect(file.subarray(0,2).toString()).toBe('PK')
+            const entries = formats({mode:'inspect',file:file.toString('base64')})
+            expect(JSON.stringify(entries)).not.toContain(foreign.org)
+            expect(JSON.stringify(entries)).not.toContain(foreign.asset)
+            expect(JSON.stringify(entries)).not.toContain('B 隔离回归')
+        }
+        await denied(request,'get','/api/users/export/user',undefined,viewer)
+        const users = await request.get('/api/users/export/user',{headers})
+        const userFile = await users.body()
+        expect(userFile.subarray(0,2).toString()).toBe('PK')
+        const userEntries = JSON.stringify(formats({mode:'inspect',file:userFile.toString('base64')}))
+        expect(userEntries).not.toContain(foreign.username)
+        expect(userEntries).toContain('isolation_viewer_')
+    })
+    test('凭证及报销专用附件上传下载删除均校验账套', async ({request}) => {
+        const before = fixture('snapshot',bookA)
+        const file = {name:'audit.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-isolation-only')}
+        for (const [root,key,id] of [
+            ['/api/voucher/attachment','voucherId',foreign.voucher],
+            ['/api/expense/claim/attachment','claimId',foreign.expense],
+        ]) {
+            const upload = await (await request.post(`${root}/upload`,{headers,multipart:{file,[key]:id}})).json()
+            expect(upload.code).not.toBe(0)
+        }
+        await denied(request,'get',`/api/expense/claim/attachment/download/${foreign.attachment}`)
+        await denied(request,'delete',`/api/expense/claim/attachment/${foreign.attachment}`)
+        expect((await (await request.get(`/api/voucher/attachment/download/${foreign.voucherAttachment}`,{headers})).json()).code).not.toBe(0)
+        expect((await (await request.delete(`/api/voucher/attachment/${foreign.voucherAttachment}`,{headers})).json()).code).not.toBe(0)
+        const uploaded = await (await request.post(`/api/voucher/attachment/upload?voucherId=${own.voucher}`,{headers,multipart:{file}})).json()
+        expect(uploaded.code,uploaded.message).toBe(0)
+        const download = await request.get(`/api/voucher/attachment/download/${uploaded.data.id}`,{headers})
+        expect((await download.body()).toString()).toBe('%PDF-isolation-only')
+        expect((await (await request.delete(`/api/voucher/attachment/${uploaded.data.id}`,{headers})).json()).code).toBe(0)
+        // Attachment deletion is logical; compare B in afterEach and the A business parent explicitly.
+        expect(fixture('snapshot',bookA).voucher).toEqual(before.voucher)
+    })
+    test('存量附件错误引用 B 文件时，专用下载及删除不能绕过文件归属', async ({request}) => {
+        const before = businessSnapshot(bookA)
+        fixture('link-file',bookA,own.attachment,foreign.file)
+        try {
+            await denied(request,'get',`/api/expense/claim/attachment/download/${own.attachment}`)
+            await denied(request,'delete',`/api/expense/claim/attachment/${own.attachment}`)
+        } finally { fixture('link-file',bookA,own.attachment,own.file) }
+        expect(businessSnapshot(bookA)).toEqual(before)
+    })
+    test('仅管理 A 的用户不能触发全局备份、覆盖 B 或恢复篡改的 B 附件', async ({request}) => {
+        const username = `isolation_admin_${Date.now()}`, password = 'Audit@2026!'
+        expect((await (await request.post('/api/users/add',{headers,data:{username,password,displayName:'A管理员',userType:'EMPLOYEE',userState:'RESIDENT',status:1,sortIndex:99}})).json()).code).toBe(0)
+        const id = (await (await request.get(`/api/users/getByUsername/${username}`,{headers})).json()).data.id
+        expect((await (await request.post('/api/book/members/grant',{headers,data:{bookId:bookA,userId:id,roleId:'ROLE_ADMINISTRATORS'}})).json()).code).toBe(0)
+        const adminA = (await loginViaApiAs(request,username,password)).headers
+        const before = businessSnapshot(bookA)
+        await denied(request,'post','/api/book/backup/schedule/run',undefined,adminA)
+        await denied(request,'get','/api/book/backup/schedule/status',undefined,adminA)
+        await denied(request,'post',`/api/book/backup/export?bookId=${bookB}`,undefined,adminA)
+        const backup = await request.post(`/api/book/backup/export?bookId=${bookA}`,{headers:adminA})
+        const bytes = await backup.body()
+        expect(bytes.subarray(0,2).toString()).toBe('PK')
+        const entries = formats({mode:'inspect',file:bytes.toString('base64')})
+        expect(Object.keys(entries)).not.toContain('data/userinfo.jsonl')
+        expect(Object.keys(entries)).not.toContain('data/permission_book.jsonl')
+        for (const [name,content] of Object.entries(entries)) {
+            if (!name.endsWith('.jsonl')) continue
+            for (const line of String(content).split('\n').filter(Boolean)) {
+                const row = JSON.parse(line)
+                if (row.book_id !== undefined) expect(row.book_id).toBe(bookA)
+            }
+        }
+        const upload = {file:{name:'backup.zip',mimeType:'application/zip',buffer:bytes}}
+        const overwrite = await (await request.post(`/api/book/backup/restore-overwrite?bookId=${bookB}&confirmPhrase=${encodeURIComponent('覆盖恢复')}`,{headers:adminA,multipart:upload})).json()
+        expect(overwrite.code).toBe(500014)
+        const tampered = formats({mode:'tamper-file',file:bytes.toString('base64'),fileId:foreign.file})
+        const rejected = await (await request.post('/api/book/backup/restore',{headers:adminA,multipart:{file:{...upload.file,buffer:Buffer.from(tampered.file,'base64')}}})).json()
+        expect(rejected.code).toBe(500014)
+        expect(businessSnapshot(bookA)).toEqual(before)
+        const name = `导出权限-${Date.now()}`
+        expect((await (await request.post('/api/book/save',{headers,data:{name,companyName:name,standardId:'1',enableDate:term,vatType:1,voucherReviewed:1,status:1}})).json()).code).toBe(0)
+        const books = await (await request.get('/api/book/fetchAll',{headers})).json()
+        const target = books.data.find((row:any)=>row.name===name).id
+        expect((await (await request.post('/api/book/members/grant',{headers,data:{bookId:target,userId:id,roleId:'ROLE_VIEWER'}})).json()).code).toBe(0)
+        await denied(request,'get',`/api/statement/books-pack/export?yearPeriod=${term}&bookId=${target}`,undefined,adminA)
+        const batch = await request.post('/api/statement/books-pack/export-batch',{headers:adminA,data:{bookIds:[bookA,target,bookB],yearPeriod:term,includeVoucherList:false}})
+        const members = formats({mode:'inspect',file:(await batch.body()).toString('base64')})
+        expect(members['errors.txt']).toContain(target)
+        expect(members['errors.txt']).toContain(bookB)
+        expect(Object.keys(members).some(key=>key.endsWith('.zip'))).toBe(true)
+        expect(Object.keys(members).some(key=>key.includes(name))).toBe(false)
+    })
+    test('克隆恢复附件使用独立文件，删除克隆附件不会改变源账套', async ({request}) => {
+        const before = businessSnapshot(bookA)
+        const exported = await request.post(`/api/book/backup/export?bookId=${bookA}`,{headers})
+        const file = {name:'backup.zip',mimeType:'application/zip',buffer:await exported.body()}
+        const restored = await (await request.post('/api/book/backup/restore',{headers,multipart:{file}})).json()
+        expect(restored.code,JSON.stringify(restored)).toBe(0)
+        const clone = restored.data.bookId
+        const snapshot = fixture('snapshot',clone)
+        const attachment = snapshot.expense_claim_attachment.find((row:any)=>row.file_name==='isolation-fixture.txt')
+        expect(attachment.file_id).not.toBe(own.file)
+        expect(snapshot.linked_files.find((row:any)=>row.id===attachment.file_id).content).toBe(before.linked_files.find((row:any)=>row.id===own.file).content)
+        expect((await (await request.get(`/api/users/switchBook/${clone}`,{headers})).json()).code).toBe(0)
+        try {
+            expect((await (await request.delete(`/api/expense/claim/attachment/${attachment.id}`,{headers})).json()).code).toBe(0)
+            const overwrite = await (await request.post(`/api/book/backup/restore-overwrite?bookId=${clone}&confirmPhrase=${encodeURIComponent('覆盖恢复')}`,{headers,multipart:{file}})).json()
+            expect(overwrite.code,JSON.stringify(overwrite)).toBe(0)
+            expect(overwrite.data.name).toBe(restored.data.name)
+            expect(overwrite.data.preBackupFile).toContain('round2-backups')
+            const replaced = fixture('snapshot',clone).expense_claim_attachment.find((row:any)=>row.file_name==='isolation-fixture.txt')
+            expect(replaced.file_id).not.toBe(attachment.file_id)
+            expect(replaced.file_id).not.toBe(own.file)
+        } finally { await request.get(`/api/users/switchBook/${bookA}`,{headers}) }
+        expect(businessSnapshot(bookA)).toEqual(before)
     })
     test('撤销授权后原会话不能继续读取账套或刷新令牌', async ({request}) => {
         const revoked = await (await request.delete(`/api/book/members/revoke?bookId=${bookA}&userId=${viewerId}`,{headers})).json()

@@ -21,6 +21,7 @@ class ScheduledBookBackupServiceTest {
 
     @Mock private BookBackupService bookBackupService;
     @Mock private BookMapper bookMapper;
+    @Mock private com.financial.cloud.service.book.BookService bookService;
 
     @TempDir Path tempDir;
 
@@ -33,7 +34,7 @@ class ScheduledBookBackupServiceTest {
         properties.setEnabled(true);
         properties.setDirectory(tempDir.toString());
         properties.setRetainCount(2);
-        service = new ScheduledBookBackupService(properties, bookBackupService, bookMapper);
+        service = new ScheduledBookBackupService(properties, bookBackupService, bookMapper, bookService);
     }
 
     @Test
@@ -57,6 +58,35 @@ class ScheduledBookBackupServiceTest {
         assertThat(Files.exists(mid)).isTrue();
         assertThat(Files.exists(newest)).isTrue();
         assertThat(Files.exists(other)).isTrue();
+    }
+
+    @Test
+    void manualCycleRequiresEveryBookBeforeAnyExportOrFileWrite() throws Exception {
+        var operator = new com.financial.cloud.domain.idm.UserInfo();
+        var a = new com.financial.cloud.domain.book.Book(); a.setId("A");
+        var b = new com.financial.cloud.domain.book.Book(); b.setId("B");
+        when(bookMapper.selectList(org.mockito.ArgumentMatchers.any())).thenReturn(List.of(a, b));
+        org.mockito.Mockito.doNothing().when(bookService).requireBookAdministrator(operator, "A");
+        org.mockito.Mockito.doThrow(new com.financial.cloud.exception.BusinessException(403, "denied"))
+                .when(bookService).requireBookAdministrator(operator, "B");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.runCycleForOperator(operator))
+                .isInstanceOf(com.financial.cloud.exception.BusinessException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.statusForOperator(operator))
+                .isInstanceOf(com.financial.cloud.exception.BusinessException.class);
+        org.mockito.Mockito.verifyNoInteractions(bookBackupService);
+        try (var files = Files.list(tempDir)) { assertThat(files.count()).isZero(); }
+        assertThat(service.status().lastRun()).isNull();
+    }
+
+    @Test
+    void pruneDoesNotMatchBookIdInsideAnotherBookName() throws Exception {
+        Path own = tempDir.resolve("scheduled-own-book-a-20260101-010101.zip");
+        Path other = tempDir.resolve("scheduled-name-book-a-middle-book-b-20260101-010101.zip");
+        Files.write(own, new byte[]{1});
+        Files.write(other, new byte[]{2});
+        service.prune(tempDir, "book-a", 0);
+        assertThat(own).doesNotExist();
+        assertThat(other).exists();
     }
 
     @Test

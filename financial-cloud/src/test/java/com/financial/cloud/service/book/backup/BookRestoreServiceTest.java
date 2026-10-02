@@ -171,7 +171,7 @@ class BookRestoreServiceTest {
 
         assertThat(result.bookId()).isEqualTo("book-target");
         assertThat(result.preBackupFile()).contains("pre-overwrite-book-target-");
-        assertThat(result.name()).isEqualTo("示例账套");
+        assertThat(result.name()).isEqualTo("旧名");
         verify(jdbcTemplate, atLeastOnce()).update(org.mockito.ArgumentMatchers.contains("DELETE"), eq("book-target"));
         Map<String, List<Map<String, Object>>> inserted = captureInserts();
         assertThat(inserted.get("book_subject").get(0).get("book_id")).isEqualTo("book-target");
@@ -262,6 +262,67 @@ class BookRestoreServiceTest {
     }
 
     // ---------- 测试工具 ----------
+
+    @Test
+    void unknownReportReferenceCannotSurviveAsForeignId() {
+        Map<String, List<Map<String, Object>>> data = new LinkedHashMap<>();
+        addRow(data, "statement_income_item", orderedMap("id", "item", "book_id", "A", "income_id", "foreign-header"));
+        assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(buildZip(data, Map.of(), null)), operator()))
+                .hasMessageContaining("template 哨兵");
+    }
+
+    @Test
+    void missingBookColumnIsBoundToDestinationInsteadOfDatabaseDefault() {
+        Map<String, List<Map<String, Object>>> data = new LinkedHashMap<>();
+        addRow(data, "journal_account", orderedMap("id", "account"));
+        var restored = service.restore(new ByteArrayInputStream(buildZip(data, Map.of(), null)), operator());
+        assertThat(captureInserts().get("journal_account").get(0).get("book_id")).isEqualTo(restored.bookId());
+    }
+
+    @Test
+    void foreignAttachmentFileIsRejectedBeforeAnyWrites() {
+        Map<String, List<Map<String, Object>>> data = new LinkedHashMap<>();
+        addRow(data, "expense_claim_attachment", orderedMap("id", "att", "book_id", "A",
+                "claim_id", "claim", "file_id", "secret-B"));
+        when(jdbcTemplate.queryForList(anyString(), eq("secret-B"), eq("secret-B")))
+                .thenReturn(List.of(Map.of("book_id", "B")));
+        org.mockito.Mockito.doThrow(new BusinessException(403, "foreign file"))
+                .when(bookService).requireBookAdministrator(any(), eq("B"));
+        assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(buildZip(data, Map.of(), null)), operator()))
+                .hasMessageContaining("foreign file");
+        verify(bookMapper, never()).insert(any(Book.class));
+        org.mockito.Mockito.verifyNoInteractions(identifierGenerator);
+        verify(jdbcTemplate, never()).update(anyString(), any(Object[].class));
+    }
+
+    @Test
+    void restoredAttachmentsReceiveIndependentPhysicalFiles() {
+        Map<String, List<Map<String, Object>>> data = new LinkedHashMap<>();
+        addRow(data, "expense_claim", orderedMap("id", "claim", "book_id", "A"));
+        addRow(data, "expense_claim_attachment", orderedMap("id", "att", "book_id", "A",
+                "claim_id", "claim", "file_id", "file-A"));
+        when(jdbcTemplate.queryForList(anyString(), eq("file-A"), eq("file-A")))
+                .thenReturn(List.of(Map.of("book_id", "A")));
+        when(jdbcTemplate.queryForList("SELECT * FROM file_storage WHERE id=?", "file-A"))
+                .thenReturn(List.of(Map.of("id", "file-A", "data_stored", new byte[]{1,2,3})));
+        var result = service.restore(new ByteArrayInputStream(buildZip(data, Map.of(), null)), operator());
+        var inserted = captureInserts();
+        var file = inserted.get("file_storage").get(0);
+        var attachment = inserted.get("expense_claim_attachment").get(0);
+        assertThat(file.get("id")).isNotEqualTo("file-A");
+        assertThat(attachment.get("file_id")).isEqualTo(file.get("id"));
+        assertThat(attachment.get("book_id")).isEqualTo(result.bookId());
+        assertThat(attachment.get("claim_id")).isEqualTo(inserted.get("expense_claim").get(0).get("id"));
+    }
+
+    @Test
+    void missingAttachmentSourceIsRejectedBeforeCreatingBook() {
+        Map<String, List<Map<String, Object>>> data = new LinkedHashMap<>();
+        addRow(data, "voucher_attachment", orderedMap("id", "att", "book_id", "A", "file_id", "missing"));
+        assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(buildZip(data, Map.of(), null)), operator()))
+                .hasMessageContaining("来源账套");
+        verify(bookMapper, never()).insert(any(Book.class));
+    }
 
     private UserInfo operator() {
         UserInfo user = new UserInfo();

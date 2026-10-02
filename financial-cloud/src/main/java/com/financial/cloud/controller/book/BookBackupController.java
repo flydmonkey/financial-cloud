@@ -90,7 +90,7 @@ public class BookBackupController {
     @GetMapping("/schedule/status")
     public Message<Map<String, Object>> scheduleStatus(@CurrentUser UserInfo userInfo) {
         ProductRoles.requireAdministrator();
-        ScheduledBookBackupService.ScheduleStatus st = scheduledBookBackupService.status();
+        ScheduledBookBackupService.ScheduleStatus st = scheduledBookBackupService.statusForOperator(userInfo);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("enabled", st.enabled());
         body.put("cron", st.cron());
@@ -117,7 +117,7 @@ public class BookBackupController {
     @PostMapping("/schedule/run")
     public Message<Map<String, Object>> scheduleRun(@CurrentUser UserInfo userInfo) {
         ProductRoles.requireAdministrator();
-        boolean started = scheduledBookBackupService.runCycle("manual");
+        boolean started = scheduledBookBackupService.runCycleForOperator(userInfo);
         if (!started) {
             throw new BusinessException(409, "定时备份正在执行中，请稍后再试");
         }

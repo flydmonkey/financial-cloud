@@ -51,6 +51,16 @@ The system SHALL restore a validated backup as a NEW book (new `book_id`) for th
 - **WHEN** a clone restore completes
 - **THEN** no pre-existing book's rows SHALL have been modified or deleted
 
+#### Scenario: Attachment restoration uses independent files
+- **WHEN** a backup contains attachment file references available on the same instance
+- **THEN** the operator SHALL administer every source book associated with each referenced file before any restore writes
+- **AND** restored attachments SHALL reference independent copies of the file rows, so deleting restored attachments cannot change source files
+- **AND** missing files or unverifiable source ownership SHALL reject restoration; this format does not embed attachment binaries for transfer to another instance
+
+#### Scenario: Missing scope and unknown report references
+- **WHEN** an imported book-scoped row omits book_id or contains an unmapped report header reference
+- **THEN** book_id SHALL be bound to the destination and only the explicit template sentinel may survive without remapping
+
 ### Requirement: Overwrite restore with confirmation and pre-backup
 The system SHALL allow an authorized book administrator to restore a validated backup package into an existing target book, replacing that book's business data, only when an explicit confirmation phrase is provided. Before any destructive write, the system SHALL persist a pre-overwrite backup ZIP of the target book to the configured backup directory. The overwrite SHALL keep the target `book_id` and existing membership grants, remap all other primary keys like clone restore, run in a single transaction, and reject sealed books.
 
@@ -62,6 +72,7 @@ The system SHALL allow an authorized book administrator to restore a validated b
 - **WHEN** an authorized administrator requests overwrite restore with a valid package and confirmation phrase
 - **THEN** the system SHALL first write a pre-overwrite backup ZIP of the target book to disk
 - **AND** SHALL wipe and replace book-scoped business rows while keeping the target book id and memberships
+- **AND** SHALL preserve the target book name to avoid duplicating the source book's identity
 
 #### Scenario: Sealed book rejected
 - **WHEN** overwrite restore targets a sealed book

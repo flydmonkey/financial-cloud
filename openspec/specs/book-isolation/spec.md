@@ -45,3 +45,18 @@ Default voucher-template lists SHALL be scoped to the current book. Explicit sta
 #### Scenario: Read-only global configuration access
 - **WHEN** a viewer reads global tax rates or current-book formulas and attempts to modify them
 - **THEN** the read remains available and the write fails
+
+### Requirement: Import and export target boundaries
+Spreadsheet imports SHALL resolve business references within the authenticated book. ID-based imports SHALL validate all original and parent IDs before writes. User exports SHALL require current-book administration and include only users with active membership in that book. Explicit single and batch monthly book exports SHALL validate export roles for each target book, independently of the role in the current book.
+
+#### Scenario: Mixed department spreadsheet
+- **WHEN** A imports a workbook containing an A department and a B department or parent ID
+- **THEN** neither A nor B departments SHALL be changed
+
+#### Scenario: Administrator elsewhere but viewer on target
+- **WHEN** A's administrator requests a monthly book export for a book where the user is only a viewer
+- **THEN** that target SHALL not be exported, including in a batch ZIP
+
+#### Scenario: Stored attachment points to a foreign file
+- **WHEN** an A attachment references a file also associated with B
+- **THEN** dedicated attachment downloads and deletion SHALL enforce the same file ownership boundary as generic file APIs

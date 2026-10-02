@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value={"/api/permissions/permissionBook"})
 public class PermissionBookController {
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private final PermissionBookService permissionBookService;
 
@@ -49,6 +50,9 @@ public class PermissionBookController {
 	public Message<Page<Book>> userAccessBook(PermissionBookPageDto dto,
 													@CurrentUser UserInfo currentUser) {
 		log.debug("userAccessBook : {}",dto);
+		ProductRoles.requireAdministrator();
+        if (StringUtils.isBlank(dto.getBookId())) dto.setBookId(currentUser.getBookId());
+        bookOwnershipGuard.requireAdministrator(currentUser, dto.getBookId());
 		return Message.ok(permissionBookService.userAccessBook(dto.build(), dto));
 	}
 
@@ -56,6 +60,9 @@ public class PermissionBookController {
 	public Message<Page<Book>> userNotAccessBook(PermissionBookPageDto dto,
 													   @CurrentUser UserInfo currentUser) {
 		log.debug("userNotAccessBook : {}",dto);
+		ProductRoles.requireAdministrator();
+        if (StringUtils.isBlank(dto.getBookId())) dto.setBookId(currentUser.getBookId());
+        bookOwnershipGuard.requireAdministrator(currentUser, dto.getBookId());
 		return Message.ok(permissionBookService.userNotAccessBook(dto.build(), dto));
 	}
 	
@@ -66,6 +73,9 @@ public class PermissionBookController {
 	@PostMapping(value = {"/add"})
 	@Transactional
 	public Message<PermissionBook> add(@Validated @RequestBody PermissionBookDto dto,@CurrentUser UserInfo currentUser) {
+		for (String bookId : dto.bookIds()) {
+			bookOwnershipGuard.requireAdministrator(currentUser, bookId);
+		}
 		if (!ProductRoles.isProductRoleId(dto.roleId())) {
 			throw new BusinessException(UsersBusinessCode.ROLE_REQUIRED);
 		}
@@ -95,6 +105,12 @@ public class PermissionBookController {
 	public Message<RoleMember> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
 		log.debug("-delete ids : {}" , ids);
 		List<PermissionBook> books = permissionBookService.listByIds(ids);
+		if (books.size() != ids.stream().distinct().count()) {
+			throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
+		}
+		for (PermissionBook book : books) {
+			bookOwnershipGuard.requireAdministrator(currentUser, book.getBookId());
+		}
 		if (permissionBookService.removeBatchByIds(ids)) {
 			for (PermissionBook book : books) {
 				roleMemberService.remove(new LambdaQueryWrapper<RoleMember>()

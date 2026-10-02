@@ -49,7 +49,7 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
 
     private final BookSubjectService bookSubjectService;
     public Message<Page<VoucherTemplate>> pageList(VoucherTemplatePageDto dto) {
-        if (StringUtils.isNotBlank(dto.getRelatedId())) {
+        if (mayRematchCurrentBook(dto.getRelatedId())) {
             rematchSalaryAccrualParentSubjects(dto.getRelatedId());
         }
         Page<VoucherTemplate> page = voucherTemplateMapper.pageList(dto.build(), dto);
@@ -154,7 +154,9 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
     		 return Message.ok(null);
     	 }
     	 // 账套内计提工资模板：父级科目改写为可入账末级，避免规则页只显示编码
-    	 rematchSalaryAccrualParentSubjects(voucherTemplate.getRelatedId());
+         if (mayRematchCurrentBook(voucherTemplate.getRelatedId())) {
+             rematchSalaryAccrualParentSubjects(voucherTemplate.getRelatedId());
+         }
     	 voucherTemplate = voucherTemplateMapper.selectById(id);
 
     	 LambdaQueryWrapper<VoucherTemplateItem> lqw = Wrappers.lambdaQuery();
@@ -167,6 +169,11 @@ public class VoucherTemplateService extends ServiceImpl<VoucherTemplateMapper, V
          voucherTemplate.setItems(items);
 		return Message.ok(voucherTemplate);
 	}
+    private boolean mayRematchCurrentBook(String bookId) {
+        com.financial.cloud.domain.idm.UserInfo user = com.financial.cloud.authn.support.AuthorizationUtils.getUserInfo();
+        return user != null && Objects.equals(user.getBookId(), bookId)
+                && com.financial.cloud.constants.auth.ProductRoles.canWriteBusiness();
+    }
 	public boolean deleteByBookIds(List<String> bookIds) {
 		LambdaQueryWrapper<VoucherTemplate> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(VoucherTemplate::getRelatedId, bookIds);

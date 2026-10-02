@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.book;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.ExcelImport;
@@ -25,11 +26,13 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class BookInitBalanceController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final BookInitBalanceService bookInitBalanceService;
 
     @GetMapping(value = {"/list"})
     public Message<List<BookInitBalanceVo>> fetch(BookInitBalancePageDto dto,
                                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("book_init_balance", dto);
         dto.setBookId(userInfo.getBookId());
         if (StringUtils.isBlank(dto.getBookId())) {
             return Message.failed("所属账套ID不能为空");
@@ -40,6 +43,7 @@ public class BookInitBalanceController {
     @PostMapping("/save")
     public Message<String> save(@Validated @RequestBody List<BookInitBalanceChangeDto> dtos,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("book_init_balance", dtos);
         for (BookInitBalanceChangeDto dto : dtos) {
             dto.setBookId(userInfo.getBookId());
         }
@@ -50,6 +54,7 @@ public class BookInitBalanceController {
     public void export(BookInitBalancePageDto dto,
                        @CurrentUser UserInfo userInfo,
                        HttpServletResponse response) throws IOException {
+        bookOwnershipGuard.checkRequest("book_init_balance", dto);
         dto.setBookId(userInfo.getBookId());
         bookInitBalanceService.export(dto, response);
     }

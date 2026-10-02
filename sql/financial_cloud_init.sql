@@ -4438,4 +4438,9 @@ WHERE id IN (
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+-- Small-enterprise R&D is 4301, not non-operating income 5301.
+UPDATE standard_statement_rules SET subject_code = '4301'
+WHERE standard_id = '1' AND type = 'balance_sheet'
+  AND item_code = '1211' AND subject_code = '5301';
+
 -- Default admin: username=admin password=changeme (change after first login)

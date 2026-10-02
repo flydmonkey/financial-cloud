@@ -5,7 +5,7 @@ import {
     assertIncomeCarryReconciliation,
     assertIncomeFormulaChain,
     assertIncomeGoldenLines,
-    assertReportsBalanced,
+    assertReportsReconciled,
     computeCarryNetFromSubjectBalances,
     fetchIncomeStatement,
     fetchIncomeStatementResult,
@@ -110,7 +110,7 @@ test.describe.serial('income statement golden dataset', () => {
             )
         }
 
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('IS-G01: formula chain and config rules reconciliation', async ({request}) => {

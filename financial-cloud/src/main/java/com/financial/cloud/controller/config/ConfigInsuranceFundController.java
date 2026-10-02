@@ -1,6 +1,7 @@
 package com.financial.cloud.controller.config;
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/config/insurance_fund")
 @Slf4j
 public class ConfigInsuranceFundController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final ConfigInsuranceFundService configInsuranceFundService;
 
@@ -27,6 +29,8 @@ public class ConfigInsuranceFundController {
     @PutMapping("/updateCurrent")
     public Message<String> updateCurrent(@RequestBody ConfigInsuranceFund configInsuranceFund,
                                          @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("config_insurance_fund", configInsuranceFund);
         configInsuranceFund.setBookId(currentUser.getBookId());
         log.debug("update {} ",configInsuranceFund);
         if(configInsuranceFundService.saveOrUpdate(configInsuranceFund)) {

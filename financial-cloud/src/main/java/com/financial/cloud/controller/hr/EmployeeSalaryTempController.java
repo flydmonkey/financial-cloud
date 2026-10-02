@@ -1,6 +1,7 @@
 package com.financial.cloud.controller.hr;
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
@@ -22,11 +23,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/salary/detail")
 @Slf4j
 public class EmployeeSalaryTempController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final EmployeeSalaryTempService jbxSalaryDetailService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<EmployeeSalaryTemp>> fetch(SalaryDetailPageDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary_temp", dto);
         dto.setBookId(currentUser.getBookId());
         log.debug("fetch {}", dto);
         return jbxSalaryDetailService.pageList(dto);
@@ -34,18 +37,21 @@ public class EmployeeSalaryTempController {
 
     @PostMapping("/createTable")
     public Message<String> createTable(@Validated @RequestBody CreateSalaryTableDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary_temp", dto);
         dto.setBookId(currentUser.getBookId());
         return jbxSalaryDetailService.createTable(dto);
     }
 
     @GetMapping("/get/{id}")
     public Message<EmployeeSalaryTemp> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("employee_salary_temp", "id", id);
         return Message.ok(jbxSalaryDetailService.getById(id));
     }
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody SalaryDetailChangeDto dto,
                                   @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary_temp", dto);
         dto.setBookId(currentUser.getBookId());
         log.debug("-update  {}", dto);
         return jbxSalaryDetailService.update(dto);
@@ -61,11 +67,13 @@ public class EmployeeSalaryTempController {
 
     @GetMapping("/re-calculate")
     public Message<EmployeeSalaryTemp> reCalculate(EmployeeSalaryTemp employeeSalaryTemp) {
+        bookOwnershipGuard.checkRequest("employee_salary_temp", employeeSalaryTemp);
         return jbxSalaryDetailService.reCalculate(employeeSalaryTemp);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("employee_salary_temp", dto);
         return jbxSalaryDetailService.delete(dto);
     }
 }

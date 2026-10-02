@@ -434,7 +434,12 @@ public class SettlementService extends ServiceImpl<SettlementMapper, Settlement>
 					.findFirst()
 					.orElse(null);
 			if (template != null && doneTemplateIds.contains(template.getId())) {
-				list.add(SettlementVerifyVo.hardPass(checkIndex++, label));
+				if (settlementCarryService.hasPnlCarrySourceBalance(bookId, code)) {
+					list.add(SettlementVerifyVo.hardFail(checkIndex++, label,
+							"结转后仍有科目余额，请补充结转并过账"));
+				} else {
+					list.add(SettlementVerifyVo.hardPass(checkIndex++, label));
+				}
 			} else if (MonthEndCloseRules.isDecemberYearProfitCode(code)) {
 				if (!settlementCarryService.hasPnlCarrySourceBalance(bookId, code)) {
 					list.add(SettlementVerifyVo.hardNa(checkIndex++, label, "本年利润无余额，无需结转"));

@@ -119,7 +119,7 @@ def main() -> None:
         port=int(os.environ.get("FC_DB_PORT", "3307")),
         user="financial_cloud",
         password="FinancialCloud321!",
-        database="financial_cloud",
+        database=os.environ.get("FC_DB_NAME", "financial_cloud"),
         charset="utf8mb4",
         autocommit=False,
     )

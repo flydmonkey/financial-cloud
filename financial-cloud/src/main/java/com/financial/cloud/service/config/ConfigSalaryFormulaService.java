@@ -45,6 +45,7 @@ public class ConfigSalaryFormulaService extends ServiceImpl<ConfigSalaryFormulaM
     }
     public Message<Page<ConfigSalaryFormula>> pageList(ConfigSalaryFormulaPageDto dto) {
         LambdaQueryWrapper<ConfigSalaryFormula> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ConfigSalaryFormula::getBookId, dto.getBookId());
         if (StringUtils.isNotEmpty(dto.getRuleName())) {
             wrapper.like(ConfigSalaryFormula::getRuleName, dto.getRuleName());
         }
@@ -91,6 +92,7 @@ public class ConfigSalaryFormulaService extends ServiceImpl<ConfigSalaryFormulaM
      */
     private void checkRuleName(ConfigSalaryFormulaChangeDto dto, boolean isEdit) {
         LambdaQueryWrapper<ConfigSalaryFormula> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ConfigSalaryFormula::getBookId, dto.getBookId());
         wrapper.eq(ConfigSalaryFormula::getRuleName, dto.getRuleName());
         if (isEdit) {
             wrapper.ne(ConfigSalaryFormula::getId, dto.getId());

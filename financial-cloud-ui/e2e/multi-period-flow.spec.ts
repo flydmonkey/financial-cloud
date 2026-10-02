@@ -9,6 +9,7 @@ import {
 import {
     assertCashFlowReconciliation,
     assertReportsBalanced,
+    assertReportsReconciled,
     fetchBalanceSheet,
     fetchCashFlowStatement,
     fetchSubjectBalances,
@@ -100,7 +101,7 @@ test.describe.serial('multi-period accounting flow', () => {
 
         await fixVoucherNumbering(request, ctx.headers)
         await verifySettlement(request, ctx.headers, {bookId: ctx.bookId})
-        await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
+        await assertReportsReconciled(request, ctx.headers, ctx.period1Term)
 
         ctx.period1Income = await getIncomeNetProfit(request, ctx.headers, ctx.period1Term)
         ctx.period1Balance = await getBalanceSheetTotals(request, ctx.headers, ctx.period1Term)
@@ -175,7 +176,7 @@ test.describe.serial('multi-period accounting flow', () => {
             )
         }
 
-        await assertReportsBalanced(request, ctx.headers, ctx.period2Term)
+        await assertReportsReconciled(request, ctx.headers, ctx.period2Term)
     })
 
     test('CF-M02: period 2 inventory indirect uses prior month closing as opening', async ({request}) => {
@@ -228,10 +229,6 @@ test.describe.serial('multi-period accounting flow', () => {
         })
 
         await assertReportsBalanced(request, ctx.headers, ctx.period1Term)
-        await assertReportsBalanced(request, ctx.headers, ctx.period2Term)
-
-        if (ctx.period1Balance.assetTotal != null && period2Balance.assetTotal != null) {
-            expect(Math.abs(period2Balance.assetTotal! - period2Balance.liabilityTotal!)).toBeLessThanOrEqual(0.01)
-        }
+        await assertReportsReconciled(request, ctx.headers, ctx.period2Term)
     })
 })

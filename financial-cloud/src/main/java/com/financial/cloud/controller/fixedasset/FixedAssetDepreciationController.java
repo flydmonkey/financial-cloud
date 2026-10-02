@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.fixedasset;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -21,6 +22,7 @@ import java.util.Map;
 @RequestMapping("/api/fixed-asset/depreciation")
 @RequiredArgsConstructor
 public class FixedAssetDepreciationController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final FixedAssetDepreciationService depreciationService;
 
@@ -42,6 +44,7 @@ public class FixedAssetDepreciationController {
     @PutMapping("/params")
     public Message<FixedAssetDepreciationParamsDto> saveParams(@RequestBody FixedAssetDepreciationParamsDto dto,
                                                               @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("fixed_asset_work", dto);
         ProductRoles.requireWriteBusiness();
         return depreciationService.saveParams(userInfo.getBookId(), dto);
     }
@@ -56,6 +59,7 @@ public class FixedAssetDepreciationController {
     public Message<String> saveWork(@RequestParam(required = false) String yearPeriod,
                                     @RequestBody List<FixedAssetWorkItemDto> items,
                                     @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("fixed_asset_work", items);
         ProductRoles.requireWriteBusiness();
         return depreciationService.saveWork(userInfo.getBookId(), yearPeriod, items);
     }
@@ -63,6 +67,7 @@ public class FixedAssetDepreciationController {
     @PostMapping("/accrue")
     public Message<FixedAssetAccrueResultVo> accrue(@RequestBody(required = false) FixedAssetAccrueDto dto,
                                                     @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("fixed_asset_work", dto);
         ProductRoles.requireWriteBusiness();
         return depreciationService.accrue(userInfo.getBookId(), dto);
     }

@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.book;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
@@ -23,11 +24,13 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class AssistAccController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final AssistAccService assistAccService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<AssistAccVo>> fetch(AssistAccPageDto dto,
                                             @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("assist_acc", dto);
         dto.setBookId(userInfo.getBookId());
         if (StringUtils.isBlank(dto.getBookId())) {
             return Message.failed("所属账套ID不能为空");
@@ -37,12 +40,14 @@ public class AssistAccController {
 
     @GetMapping("/get/{id}")
     public Message<AssistAccVo> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("assist_acc", "id", id);
         return assistAccService.getById(id);
     }
 
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody AssistAccChangeDto dto,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("assist_acc", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assistAccService.save(dto);
@@ -51,6 +56,7 @@ public class AssistAccController {
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody AssistAccChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("assist_acc", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assistAccService.update(dto);
@@ -58,6 +64,7 @@ public class AssistAccController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("assist_acc", dto);
         ProductRoles.requireWriteBusiness();
         return assistAccService.delete(dto);
     }

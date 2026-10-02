@@ -2,6 +2,7 @@ package com.financial.cloud.controller.journal;
 
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.financial.cloud.authn.support.AuthorizationUtils;
@@ -22,11 +23,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/journal/summary")
 public class JournalSummaryController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final JournalSummaryService journalSummaryService;
 
     @GetMapping(value = {"/fetch"})
     public Message<JournalSummaryVo> fetch(JournalSummaryPageDto dto) {
+        bookOwnershipGuard.checkRequest("journal_summary", dto);
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         log.debug("fetch {}", dto);
 
@@ -35,12 +38,15 @@ public class JournalSummaryController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("journal_summary", dto);
     	ProductRoles.requireWriteBusiness();
         return journalSummaryService.delete(dto);
     }
     
     @GetMapping(value = {"/summaryAccount"})
     public Message<String> summaryAccount(JournalSummaryDto dto) {
+        ProductRoles.requireWriteBusiness();
+        bookOwnershipGuard.checkRequest("journal_summary", dto);
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
     	return journalSummaryService.summaryAccount(dto);
     }

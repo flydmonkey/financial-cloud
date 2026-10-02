@@ -28,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/book")
 public class BookController {
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
     private final BookService bookService;
 
@@ -39,6 +40,7 @@ public class BookController {
 
     @GetMapping("/get/{id}")
     public Message<Book> getById(@PathVariable(name="id") String id) {
+        bookOwnershipGuard.requireAccess(com.financial.cloud.authn.support.AuthorizationUtils.getUserInfo(), id);
 
         log.debug("get {}",id);
 

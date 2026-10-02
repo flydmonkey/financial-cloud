@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-import {assertReportsBalanced} from './helpers/reports'
+import {assertReportsReconciled} from './helpers/reports'
 import {verifySettlement} from './helpers/settlement'
 import {
     buildBalancedVoucherPayload,
@@ -115,7 +115,7 @@ test.describe.serial('no-review voucher flow', () => {
         await postVoucher(request, ctx.headers, ctx.voucherId)
         const detail = await getVoucherDetail(request, ctx.headers, ctx.voucherId)
         expect(detail.senderName).toBeTruthy()
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('settlement verify passes with no-review voucher', async ({request}) => {

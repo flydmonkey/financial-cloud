@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.voucher;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class VoucherTemplateController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final VoucherTemplateService voucherTemplateService;
 
@@ -27,6 +29,7 @@ public class VoucherTemplateController {
     
     @GetMapping(value = {"/get"})
     public Message<VoucherTemplate> get(@RequestParam("id") String id,@CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.requireTemplateRead(id);
     	return voucherTemplateService.get(id);
     }
     
@@ -36,6 +39,7 @@ public class VoucherTemplateController {
      */
     @GetMapping(value = {"/fetch"})
     public Message<Page<VoucherTemplate>> fetch(VoucherTemplatePageDto dto,@CurrentUser UserInfo userInfo) {
+        dto.setRelatedId(bookOwnershipGuard.templateReadScope(dto.getRelatedId()));
         return voucherTemplateService.pageList(dto);
     }
 
@@ -47,6 +51,9 @@ public class VoucherTemplateController {
     @PostMapping(value = {"/save"})
     public Message<String> save(@Validated @RequestBody VoucherTemplateChangeDto dto,
                                                            @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher_template", dto);
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        dto.setRelatedId(userInfo.getBookId());
         //dto.setBookId(userInfo.getBookId());
         return voucherTemplateService.save(dto);
     }
@@ -58,6 +65,8 @@ public class VoucherTemplateController {
      */
     @DeleteMapping(value = {"/delete"})
     public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("voucher_template", dto);
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
         return voucherTemplateService.delete(dto);
     }
 }

@@ -157,6 +157,14 @@
         ref="printArea"
         class="table-scroll-x table-scroll-x--wide"
       >
+        <el-alert
+          v-if="balanceWarning"
+          :title="balanceWarning"
+          type="error"
+          show-icon
+          :closable="false"
+          data-testid="balance-sheet-warning"
+        />
         <el-table
           id="export-table"
           v-loading="loading"
@@ -581,7 +589,7 @@
 <script setup name="ReportBalanceSheet" lang="ts">
 import * as reportApis from "@/api/statement/statement";
 import {getCurrentQuarter, parseTime} from '@/utils/financialCloud'
-import {getCurrentInstance, h, ref, shallowRef, reactive, toRefs, VNode, nextTick} from 'vue'
+import {computed, getCurrentInstance, h, ref, shallowRef, reactive, toRefs, VNode, nextTick} from 'vue'
 import {downloadData, formatAmount} from "@/utils";
 import booksSetStore from "@/store/modules/bookStore";
 import {ElForm, ElTable, FormInstance, TableColumnCtx} from "element-plus";
@@ -610,6 +618,15 @@ cascaderSubjectPropsCopy.value.checkStrictly = true
 // 会计科目数据
 const subjectList = ref<any>([])
 const balanceSheetList = ref<any>([]);
+const reconciliation = ref<{
+  balanced: boolean | null;
+  assetTotal: number | string;
+  liabilityTotal: number | string;
+  balanceDifference: number | string;
+} | null>(null);
+const balanceWarning = computed(() => reconciliation.value?.balanced === false
+  ? `资产负债表不平：资产总计 ${formatAmount(reconciliation.value.assetTotal)}，负债及所有者权益总计 ${formatAmount(reconciliation.value.liabilityTotal)}，差额（资产－负债及权益）${formatAmount(reconciliation.value.balanceDifference)}。请核对损益结转、期初余额及报表取数规则。`
+  : '');
 const subjectKeyIdItem = ref<any>({})
 const loading = ref(true);
 const buttonLoading = ref(false);
@@ -676,11 +693,13 @@ function doConfig() {
 function getList() {
   loading.value = true;
   balanceSheetList.value = [];
+  reconciliation.value = null;
   if (ableEdit.value == false) {
     reportApis.selectGroupBalanceSheet(queryParams.value).then((response: any) => {
       const list: any = []
       const mapList: any = {}
       if (response.data && response.data.items) {
+        reconciliation.value = response.data.items;
         const assets = response.data.items.assets
         const liability = response.data.items.liability
         const maxData = assets.length > liability.length ? assets : liability
@@ -836,6 +855,7 @@ function handlePrint() {
   openTablePrintWindow({
     title: '资产负债表',
     subtitle: `核算单位：${company}　期间：${queryParams.value.reportDate}`,
+    warning: balanceWarning.value,
     tableHtml: `<thead><tr>
       <th>资产</th><th>行次</th><th>期末余额</th><th>年初余额</th>
       <th>负债和所有者权益</th><th>行次</th><th>期末余额</th><th>年初余额</th>

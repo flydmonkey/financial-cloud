@@ -221,7 +221,7 @@ test.describe.serial('three-statement golden dataset', () => {
             .toBeCloseTo(ctx.expected!.cashFlow.inventoryChange, 0)
     })
 
-    test('BS-B05: strict mode blocks imbalanced balance sheet', async ({request}) => {
+    test('BS-B05: imbalance is blocked or reported without changing totals', async ({request}) => {
         test.skip(!ctx.expected, '未执行 BS-G05')
         const body = await fetchBalanceSheetResult(request, ctx.headers, ctx.term)
         if (body.code === 513013) {
@@ -229,10 +229,11 @@ test.describe.serial('three-statement golden dataset', () => {
             return
         }
         expect(body.code).toBe(0)
-        test.info().annotations.push({
-            type: 'note',
-            description: '非 strict 模式：费用过账后总计行静默调平，跳过 513013 断言',
-        })
+        const items = (body.data as any).items
+        expect(items.balanced).toBe(false)
+        expect(num(items.balanceDifference)).toBeCloseTo(-5_000, 2)
+        expect(num(items.assetTotal)).toBeCloseTo(ctx.expected!.assetTotal, 2)
+        expect(num(items.liabilityTotal)).toBeCloseTo(ctx.expected!.assetTotal + 5_000, 2)
     })
 
     test('BS-G06: carry-forward expense restores trial balance via 未分配利润', async ({request}) => {

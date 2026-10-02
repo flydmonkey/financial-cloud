@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.statement;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -24,6 +25,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class StatementCashFlowController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final VoucherItemCashFlowService voucherItemCashFlowService;
 
     private final StatementCashFlowService statementCashFlowService;
@@ -33,6 +35,7 @@ public class StatementCashFlowController {
 
     @PostMapping("/specify")
     public Message<String> specifyCashFlowItems(@Validated @RequestBody VoucherItemCashFlowDto dto, @CurrentUser UserInfo user) {
+        bookOwnershipGuard.checkRequest("statement_cash_flow", dto);
         dto.setBookId(user.getBookId());
         String voucherDate = dto.getVoucherDate();
         String currentTerm = configSysService.getCurrentTerm(dto.getBookId());
@@ -44,12 +47,14 @@ public class StatementCashFlowController {
 
     @GetMapping("/get")
     public Message<List<VoucherItemVo>> getCashFlowItems(VoucherItemPageDto paramsDto, @CurrentUser UserInfo user) {
+        bookOwnershipGuard.checkRequest("statement_cash_flow", paramsDto);
         paramsDto.setBookId(user.getBookId());
         return voucherItemCashFlowService.getCashFlowItems(paramsDto);
     }
 
     @PostMapping("/save")
     public Message<String> changeSpecifyItem(@RequestBody StatementCashFlow statementCashFlow, @CurrentUser UserInfo user) {
+        bookOwnershipGuard.checkRequest("statement_cash_flow", statementCashFlow);
         statementCashFlow.setBookId(user.getBookId());
         return statementCashFlowService.changeSpecifyItem(statementCashFlow);
     }

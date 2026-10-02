@@ -1,7 +1,7 @@
 import {expect, test} from '@playwright/test'
 import {getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
 import {
-    assertReportsBalanced,
+    assertReportsReconciled,
     fetchSubjectBalances,
     getSubjectBalance,
 } from './helpers/reports'
@@ -81,7 +81,7 @@ test.describe.serial('voucher edge cases', () => {
             debit.code,
         )
         expect(afterRed).toBeCloseTo(beforePositive, 2)
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('TC-RPT-006: red-letter posting preserves negative sign in subject balance', async ({request}) => {
@@ -105,7 +105,7 @@ test.describe.serial('voucher edge cases', () => {
             type: 'note',
             description: `${debit.code} 余额 ${before} → ${after}（红字 -${RED_LETTER_AMOUNT}）`,
         })
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('TC-EXC-004: amount precision at schema max 99,999,999.99', async ({request}) => {

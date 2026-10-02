@@ -59,7 +59,7 @@
                 :label="$t('jbx.voucher.voucher')"
                 align="center"
                 prop="voucherId"
-                width="120"
+                width="200"
                 class-name="cell-nowrap carry-action-col col-sticky-left-2"
               >
                 <template #default="scope">
@@ -70,6 +70,14 @@
                     @click="newVoucher(scope.row)"
                   >
                     生成
+                  </el-button>
+                  <el-button
+                    v-if="scope.row.voucherId && ['qm_jz_sr', 'qm_jz_cbfy', 'qm_jz_sds', 'qm_jz_bnlr'].includes(scope.row.code)"
+                    type="primary"
+                    size="small"
+                    @click="newVoucher(scope.row)"
+                  >
+                    补充结转
                   </el-button>
                   <el-button
                     v-if="scope.row.voucherId !== null &&scope.row.voucherId !==''"

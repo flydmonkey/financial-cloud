@@ -6,6 +6,8 @@ export type TablePrintOptions = {
   title: string
   /** 副标题行，如核算单位与期间 */
   subtitle?: string
+  /** 报表异常提示，纯文本且在打印中保留 */
+  warning?: string
   /** 完整 <thead>/<tbody> HTML */
   tableHtml: string
 }
@@ -31,6 +33,7 @@ export function openTablePrintWindow(options: TablePrintOptions): void {
   body { font-family: "Songti SC", "SimSun", serif; color: #222; margin: 24px; }
   h1 { text-align: center; font-size: 18px; margin: 0 0 4px; }
   .meta { text-align: center; color: #555; font-size: 12px; margin-bottom: 12px; }
+  .warning { border: 1px solid #9a6700; padding: 8px; margin-bottom: 12px; font-size: 12px; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th, td { border: 1px solid #333; padding: 4px 6px; line-height: 1.5; }
   th { background: #f0f0f0; }
@@ -49,6 +52,7 @@ export function openTablePrintWindow(options: TablePrintOptions): void {
 <div class="toolbar"><button type="button" onclick="window.print()">打印</button></div>
 <h1>${escapeHtml(options.title)}</h1>
 <div class="meta">${escapeHtml(options.subtitle || '')}</div>
+${options.warning ? `<div class="warning">${escapeHtml(options.warning)}</div>` : ''}
 <table>${options.tableHtml}</table>
 <script>setTimeout(function () { window.print() }, 200)<\/script>
 </body>

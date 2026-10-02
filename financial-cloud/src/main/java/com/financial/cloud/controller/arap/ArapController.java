@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.arap;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -23,21 +24,25 @@ import java.util.List;
 @RequestMapping("/api/arap")
 @RequiredArgsConstructor
 public class ArapController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
 	private final ArapService arapService;
 
 	@GetMapping("/balance")
 	public Message<List<ArapBalanceVo>> balance(ArapQueryDto dto, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("arap_writeoff", dto);
 		return arapService.balances(userInfo.getBookId(), dto);
 	}
 
 	@GetMapping("/detail")
 	public Message<List<ArapDetailLineVo>> detail(ArapQueryDto dto, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("arap_writeoff", dto);
 		return arapService.detail(userInfo.getBookId(), dto);
 	}
 
 	@GetMapping("/aging")
 	public Message<List<ArapAgingVo>> aging(ArapQueryDto dto, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("arap_writeoff", dto);
 		return arapService.aging(userInfo.getBookId(), dto);
 	}
 
@@ -45,6 +50,7 @@ public class ArapController {
 	public void exportStatement(ArapQueryDto dto,
 			@CurrentUser UserInfo userInfo,
 			HttpServletResponse response) throws IOException {
+        bookOwnershipGuard.checkRequest("arap_writeoff", dto);
 		try {
 			arapService.exportStatement(userInfo.getBookId(), dto, response);
 		} catch (IllegalArgumentException ex) {

@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test'
 import {getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-import {sheetGrandTotal} from './helpers/reports'
+import {assertReportsReconciled} from './helpers/reports'
 
 test.describe('report module', () => {
     test('balance sheet API returns total rows', async ({request}) => {
@@ -23,7 +23,7 @@ test.describe('report module', () => {
         expect(liability.some((item: any) => (item.itemName || '').includes('总计'))).toBeTruthy()
     })
 
-    test('balance sheet totals are balanced for current term', async ({request}) => {
+    test('current balance sheet difference reconciles to uncarried P&L', async ({request}) => {
         const auth = await loginViaApi(request)
         const user = await getCurrentUser(request, auth.headers)
         const term = await getCurrentTerm(request, auth.headers, user.bookId)
@@ -42,15 +42,7 @@ test.describe('report module', () => {
             test.skip(true, '账套暂无资产负债表模板数据')
         }
 
-        const assetTotal = sheetGrandTotal(assets)
-        const liabilityTotal = sheetGrandTotal(liability)
-        if (assetTotal == null || liabilityTotal == null) {
-            test.skip(true, '未找到「总计」行')
-        }
-        expect(
-            Math.abs(assetTotal! - liabilityTotal!),
-            `资产负债表不平衡：资产 ${assetTotal}，负债及权益 ${liabilityTotal}`,
-        ).toBeLessThanOrEqual(0.01)
+        await assertReportsReconciled(request, auth.headers, term)
     })
 
     test('statistics endpoints respond without server error', async ({request}) => {

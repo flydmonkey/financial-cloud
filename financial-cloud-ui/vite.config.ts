@@ -31,7 +31,7 @@ export default defineConfig(({mode, command}) => {
             open: false,
             proxy: {
                 '/api': {
-                    target: 'http://localhost:2154',
+                    target: env.VITE_API_PROXY_TARGET || 'http://localhost:2154',
                     changeOrigin: true,
                     rewrite: (p) => p
                 }

@@ -87,6 +87,7 @@ public class RolesController {
 	public Message<Roles> insert(@Validated(value = AddGroup.class) @RequestBody Roles group, @CurrentUser UserInfo currentUser) {
 		ProductRoles.requireAdministrator();
 		log.debug("-Add  : {}" , group);
+        rejectReservedCode(group.getRoleCode());
 		group.setId(identifierGenerator.nextId("groups").toString());
 		if(StringUtils.isBlank(group.getRoleCode())) {
 			group.setRoleCode(group.getId());
@@ -110,6 +111,11 @@ public class RolesController {
 	public Message<Roles> update(@Validated(value = EditGroup.class) @RequestBody Roles group,@CurrentUser UserInfo currentUser) {
 		ProductRoles.requireAdministrator();
 		log.debug("-update  group : {}" , group);
+        if (ProductRoles.isProductRoleId(group.getId())) {
+            // Product role permissions are fixed; book administrators manage membership.
+            throw new com.financial.cloud.exception.BusinessException(com.financial.cloud.enums.error.UsersBusinessCode.PERMISSION_DENIED);
+        }
+        rejectReservedCode(group.getRoleCode());
 		if(group.getId().equalsIgnoreCase("ROLE_ALL_USER")) {
 			group.setDefaultAllUser();
 		}
@@ -132,6 +138,9 @@ public class RolesController {
 	public Message<Roles> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
 		ProductRoles.requireAdministrator();
 		log.debug("-delete ids : {}" , ids);
+        for (String id : ids) {
+            if (ProductRoles.isProductRoleId(id)) throw new com.financial.cloud.exception.BusinessException(com.financial.cloud.enums.error.UsersBusinessCode.PERMISSION_DENIED);
+        }
 		ids.removeAll(Arrays.asList("ROLE_ALL_USER","ROLE_ADMINISTRATORS","-1"));
 		if (groupsService.removeByIds(ids)) {
 			historySystemLogsService.log(
@@ -145,4 +154,7 @@ public class RolesController {
 			return new Message<>(Message.FAIL);
 		}
 	}
+    private void rejectReservedCode(String code) {
+        if (ProductRoles.isProductRoleId(code)) throw new com.financial.cloud.exception.BusinessException(com.financial.cloud.enums.error.UsersBusinessCode.PERMISSION_DENIED);
+    }
 }

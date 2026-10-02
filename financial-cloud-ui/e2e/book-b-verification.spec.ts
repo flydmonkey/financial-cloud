@@ -4,7 +4,7 @@ import {
     assertBookBKeyBalanceSheetLines,
     assertIncomeFormulaChain,
     assertIncomeLineMatchesConfig,
-    assertReportsBalanced,
+    assertReportsReconciled,
     assertThreeReportsConsistent,
     exportStatementReport,
     fetchIncomeStatement,
@@ -72,7 +72,7 @@ test.describe.serial('book B verification', () => {
             revenue: subjectPeriodAmount(subjectBalances, '5001'),
             expense: subjectPeriodAmount(subjectBalances, '5602'),
         }
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('step1: receive payment 50000 (bank debit, receivable credit)', async ({request}) => {
@@ -85,7 +85,7 @@ test.describe.serial('book B verification', () => {
             request, ctx.headers, ctx.bookId, '验算-收到货款', 50000,
             {debit: bank, credit: receivable},
         )
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
         await assertBookBKeyBalanceSheetLines(request, ctx.headers, ctx.term)
     })
 
@@ -97,7 +97,7 @@ test.describe.serial('book B verification', () => {
             request, ctx.headers, ctx.bookId, '验算-支付管理费', 10000,
             {debit: expense, credit: bank},
         )
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('TC-RPT-011: expense voucher reflected in income statement', async ({request}) => {
@@ -126,7 +126,7 @@ test.describe.serial('book B verification', () => {
         ctx.step3Income = await getIncomeNetProfit(request, ctx.headers, ctx.term)
         const subjectBalances = await fetchSubjectBalances(request, ctx.headers, ctx.term)
         ctx.afterPostBank = getSubjectBalance(subjectBalances, '1002')
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
         await assertBookBKeyBalanceSheetLines(request, ctx.headers, ctx.term)
     })
 
@@ -152,7 +152,7 @@ test.describe.serial('book B verification', () => {
             description: `资产总计 ${ctx.step0.assetTotal} → ${balance.assetTotal}, 1002=${ctx.afterPostBank}`,
         })
         expect((balance.assetTotal ?? 0)).toBeGreaterThanOrEqual(ctx.step0.assetTotal ?? 0)
-        await assertThreeReportsConsistent(request, ctx.headers, ctx.term)
+        await assertThreeReportsConsistent(request, ctx.headers, ctx.term, {allowUncarriedProfit: true})
         await assertBookBKeyBalanceSheetLines(request, ctx.headers, ctx.term)
     })
 

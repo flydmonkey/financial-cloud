@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Slf4j
 @Repository
 public class UserInfoExcelService  extends ServiceImpl<UserInfoMapper,UserInfo>{
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private final UserInfoService userInfoService;
 
@@ -116,6 +117,7 @@ public class UserInfoExcelService  extends ServiceImpl<UserInfoMapper,UserInfo>{
                 // 数据去重
                 if(!CollectionUtils.isEmpty(userInfoList)){
                     userInfoList = userInfoList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getUsername()))), ArrayList::new));
+                    bookOwnershipGuard.checkAccountWrites(userInfoList, currentUser);
                     for (UserInfo userInfo : userInfoList) {
 						//如果导入用户标识，则根据用户标识D判断是存在，进行更新和修改
 						if(org.apache.commons.lang3.StringUtils.isNotEmpty(userInfo.getId())) {

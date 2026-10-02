@@ -144,11 +144,7 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
                 if (voucherItems.isEmpty()) {
                     return Message.failed("本期无收入余额，无需结转");
                 }
-                for (VoucherItemChangeDto vt : voucherItems) {
-                    debitAmount = debitAmount.add(vt.getDebitAmount());
-                }
-                creditAmount = debitAmount;
-                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, debitAmount, 2));
+                addCarryCounterpart(bookId, voucherItems, itemsMap, yearProfitCode);
             } else if (voucherTemplate.getCode().equals("qm_jz_cbfy")) {//结转成本
                 for (String root : MonthEndCloseRules.costCarryRootsForStandard(standardId)) {
                     addCarryVoucherItems(bookId, root, voucherItems, itemsMap, 2);
@@ -156,22 +152,14 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
                 if (voucherItems.isEmpty()) {
                     return Message.failed("本期无成本费用余额，无需结转");
                 }
-                for (VoucherItemChangeDto vt : voucherItems) {
-                    creditAmount = creditAmount.add(vt.getCreditAmount());
-                }
-                debitAmount = creditAmount;
-                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, debitAmount, 1));
+                addCarryCounterpart(bookId, voucherItems, itemsMap, yearProfitCode);
             } else if (voucherTemplate.getCode().equals("qm_jz_sds")) {//结转所得税
                 addCarryVoucherItems(bookId, MonthEndCloseRules.incomeTaxExpenseSubjectForStandard(standardId),
                         voucherItems, itemsMap, 2);
                 if (voucherItems.isEmpty()) {
                     return Message.failed("本期无所得税费用余额，无需结转");
                 }
-                for (VoucherItemChangeDto vt : voucherItems) {
-                    creditAmount = creditAmount.add(vt.getCreditAmount());
-                }
-                debitAmount = creditAmount;
-                voucherItems.add(createCarryVoucherItemDto(bookId, itemsMap, yearProfitCode, debitAmount, 1));
+                addCarryCounterpart(bookId, voucherItems, itemsMap, yearProfitCode);
             } else if (voucherTemplate.getCode().equals("qm_jz_bnlr")) {//年末 结转本年利润
                 if (month == 12) {
                     StatementSubjectBalance profitBalance = getCarrySubjectBalance(bookId, yearProfitCode);
@@ -321,7 +309,7 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
                     VoucherTemplateItem item = templateItem != null
                             ? templateItem
                             : fallbackTemplateItem(s.getCode(), fallbackDirection);
-                    items.add(createVoucherItemDtoBySubject(bookId, s, item, s.getBalance().abs()));
+                    items.add(signedCarryItem(createVoucherItemDtoBySubject(bookId, s, item, s.getBalance().abs()), s.getBalance()));
                     added = true;
                 }
             }
@@ -331,7 +319,7 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
                         VoucherTemplateItem item = templateItem != null
                                 ? templateItem
                                 : fallbackTemplateItem(s.getCode(), fallbackDirection);
-                        items.add(createVoucherItemDtoBySubject(bookId, s, item, s.getBalance().abs()));
+                        items.add(signedCarryItem(createVoucherItemDtoBySubject(bookId, s, item, s.getBalance().abs()), s.getBalance()));
                         break;
                     }
                 }
@@ -346,6 +334,30 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         item.setSummary("结转");
         item.setDirection(direction);
         return item;
+    }
+
+    static VoucherItemChangeDto signedCarryItem(VoucherItemChangeDto item, BigDecimal sourceBalance) {
+        // Ledger balance is debit minus credit for every subject, independent
+        // of the subject's normal direction. Close on the opposite actual side.
+        item.setDebitAmount(sourceBalance.signum() < 0 ? sourceBalance.abs() : BigDecimal.ZERO);
+        item.setCreditAmount(sourceBalance.signum() > 0 ? sourceBalance.abs() : BigDecimal.ZERO);
+        return item;
+    }
+
+    static BigDecimal carryNetDebit(List<VoucherItemChangeDto> items) {
+        return items.stream().map(item ->
+                (item.getDebitAmount() == null ? BigDecimal.ZERO : item.getDebitAmount())
+                        .subtract(item.getCreditAmount() == null ? BigDecimal.ZERO : item.getCreditAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void addCarryCounterpart(String bookId, List<VoucherItemChangeDto> items,
+                                     Map<String, VoucherTemplateItem> templates, String yearProfitCode) {
+        BigDecimal netDebit = carryNetDebit(items);
+        if (netDebit.signum() != 0) {
+            items.add(createCarryVoucherItemDto(bookId, templates, yearProfitCode,
+                    netDebit.abs(), netDebit.signum() > 0 ? 2 : 1));
+        }
     }
 
     private VoucherItemChangeDto createCarryVoucherItemDto(String bookId,
@@ -365,7 +377,11 @@ public class SettlementCarryService extends ServiceImpl<SettlementMapper, Settle
         if (templateItem == null) {
             templateItem = fallbackTemplateItem(templateSubjectCode, fallbackDirection);
         }
-        return createVoucherItemDto(bookId, templateItem, amount);
+        VoucherItemChangeDto item = createVoucherItemDto(bookId, templateItem, amount);
+        // Counterpart direction follows the actual net, including reversal balances.
+        item.setDebitAmount(fallbackDirection == 1 ? amount : BigDecimal.ZERO);
+        item.setCreditAmount(fallbackDirection == 2 ? amount : BigDecimal.ZERO);
+        return item;
     }
 
     /**

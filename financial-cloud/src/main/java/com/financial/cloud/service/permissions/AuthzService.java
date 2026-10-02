@@ -62,7 +62,8 @@ public class AuthzService   extends ServiceImpl<AuthzMapper,UserInfo>{
         for (Roles group : listGroup) {
             grantedAuthority.add(new SimpleAuthority(group.getId()));
             //Group Code和id不同的情况
-            if(!grantedAuthority.contains(new SimpleAuthority(group.getRoleCode()))) {
+            if(!com.financial.cloud.constants.auth.ProductRoles.isProductRoleId(group.getRoleCode())
+                    && !grantedAuthority.contains(new SimpleAuthority(group.getRoleCode()))) {
             	grantedAuthority.add(new SimpleAuthority(group.getRoleCode()));
             }
             //判断角色类型

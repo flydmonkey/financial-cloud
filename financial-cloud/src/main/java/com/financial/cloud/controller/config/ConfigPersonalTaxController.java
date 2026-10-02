@@ -40,6 +40,7 @@ public class ConfigPersonalTaxController {
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody ConfigPersonalTaxChangeDto dto,
                                 @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
         dto.setBookId(currentUser.getBookId());
         log.debug("save {}", dto);
         return configJbxTaxService.save(dto);
@@ -47,6 +48,7 @@ public class ConfigPersonalTaxController {
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody ConfigPersonalTaxChangeDto dto) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
         log.debug("update {}", dto);
 
         return configJbxTaxService.update(dto);
@@ -54,6 +56,7 @@ public class ConfigPersonalTaxController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
         return configJbxTaxService.delete(dto);
     }
 }

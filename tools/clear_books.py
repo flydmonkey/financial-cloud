@@ -8,7 +8,7 @@ import pymysql
 
 HOST = os.environ.get("FC_DB_HOST", "127.0.0.1")
 PORT = int(os.environ.get("FC_DB_PORT", "3307"))
-DB = "financial_cloud"
+DB = os.environ.get("FC_DB_NAME", "financial_cloud")
 USER = "financial_cloud"
 PASSWORD = "FinancialCloud321!"
 

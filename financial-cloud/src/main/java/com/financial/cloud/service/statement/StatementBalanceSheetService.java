@@ -760,8 +760,22 @@ public class StatementBalanceSheetService{
     }
 
     void reconcileGrandTotals(StatementBalanceSheetItemListVo itemListVo) {
+        if (itemListVo == null) {
+            return;
+        }
         GrandTotalDiff totals = computeGrandTotalDiff(itemListVo);
-        if (totals == null || totals.withinTolerance()) {
+        if (totals == null) {
+            itemListVo.setBalanced(null);
+            itemListVo.setAssetTotal(null);
+            itemListVo.setLiabilityTotal(null);
+            itemListVo.setBalanceDifference(null);
+            return;
+        }
+        itemListVo.setBalanced(totals.withinTolerance());
+        itemListVo.setAssetTotal(totals.assetTotal());
+        itemListVo.setLiabilityTotal(totals.liabilityTotal());
+        itemListVo.setBalanceDifference(totals.diff());
+        if (totals.withinTolerance()) {
             return;
         }
         if (strictTrialBalance) {
@@ -771,9 +785,8 @@ public class StatementBalanceSheetService{
                     totals.assetTotal(),
                     totals.liabilityTotal());
         }
-        log.warn("Balance sheet out of balance by {}, adjusting liability grand total from {} to {}",
+        log.warn("Balance sheet out of balance by {}, preserving liability grand total {} and asset grand total {}",
                 totals.diff(), totals.liabilityTotal(), totals.assetTotal());
-        totals.liabilityGrand().setCurrentBalance(totals.assetTotal());
     }
 
     /**

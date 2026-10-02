@@ -260,9 +260,15 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
         if (bookId == null || bookId.isBlank()) {
             throw new BusinessException(UsersBusinessCode.BOOK_REQUIRED);
         }
+        if (permissionBookService.count(new LambdaQueryWrapper<PermissionBook>()
+                .eq(PermissionBook::getUserId, currentUser.getId())
+                .eq(PermissionBook::getBookId, bookId)) == 0) {
+            throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
+        }
         long count = roleMemberService.count(new LambdaQueryWrapper<RoleMember>()
                 .eq(RoleMember::getMemberId, currentUser.getId())
                 .eq(RoleMember::getBookId, bookId)
+                .eq(RoleMember::getType, "USER")
                 .eq(RoleMember::getRoleId, ProductRoles.ADMINISTRATORS));
         if (count == 0) {
             throw new BusinessException(UsersBusinessCode.PERMISSION_DENIED);
@@ -274,9 +280,13 @@ public class BookService extends ServiceImpl<BookMapper, Book>{
                 || bookId == null || bookId.isBlank()) {
             return false;
         }
-        return roleMemberService.count(new LambdaQueryWrapper<RoleMember>()
+        return permissionBookService.count(new LambdaQueryWrapper<PermissionBook>()
+                .eq(PermissionBook::getUserId, currentUser.getId())
+                .eq(PermissionBook::getBookId, bookId)) > 0
+                && roleMemberService.count(new LambdaQueryWrapper<RoleMember>()
                 .eq(RoleMember::getMemberId, currentUser.getId())
                 .eq(RoleMember::getBookId, bookId)
+                .eq(RoleMember::getType, "USER")
                 .eq(RoleMember::getRoleId, ProductRoles.ADMINISTRATORS)) > 0;
     }
     public List<BookVo> listBooks(String userId) {

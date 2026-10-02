@@ -261,7 +261,7 @@ class StatementBalanceSheetServiceTest {
     }
 
     @Test
-    void reconcileGrandTotals_adjustsLiabilityWhenOutOfBalance() {
+    void reconcileGrandTotals_preservesActualTotalsAndReportsDifference() {
         StatementBalanceSheetItem liabilityGrand =
                 grandItem(AssetOrLiabilityEnum.liability.name(), "2299", 1, bd("90000"));
         StatementBalanceSheetItemListVo vo = new StatementBalanceSheetItemListVo();
@@ -270,7 +270,11 @@ class StatementBalanceSheetServiceTest {
 
         statementBalanceSheetService.reconcileGrandTotals(vo);
 
-        assertEquals(0, bd("100000").compareTo(liabilityGrand.getCurrentBalance()));
+        assertEquals(0, bd("90000").compareTo(liabilityGrand.getCurrentBalance()));
+        assertEquals(0, bd("100000").compareTo(vo.getAssetTotal()));
+        assertEquals(0, bd("90000").compareTo(vo.getLiabilityTotal()));
+        assertEquals(0, bd("10000").compareTo(vo.getBalanceDifference()));
+        assertFalse(vo.getBalanced());
     }
 
     @Test
@@ -284,6 +288,55 @@ class StatementBalanceSheetServiceTest {
         statementBalanceSheetService.reconcileGrandTotals(vo);
 
         assertEquals(0, bd("100000").compareTo(liabilityGrand.getCurrentBalance()));
+        assertTrue(vo.getBalanced());
+        assertEquals(0, BigDecimal.ZERO.compareTo(vo.getBalanceDifference()));
+    }
+
+    @Test
+    void reconcileGrandTotals_preservesNegativeDifference() {
+        StatementBalanceSheetItemListVo vo = new StatementBalanceSheetItemListVo();
+        vo.setAssets(List.of(grandItem(AssetOrLiabilityEnum.asset.name(), "1199", 1, bd("90000"))));
+        vo.setLiability(List.of(grandItem(AssetOrLiabilityEnum.liability.name(), "2299", 1, bd("100000"))));
+        statementBalanceSheetService.reconcileGrandTotals(vo);
+        assertEquals(0, bd("-10000").compareTo(vo.getBalanceDifference()));
+        assertEquals(0, bd("100000").compareTo(vo.getLiability().get(0).getCurrentBalance()));
+        assertFalse(vo.getBalanced());
+    }
+
+    @Test
+    void reconcileGrandTotals_strictModeAcceptsOneCentButRejectsTwo() {
+        ReflectionTestUtils.setField(statementBalanceSheetService, "strictTrialBalance", true);
+        StatementBalanceSheetItemListVo vo = new StatementBalanceSheetItemListVo();
+        vo.setAssets(List.of(grandItem(AssetOrLiabilityEnum.asset.name(), "1199", 1, bd("100000"))));
+        StatementBalanceSheetItem liability = grandItem(AssetOrLiabilityEnum.liability.name(), "2299", 1, bd("99999.99"));
+        vo.setLiability(List.of(liability));
+        statementBalanceSheetService.reconcileGrandTotals(vo);
+        assertTrue(vo.getBalanced());
+        assertEquals(0, bd("0.01").compareTo(vo.getBalanceDifference()));
+        liability.setCurrentBalance(bd("100000.01"));
+        statementBalanceSheetService.reconcileGrandTotals(vo);
+        assertTrue(vo.getBalanced());
+        assertEquals(0, bd("-0.01").compareTo(vo.getBalanceDifference()));
+        liability.setCurrentBalance(bd("99999.98"));
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> statementBalanceSheetService.reconcileGrandTotals(vo));
+        assertEquals(StatementErrorCode.BALANCE_SHEET_TRIAL_BALANCE_FAILED.getCode(), ex.getCode());
+        assertEquals(0, bd("99999.98").compareTo(liability.getCurrentBalance()));
+    }
+
+    @Test
+    void reconcileGrandTotals_missingTotalsClearStatus() {
+        StatementBalanceSheetItemListVo vo = new StatementBalanceSheetItemListVo();
+        vo.setBalanced(true);
+        vo.setAssetTotal(BigDecimal.ONE);
+        vo.setLiabilityTotal(BigDecimal.ONE);
+        vo.setBalanceDifference(BigDecimal.ZERO);
+        statementBalanceSheetService.reconcileGrandTotals(vo);
+        assertNull(vo.getBalanced());
+        assertNull(vo.getAssetTotal());
+        assertNull(vo.getLiabilityTotal());
+        assertNull(vo.getBalanceDifference());
+        statementBalanceSheetService.reconcileGrandTotals(null);
     }
 
     @Test

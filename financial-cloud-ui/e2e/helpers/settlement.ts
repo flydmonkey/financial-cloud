@@ -100,7 +100,8 @@ export async function prepareRequiredCarryForClose(
                     })),
                 }, template.voucherId)
             }
-            continue
+            // An earlier posted carry does not include later business vouchers.
+            // Generate a supplemental carry from remaining source balances below.
         }
         try {
             await generateAndPostCarryByCode(request, headers, code)

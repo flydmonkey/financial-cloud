@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.hr;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -22,18 +23,21 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class EmployeeSalarySummaryController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final EmployeeSalarySummaryService employeeSalarySummaryService;
 
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody SalarySummaryChangeDto dto,
                                 @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary_summary", dto);
         dto.setBookId(currentUser.getBookId());
         return employeeSalarySummaryService.save(dto);
     }
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<EmployeeSalarySummary>> fetch(SalaryDetailPageDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary_summary", dto);
         dto.setBookId(currentUser.getBookId());
         log.debug("fetch {}", dto);
         return employeeSalarySummaryService.pageList(dto);
@@ -41,6 +45,7 @@ public class EmployeeSalarySummaryController {
 
     @GetMapping("/summary")
     public Message<EmployeeSalarySummary> summary(SalarySummaryChangeDto dto,@CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary_summary", dto);
     	dto.setBookId(currentUser.getBookId());
     	if(dto.getBelongDateRange()!= null && dto.getBelongDateRange().length ==2) {
     		dto.setBelongDate(YearMonth.parse(dto.getBelongDateRange()[0]));

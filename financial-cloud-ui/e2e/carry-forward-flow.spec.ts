@@ -1,6 +1,6 @@
 import {expect, test, type APIRequestContext} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-import {assertReportsBalanced, assertIncomeCarryReconciliation, assertIncomeMonthlyCarryReconciliation, assertThreeReportsConsistent, computeCarryNetFromSubjectBalances, fetchSubjectBalances, getIncomeNetProfit, getSubjectBalance, getSubjectBalanceByCodes, UNDISTRIBUTED_PROFIT_SUBJECT_CODES} from './helpers/reports'
+import {assertReportsReconciled, assertIncomeCarryReconciliation, assertIncomeMonthlyCarryReconciliation, assertThreeReportsConsistent, computeCarryNetFromSubjectBalances, fetchSubjectBalances, getIncomeNetProfit, getSubjectBalance, getSubjectBalanceByCodes, UNDISTRIBUTED_PROFIT_SUBJECT_CODES} from './helpers/reports'
 import {
     deleteCarryVoucher,
     fetchCarryTemplates,
@@ -83,7 +83,7 @@ test.describe.serial('carry-forward flow', () => {
             request, ctx.headers, ctx.bookId, 'E2E结转-管理费用', 100,
             {debit: expense, credit: bank},
         )
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('TC-RPT-015: income statement before carry-forward retains P&L subject balances', async ({request}) => {

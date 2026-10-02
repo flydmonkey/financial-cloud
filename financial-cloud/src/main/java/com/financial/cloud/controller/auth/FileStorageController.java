@@ -68,7 +68,7 @@ public class FileStorageController {
  	@GetMapping(value={"/image/{id}"})
  	@ResponseBody
  	public Message<String> view(@PathVariable("id") String id){
- 		FileStorage fileStorage = fileUploadService.getById(id);
+        FileStorage fileStorage = fileUploadService.requireReadable(id);
  		if(fileStorage != null && fileStorage.getDataStored() != null) {
  			return new Message<>(Base64ImageUtils.encodePngBytes(fileStorage.getDataStored()));
  		} else {
@@ -78,7 +78,7 @@ public class FileStorageController {
 
  	@GetMapping(value={"/image/{id}.png"})
  	public String viewPng(@PathVariable("id") String id){
- 		FileStorage fileStorage = fileUploadService.getById(id);
+        FileStorage fileStorage = fileUploadService.requireReadable(id);
  		if(fileStorage != null && fileStorage.getDataStored() != null) {
  			return Base64ImageUtils.encodePngBytes(fileStorage.getDataStored());
  		}
@@ -88,7 +88,7 @@ public class FileStorageController {
  	@GetMapping(value={"/image/getByIds"})
  	@ResponseBody
  	public Message<List<FileStorage>> getByIds(@RequestParam("ids") List<String> ids){
- 		List<FileStorage> fileStorageList = fileUploadService.listByIds(ids);
+        List<FileStorage> fileStorageList = ids.stream().map(fileUploadService::requireReadable).toList();
  		for(FileStorage fileStorage : fileStorageList) {
 	 		if(fileStorage != null && fileStorage.getDataStored() != null) {
 	 			fileStorage.setImageBase64(Base64ImageUtils.encodePngBytes(fileStorage.getDataStored()));
@@ -100,6 +100,7 @@ public class FileStorageController {
  	@DeleteMapping(value={"/image/delete"})
  	@ResponseBody
  	public Message<String> delete(@RequestParam("ids") List<String> ids){
+        ids.forEach(fileUploadService::requireDeletable);
  		fileUploadService.removeBatchByIds(ids);
  		return new Message<>(Message.SUCCESS,"");
  	}

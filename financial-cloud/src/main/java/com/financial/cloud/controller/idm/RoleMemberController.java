@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value={"/api/idm/groupmembers"})
 public class RoleMemberController {
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private final RoleMemberService groupMemberService;
 
@@ -92,6 +93,10 @@ public class RoleMemberController {
 	 */
 	@PostMapping(value = {"/add"})
 	public Message<RoleMember> addGroupMember(@Validated @RequestBody RoleMemberDto dto,@CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        validateRole(dto.getRoleId());
+        if (!"USER".equals(dto.getType())) denied();
+        for (String id : dto.getMemberIds()) bookOwnershipGuard.requireAccess(userInfoService.getById(id), currentUser.getBookId());
 		boolean result = true;
 		for (int i = 0; i < dto.getMemberIds().size(); i++) {
 			RoleMember newGroupMember =
@@ -117,7 +122,10 @@ public class RoleMemberController {
 	 */
 	@PostMapping(value = {"/addMember2Groups"})
 	public Message<RoleMember> addMember2Groups(@Validated @RequestBody RoleMemberUserGroupsDto dto, @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
 		UserInfo userInfo = userInfoService.findByUsername(dto.getUsername());
+        bookOwnershipGuard.requireAccess(userInfo, currentUser.getBookId());
+        dto.getGroupIds().forEach(this::validateRole);
 
 		boolean result = true;
 		for (int i = 0; i < dto.getGroupIds().size(); i++) {
@@ -138,6 +146,12 @@ public class RoleMemberController {
 
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<RoleMember> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        List<RoleMember> members = groupMemberService.listByIds(ids);
+        if (members.size() != ids.stream().distinct().count()) denied();
+        for (RoleMember member : members) {
+            if (!java.util.Objects.equals(currentUser.getBookId(), member.getBookId())) denied();
+        }
 		log.debug("-delete ids : {}" , ids);
 		if (groupMemberService.removeBatchByIds(ids)) {
 			 return new Message<>(Message.SUCCESS);
@@ -145,4 +159,10 @@ public class RoleMemberController {
 			return new Message<>(Message.FAIL);
 		}
 	}
+    private void validateRole(String role) {
+        if (!com.financial.cloud.constants.auth.ProductRoles.isProductRoleId(role)) denied();
+    }
+    private void denied() {
+        throw new com.financial.cloud.exception.BusinessException(com.financial.cloud.enums.error.UsersBusinessCode.PERMISSION_DENIED);
+    }
 }

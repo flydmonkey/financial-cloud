@@ -27,6 +27,8 @@ import com.financial.cloud.service.statement.StatementReportService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import com.financial.cloud.service.voucher.VoucherService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -161,8 +163,9 @@ class SettlementServiceTest {
         verify(settlementMapper, never()).insert(any(Settlement.class));
     }
 
-    @Test
-    void verify_passesDepreciationNaWhenNoAccruableAssets() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void verify_requiresZeroSourceBalanceEvenWithExistingCarry(boolean remainingIncome) {
         when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-03");
         when(voucherService.count(any(LambdaQueryWrapper.class))).thenReturn(0L);
         when(voucherService.checkSuccessiveAll(BOOK_ID)).thenReturn(Message.ok(Collections.emptyList()));
@@ -185,12 +188,20 @@ class SettlementServiceTest {
         carryCbfy.setVoucherTemplateId("t-cbfy");
         carryCbfy.setVoucherId("v2");
         when(settlementCarryforwardMapper.selectList(any())).thenReturn(List.of(carrySr, carryCbfy));
+        when(settlementCarryService.hasPnlCarrySourceBalance(BOOK_ID, MonthEndCloseRules.CODE_CARRY_INCOME))
+                .thenReturn(remainingIncome);
+        when(settlementCarryService.hasPnlCarrySourceBalance(BOOK_ID, MonthEndCloseRules.CODE_CARRY_COST))
+                .thenReturn(false);
         when(fixedAssetDepreciationService.needsDepreciationAccrual(BOOK_ID, "2025-03")).thenReturn(false);
         stubArapOk();
 
         Message<List<SettlementVerifyVo>> result = settlementService.verify(BOOK_ID);
 
-        assertEquals(Message.SUCCESS, result.getCode());
+        assertEquals(remainingIncome ? Message.FAIL : Message.SUCCESS, result.getCode());
+        SettlementVerifyVo incomeCarry = result.getData().stream()
+                .filter(v -> "损益结转-收入".equals(v.getItem())).findFirst().orElseThrow();
+        assertEquals(!remainingIncome, incomeCarry.isResult());
+        if (remainingIncome) assertTrue(incomeCarry.getReason().contains("补充结转"));
         SettlementVerifyVo depr = result.getData().stream()
                 .filter(v -> "固定资产折旧".equals(v.getItem()))
                 .findFirst()
@@ -237,6 +248,8 @@ class SettlementServiceTest {
         carrySr.setVoucherId("v1");
         when(settlementCarryforwardMapper.selectList(any())).thenReturn(List.of(carrySr));
         when(settlementCarryService.hasPnlCarrySourceBalance(BOOK_ID, MonthEndCloseRules.CODE_CARRY_COST))
+                .thenReturn(false);
+        when(settlementCarryService.hasPnlCarrySourceBalance(BOOK_ID, MonthEndCloseRules.CODE_CARRY_INCOME))
                 .thenReturn(false);
         when(fixedAssetDepreciationService.needsDepreciationAccrual(BOOK_ID, "2025-03")).thenReturn(false);
         stubArapOk();

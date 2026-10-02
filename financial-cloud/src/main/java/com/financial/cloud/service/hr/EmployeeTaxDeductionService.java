@@ -71,6 +71,7 @@ public class EmployeeTaxDeductionService extends ServiceImpl<EmployeeTaxDeductio
             try {
                 //删除历史数据
                 LambdaQueryWrapper<EmployeeTaxDeduction> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(EmployeeTaxDeduction::getBookId, currentUser.getBookId());
                 wrapper.isNotNull(EmployeeTaxDeduction::getIdCardNo);
                 this.remove(wrapper);
 

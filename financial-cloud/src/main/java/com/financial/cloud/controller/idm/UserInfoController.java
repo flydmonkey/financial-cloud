@@ -65,6 +65,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping(value = { "/api/users" })
 public class UserInfoController {
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
 	private final UserInfoService userInfoService;
 
@@ -105,6 +107,7 @@ public class UserInfoController {
 			return new Message<>(Message.FAIL);
 		}
 		UserInfo userInfo = userInfoService.getById(currentUser.getId());
+        userInfo.setBookId(currentUser.getBookId()); // active book belongs to this session, not another login's saved default
 		userInfo.clearSensitive();
 		return new Message<>(userInfo);
 	}
@@ -115,6 +118,7 @@ public class UserInfoController {
 		if (Objects.isNull(currentUser)|| StringUtils.isBlank(bookId)) {
 			return new Message<>(Message.FAIL);
 		}
+		bookOwnershipGuard.requireAccess(currentUser, bookId);
 		currentUser.setBookId(bookId);
 		SignedPrincipal principal  = AuthorizationUtils.getPrincipal();
 		if (principal == null) {
@@ -147,6 +151,7 @@ public class UserInfoController {
 
 	@GetMapping(value = { "/get/{id}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> get(@PathVariable("id") String id) {
+        requireManagedUser(id);
 		UserInfo userInfo=userInfoService.getById(id);
 		userInfo.clearSensitive();
 		return new Message<>(userInfo);
@@ -155,12 +160,15 @@ public class UserInfoController {
 	@GetMapping(value = { "/getByUsername/{username}" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> getByUsername(@PathVariable("username") String username) {
 		UserInfo userInfo=userInfoService.findByUsername(username);
+        if (userInfo == null) throw new com.financial.cloud.exception.BusinessException(com.financial.cloud.enums.error.UsersBusinessCode.PERMISSION_DENIED);
+        requireManagedUser(userInfo.getId());
 		userInfo.clearSensitive();
 		return new Message<>(userInfo);
 	}
 
 	@PostMapping(value={"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> insert(@Validated(value = AddGroup.class) @RequestBody UserInfo userInfo,@CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
 		log.debug("-Add  : {}" , userInfo);
 		userInfo.setId(WebContext.genId());
 		userInfo.setBookId(currentUser.getBookId());
@@ -181,9 +189,11 @@ public class UserInfoController {
 
 	@PutMapping(value={"/update"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> update(@Validated(value = EditGroup.class) @RequestBody  UserInfo userInfo, @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        requireManagedUser(userInfo.getId());
 		log.debug("-update  : {}" , userInfo);
 
-		userInfo.setBookId(currentUser.getBookId());
+		userInfo.setBookId(userInfoService.getById(userInfo.getId()).getBookId());
 
 		if (userInfoService.updateOneUser(userInfo)) {
 			historySystemLogsService.log(
@@ -200,6 +210,8 @@ public class UserInfoController {
 
 	@DeleteMapping(value={"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> delete(@RequestParam("ids") List<String> ids,@CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        ids.forEach(this::requireManagedUser);
 		log.debug("-delete  ids : {} " , ids);
 
 		if (userInfoService.removeByIds(ids)) {
@@ -226,7 +238,9 @@ public class UserInfoController {
 			@Validated(value = EditGroup.class)
 			@RequestBody ChangePassword changePassword,
 			@CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
 		log.debug("UserId {}",changePassword.getUserId());
+        requireManagedUser(changePassword.getUserId());
 		changePassword.setPasswordSetType(ConstsPasswordSetType.PASSWORD_NORMAL);
 		if(userInfoService.changePassword(changePassword,true)) {
 			historySystemLogsService.log(
@@ -243,9 +257,11 @@ public class UserInfoController {
 
 	@GetMapping(value = { "/updateStatus" }, produces = {MediaType.APPLICATION_JSON_VALUE})
 	public Message<UserInfo> updateStatus(@ModelAttribute UserInfo userInfo,@CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        requireManagedUser(userInfo.getId());
 		log.debug("updateStatus {}",userInfo);
 		UserInfo loadUserInfo = userInfoService.getById(userInfo.getId());
-		userInfo.setBookId(currentUser.getBookId());
+		userInfo.setBookId(loadUserInfo.getBookId());
 		userInfo.setUsername(loadUserInfo.getUsername());
 		userInfo.setDisplayName(loadUserInfo.getDisplayName());
 		if(userInfoService.updateStatus(userInfo)) {
@@ -289,6 +305,7 @@ public class UserInfoController {
     public Message<UserInfo> importUsers(
     		@ModelAttribute("excelImportFile")ExcelImport excelImportFile,
     		@CurrentUser UserInfo currentUser)  {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
     	userInfoExcelService.importFromExcel(excelImportFile,currentUser);
         return new Message<>(Message.FAIL);
 
@@ -328,4 +345,21 @@ public class UserInfoController {
 		configPasswordPolicyService.buildTipMessage(passwordPolicy);
 		return new Message<>(passwordPolicy);
 	}
+
+    private void requireManagedUser(String id) {
+        UserInfo current = AuthorizationUtils.getUserInfo();
+        if (current != null && Objects.equals(current.getId(), id)) return;
+        UserInfo target = userInfoService.getById(id);
+        boolean newlyCreated = current != null && target != null
+                && com.financial.cloud.constants.auth.ProductRoles.isAdministrator()
+                && Objects.equals(current.getId(), target.getCreatedBy())
+                && Objects.equals(current.getBookId(), target.getBookId());
+        if (!newlyCreated) bookOwnershipGuard.requireAccess(target, current == null ? null : current.getBookId());
+        jakarta.servlet.http.HttpServletRequest request = WebContext.getRequest();
+        if (request != null && (!"GET".equals(request.getMethod()) || request.getRequestURI().endsWith("/updateStatus"))) {
+            // A shared global account must not be taken over through one of its books.
+            List<String> books = jdbc.query("SELECT book_id FROM permission_book WHERE user_id=? AND deleted='n'", (rs, row) -> rs.getString(1), id);
+            for (String book : books) bookOwnershipGuard.requireAdministrator(current, book);
+        }
+    }
 }

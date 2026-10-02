@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Slf4j
 @Repository
 public class OrganizationsExcelService extends ServiceImpl<OrganizationsMapper,Organizations>{
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private final OrganizationsService organizationsService;
 
@@ -143,6 +144,7 @@ public class OrganizationsExcelService extends ServiceImpl<OrganizationsMapper,O
 			// 数据去重
 			if (!CollectionUtils.isEmpty(orgsList)) {
 				orgsList = orgsList.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getId()))), ArrayList::new));
+                bookOwnershipGuard.checkRequest("organizations", orgsList);
 				for (Organizations org : orgsList) {
 					organizationsService.saveOrUpdate(org);
 				}

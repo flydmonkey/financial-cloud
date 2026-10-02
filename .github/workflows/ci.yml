@@ -88,8 +88,8 @@ jobs:
         run: |
           JAR=$(ls target/*.jar | grep -v '\.original$' | head -n1)
           echo "Starting $JAR"
-          # accounting 套件会在未结转损益时断言报表试算平衡；strict-trial-balance 会返回 513013，
-          # 与套件设计（非 strict 下总计行静默调平）冲突。Golden 套件单独覆盖 513013。
+          # 非 strict 模式保留真实总计；结转前核对差额与损益余额，结转后要求平衡。
+          # strict 模式返回 513013，由后端单测及 Golden 分支覆盖。
           java -jar "$JAR" --server.port=2154 --financial-cloud.statement.balance-sheet.strict-trial-balance=false --financial-cloud.statement.income.strict-formula-validation=true --financial-cloud.statement.cash-flow.strict-reconciliation=true > ../backend-ci.log 2>&1 &
           if ! npx --yes wait-on http://localhost:2154/api/login/get --timeout 300000; then
             echo "==== backend log (tail) ===="
@@ -143,6 +143,11 @@ jobs:
           cd financial-cloud-ui
           npx playwright --version
           npx playwright test --list e2e/00-opening-balance-report.spec.ts
+      - name: Run balance sheet integrity regression
+        working-directory: financial-cloud-ui
+        run: npm run test:e2e:balance-sheet-integrity
+        env:
+          E2E_BASE_URL: http://localhost:3154
       - name: Run E2E accounting suite
         working-directory: financial-cloud-ui
         run: |

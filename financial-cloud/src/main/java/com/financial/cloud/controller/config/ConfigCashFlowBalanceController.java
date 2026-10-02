@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.config;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import java.util.List;
 
 import com.financial.cloud.dto.report.CashFlowSubjectBalanceVo;
@@ -26,12 +27,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class ConfigCashFlowBalanceController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final ConfigCashFlowBalanceService configCashFlowService;
 
     @GetMapping(value = {"/fetch"})
     public Message<CashFlowSubjectBalanceVo> fetch(ConfigCashFlowPageDto dto,
                                                    @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("config_cash_flow_balance", dto);
         log.debug("fetch {}", dto);
         dto.setBookId(currentUser.getBookId());
         return configCashFlowService.pageList(dto);
@@ -40,6 +43,8 @@ public class ConfigCashFlowBalanceController {
     @PostMapping("/save")
     public Message<String> save(@RequestBody ConfigCashFlowChangeDto dto,
                                                       @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("config_cash_flow_balance", dto);
         log.debug("save {}", dto);
         return configCashFlowService.save(dto);
     }

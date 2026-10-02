@@ -2,6 +2,7 @@ package com.financial.cloud.controller.book;
 
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,17 +29,20 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/booksubject")
 public class BookSubjectController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final BookSubjectService bookSubjectService;
 
     @GetMapping(value = {"/tree/{bookId}"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<List<Tree<String>>> treeByBookId(@PathVariable(name = "bookId") String bookId) {
+        bookOwnershipGuard.checkBook(bookId);
         List<Tree<String>> tree = bookSubjectService.tree(bookId);
         return new Message<>(Message.SUCCESS, tree);
     }
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<BookSubject>> fetch(SubjectPageDto dto) {
+        bookOwnershipGuard.checkRequest("book_subject", dto);
 
         log.debug("fetchBySet {}", dto);
 
@@ -47,27 +51,33 @@ public class BookSubjectController {
 
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody SubjectChangeDto dto) {
+        bookOwnershipGuard.checkRequest("book_subject", dto);
         return bookSubjectService.save(dto);
     }
 
     @GetMapping("/get")
     public Message<BookSubject> getById(BookQueryDto dto) {
+        bookOwnershipGuard.checkRequest("book_subject", dto);
         return new Message<>(Message.SUCCESS, bookSubjectService.getById(dto.getBookId(), dto.getId()));
     }
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody SubjectChangeDto dto) {
+        bookOwnershipGuard.checkRequest("book_subject", dto);
         return bookSubjectService.update(dto);
     }
 
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("book_subject", dto);
         return bookSubjectService.delete(dto);
     }
 
     @GetMapping(value = {"/reorgDisplayName"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<String> reorgDisplayName(BookSubjectTreeDto dto) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("book_subject", dto);
         return bookSubjectService.reorgDisplayName(dto.getBookId());
     }
 }

@@ -46,6 +46,7 @@ financial-cloud:
       retain-count: 7
   statement:
     balance-sheet:
+      # false 保留真实总计并返回差额；true 在期末差额超过 0.01 时返回 513013。
       strict-trial-balance: false
     cash-flow:
       strict-reconciliation: false

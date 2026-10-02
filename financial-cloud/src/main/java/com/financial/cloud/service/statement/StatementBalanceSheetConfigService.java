@@ -152,8 +152,9 @@ public class StatementBalanceSheetConfigService{
      *
      * @return 结果
      */
-    public Message<List<StatementRules>> getRules(String itemCode) {
+    public Message<List<StatementRules>> getRules(String bookId, String itemCode) {
         LambdaQueryWrapper<StatementRules> lqw = Wrappers.lambdaQuery();
+        lqw.eq(StatementRules::getBookId, bookId);
         lqw.eq(StatementRules::getItemCode, itemCode);
         lqw.eq(StatementRules::getType, StatementTypeEnum.balance_sheet.name());
         lqw.orderByAsc(StatementRules::getSubjectCode);

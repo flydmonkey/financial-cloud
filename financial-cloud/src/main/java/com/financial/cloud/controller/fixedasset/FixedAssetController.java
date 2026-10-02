@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.fixedasset;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
@@ -29,11 +30,13 @@ import java.io.IOException;
 @RequestMapping("/api/fixed-asset/card")
 @RequiredArgsConstructor
 public class FixedAssetController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final FixedAssetService fixedAssetService;
 
     @GetMapping("/fetch")
     public Message<Page<FixedAssetVo>> fetch(FixedAssetPageDto dto, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("fixed_asset", dto);
         dto.setBookId(userInfo.getBookId());
         if (StringUtils.isBlank(dto.getBookId())) {
             return Message.failed("所属账套ID不能为空");
@@ -44,6 +47,7 @@ public class FixedAssetController {
     @GetMapping("/export")
     public void export(FixedAssetPageDto dto, @CurrentUser UserInfo userInfo, HttpServletResponse response)
             throws IOException {
+        bookOwnershipGuard.checkRequest("fixed_asset", dto);
         dto.setBookId(userInfo.getBookId());
         fixedAssetService.export(dto, response);
     }
@@ -63,12 +67,14 @@ public class FixedAssetController {
 
     @GetMapping("/get/{id}")
     public Message<FixedAssetVo> getById(@PathVariable("id") String id) {
+        bookOwnershipGuard.checkReference("fixed_asset", "id", id);
         return fixedAssetService.getById(id);
     }
 
     @PostMapping("/save")
     public Message<FixedAssetSaveResultVo> save(@Validated(AddGroup.class) @RequestBody FixedAssetChangeDto dto,
                                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("fixed_asset", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return fixedAssetService.save(dto);
@@ -77,6 +83,7 @@ public class FixedAssetController {
     @PutMapping("/update")
     public Message<String> update(@Validated(EditGroup.class) @RequestBody FixedAssetChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("fixed_asset", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return fixedAssetService.update(dto);
@@ -84,24 +91,28 @@ public class FixedAssetController {
 
     @PostMapping("/copy/{id}")
     public Message<String> copy(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("fixed_asset", "id", id);
         ProductRoles.requireWriteBusiness();
         return fixedAssetService.copy(id, userInfo.getBookId());
     }
 
     @PostMapping("/suspend/{id}")
     public Message<String> suspend(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("fixed_asset", "id", id);
         ProductRoles.requireWriteBusiness();
         return fixedAssetService.suspend(id, userInfo.getBookId());
     }
 
     @PostMapping("/resume/{id}")
     public Message<String> resume(@PathVariable("id") String id, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("fixed_asset", "id", id);
         ProductRoles.requireWriteBusiness();
         return fixedAssetService.resume(id, userInfo.getBookId());
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("fixed_asset", dto);
         ProductRoles.requireWriteBusiness();
         return fixedAssetService.delete(dto);
     }
@@ -110,6 +121,8 @@ public class FixedAssetController {
     public Message<FixedAssetDisposeResultVo> dispose(@PathVariable("id") String id,
                                                       @RequestBody(required = false) FixedAssetDisposeDto dto,
                                                       @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("fixed_asset", "id", id);
+        bookOwnershipGuard.checkRequest("fixed_asset", dto);
         ProductRoles.requireWriteBusiness();
         return fixedAssetService.dispose(id, userInfo.getBookId(), dto);
     }

@@ -26,6 +26,7 @@ import com.financial.cloud.common.Message;
 @Controller
 @RequestMapping(value = "/api/auth")
 public class AuthTokenRefreshPoint {
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private static final String REFRESH_FAILED_MESSAGE = "Refresh Token Fail !";
 
@@ -51,6 +52,10 @@ public class AuthTokenRefreshPoint {
 			if (session == null || session.getAuthentication() == null) {
 				log.debug("refresh session not found.");
 				return unauthorized(REFRESH_FAILED_MESSAGE);
+			}
+			com.financial.cloud.domain.idm.UserInfo user = com.financial.cloud.authn.support.AuthorizationUtils.getUserInfo(session.getAuthentication());
+			if (user != null && user.getBookId() != null && !user.getBookId().isBlank()) {
+				bookOwnershipGuard.requireAccess(user, user.getBookId());
 			}
 			sessionManager.refresh(refreshToken);
 			AuthJwt authJwt = authTokenService.genAuthJwt(session.getAuthentication());

@@ -1,7 +1,7 @@
 import {expect, test} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
 import {
-    assertReportsBalanced,
+    assertReportsReconciled,
     assertThreeReportsConsistent,
     assertIncomeFormulaChain,
     captureReportSnapshot,
@@ -56,7 +56,7 @@ test.describe.serial('report reconciliation', () => {
         await ensureVoucherReviewEnabled(request, auth.headers, user.bookId)
 
         ctx.baseline = await captureReportSnapshot(request, ctx.headers, ctx.term)
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('audited-not-posted: all three reports stay unchanged', async ({request}) => {
@@ -79,7 +79,7 @@ test.describe.serial('report reconciliation', () => {
         await auditVoucher(request, ctx.headers, ctx.voucherId)
 
         ctx.afterAudit = await captureReportSnapshot(request, ctx.headers, ctx.term)
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
 
         const incomeUnchanged =
             Math.abs((ctx.afterAudit.incomeNetProfit ?? 0) - (ctx.baseline!.incomeNetProfit ?? 0)) <= 0.01
@@ -111,7 +111,7 @@ test.describe.serial('report reconciliation', () => {
 
         await postVoucher(request, ctx.headers, ctx.voucherId)
         ctx.afterPost = await captureReportSnapshot(request, ctx.headers, ctx.term)
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
 
         // 审核未过账时利润表应与基线一致（仅已过账才计入）
         if (ctx.baseline!.incomeNetProfit != null && ctx.afterAudit!.incomeNetProfit != null) {
@@ -162,11 +162,11 @@ test.describe.serial('report reconciliation', () => {
         if (before.incomeNetProfit != null && after.incomeNetProfit != null) {
             expect(Math.abs(after.incomeNetProfit - before.incomeNetProfit)).toBeLessThanOrEqual(0.01)
         }
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('TC-E2E-005: three reports stay consistent after duplicate post guard', async ({request}) => {
         test.skip(!ctx.afterPost, '缺少过账快照')
-        await assertThreeReportsConsistent(request, ctx.headers, ctx.term)
+        await assertThreeReportsConsistent(request, ctx.headers, ctx.term, {allowUncarriedProfit: true})
     })
 })

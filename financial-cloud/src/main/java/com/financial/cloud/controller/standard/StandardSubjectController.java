@@ -48,6 +48,7 @@ public class StandardSubjectController {
     
     @GetMapping(value = {"/reorgDisplayName"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<String> reorgDisplayName(BookSubjectTreeDto dto) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
     	return standardSubjectService.reorgDisplayName(dto);
     }
 

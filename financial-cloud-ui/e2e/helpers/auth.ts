@@ -81,14 +81,15 @@ export async function ensureReviewerSession(
     }
 
     let userId: string | undefined
-    const existing = await request.get(`/api/users/getByUsername/${reviewerUsername}`, {
+    const existing = await request.get(`/api/book/members/search?bookId=${bookId}&q=${encodeURIComponent(reviewerUsername)}`, {
         headers: adminHeaders,
     })
     if (existing.ok()) {
         try {
             const body = await existing.json()
-            if (body?.code === 0 && body?.data?.id) {
-                userId = String(body.data.id)
+            const reviewer = body?.data?.find((item: any) => item.username === reviewerUsername)
+            if (body?.code === 0 && reviewer?.userId) {
+                userId = String(reviewer.userId)
             }
         } catch {
             // getByUsername 在用户不存在时可能返回非 JSON / 500，忽略并创建
@@ -119,13 +120,13 @@ export async function ensureReviewerSession(
         userId = String(createdBody.data.id)
     }
 
-    // 使用管理员角色保证凭证审核 API 可用（init 中 ROLE_REVIEWER 角色行可能缺失）
-    const role = await request.post('/api/idm/groupmembers/add', {
+    // 授予目标账套审核角色，同时建立账套访问资格。
+    const role = await request.post('/api/book/members/grant', {
         headers: adminHeaders,
         data: {
-            roleId: 'ROLE_ADMINISTRATORS',
-            memberIds: [userId],
-            type: 'USER',
+            bookId,
+            roleId: 'ROLE_REVIEWER',
+            userId,
         },
     })
     const roleBody = await role.json()

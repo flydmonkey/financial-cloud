@@ -10,7 +10,7 @@ import {
     specifyCashFlowForItem,
 } from './helpers/cash-flow'
 import {
-    assertReportsBalanced,
+    assertReportsReconciled,
     captureReportSnapshot,
     fetchBalanceSheet,
     fetchCashFlowStatement,
@@ -159,7 +159,7 @@ test.describe.serial('cash flow reconciliation', () => {
     })
 
     test('TC-RPT-021: ending cash aligns with balance sheet monetary funds', async ({request}) => {
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
         const totals = await getCashFlowTotals(request, ctx.headers, ctx.term)
         const items = await fetchCashFlowStatement(request, ctx.headers, ctx.term)
         expect(findCashFlowItem(items, CashFlowItems.ENDING_CASH), '缺少期末现金行').toBeTruthy()

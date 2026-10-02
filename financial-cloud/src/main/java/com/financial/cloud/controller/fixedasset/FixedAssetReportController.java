@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.fixedasset;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -19,6 +20,7 @@ import java.io.IOException;
 @RequestMapping("/api/fixed-asset/report")
 @RequiredArgsConstructor
 public class FixedAssetReportController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final FixedAssetDepreciationReportService reportService;
 

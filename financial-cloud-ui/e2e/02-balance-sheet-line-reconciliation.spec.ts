@@ -3,7 +3,7 @@ import {getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
 import {
     assertBalanceSheetLineMatchesConfig,
     assertBalanceSheetLineMatchesRules,
-    assertReportsBalanced,
+    assertReportsReconciled,
     fetchBalanceSheet,
     fetchBalanceSheetRules,
     findBalanceSheetItemByName,
@@ -74,6 +74,6 @@ test.describe.serial('balance sheet line reconciliation', () => {
 
     test('BS-B01: trial balance holds after line reconciliation', async ({request}) => {
         test.skip(!ctx.term, '无账期')
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 })

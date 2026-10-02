@@ -71,8 +71,14 @@ test.describe.serial('settlement uncheckout', () => {
         const termAfter = await getCurrentTerm(request, ctx.headers, ctx.bookId)
         expect(termAfter).toBe(closedTerm)
 
-        const balancesAfter = await fetchSubjectBalances(request, ctx.headers, nextTerm)
-        expect(balancesAfter.length).toBe(0)
+        // After reopening, nextTerm is outside the reportable range. The API
+        // rejects that future period instead of returning an empty balance list.
+        const futureBalances = await request.get(
+            `/api/statement/subject-balance?periodType=month&reportDate=${nextTerm}&showAll=true`,
+            {headers: ctx.headers},
+        )
+        expect(futureBalances.ok()).toBe(true)
+        expect((await futureBalances.json()).code).toBe(513008)
 
         const records = await fetchSettlementRecords(
             request, ctx.headers, closedTerm.slice(0, 4),

@@ -1,6 +1,7 @@
 package com.financial.cloud.controller.hr;
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
@@ -31,11 +32,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/employee/salary")
 @Slf4j
 public class EmployeeSalaryController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final EmployeeSalaryService employeeSalaryService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<EmployeeSalary>> fetch(SalaryDetailPageDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         dto.setBookId(currentUser.getBookId());
         log.debug("fetch {}", dto);
         return employeeSalaryService.pageList(dto);
@@ -44,6 +47,7 @@ public class EmployeeSalaryController {
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody SalaryDetailChangeDto dto,
                                   @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         log.debug("-update  {}", dto);
@@ -53,6 +57,7 @@ public class EmployeeSalaryController {
     @PutMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody SalaryDetailChangeDto dto,
                                   @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         log.debug("-save  {}", dto);
@@ -61,11 +66,13 @@ public class EmployeeSalaryController {
 
     @GetMapping("/get/{id}")
     public Message<EmployeeSalary> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("employee_salary", "id", id);
         return Message.ok(employeeSalaryService.getById(id));
     }
 
     @GetMapping("/summary")
     public Message<EmployeeSalarySummary> summary(SalarySummaryChangeDto dto,@CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
     	if(dto.getBelongDateRange()!= null && dto.getBelongDateRange().length ==2
     			&& dto.getBelongDateRange()[0].equalsIgnoreCase(dto.getBelongDateRange()[1])) {
     		dto.setBelongDate(YearMonth.parse(dto.getBelongDateRange()[0]));
@@ -77,6 +84,7 @@ public class EmployeeSalaryController {
     @GetMapping("/export")
     public Message<String> exportTaxItems(SalaryDetailPageDto dto,
             HttpServletResponse response, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
             dto.setBookId(currentUser.getBookId());
             return employeeSalaryService.exportTaxItems(dto, response);
     }
@@ -84,18 +92,21 @@ public class EmployeeSalaryController {
     @GetMapping("/export-payment")
     public Message<String> exportPayment(SalaryDetailPageDto dto,
             HttpServletResponse response, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         dto.setBookId(currentUser.getBookId());
         return employeeSalaryService.exportPaymentFile(dto, response);
     }
 
     @GetMapping("/count")
     public Message<Long> countByBelongDate(SalaryDetailPageDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         dto.setBookId(currentUser.getBookId());
         return Message.ok(employeeSalaryService.countByBelongDate(dto.getBookId(), dto.getBelongDate()));
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         ProductRoles.requireWriteBusiness();
         return employeeSalaryService.delete(dto);
     }
@@ -103,6 +114,7 @@ public class EmployeeSalaryController {
 
     @PostMapping("/generate-voucher")
     public Message<String> generateVoucher(@Validated @RequestBody GenerateVoucherDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         return employeeSalaryService.generateVoucher(dto);
@@ -110,6 +122,7 @@ public class EmployeeSalaryController {
     
     @PostMapping("/delete-voucher")
     public Message<String> deleteVoucher(@Validated @RequestBody GenerateVoucherDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee_salary", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         return employeeSalaryService.deleteVoucher(dto);

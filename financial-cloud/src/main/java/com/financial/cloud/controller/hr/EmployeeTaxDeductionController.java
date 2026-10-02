@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.hr;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.authn.support.AuthorizationUtils;
@@ -23,10 +24,12 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class EmployeeTaxDeductionController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final EmployeeTaxDeductionService employeeTaxDeductionService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<EmployeeTaxDeduction>> fetch(EmployeeTaxDeductionPageDto dto) {
+        bookOwnershipGuard.checkRequest("employee_tax_deduction", dto);
         log.debug("fetch {}", dto);
         dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return employeeTaxDeductionService.pageList(dto);
@@ -34,23 +37,27 @@ public class EmployeeTaxDeductionController {
 
     @GetMapping("/get/{id}")
     public Message<EmployeeTaxDeduction> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("employee_tax_deduction", "id", id);
         return Message.ok(employeeTaxDeductionService.getById(id));
     }
 
     @PostMapping("/add")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody EmployeeTaxDeductionDto dto) {
+        bookOwnershipGuard.checkRequest("employee_tax_deduction", dto);
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
     	return employeeTaxDeductionService.save(dto);
     }
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody EmployeeTaxDeductionDto dto) {
+        bookOwnershipGuard.checkRequest("employee_tax_deduction", dto);
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
     	return employeeTaxDeductionService.update(dto);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("employee_tax_deduction", dto);
         return employeeTaxDeductionService.delete(dto);
     }
 
@@ -58,6 +65,7 @@ public class EmployeeTaxDeductionController {
     public Message<String> importing(
             @ModelAttribute("excelImportFile") ExcelImport excelImportFile,
             @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireWriteBusiness();
         if (excelImportFile.isExcelNotEmpty()) {
         	employeeTaxDeductionService.importFromExcel(excelImportFile,currentUser);
         }

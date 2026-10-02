@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.statement;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -17,14 +18,16 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class StatementRuleConfigController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final StatementBalanceSheetConfigService configService;
 
     /**
      * 获取报表项统计规则配置
      */
     @GetMapping
-    public Message<List<StatementRules>> getRules(@RequestParam("itemCode") String itemCode) {
-        return configService.getRules(itemCode);
+    public Message<List<StatementRules>> getRules(@RequestParam("itemCode") String itemCode,
+                                                @CurrentUser UserInfo userInfo) {
+        return configService.getRules(userInfo.getBookId(), itemCode);
     }
 
     /**
@@ -37,6 +40,8 @@ public class StatementRuleConfigController {
     public Message<List<StatementRules>> saveRules(@Validated @RequestBody List<StatementRules> dto,
                                                    @PathVariable("itemCode") String itemCode,
                                                    @CurrentUser UserInfo userInfo) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("statement_rules", dto);
         return configService.saveRules(dto, userInfo.getBookId(), itemCode);
     }
 }

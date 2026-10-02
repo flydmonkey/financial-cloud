@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.statement;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.idm.UserInfo;
@@ -17,6 +18,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class StatementIncomeConfigController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final StatementIncomeConfigService statementIncomeConfigService;
 
@@ -47,6 +49,8 @@ public class StatementIncomeConfigController {
     @PostMapping
     public Message<StatementIncomeItem> save(@Validated @RequestBody StatementIncomeItem dto,
                                                            @CurrentUser UserInfo userInfo) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("statement_income_item", dto);
         dto.setBookId(userInfo.getBookId());
         return statementIncomeConfigService.save(dto);
     }
@@ -59,6 +63,8 @@ public class StatementIncomeConfigController {
      */
     @DeleteMapping(value = {"/{id}"})
     public Message<Boolean> delete(@PathVariable("id") String id) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkReference("statement_income_item", "id", id);
         return statementIncomeConfigService.delete(id);
     }
 }

@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.config;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.common.PageQuery;
@@ -19,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/config/sys")
 public class ConfigSysController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final ConfigSysService configService;
 
     /**
@@ -34,6 +36,7 @@ public class ConfigSysController {
      */
     @GetMapping("/fetch")
     public Message<List<ConfigSys>> list(ConfigSys config, PageQuery pageQuery, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("config", config);
         config.setBookId(userInfo.getBookId());
         return configService.pageList(config, pageQuery);
     }
@@ -45,6 +48,7 @@ public class ConfigSysController {
      */
     @GetMapping(value = "/get/{configId}")
     public Message<ConfigSys> getInfo(@PathVariable(name = "configId") String configId) {
+        bookOwnershipGuard.checkReference("config", "configId", configId);
         return configService.getById(configId);
     }
 
@@ -63,6 +67,8 @@ public class ConfigSysController {
      */
     @PostMapping("/save")
     public Message<String> save(@Validated @RequestBody ConfigSys config, @CurrentUser UserInfo userInfo) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("config", config);
         config.setBookId(userInfo.getBookId());
         if (!configService.checkConfigKeyUnique(config)) {
             return Message.failed("新增参数'" + config.getConfigName() + "'失败，参数键名已存在");
@@ -76,6 +82,8 @@ public class ConfigSysController {
      */
     @PutMapping("/update")
     public Message<String> update(@Validated @RequestBody ConfigSys config, @CurrentUser UserInfo userInfo) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("config", config);
         config.setBookId(userInfo.getBookId());
         if (!configService.checkConfigKeyUnique(config)) {
             return Message.failed("修改参数'" + config.getConfigName() + "'失败，参数键名已存在");
@@ -89,6 +97,8 @@ public class ConfigSysController {
      */
     @PutMapping("/updateByKey")
     public Message<String> updateByKey(@RequestBody ConfigSys config, @CurrentUser UserInfo userInfo) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("config", config);
         config.setBookId(userInfo.getBookId());
         configService.update(config);
         return Message.ok("成功");
@@ -99,6 +109,8 @@ public class ConfigSysController {
      */
     @DeleteMapping("/delete")
     public Message<String> remove(@RequestBody ListIdsDto dto) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("config", dto);
         configService.delete(dto);
         return Message.ok("成功");
     }

@@ -29,6 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Slf4j
 @Component
 public class PermissionInterceptor implements AsyncHandlerInterceptor {
+    private final com.financial.cloud.service.book.BookOwnershipGuard bookOwnershipGuard;
 
 	private final SessionManager sessionManager;
 
@@ -48,6 +49,19 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 		}
 		UserInfo userInfo = principal.getUserInfo();
 		if (userInfo != null) {
+			String uri = request.getRequestURI();
+			// A revoked/stale book must not remain usable through an existing session.
+			// These recovery endpoints do not expose current-book financial data.
+			boolean recovery = uri.startsWith("/api/users/switchBook/") || uri.equals("/api/users/currentUser")
+					|| uri.equals("/api/book/fetchAll") || uri.equals("/api/book/fetch")
+					|| uri.equals("/api/book/onboarding-status") || uri.equals("/api/book/setup")
+					|| uri.equals("/api/book/save") || uri.startsWith("/api/logout") || uri.startsWith("/api/workspace/books");
+            boolean globalRead = uri.startsWith("/api/standard") || uri.startsWith("/api/config/tax")
+                    || uri.startsWith("/api/metadata")
+                    || uri.startsWith("/api/idm/groups") || uri.startsWith("/api/filestorage");
+			if (!recovery && !(globalRead && (userInfo.getBookId() == null || userInfo.getBookId().isBlank()))) {
+				bookOwnershipGuard.requireAccess(userInfo, userInfo.getBookId());
+			}
 			List<Authority> authorities = loginService.grantAuthority(userInfo);
 			principal.setAuthenticated(true);
 			principal.setGrantedAuthority(authorities);

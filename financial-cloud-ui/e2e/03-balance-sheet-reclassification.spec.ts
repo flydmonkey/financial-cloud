@@ -3,7 +3,7 @@ import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './
 import {
     assertBalanceSheetLineByNameMatchesRulesFromConfig,
     assertBalanceSheetLineMatchesConfig,
-    assertReportsBalanced,
+    assertReportsReconciled,
     fetchBalanceSheet,
     findBalanceSheetItemByName,
     num,
@@ -29,32 +29,7 @@ test.describe.serial('balance sheet reclassification', () => {
         ctx.term = await getCurrentTerm(request, auth.headers, user.bookId)
     })
 
-    test('BS-R04: bad debt allowance reduces 应收账款净值', async ({request}) => {
-        test.skip(!ctx.bookId, '无账套')
-        const subjects = await fetchBookSubjects(request, ctx.headers, ctx.bookId)
-        const {receivable, revenue, badDebtAllowance, badDebtExpense} = pickStandardBusinessSubjects(subjects)
-        test.skip(!receivable || !revenue, '缺少 1122/5001')
-        test.skip(!badDebtAllowance || !badDebtExpense, '缺少 1141/5711 坏账科目')
-
-        await createAndPostVoucher(
-            request, ctx.headers, ctx.bookId, '坏账测-赊销', 20_000,
-            {debit: receivable, credit: revenue},
-        )
-        await createAndPostVoucher(
-            request, ctx.headers, ctx.bookId, '坏账测-计提准备', 3_000,
-            {debit: badDebtExpense, credit: badDebtAllowance},
-        )
-
-        const balanceSheet = await fetchBalanceSheet(request, ctx.headers, ctx.term)
-        const assets = balanceSheet?.items?.assets || []
-        const arLine = findBalanceSheetItemByName(assets, '应收账款')
-        expect(arLine?.itemCode, '模板无应收账款行').toBeTruthy()
-        expect(num(arLine?.currentBalance)).toBeCloseTo(17_000, 0)
-        await assertBalanceSheetLineByNameMatchesRulesFromConfig(
-            request, ctx.headers, ctx.term, '应收账款',
-        )
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
-    })
+    // BS-R04 uses an enterprise-standard book in balance-sheet-bad-debt.spec.ts.
 
     test('BS-R03: same-subject mixed direction uses net ledger balance', async ({request}) => {
         test.skip(!ctx.bookId, '无账套')
@@ -125,7 +100,7 @@ test.describe.serial('balance sheet reclassification', () => {
         await assertBalanceSheetLineMatchesConfig(
             request, ctx.headers, ctx.term, String(advanceLine!.itemCode),
         )
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('BS-R02: AP debit balance reclassifies to 预付款项', async ({request}) => {
@@ -159,6 +134,6 @@ test.describe.serial('balance sheet reclassification', () => {
         await assertBalanceSheetLineMatchesConfig(
             request, ctx.headers, ctx.term, String(prepaidLine!.itemCode),
         )
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 })

@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper=false)
 public class ConfigSalaryFormulaPageDto extends PageQuery {
+    private String bookId;
     /**
 	 * 
 	 */

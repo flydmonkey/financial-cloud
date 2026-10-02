@@ -95,12 +95,20 @@ test.describe('voucher entry workspace', () => {
     await expect(page.getByRole('button', { name: '下一张' })).toBeVisible()
     await expect(page.getByRole('button', { name: '新建凭证' })).toBeVisible()
     await expect(page.getByText(/借贷平衡/)).toBeVisible()
-    await expect(page.locator('.el-drawer')).toHaveCount(0)
+    // Global drawers may remain mounted while hidden; workspace must have no open drawer.
+    await expect(page.locator('.el-drawer:visible')).toHaveCount(0)
 
-    await page.getByRole('button', { name: '添加分录' }).click()
+    const summaryCells = page.locator('.el-table__body .rv-col-summary')
+    const summaryInputs = summaryCells.locator('input')
+    // The current editor adds an entry by clicking a blank grid row.
+    await summaryCells.nth(payload.items.length).click()
+    await expect(summaryInputs).toHaveCount(1)
+    await summaryInputs.fill('workspace-added-entry')
+    await expect(summaryInputs).toHaveValue('workspace-added-entry')
     await expect(page.getByRole('button', { name: '打印' })).toBeVisible()
 
     await page.getByRole('button', { name: '新建凭证' }).click()
+    await page.getByRole('button', { name: '不保存离开' }).click()
     await expect(page).toHaveURL(/\/voucher\/voucher-edit(?:\?|$)/)
     await expect(page).not.toHaveURL(/[?&]id=/)
   })

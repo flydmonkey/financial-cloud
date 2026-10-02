@@ -2,6 +2,7 @@ package com.financial.cloud.controller.idm;
 
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
@@ -48,6 +49,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping({"/api/orgs"})
 public class OrganizationsController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final OrganizationsService organizationsService;
 
@@ -59,12 +61,14 @@ public class OrganizationsController {
 
     @GetMapping(value = {"/fetch"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Page<Organizations>> fetch(OrgPageDto dto, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("organizations", dto);
         dto.setBookId(currentUser.getBookId());
         return organizationsService.pageList(dto);
     }
 
     @GetMapping(value = {"/query"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<List<Organizations>> query(@ModelAttribute Organizations org, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("organizations", org);
         log.debug("-query  {}", org);
         LambdaQueryWrapper<Organizations> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Organizations::getBookId, currentUser.getBookId());
@@ -78,6 +82,7 @@ public class OrganizationsController {
 
     @GetMapping(value = {"/get/{id}"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Organizations> get(@PathVariable("id") String id) {
+        bookOwnershipGuard.checkReference("organizations", "id", id);
         Organizations org = organizationsService.getById(id);
         return new Message<>(org);
     }
@@ -85,6 +90,8 @@ public class OrganizationsController {
     @PostMapping(value = {"/add"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Organizations> insert(@Validated(value = AddGroup.class)
                                          @RequestBody Organizations org, @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("organizations", org);
         log.debug("-Add  : {}", org);
         org.setBookId(currentUser.getBookId());
         if (organizationsService.saveOneOrg(org)) {
@@ -104,6 +111,8 @@ public class OrganizationsController {
     public Message<Organizations> update(@Validated(value = EditGroup.class)
                                          @RequestBody Organizations org,
                                          @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("organizations", org);
         log.debug("-update  : {}", org);
         org.setBookId(currentUser.getBookId());
         if (organizationsService.updateOneOrg(org)) {
@@ -121,6 +130,8 @@ public class OrganizationsController {
 
     @DeleteMapping(value = {"/delete"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<Organizations> delete(@RequestParam("ids") List<String> ids, @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
+        bookOwnershipGuard.checkRequest("organizations", ids);
         log.debug("-delete  ids : {} ", ids);
         if (organizationsService.removeByIds(ids)) {
             historySystemLogsService.log(
@@ -137,6 +148,7 @@ public class OrganizationsController {
 
     @GetMapping(value = {"/tree"}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Message<List<Tree<String>>> tree(@ModelAttribute Organizations organization, @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("organizations", organization);
         log.debug("-query  {}", organization);
         organization.setBookId(currentUser.getBookId());
 
@@ -154,6 +166,7 @@ public class OrganizationsController {
     public Message<Organizations> importingOrganizations(
             @ModelAttribute("excelImportFile") ExcelImport excelImportFile,
             @CurrentUser UserInfo currentUser) {
+        com.financial.cloud.constants.auth.ProductRoles.requireAdministrator();
         if (excelImportFile.isExcelNotEmpty()) {
         	organizationsExcelService.importFromExcel(excelImportFile,currentUser);
         }
@@ -167,6 +180,7 @@ public class OrganizationsController {
                                     @PathVariable("type") String type,
                                     HttpServletResponse response,
                                     @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("organizations", organization);
     	organization.setBookId(currentUser.getBookId());
     	organizationsExcelService.exportToExcel(type,organization,response);
     }

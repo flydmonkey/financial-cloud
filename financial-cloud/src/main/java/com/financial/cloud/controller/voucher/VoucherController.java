@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.voucher;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.ExcelImport;
@@ -40,6 +41,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class VoucherController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final VoucherService voucherService;
     private final HistorySystemLogsService historySystemLogsService;
     private final MultiColumnLedgerService multiColumnLedgerService;
@@ -61,6 +63,7 @@ public class VoucherController {
     @GetMapping("/items/fetch")
     public Message<Page<VoucherItemVo>> subLedger(VoucherItemPageDto paramsDto,
                                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", paramsDto);
         paramsDto.setBookId(userInfo.getBookId());
         return voucherService.subLedger(paramsDto);
     }
@@ -69,6 +72,7 @@ public class VoucherController {
     public void subLedgerExportPdf(HttpServletResponse response,
                                    VoucherItemPageDto paramsDto,
                                    @CurrentUser UserInfo userInfo) throws IOException {
+        bookOwnershipGuard.checkRequest("voucher", paramsDto);
         paramsDto.setBookId(userInfo.getBookId());
         voucherService.exportSubLedgerPdf(paramsDto, response);
     }
@@ -76,6 +80,7 @@ public class VoucherController {
     @GetMapping("/items/fetch-by-cash-flow")
     public Message<Page<VoucherItemVo>> fetchByCashFlow(VoucherItemPageDto paramsDto,
                                                         @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", paramsDto);
         paramsDto.setBookId(userInfo.getBookId());
         return voucherService.fetchByCashFlow(paramsDto);
     }
@@ -127,6 +132,7 @@ public class VoucherController {
     @GetMapping(value = {"/fetch"})
     public Message<Page<VoucherVo>> fetch(VoucherPageDto dto,
                                           @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", dto);
         dto.setBookId(userInfo.getBookId());
         log.debug("fetch {}", dto);
         return voucherService.pageList(dto);
@@ -134,6 +140,7 @@ public class VoucherController {
 
     @GetMapping("/get/{id}")
     public Message<VoucherVo> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("voucher", "id", id);
         return voucherService.queryById(id);
     }
 
@@ -148,6 +155,7 @@ public class VoucherController {
     @PostMapping("/draft")
     public Message<String> draft(@Validated(value = AddGroup.class) @RequestBody VoucherChangeDto dto,
                                  @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", dto);
         ProductRoles.requireWriteVoucher();
         dto.setBookId(userInfo.getBookId());
         if (StringUtils.isEmpty(dto.getId())) {
@@ -167,6 +175,7 @@ public class VoucherController {
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody VoucherChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", dto);
         ProductRoles.requireWriteVoucher();
         dto.setBookId(userInfo.getBookId());
         return voucherService.update(dto);
@@ -175,6 +184,7 @@ public class VoucherController {
     @DeleteMapping("/delete/{ids}")
     public Message<String> delete(@PathVariable(name = "ids") List<String> ids,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireWriteVoucher();
         Message<String> result = voucherService.delete(ids, userInfo.getBookId());
         auditLog("删除", ids, result, userInfo);
@@ -184,6 +194,7 @@ public class VoucherController {
     @PostMapping("/submit")
     public Message<String> submit(@Validated @RequestBody VoucherChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", dto);
         ProductRoles.requireWriteVoucher();
         dto.setBookId(userInfo.getBookId());
         return voucherService.submit(dto, true);
@@ -192,6 +203,7 @@ public class VoucherController {
     @PostMapping("/submit/{ids}")
     public Message<String> submitBatch(@PathVariable(name = "ids") List<String> ids,
                                        @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireWriteVoucher();
         return voucherService.submitBatch(ids, userInfo.getBookId());
     }
@@ -199,6 +211,7 @@ public class VoucherController {
     @PutMapping("/cancel/{ids}")
     public Message<Integer> cancelByIds(@PathVariable(name = "ids") List<String> ids,
                                         @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireWriteVoucher();
         return voucherService.cancelByIds(ids, userInfo.getBookId());
     }
@@ -209,6 +222,7 @@ public class VoucherController {
     @PutMapping("/void/{id}")
     public Message<String> voidVoucher(@PathVariable(name = "id") String id,
                                        @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("voucher", "id", id);
         ProductRoles.requireWriteVoucher();
         Message<String> result = voucherService.voidById(id, userInfo.getBookId());
         auditLog("作废", List.of(id), result, userInfo);
@@ -221,6 +235,7 @@ public class VoucherController {
     @PutMapping("/unvoid/{id}")
     public Message<String> unvoidVoucher(@PathVariable(name = "id") String id,
                                          @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("voucher", "id", id);
         ProductRoles.requireWriteVoucher();
         Message<String> result = voucherService.unvoidById(id, userInfo.getBookId());
         auditLog("恢复作废", List.of(id), result, userInfo);
@@ -233,6 +248,7 @@ public class VoucherController {
     @PostMapping("/reverse/{id}")
     public Message<String> reverseVoucher(@PathVariable(name = "id") String id,
                                           @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("voucher", "id", id);
         ProductRoles.requireWriteVoucher();
         Message<String> result = voucherService.reverseById(id, userInfo.getBookId());
         auditLog("红字冲销", List.of(id), result, userInfo);
@@ -242,6 +258,7 @@ public class VoucherController {
     @GetMapping("/successive")
     public Message<List<VoucherSuccessiveDto>> checkSuccessive(@CurrentUser UserInfo userInfo,
                                                                VoucherSuccessiveQueryDto query) {
+        bookOwnershipGuard.checkRequest("voucher", query);
         query.setBookId(userInfo.getBookId());
         return voucherService.checkSuccessiveAll(userInfo.getBookId());
     }
@@ -249,6 +266,7 @@ public class VoucherController {
     @PutMapping("/successive")
     public Message<Void> updateSuccessive(@CurrentUser UserInfo userInfo,
                                           @RequestBody @Validated List<VoucherSuccessiveDto> dtos) {
+        bookOwnershipGuard.checkRequest("voucher", dtos);
         for (VoucherSuccessiveDto dto : dtos) {
             dto.setBookId(userInfo.getBookId());
         }
@@ -258,6 +276,7 @@ public class VoucherController {
     @PutMapping("/audit/{ids}")
     public Message<Void> audit(@PathVariable(name = "ids") List<String> ids,
                                @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireApproveVoucher();
         Message<Void> result = voucherService.audit(ids, userInfo);
         auditLog("审核", ids, result, userInfo);
@@ -267,6 +286,7 @@ public class VoucherController {
     @PutMapping("/unaudit/{ids}")
     public Message<Void> unaudit(@PathVariable(name = "ids") List<String> ids,
                                    @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireApproveVoucher();
         Message<Void> result = voucherService.unaudit(ids, userInfo.getBookId());
         auditLog("反审核", ids, result, userInfo);
@@ -276,6 +296,7 @@ public class VoucherController {
     @PutMapping("/sender/{ids}")
     public Message<Void> sender(@PathVariable(name = "ids") List<String> ids,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireWriteVoucher();
         Message<Void> result = voucherService.sender(ids, userInfo);
         auditLog("过账", ids, result, userInfo);
@@ -285,6 +306,7 @@ public class VoucherController {
     @PutMapping("/unsender/{ids}")
     public Message<Void> unsender(@PathVariable(name = "ids") List<String> ids,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireWriteVoucher();
         Message<Void> result = voucherService.unsender(ids, userInfo.getBookId());
         auditLog("反过账", ids, result, userInfo);
@@ -294,6 +316,7 @@ public class VoucherController {
     @PutMapping("/manage-audit/{ids}")
     public Message<Void> manageAudit(@PathVariable(name = "ids") List<String> ids,
                                      @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("voucher", ids);
         ProductRoles.requireApproveVoucher();
         return voucherService.manageAudit(ids, userInfo);
     }
@@ -302,6 +325,7 @@ public class VoucherController {
     public void export(HttpServletResponse response,
                        VoucherPageDto dto,
                        @CurrentUser UserInfo userInfo) throws IOException {
+        bookOwnershipGuard.checkRequest("voucher", dto);
         dto.setBookId(userInfo.getBookId());
         voucherService.export(dto, response);
     }

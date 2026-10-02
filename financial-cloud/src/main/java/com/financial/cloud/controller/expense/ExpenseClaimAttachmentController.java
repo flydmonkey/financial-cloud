@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.expense;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.auth.FileStorage;
@@ -29,12 +30,14 @@ import java.util.List;
 @RequestMapping("/api/expense/claim/attachment")
 @RequiredArgsConstructor
 public class ExpenseClaimAttachmentController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final ExpenseClaimAttachmentService attachmentService;
 
     @GetMapping("/list")
     public Message<List<ExpenseClaimAttachment>> list(@RequestParam String claimId,
                                                       @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim_attachment", "claimId", claimId);
         return Message.ok(attachmentService.listByClaim(claimId, userInfo.getBookId()));
     }
 
@@ -42,6 +45,7 @@ public class ExpenseClaimAttachmentController {
     public Message<ExpenseClaimAttachment> upload(@RequestParam("file") MultipartFile file,
                                                   @RequestParam String claimId,
                                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim_attachment", "claimId", claimId);
         return Message.ok(attachmentService.upload(file, claimId, userInfo));
     }
 
@@ -49,6 +53,7 @@ public class ExpenseClaimAttachmentController {
     public void download(@PathVariable String id,
                          @CurrentUser UserInfo userInfo,
                          HttpServletResponse response) throws IOException {
+        bookOwnershipGuard.checkReference("expense_claim_attachment", "id", id);
         FileStorage storage = attachmentService.download(id, userInfo.getBookId());
         response.setContentType(storage.getContentType() == null
                 ? "application/octet-stream" : storage.getContentType());
@@ -63,6 +68,7 @@ public class ExpenseClaimAttachmentController {
     @DeleteMapping("/{id}")
     public Message<String> delete(@PathVariable String id,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim_attachment", "id", id);
         attachmentService.deleteAttachment(id, userInfo.getBookId());
         return Message.ok(id);
     }

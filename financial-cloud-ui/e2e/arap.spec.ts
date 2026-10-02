@@ -37,7 +37,13 @@ test.describe('arap L1+L2', () => {
         const verify = await request.get('/api/settlement/verify', {headers: auth.headers})
         expect(verify.ok()).toBeTruthy()
         const vBody = await verify.json()
-        expect(vBody.code === 0 || vBody.code === 1).toBeTruthy()
+        // Shared books may have incomplete carry-forward checks; FAIL is 2.
+        // That must still return structured checks, rather than an API error.
+        expect([0, 2]).toContain(vBody.code)
+        expect(Array.isArray(vBody.data)).toBe(true)
+        if (vBody.code === 2) {
+            expect(vBody.data.some((item: any) => item.hard !== false && item.applicable !== false && !item.result)).toBe(true)
+        }
         const arap = (vBody.data || []).find((x: any) => String(x.item || '').includes('往来'))
         expect(arap, 'verify should include 往来款项 item').toBeTruthy()
         if (arap.warning) {

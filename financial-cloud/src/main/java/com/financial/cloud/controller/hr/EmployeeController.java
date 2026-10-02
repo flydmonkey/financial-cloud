@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.hr;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -21,11 +22,13 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class EmployeeController {
+    private final BookOwnershipGuard bookOwnershipGuard;
     private final EmployeeService employeeService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<Employee>> fetch(EmployeePageDto dto,
                                          @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee", dto);
         log.debug("fetch {}", dto);
         dto.setBookId(currentUser.getBookId());
         return employeeService.pageList(dto);
@@ -33,23 +36,27 @@ public class EmployeeController {
 
     @GetMapping("/get/{id}")
     public Message<Employee> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("employee", "id", id);
         return Message.ok(employeeService.getById(id));
     }
 
     @PostMapping("/save")
     public Message<String> save(@Validated(value = AddGroup.class) @RequestBody EmployeeChangeDto dto,
                                 @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("employee", dto);
         dto.setBookId(currentUser.getBookId());
         return employeeService.save(dto);
     }
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody EmployeeChangeDto dto) {
+        bookOwnershipGuard.checkRequest("employee", dto);
         return employeeService.update(dto);
     }
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("employee", dto);
         return employeeService.delete(dto);
     }
 

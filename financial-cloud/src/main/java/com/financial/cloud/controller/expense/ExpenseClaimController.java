@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.expense;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
 import com.financial.cloud.common.Message;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/expense/claim")
 @RequiredArgsConstructor
 public class ExpenseClaimController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final ExpenseClaimService expenseClaimService;
 
@@ -40,6 +42,7 @@ public class ExpenseClaimController {
     @PostMapping
     public Message<String> save(@RequestBody ExpenseClaimSaveDto dto,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("expense_claim", dto);
         return expenseClaimService.save(userInfo.getBookId(), dto);
     }
 
@@ -47,6 +50,7 @@ public class ExpenseClaimController {
     @GetMapping("/{id}")
     public Message<ExpenseClaim> detail(@PathVariable String id,
                                         @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim", "id", id);
         return Message.ok(expenseClaimService.detail(id, userInfo.getBookId()));
     }
 
@@ -54,6 +58,7 @@ public class ExpenseClaimController {
     @PutMapping("/submit/{id}")
     public Message<Void> submit(@PathVariable String id,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim", "id", id);
         return expenseClaimService.submit(id, userInfo.getBookId());
     }
 
@@ -63,6 +68,7 @@ public class ExpenseClaimController {
                                @RequestParam boolean approve,
                                @RequestParam(defaultValue = "") String reason,
                                @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim", "id", id);
         return expenseClaimService.audit(id, userInfo.getBookId(), approve, reason, userInfo.getDisplayName());
     }
 
@@ -70,12 +76,14 @@ public class ExpenseClaimController {
     @PostMapping("/voucher/{id}")
     public Message<String> generateVoucher(@PathVariable String id,
                                            @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim", "id", id);
         return expenseClaimService.generateVoucher(id, userInfo.getBookId());
     }
 
     @DeleteMapping("/{id}")
     public Message<Void> delete(@PathVariable String id,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkReference("expense_claim", "id", id);
         return expenseClaimService.delete(id, userInfo.getBookId());
     }
 }

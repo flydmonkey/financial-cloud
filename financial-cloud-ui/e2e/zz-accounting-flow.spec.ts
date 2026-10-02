@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test'
-import {assertBalanceSheetTrial, assertIncomeFormulaChain} from './helpers/reports'
+import {assertBalanceSheetTrial, assertReportsReconciled, assertIncomeFormulaChain} from './helpers/reports'
 import {getCurrentTerm, getCurrentUser, loginViaApi, loginViaUi} from './helpers/auth'
 import {cleanupBlockingVouchersForSettlement, prepareRequiredCarryForClose} from './helpers/settlement'
 import {
@@ -97,7 +97,7 @@ test.describe.serial('accounting lifecycle', () => {
         }
     })
 
-    test('balance sheet trial before checkout', async ({request}) => {
+    test('balance sheet difference reconciles before checkout', async ({request}) => {
         const res = await request.get(
             `/api/statement/balance-sheet?periodType=month&reportDate=${ctx.term}`,
             {headers: ctx.headers},
@@ -105,10 +105,7 @@ test.describe.serial('accounting lifecycle', () => {
         expect(res.ok()).toBeTruthy()
         const body = await res.json()
         expect(body.code).toBe(0)
-        assertBalanceSheetTrial(
-            body.data?.items?.assets || [],
-            body.data?.items?.liability || [],
-        )
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('period checkout (期末结账)', async ({request}) => {

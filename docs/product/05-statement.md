@@ -77,6 +77,8 @@
 
 ## 8. 已知缺口
 
+- 资产负债表保留实际期末总计，不自动调平；差额超过 0.01 时页面与浏览器打印显示异常及排查提示，Excel/PDF 保留实际金额。未结转损益时应先核对结转；严格模式配置 `financial-cloud.statement.balance-sheet.strict-trial-balance=true` 时返回 513013。API `items` 提供 `balanced`、`assetTotal`、`liabilityTotal`、`balanceDifference`（资产减负债及权益）；缺少总计时为 null。
+
 - 季度切换体验未全面产品化（以月/年为主）。
 - Post-V1：更多自定义报表模板。
 - 「本月账本包」ZIP 一键导出已落地（见 `monthly-books-pack`）；账簿侧 PDF 见 [04](04-ledger.md)。

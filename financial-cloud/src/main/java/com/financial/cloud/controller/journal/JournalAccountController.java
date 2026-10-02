@@ -2,6 +2,7 @@ package com.financial.cloud.controller.journal;
 
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -29,11 +30,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/journal/account")
 public class JournalAccountController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final JournalAccountService journalAccountService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<JournalAccount>> fetch(JournalAccountPageDto dto) {
+        bookOwnershipGuard.checkRequest("journal_account", dto);
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         log.debug("fetch {}", dto);
 
@@ -60,11 +63,13 @@ public class JournalAccountController {
 
     @GetMapping("/get/{id}")
     public Message<JournalAccount> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("journal_account", "id", id);
         return new Message<>(Message.SUCCESS, journalAccountService.getById(id));
     }
 
     @PostMapping("/add")
     public Message<String> add(@Validated(value = AddGroup.class) @RequestBody JournalAccountDto dto) {
+        bookOwnershipGuard.checkRequest("journal_account", dto);
     	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return journalAccountService.save(dto);
@@ -72,6 +77,7 @@ public class JournalAccountController {
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody JournalAccountDto dto) {
+        bookOwnershipGuard.checkRequest("journal_account", dto);
     	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
     	return journalAccountService.update(dto);
@@ -79,6 +85,7 @@ public class JournalAccountController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("journal_account", dto);
     	ProductRoles.requireWriteBusiness();
         return journalAccountService.delete(dto);
     }

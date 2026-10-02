@@ -13,6 +13,7 @@ public class ConfigSalaryFormulaChangeDto {
 
     @NotNull(message = MessageKeys.Validation.COMMON_EDIT_TARGET_REQUIRED, groups = {EditGroup.class})
     private String id;
+    private String bookId;
 
     @NotNull(message = MessageKeys.Validation.COMMON_RULE_NAME_REQUIRED, groups = {AddGroup.class, EditGroup.class})
     String ruleName;

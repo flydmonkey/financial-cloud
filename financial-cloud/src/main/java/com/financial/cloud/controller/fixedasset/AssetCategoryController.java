@@ -1,5 +1,6 @@
 package com.financial.cloud.controller.fixedasset;
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.financial.cloud.authn.annotation.CurrentUser;
@@ -23,11 +24,13 @@ import java.util.List;
 @RequestMapping("/api/fixed-asset/category")
 @RequiredArgsConstructor
 public class AssetCategoryController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final AssetCategoryService assetCategoryService;
 
     @GetMapping("/fetch")
     public Message<Page<AssetCategoryVo>> fetch(AssetCategoryPageDto dto, @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("asset_category", dto);
         dto.setBookId(userInfo.getBookId());
         if (StringUtils.isBlank(dto.getBookId())) {
             return Message.failed("所属账套ID不能为空");
@@ -42,12 +45,14 @@ public class AssetCategoryController {
 
     @GetMapping("/get/{id}")
     public Message<AssetCategoryVo> getById(@PathVariable("id") String id) {
+        bookOwnershipGuard.checkReference("asset_category", "id", id);
         return assetCategoryService.getById(id);
     }
 
     @PostMapping("/save")
     public Message<String> save(@Validated(AddGroup.class) @RequestBody AssetCategoryChangeDto dto,
                                 @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("asset_category", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assetCategoryService.save(dto);
@@ -56,6 +61,7 @@ public class AssetCategoryController {
     @PutMapping("/update")
     public Message<String> update(@Validated(EditGroup.class) @RequestBody AssetCategoryChangeDto dto,
                                   @CurrentUser UserInfo userInfo) {
+        bookOwnershipGuard.checkRequest("asset_category", dto);
         ProductRoles.requireWriteBusiness();
         dto.setBookId(userInfo.getBookId());
         return assetCategoryService.update(dto);
@@ -63,6 +69,7 @@ public class AssetCategoryController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("asset_category", dto);
         ProductRoles.requireWriteBusiness();
         return assetCategoryService.delete(dto);
     }

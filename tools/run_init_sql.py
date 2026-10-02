@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -14,7 +15,9 @@ INIT_SQL = ROOT / "sql" / "financial_cloud_init.sql"
 
 HOST = os.environ.get("FC_DB_HOST", "127.0.0.1")
 PORT = int(os.environ.get("FC_DB_PORT", "3307"))
-DB = "financial_cloud"
+DB = os.environ.get("FC_DB_NAME", "financial_cloud")
+if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", DB):
+    raise SystemExit("FC_DB_NAME must be a safe lowercase database identifier")
 DB_USER = "financial_cloud"
 DB_PASSWORD = "FinancialCloud321!"
 
@@ -176,6 +179,8 @@ def main() -> int:
         return 1
 
     sql = INIT_SQL.read_text(encoding="utf-8")
+    # Keep both schema-selection statements pointed at the requested isolated database.
+    sql = sql.replace("`financial_cloud`", f"`{DB}`")
     conn, user = pick_admin_connection()
     print(f"Connected as {user}")
 

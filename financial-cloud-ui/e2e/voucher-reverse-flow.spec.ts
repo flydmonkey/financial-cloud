@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test'
 import {fetchBookSubjects, getCurrentTerm, getCurrentUser, loginViaApi} from './helpers/auth'
-import {assertReportsBalanced, fetchSubjectBalances, subjectPeriodAmount} from './helpers/reports'
+import {assertReportsReconciled, fetchSubjectBalances, subjectPeriodAmount} from './helpers/reports'
 import {
     auditVoucher,
     buildBalancedVoucherPayload,
@@ -82,7 +82,7 @@ test.describe.serial('voucher reverse flow', () => {
             ctx.firstPostDebitAmount = subjectPeriodAmount(balances, ctx.debitSubjectCode)
             expect(ctx.firstPostDebitAmount).toBeGreaterThanOrEqual(initialAmount)
         }
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 
     test('unpost and unaudit posted voucher', async ({request}) => {
@@ -158,6 +158,6 @@ test.describe.serial('voucher reverse flow', () => {
 
     test('balance sheet remains balanced after reverse flow', async ({request}) => {
         test.skip(!ctx.voucherId, '前置凭证未创建')
-        await assertReportsBalanced(request, ctx.headers, ctx.term)
+        await assertReportsReconciled(request, ctx.headers, ctx.term)
     })
 })

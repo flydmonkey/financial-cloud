@@ -91,6 +91,7 @@ class BookServiceTest {
     void requireBookAdministrator_deniesWhenNotAdmin() {
         UserInfo user = new UserInfo();
         user.setId("user-2");
+        when(permissionBookService.count(any())).thenReturn(1L);
         when(roleMemberService.count(any())).thenReturn(0L);
 
         BusinessException ex = assertThrows(BusinessException.class,
@@ -102,6 +103,7 @@ class BookServiceTest {
     void requireBookAdministrator_allowsWhenAdmin() {
         UserInfo user = new UserInfo();
         user.setId("user-1");
+        when(permissionBookService.count(any())).thenReturn(1L);
         when(roleMemberService.count(any())).thenReturn(1L);
         bookService.requireBookAdministrator(user, "book-1");
     }
@@ -120,6 +122,7 @@ class BookServiceTest {
     void isBookAdministrator_trueWhenAdminMembershipExists() {
         UserInfo user = new UserInfo();
         user.setId("user-1");
+        when(permissionBookService.count(any())).thenReturn(1L);
         when(roleMemberService.count(any())).thenReturn(1L);
         assertTrue(bookService.isBookAdministrator(user, "book-1"));
     }
@@ -128,6 +131,7 @@ class BookServiceTest {
     void delete_rejectsWhenBookHasVouchers() {
         UserInfo user = new UserInfo();
         user.setId("user-1");
+        when(permissionBookService.count(any())).thenReturn(1L);
         when(roleMemberService.count(any())).thenReturn(1L);
         when(bookMapper.selectList(any())).thenReturn(List.of());
         when(bookMapper.selectCount(any())).thenReturn(0L);

@@ -2,6 +2,7 @@ package com.financial.cloud.controller.journal;
 
 
 
+import com.financial.cloud.service.book.BookOwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,11 +29,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/journal/entry")
 public class JournalEntryController {
+    private final BookOwnershipGuard bookOwnershipGuard;
 
     private final JournalEntryService journalEntryService;
 
     @GetMapping(value = {"/fetch"})
     public Message<Page<JournalEntry>> fetch(JournalEntryPageDto dto) {
+        bookOwnershipGuard.checkRequest("journal_entry", dto);
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         log.debug("fetch {}", dto);
 
@@ -42,11 +45,13 @@ public class JournalEntryController {
 
     @GetMapping("/get/{id}")
     public Message<JournalEntry> getById(@PathVariable(name = "id") String id) {
+        bookOwnershipGuard.checkReference("journal_entry", "id", id);
         return new Message<>(Message.SUCCESS, journalEntryService.getById(id));
     }
 
     @PostMapping("/add")
     public Message<String> add(@Validated(value = AddGroup.class) @RequestBody JournalEntryDto dto) {
+        bookOwnershipGuard.checkRequest("journal_entry", dto);
     	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return journalEntryService.save(dto);
@@ -54,6 +59,7 @@ public class JournalEntryController {
 
     @PutMapping("/update")
     public Message<String> update(@Validated(value = EditGroup.class) @RequestBody JournalEntryDto dto) {
+        bookOwnershipGuard.checkRequest("journal_entry", dto);
     	ProductRoles.requireWriteBusiness();
     	dto.setBookId(AuthorizationUtils.getUserInfo().getBookId());
         return journalEntryService.update(dto);
@@ -61,6 +67,7 @@ public class JournalEntryController {
 
     @DeleteMapping("/delete")
     public Message<String> delete(@Validated @RequestBody ListIdsDto dto) {
+        bookOwnershipGuard.checkRequest("journal_entry", dto);
     	ProductRoles.requireWriteBusiness();
         return journalEntryService.delete(dto);
     }
@@ -68,6 +75,7 @@ public class JournalEntryController {
     @PostMapping("/generate-voucher")
     public Message<String> generateVoucher(@Validated @RequestBody GenerateVoucherDto dto,
                                           @CurrentUser UserInfo currentUser) {
+        bookOwnershipGuard.checkRequest("journal_entry", dto);
     	ProductRoles.requireWriteBusiness();
         dto.setBookId(currentUser.getBookId());
         return journalEntryService.generateVoucher(dto);

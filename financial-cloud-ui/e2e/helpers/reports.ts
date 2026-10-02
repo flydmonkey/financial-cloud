@@ -842,8 +842,13 @@ export async function assertThreeReportsConsistent(
     request: APIRequestContext,
     headers: Record<string, string>,
     term: string,
+    options?: {allowUncarriedProfit?: boolean},
 ) {
-    await assertReportsBalanced(request, headers, term)
+    if (options?.allowUncarriedProfit) {
+        await assertReportsReconciled(request, headers, term)
+    } else {
+        await assertReportsBalanced(request, headers, term)
+    }
     const income = await fetchIncomeStatement(request, headers, term)
     assertIncomeFormulaChain(income?.items || [])
 }
@@ -1021,6 +1026,49 @@ export async function assertReportsBalanced(
         balanceSheet?.items?.assets || [],
         balanceSheet?.items?.liability || [],
     )
+}
+
+/** 未结转报告：真实差额必须等于末级损益科目的贷方净余额，不能静默调平。 */
+export async function assertReportsReconciled(
+    request: APIRequestContext,
+    headers: Record<string, string>,
+    term: string,
+) {
+    const balanceSheet = await fetchBalanceSheet(request, headers, term)
+    const items = balanceSheet?.items
+    const assets = sheetGrandTotal(items?.assets || [])
+    const liabilities = sheetGrandTotal(items?.liability || [])
+    expect(assets, '缺少资产总计').not.toBeNull()
+    expect(liabilities, '缺少负债及权益总计').not.toBeNull()
+    const profitLossCodes = new Set<string>()
+    // Tree responses omit category; fetch category-6 records with pagination instead.
+    let pageNum = 1
+    while (true) {
+        const res = await request.get(
+            `/api/booksubject/fetch?bookId=${balanceSheet.bookId}&category=6&pageNum=${pageNum}&pageSize=500`,
+            {headers},
+        )
+        expect(res.ok()).toBeTruthy()
+        const body = await res.json()
+        expect(body.code).toBe(0)
+        const records = body.data?.records || []
+        for (const record of records) profitLossCodes.add(String(record.code))
+        if (pageNum * 500 >= Number(body.data?.total) || records.length === 0) break
+        pageNum++
+    }
+    expect(profitLossCodes.size, '账套应包含损益科目').toBeGreaterThan(0)
+    const balances = await fetchSubjectBalances(request, headers, term)
+    const uncarriedProfit = leafSubjectBalanceRows(balances)
+        // The small-enterprise seed classifies 5401/5402 as category 5,
+        // although both are expenses in the income statement.
+        .filter((row) => profitLossCodes.has(String(row.subjectCode)) || /^540[12]/.test(String(row.subjectCode)))
+        .reduce((sum, row) => sum + num(row.closingBalanceCredit) - num(row.closingBalanceDebit), 0)
+    const difference = assets! - liabilities!
+    expect(difference, '真实报表差额应由未结转损益解释').toBeCloseTo(uncarriedProfit, 2)
+    expect(num(items.assetTotal)).toBeCloseTo(assets!, 2)
+    expect(num(items.liabilityTotal)).toBeCloseTo(liabilities!, 2)
+    expect(num(items.balanceDifference)).toBeCloseTo(difference, 2)
+    expect(items.balanced).toBe(Math.abs(difference) <= 0.01 + 1e-8)
 }
 
 export async function getIncomeNetProfit(

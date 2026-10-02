@@ -11,14 +11,27 @@ async function jsonGet(request: APIRequestContext, url: string, headers: Record<
     return res.json()
 }
 
-async function jsonPost(request: APIRequestContext, url: string, headers: Record<string, string>, data?: unknown) {
-    const res = await request.post(url, {headers, data})
+async function jsonWrite(request: APIRequestContext, url: string, headers: Record<string, string>, data?: unknown,
+                         method: 'post' | 'put' | 'delete' = 'post') {
+    const res = await request[method](url, {headers, data})
     expect(res.ok(), `${url} HTTP ${res.status()}`).toBeTruthy()
     return res.json()
 }
 
+function expectRejected(body: any, label: string) {
+    expect(typeof body.code, `${label}: ${JSON.stringify(body)}`).toBe('number')
+    expect(body.code, `${label}: ${body.message}`).not.toBe(0)
+}
+
+// Removing a draft may update audit metadata and one link; the salary itself must stay identical.
+function salaryContent(salary: any) {
+    const content = {...salary}
+    for (const field of ['accrualVoucherId', 'salaryVoucherId', 'modifiedBy', 'modifiedDate']) delete content[field]
+    return content
+}
+
 test.describe('payroll SMB min-loop regression', () => {
-    test('employee custom base → preview → push → voucher → payment export', async ({request}) => {
+    test('employee custom base → preview → push → draft correction → posted integrity → payment export', async ({request}) => {
         test.setTimeout(120_000)
         expect(process.env.FC_DB_NAME, 'payroll fixture requires an isolated database').toMatch(/^financial_cloud_e2e_/)
         clearBooksViaScript()
@@ -45,7 +58,7 @@ test.describe('payroll SMB min-loop regression', () => {
         expect(orgList.code).toBe(0)
         let departmentId = orgList.data?.records?.[0]?.id as string | undefined
         if (!departmentId) {
-            const org = await jsonPost(request, '/api/orgs/add', headers, {
+            const org = await jsonWrite(request, '/api/orgs/add', headers, {
                 orgCode: `D-PAY-${Date.now().toString().slice(-6)}`,
                 orgName: '薪资回归部门',
                 fullName: '薪资回归部门',
@@ -81,16 +94,23 @@ test.describe('payroll SMB min-loop regression', () => {
             bankName: '测试银行',
             bankCardNo: '6222021234567890123',
         }
-        const saveEmp = await jsonPost(request, '/api/salary/employee/save', headers, empBody)
+        const saveEmp = await jsonWrite(request, '/api/salary/employee/save', headers, empBody)
         expect(saveEmp.code, saveEmp.message || JSON.stringify(saveEmp)).toBe(0)
+        // Same fixed inputs, separate employee: provides an unlinked row for an atomic batch-delete check.
+        const unlinkedEmpBody = {...empBody, displayName: '混合删除回归员',
+            employeeNumber: `${empBody.employeeNumber}B`, idCardNo: `1101011991${String(Date.now()).slice(-8)}`}
+        const saveUnlinkedEmp = await jsonWrite(request, '/api/salary/employee/save', headers, unlinkedEmpBody)
+        expect(saveUnlinkedEmp.code, saveUnlinkedEmp.message || 'create unlinked employee').toBe(0)
 
         const empPage = await jsonGet(request, '/api/salary/employee/fetch?pageNumber=1&pageSize=50', headers)
         expect(empPage.code).toBe(0)
         const employee = (empPage.data?.records || []).find((e: any) => e.employeeNumber === empBody.employeeNumber)
         expect(employee, 'created employee visible').toBeTruthy()
+        const unlinkedEmployee = (empPage.data?.records || []).find((e: any) => e.employeeNumber === unlinkedEmpBody.employeeNumber)
+        expect(unlinkedEmployee, 'unlinked employee visible').toBeTruthy()
 
         // 3) generate salary preview (temp)
-        const preview = await jsonPost(request, '/api/salary/detail/createTable', headers, {bookId})
+        const preview = await jsonWrite(request, '/api/salary/detail/createTable', headers, {bookId})
         expect(preview.code, preview.message || 'createTable').toBe(0)
 
         const tempPage = await jsonGet(request, '/api/salary/detail/fetch?pageNumber=1&pageSize=50', headers)
@@ -108,17 +128,22 @@ test.describe('payroll SMB min-loop regression', () => {
         }
 
         // 4) push confirmed salary detail
-        const push = await jsonPost(request, '/api/salary/detail/submit-detail', headers, {})
+        const push = await jsonWrite(request, '/api/salary/detail/submit-detail', headers, {})
         expect(push.code, push.message || 'submit-detail').toBe(0)
 
         const salaryPage = await jsonGet(
             request,
-            `/api/employee/salary/fetch?pageNumber=1&pageSize=50&employeeId=${employee.id}`,
+            '/api/employee/salary/fetch?pageNumber=1&pageSize=50',
             headers,
         )
         expect(salaryPage.code).toBe(0)
         const salary = (salaryPage.data?.records || []).find((r: any) => r.employeeId === employee.id)
         expect(salary, 'confirmed salary row').toBeTruthy()
+        const unlinkedSalary = (salaryPage.data?.records || []).find((r: any) => r.employeeId === unlinkedEmployee.id)
+        expect(unlinkedSalary, 'unlinked confirmed salary row').toBeTruthy()
+        expect(unlinkedSalary.belongDate).toBe(salary.belongDate)
+        expect(unlinkedSalary.accrualVoucherId).toBeNull()
+        expect(unlinkedSalary.salaryVoucherId).toBeNull()
         for (const [field, amount] of Object.entries(expected)) {
             expect(Number(salary[field]), `confirmed ${field}`).toBeCloseTo(amount, 2)
         }
@@ -128,11 +153,18 @@ test.describe('payroll SMB min-loop regression', () => {
 
         const count = await jsonGet(request, `/api/employee/salary/count?belongDate=${belongDate}`, headers)
         expect(count.code).toBe(0)
-        expect(Number(count.data)).toBeGreaterThan(0)
+        expect(Number(count.data)).toBe(2)
+
+        const readSalary = async (id = salary.id) => {
+            const result = await jsonGet(request, `/api/employee/salary/get/${id}`, headers)
+            expect(result.code, result.message || 'read confirmed salary').toBe(0)
+            expect(result.data, 'salary detail exists').toBeTruthy()
+            return result.data
+        }
 
         const before = await fetchSubjectBalances(request, headers, belongDate)
         // 5) Both vouchers must succeed; a missing template is a failure.
-        const accrual = await jsonPost(request, '/api/employee/salary/generate-voucher', headers, {
+        const accrual = await jsonWrite(request, '/api/employee/salary/generate-voucher', headers, {
             id: salary.id,
             bookId,
             voucherType: 2,
@@ -140,7 +172,7 @@ test.describe('payroll SMB min-loop regression', () => {
         expect(accrual.code, accrual.message || 'accrual voucher').toBe(0)
         expect(accrual.data).toBeTruthy()
 
-        const payVoucher = await jsonPost(request, '/api/employee/salary/generate-voucher', headers, {
+        const payVoucher = await jsonWrite(request, '/api/employee/salary/generate-voucher', headers, {
             id: salary.id,
             bookId,
             voucherType: 3,
@@ -148,8 +180,49 @@ test.describe('payroll SMB min-loop regression', () => {
         expect(payVoucher.code, payVoucher.message || 'payment voucher').toBe(0)
         expect(payVoucher.data).toBeTruthy()
         expect(payVoucher.data).not.toBe(accrual.data)
-        const accrued = await getVoucherDetail(request, headers, accrual.data)
-        const paid = await getVoucherDetail(request, headers, payVoucher.data)
+        let accrualVoucherId = accrual.data as string
+        let paymentVoucherId = payVoucher.data as string
+        const linkedSalary = await readSalary()
+        expect(linkedSalary.accrualVoucherId).toBe(accrualVoucherId)
+        expect(linkedSalary.salaryVoucherId).toBe(paymentVoucherId)
+        // Both draft removal paths clear only their selected link and allow a new voucher afterward.
+        for (const voucherType of [2, 3]) {
+            const link = voucherType === 2 ? 'accrualVoucherId' : 'salaryVoucherId'
+            const otherLink = voucherType === 2 ? 'salaryVoucherId' : 'accrualVoucherId'
+            const current = await readSalary()
+            const removedId = current[link] as string
+            const otherVoucher = await getVoucherDetail(request, headers, current[otherLink])
+            expect((await getVoucherDetail(request, headers, removedId)).status).toBe('draft')
+            const removed = await jsonWrite(request, '/api/employee/salary/delete-voucher', headers,
+                {id: salary.id, bookId, voucherType})
+            expect(removed.code, removed.message || 'remove draft payroll voucher').toBe(0)
+            const corrected = await readSalary()
+            expect(corrected[link], 'only selected link cleared').toBeNull()
+            expect(corrected[otherLink], 'other link preserved').toBe(current[otherLink])
+            expect(salaryContent(corrected), 'draft removal preserves salary values').toEqual(salaryContent(current))
+            const missing = await jsonGet(request, `/api/voucher/get/${removedId}`, headers)
+            expectRejected(missing, 'removed draft no longer exists')
+            expect(missing.data).toBeNull()
+            expect(await getVoucherDetail(request, headers, current[otherLink]), 'other voucher unchanged').toEqual(otherVoucher)
+            expect(await fetchSubjectBalances(request, headers, belongDate), 'draft removal preserves balances').toEqual(before)
+
+            const regenerated = await jsonWrite(request, '/api/employee/salary/generate-voucher', headers,
+                {id: salary.id, bookId, voucherType})
+            expect(regenerated.code, regenerated.message || 'regenerate after draft removal').toBe(0)
+            expect(regenerated.data).toEqual(expect.any(String))
+            expect(regenerated.data).not.toBe(removedId)
+            expect(regenerated.data).not.toBe(current[otherLink])
+            const relinked = await readSalary()
+            expect(relinked[link]).toBe(regenerated.data)
+            expect(relinked[otherLink]).toBe(current[otherLink])
+            expect(salaryContent(relinked), 'regeneration preserves salary values').toEqual(salaryContent(current))
+            expect(await getVoucherDetail(request, headers, current[otherLink]), 'regeneration preserves other voucher').toEqual(otherVoucher)
+            expect(await fetchSubjectBalances(request, headers, belongDate), 'draft regeneration preserves balances').toEqual(before)
+            if (voucherType === 2) accrualVoucherId = regenerated.data
+            else paymentVoucherId = regenerated.data
+        }
+        const accrued = await getVoucherDetail(request, headers, accrualVoucherId)
+        const paid = await getVoucherDetail(request, headers, paymentVoucherId)
         const sum = (voucher: typeof accrued, field: 'debitAmount' | 'creditAmount') =>
             voucher.items.reduce((total: number, item: any) => total + Number(item[field] || 0), 0)
         expect(sum(accrued, 'debitAmount')).toBe(4000)
@@ -166,8 +239,8 @@ test.describe('payroll SMB min-loop regression', () => {
         const payableCode = posting(accrued, 'creditAmount', '2211')
         expect(posting(paid, 'debitAmount', '2211')).toBe(payableCode)
         const bankCode = posting(paid, 'creditAmount', '1002')
-        await runVoucherToPosted(request, headers, voucherDetailToPayload(accrued), accrual.data)
-        await runVoucherToPosted(request, headers, voucherDetailToPayload(paid), payVoucher.data)
+        await runVoucherToPosted(request, headers, voucherDetailToPayload(accrued), accrualVoucherId)
+        await runVoucherToPosted(request, headers, voucherDetailToPayload(paid), paymentVoucherId)
         const after = await fetchSubjectBalances(request, headers, belongDate)
         // Independent expected effects, rather than recomputing from generated vouchers.
         for (const [code, delta] of [[expenseCode, 4000], [payableCode, -729.6], [bankCode, -3270.4]] as const) {
@@ -176,11 +249,59 @@ test.describe('payroll SMB min-loop regression', () => {
             expect(actual, `${code} balance row`).toBeTruthy()
             expect(Number(actual!.balance) - initial, `${code} posted balance delta`).toBeCloseTo(delta, 2)
         }
-        for (const voucherType of [2, 3]) {
-            const repeated = await jsonPost(request, '/api/employee/salary/generate-voucher', headers,
-                {id: salary.id, bookId, voucherType})
-            expect(repeated.code, 'repeat generation must fail').not.toBe(0)
+        const postedSalary = await readSalary()
+        const originalUnlinkedSalary = await readSalary(unlinkedSalary.id)
+        const postedAccrued = await getVoucherDetail(request, headers, accrualVoucherId)
+        const postedPaid = await getVoucherDetail(request, headers, paymentVoucherId)
+        expect(postedSalary.accrualVoucherId).toBe(accrualVoucherId)
+        expect(postedSalary.salaryVoucherId).toBe(paymentVoucherId)
+        expect(salaryContent(postedSalary)).toEqual(salaryContent(linkedSalary))
+        for (const voucher of [postedAccrued, postedPaid]) {
+            expect(voucher.status).toBe('completed')
+            expect(voucher.senderId, 'voucher was actually posted').toBeTruthy()
         }
+        const assertPostedUnchanged = async () => {
+            expect(await readSalary(), 'posted salary amounts and both links unchanged').toEqual(postedSalary)
+            expect(await readSalary(unlinkedSalary.id), 'unlinked row survives rejected batch').toEqual(originalUnlinkedSalary)
+            expect(await getVoucherDetail(request, headers, accrualVoucherId), 'posted accrual state and entries unchanged').toEqual(postedAccrued)
+            expect(await getVoucherDetail(request, headers, paymentVoucherId), 'posted payment state and entries unchanged').toEqual(postedPaid)
+            expect(await fetchSubjectBalances(request, headers, belongDate), 'all posted balances unchanged').toEqual(after)
+        }
+        const edited = await jsonWrite(request, '/api/employee/salary/update', headers,
+            {id: salary.id, bookId, payBasic: 9999, payAmount: 9999, totalAmount: 9999}, 'put')
+        expectRejected(edited, 'editing linked payroll must fail')
+        expect(edited.message, 'linked edit explains required correction').toMatch(/凭证/)
+        await assertPostedUnchanged()
+
+        for (const listIds of [[salary.id], [unlinkedSalary.id, salary.id]]) {
+            const removed = await jsonWrite(request, '/api/employee/salary/delete', headers, {listIds}, 'delete')
+            expectRejected(removed, 'deleting linked payroll or a mixed batch must fail')
+            expect(removed.message, 'linked deletion explains required correction').toMatch(/凭证/)
+            await assertPostedUnchanged()
+        }
+        for (const voucherType of [2, 3]) {
+            const removed = await jsonWrite(request, '/api/employee/salary/delete-voucher', headers,
+                {id: salary.id, bookId, voucherType})
+            expectRejected(removed, 'removing posted payroll voucher must fail')
+            expect(removed.message, 'original voucher status rejection is returned').toMatch(/凭证.*删除|删除.*凭证/)
+            await assertPostedUnchanged()
+        }
+        for (const voucherType of [2, 3]) {
+            const repeated = await jsonWrite(request, '/api/employee/salary/generate-voucher', headers,
+                {id: salary.id, bookId, voucherType})
+            expectRejected(repeated, 'repeat generation remains blocked after rejected mutations')
+            await assertPostedUnchanged()
+        }
+        // The unlinked member can still be deleted normally after the rejected mixed batch.
+        const removedUnlinked = await jsonWrite(request, '/api/employee/salary/delete', headers,
+            {listIds: [unlinkedSalary.id]}, 'delete')
+        expect(removedUnlinked.code, removedUnlinked.message || 'delete unlinked payroll detail').toBe(0)
+        const remainingPage = await jsonGet(request, '/api/employee/salary/fetch?pageNumber=1&pageSize=50', headers)
+        expect(remainingPage.code).toBe(0)
+        expect(remainingPage.data.records.map((row: any) => row.id)).toEqual([salary.id])
+        expect(await readSalary()).toEqual(postedSalary)
+        expect(await getVoucherDetail(request, headers, accrualVoucherId)).toEqual(postedAccrued)
+        expect(await getVoucherDetail(request, headers, paymentVoucherId)).toEqual(postedPaid)
         expect(await fetchSubjectBalances(request, headers, belongDate)).toEqual(after)
 
         // 6) export bank payment file

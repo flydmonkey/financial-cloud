@@ -13,6 +13,7 @@
 | [product/01-account-book.md](product/01-account-book.md)～[10-system-admin.md](product/10-system-admin.md) | 十大模块分册 |
 | [product/20-gap-analysis.md](product/20-gap-analysis.md) | 与 PRD 逐条差距 + P0/P1/P2 |
 | [product/21-roadmap.md](product/21-roadmap.md) | 迭代路线（对齐代账商业化与 PRD 版本） |
+| [product/23-self-iteration-roadmap.md](product/23-self-iteration-roadmap.md) | 当前五阶段路线、优先级与自主迭代记录 |
 
 ## 模块文档（技术）
 

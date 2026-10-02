@@ -2,14 +2,14 @@
 
 > **文档性质**：以代码现状（as-built）为基准的产品说明书，并对照《小微企业财务软件产品需求文档（带原型完整版）》给出差距与路线。  
 > **产品名称**：财务云（financial-cloud / jinbooks）  
-> **文档版本**：2026-09-03  
+> **文档版本**：2026-10-02（自主迭代路线）
 > **适用对象**：产品、开发、测试、代账交付、交接
 
 ## 阅读路径
 
 | 角色 | 建议顺序 |
 |------|----------|
-| 产品 / 立项 | [00-overview](00-overview.md) → [20-gap-analysis](20-gap-analysis.md) → [21-roadmap](21-roadmap.md) |
+| 产品 / 立项 | [00-overview](00-overview.md) → [20-gap-analysis](20-gap-analysis.md) → [23-self-iteration-roadmap](23-self-iteration-roadmap.md)；历史交付路线见 [21-roadmap](21-roadmap.md) |
 | 新同学上手 | [00-overview](00-overview.md) → 按业务模块 01～10 |
 | 代账交付 | [01-account-book](01-account-book.md) → [03-voucher](03-voucher.md) → [06-settlement](06-settlement.md) → [05-statement](05-statement.md) |
 | 开发对接 | 对应模块分册的「数据模型」「核心接口」章节 + [../modules/](../modules/) 技术文档 |
@@ -45,6 +45,7 @@
 | [20-gap-analysis.md](20-gap-analysis.md) | 与 PRD 逐条对照 + P0/P1/P2 分级 |
 | [21-roadmap.md](21-roadmap.md) | 迭代建议，对齐 openspec 与 PRD V1.1～V1.3 |
 | [22-accountant-quick-start.md](22-accountant-quick-start.md) | 建账、导入、日常做账、月结与交付操作手册 |
+| [23-self-iteration-roadmap.md](23-self-iteration-roadmap.md) | 五阶段迭代路线、优先级待办、阶段验收与自主迭代机制 |
 | [账务可信验收包](../testing/accounting-acceptance.md) | 独立手算案例、隔离验收命令、场景矩阵及人工签字表 |
 
 ## 状态标记约定

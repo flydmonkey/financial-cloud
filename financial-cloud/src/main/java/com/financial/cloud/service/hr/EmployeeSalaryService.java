@@ -66,6 +66,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -80,6 +81,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, EmployeeSalary>{
+    private static final String BLOCK_CHANGE_BECAUSE_VOUCHERS =
+            "工资明细已关联计提或发放凭证，请先处理并删除对应凭证后再修改或删除";
+
     private final EmployeeSalaryMapper employeeSalaryMapper;
 
     private final EmployeeMapper employeeMapper;
@@ -110,6 +114,11 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     }
     @Transactional
     public Message<String> update(SalaryDetailChangeDto dto) {
+        EmployeeSalary original = requireSalary(dto.getId());
+        if (SalaryVoucherDedupeRules.hasLinkedVoucher(
+                original.getAccrualVoucherId(), original.getSalaryVoucherId())) {
+            return Message.failed(BLOCK_CHANGE_BECAUSE_VOUCHERS);
+        }
         EmployeeSalary employeeSalary = BeanUtil.copyProperties(dto, EmployeeSalary.class);
         boolean result = super.updateById(employeeSalary);
 
@@ -124,9 +133,31 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     }
     @Transactional
     public Message<String> delete(ListIdsDto dto) {
-        List<String> ids = dto.getListIds();
+        if (dto.getListIds() == null || dto.getListIds().isEmpty()) {
+            return Message.failed("请选择要删除的工资明细");
+        }
+        List<String> ids = new ArrayList<>(new LinkedHashSet<>(dto.getListIds()));
+        if (ids.stream().anyMatch(StringUtils::isBlank)) {
+            throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
+        }
+        List<EmployeeSalary> salaries = super.listByIds(ids);
+        if (salaries.size() != ids.size()) {
+            throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
+        }
+        if (salaries.stream().anyMatch(salary -> SalaryVoucherDedupeRules.hasLinkedVoucher(
+                salary.getAccrualVoucherId(), salary.getSalaryVoucherId()))) {
+            return Message.failed(BLOCK_CHANGE_BECAUSE_VOUCHERS);
+        }
         boolean result = super.removeBatchByIds(ids);
         return result ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
+    }
+
+    private EmployeeSalary requireSalary(String id) {
+        EmployeeSalary salary = StringUtils.isBlank(id) ? null : super.getById(id);
+        if (salary == null) {
+            throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
+        }
+        return salary;
     }
     public EmployeeSalary getById(Serializable id) {
         EmployeeSalary employeeSalary = super.getById(id);
@@ -610,21 +641,37 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
         return dto;
     }
+    @Transactional
 	public Message<String> deleteVoucher(GenerateVoucherDto dto) {
         Integer voucherType = dto.getVoucherType();
-        EmployeeSalary salary = super.getById(dto.getId());
-        LambdaUpdateWrapper<EmployeeSalary> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(EmployeeSalary::getId, dto.getId());
-        List<String> ids = new ArrayList<>();
-        if(voucherType.equals(2)) {
-        	updateWrapper.set(EmployeeSalary::getAccrualVoucherId, null);
-        	ids.add(salary.getAccrualVoucherId());
-        }else if(voucherType.equals(3)) {
-        	updateWrapper.set(EmployeeSalary::getSalaryVoucherId, null);
-        	ids.add(salary.getSalaryVoucherId());
+        if (!Objects.equals(voucherType, 2) && !Objects.equals(voucherType, 3)) {
+            return Message.failed("不支持的工资凭证类型");
         }
-        voucherService.delete(ids, salary.getBookId());
-        super.update(updateWrapper);
+        EmployeeSalary salary = requireSalary(dto.getId());
+        String voucherId = voucherType == 2 ? salary.getAccrualVoucherId() : salary.getSalaryVoucherId();
+        if (StringUtils.isBlank(voucherId)) {
+            return Message.failed("工资明细未关联该类型的凭证");
+        }
+        Message<String> deleteResult = voucherService.delete(List.of(voucherId), salary.getBookId());
+        if (deleteResult.getCode() != Message.SUCCESS) {
+            // VoucherService may return a failure after deleting some dependent rows.
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return deleteResult;
+        }
+
+        LambdaUpdateWrapper<EmployeeSalary> updateWrapper = Wrappers.lambdaUpdate();
+        updateWrapper.eq(EmployeeSalary::getId, salary.getId())
+                .eq(EmployeeSalary::getBookId, salary.getBookId());
+        if (voucherType == 2) {
+            updateWrapper.eq(EmployeeSalary::getAccrualVoucherId, voucherId)
+                    .set(EmployeeSalary::getAccrualVoucherId, null);
+        } else {
+            updateWrapper.eq(EmployeeSalary::getSalaryVoucherId, voucherId)
+                    .set(EmployeeSalary::getSalaryVoucherId, null);
+        }
+        if (!super.update(updateWrapper)) {
+            throw new BusinessException(Message.FAIL, "解除工资凭证关联失败，请重试");
+        }
         
 		return Message.ok("删除成功！");
 	}

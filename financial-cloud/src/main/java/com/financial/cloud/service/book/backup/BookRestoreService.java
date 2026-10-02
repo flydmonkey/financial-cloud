@@ -23,7 +23,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -38,8 +37,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * 账套备份恢复：克隆式恢复 + 覆盖式恢复（强确认 + 预备份）。
@@ -214,14 +213,23 @@ public class BookRestoreService {
         if (!BookBackupService.FORMAT.equals(manifest.path("format").asText())) {
             throw new BusinessException(400, "备份包格式不符，无法恢复");
         }
-        if (manifest.path("formatVersion").asInt(-1) != BookBackupService.FORMAT_VERSION) {
+        int version = manifest.path("formatVersion").asInt(-1);
+        if (version != 1 && version != BookBackupService.FORMAT_VERSION) {
             throw new BusinessException(400, "备份包格式版本不受支持：" + manifest.path("formatVersion").asText());
         }
 
         Map<String, JsonNode> declared = new HashMap<>();
-        for (JsonNode tableNode : manifest.path("tables")) {
-            declared.put(tableNode.path("name").asText(), tableNode);
+        if (!manifest.path("tables").isArray()) {
+            throw new BusinessException(400, "备份包缺少有效表清单");
         }
+        for (JsonNode tableNode : manifest.path("tables")) {
+            String name = tableNode.path("name").asText();
+            if (BackupTableRegistry.SPECS.stream().noneMatch(spec -> spec.table().equals(name))
+                    || declared.putIfAbsent(name, tableNode) != null) {
+                throw new BusinessException(400, "备份包包含未知或重复表声明：" + name);
+            }
+        }
+        Set<String> expectedEntries = new HashSet<>(Set.of("manifest.json"));
         Map<String, List<Map<String, Object>>> tableRows = new LinkedHashMap<>();
         for (BackupTableSpec spec : BackupTableRegistry.SPECS) {
             JsonNode tableNode = declared.get(spec.table());
@@ -245,12 +253,24 @@ public class BookRestoreService {
                 throw new BusinessException(400, "备份包行数不符：" + spec.table());
             }
             tableRows.put(spec.table(), rows);
+            expectedEntries.add("data/" + spec.table() + ".jsonl");
+            Set<String> primaryKeys = new HashSet<>();
+            for (Map<String, Object> row : rows) {
+                Object pk = row.get(spec.pk());
+                if (pk == null || String.valueOf(pk).isBlank() || !primaryKeys.add(String.valueOf(pk))
+                        || row.keySet().stream().anyMatch(column -> !column.matches("[a-z][a-z0-9_]*"))) {
+                    throw new BusinessException(400, "备份包数据列名或主键无效：" + spec.table());
+                }
+            }
         }
         JsonNode bookMeta = manifest.path("book");
         if (bookMeta.isMissingNode() || bookMeta.path("name").asText().isBlank()) {
             throw new BusinessException(400, "备份包缺少账套元信息");
         }
         Map<String, Map<String, Object>> files = new LinkedHashMap<>();
+        if (version == 2) {
+            files = parsePortableFiles(manifest, entries, tableRows, expectedEntries);
+        } else {
         for (String table : List.of("voucher_attachment", "expense_claim_attachment")) {
             for (Map<String, Object> row : tableRows.get(table)) {
                 String fileId = String.valueOf(row.get("file_id"));
@@ -272,7 +292,64 @@ public class BookRestoreService {
                 files.put(fileId, stored.get(0));
             }
         }
+        }
+        if (!expectedEntries.equals(entries.keySet())) {
+            throw new BusinessException(400, "备份包包含未声明的 ZIP 项");
+        }
         return new ParsedBackup(bookMeta, tableRows, files);
+    }
+
+    private Map<String, Map<String, Object>> parsePortableFiles(JsonNode manifest, Map<String, byte[]> entries,
+            Map<String, List<Map<String, Object>>> tables, Set<String> expectedEntries) {
+        if (!manifest.path("files").isArray()) {
+            throw new BusinessException(400, "v2备份包缺少附件文件清单");
+        }
+        Set<String> referenced = new HashSet<>();
+        for (String table : List.of("voucher_attachment", "expense_claim_attachment")) {
+            for (Map<String, Object> row : tables.get(table)) {
+                Object id = row.get("file_id");
+                if (id == null || String.valueOf(id).isBlank()) {
+                    throw new BusinessException(400, "备份附件缺少文件引用");
+                }
+                referenced.add(String.valueOf(id));
+            }
+        }
+        Map<String, Map<String, Object>> files = new LinkedHashMap<>();
+        for (JsonNode node : manifest.path("files")) {
+            String id = node.path("id").asText();
+            String entry = node.path("entry").asText();
+            if (!referenced.contains(id) || files.containsKey(id) || !entry.matches("files/[0-9]+\\.bin")
+                    || !expectedEntries.add(entry)) {
+                throw new BusinessException(400, "备份附件包含无效或重复文件声明");
+            }
+            byte[] bytes = entries.get(entry);
+            if (bytes == null || !node.path("size").isIntegralNumber()
+                    || bytes.length != node.path("size").asLong(-1)
+                    || !BookBackupService.sha256(bytes).equals(node.path("sha256").asText())) {
+                throw new BusinessException(400, "备份附件校验失败：" + id);
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("data_stored", bytes);
+            row.put("content_size", bytes.length);
+            row.put("file_name", fileMetadata(node, "fileName", 400));
+            row.put("content_type", fileMetadata(node, "contentType", 100));
+            row.put("category", fileMetadata(node, "category", 10));
+            row.put("created_by", null);
+            files.put(id, row);
+        }
+        if (!files.keySet().equals(referenced)) {
+            throw new BusinessException(400, "备份附件缺少包内文件声明");
+        }
+        return files;
+    }
+
+    private static String fileMetadata(JsonNode node, String name, int maxLength) {
+        JsonNode field = node.path(name);
+        if (field.isNull() || field.isMissingNode()) return null;
+        if (!field.isTextual() || field.asText().length() > maxLength) {
+            throw new BusinessException(400, "备份附件元信息无效：" + name);
+        }
+        return field.asText();
     }
 
     private static boolean isAttachment(String table) {
@@ -280,22 +357,7 @@ public class BookRestoreService {
     }
 
     private Map<String, byte[]> readZip(InputStream zipStream) {
-        Map<String, byte[]> entries = new HashMap<>();
-        try (ZipInputStream zip = new ZipInputStream(zipStream)) {
-            ZipEntry entry;
-            byte[] buffer = new byte[8192];
-            while ((entry = zip.getNextEntry()) != null) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                int len;
-                while ((len = zip.read(buffer)) != -1) {
-                    out.write(buffer, 0, len);
-                }
-                entries.put(entry.getName(), out.toByteArray());
-            }
-        } catch (IOException e) {
-            throw new BusinessException(400, "备份包读取失败，请确认上传的是 ZIP 文件：" + e.getMessage());
-        }
-        return entries;
+        return BackupArchive.read(zipStream);
     }
 
     private Book createBookShell(JsonNode meta) {

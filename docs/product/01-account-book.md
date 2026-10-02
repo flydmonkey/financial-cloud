@@ -28,6 +28,7 @@
 | 账套封存（归档只读） | **已实现** | status=2 + `BookSealGuard` 写拦截；往期锁定另靠结账期间 |
 | 账套作废（有数据不可删仅作废） | **已实现** | 有凭证禁硬删（`BOOK_HAS_DATA_DELETE`）；留存语义=封存 status=2 |
 | 手动备份 / 克隆式恢复 | **已实现** | `/api/book/backup/export`、`/restore`；列表行操作 |
+| 包内附件与便携恢复 | **已实现（v2）** | 新备份含凭证/报销附件内容；恢复使用独立文件，兼容 v1 同实例权限校验；[格式与演练](../testing/portable-book-backup.md) |
 | 定时备份 | **已实现** | 配置 `financial-cloud.backup.schedule.*`；落盘同格式 ZIP + 保留 N 份；账套页可查看/立即跑一轮 |
 | 覆盖式恢复 | **已实现** | `/api/book/backup/restore-overwrite`；确认短语「覆盖恢复」+ 预备份 + 封存拒绝 |
 

@@ -46,6 +46,11 @@ with connection.cursor() as q:
         assert q.rowcount == 1
         connection.commit()
         result = {'updated': True}
+    elif mode == 'remove-files':
+        # Deliberately simulate lost files only in the guarded isolated database.
+        q.execute('DELETE FROM file_storage WHERE id IN (SELECT file_id FROM voucher_attachment WHERE book_id=%s UNION SELECT file_id FROM expense_claim_attachment WHERE book_id=%s)', (book, book))
+        result = {'removed': q.rowcount}
+        connection.commit()
     elif mode == 'link-entry':
         entry, account = sys.argv[3:5]
         q.execute('UPDATE journal_entry SET acc_id=%s WHERE id=%s AND book_id=%s',(account,entry,book))

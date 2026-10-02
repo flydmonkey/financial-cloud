@@ -324,9 +324,13 @@ test.describe.serial('全模块账套隔离', () => {
         const upload = {file:{name:'backup.zip',mimeType:'application/zip',buffer:bytes}}
         const overwrite = await (await request.post(`/api/book/backup/restore-overwrite?bookId=${bookB}&confirmPhrase=${encodeURIComponent('覆盖恢复')}`,{headers:adminA,multipart:upload})).json()
         expect(overwrite.code).toBe(500014)
-        const tampered = formats({mode:'tamper-file',file:bytes.toString('base64'),fileId:foreign.file})
+        // v1 still verifies live source ownership; v2 must never query a supplied source id.
+        const tampered = formats({mode:'tamper-file',legacy:true,file:bytes.toString('base64'),fileId:foreign.file})
         const rejected = await (await request.post('/api/book/backup/restore',{headers:adminA,multipart:{file:{...upload.file,buffer:Buffer.from(tampered.file,'base64')}}})).json()
         expect(rejected.code).toBe(500014)
+        const v2Tampered = formats({mode:'tamper-file',file:bytes.toString('base64'),fileId:foreign.file})
+        const v2Rejected = await (await request.post('/api/book/backup/restore',{headers:adminA,multipart:{file:{...upload.file,buffer:Buffer.from(v2Tampered.file,'base64')}}})).json()
+        expect(v2Rejected.code).not.toBe(0)
         expect(businessSnapshot(bookA)).toEqual(before)
         const name = `导出权限-${Date.now()}`
         expect((await (await request.post('/api/book/save',{headers,data:{name,companyName:name,standardId:'1',enableDate:term,vatType:1,voucherReviewed:1,status:1}})).json()).code).toBe(0)

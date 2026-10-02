@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -53,6 +54,7 @@ class BookBackupServiceTest {
 
         lenient().when(jdbcTemplate.queryForList(anyString(), eq("book-1"))).thenAnswer(inv -> {
             String sql = inv.getArgument(0);
+            if (sql.contains("`voucher_attachment`") || sql.contains("`expense_claim_attachment`")) return List.of();
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", "old-1");
             row.put("book_id", "book-1");
@@ -74,7 +76,7 @@ class BookBackupServiceTest {
 
         String manifest = new String(entries.get("manifest.json"), StandardCharsets.UTF_8);
         assertThat(manifest).contains(BookBackupService.FORMAT);
-        assertThat(manifest).contains("\"formatVersion\" : 1");
+        assertThat(manifest).contains("\"formatVersion\" : 2");
         assertThat(manifest).contains("示例账套");
         assertThat(manifest).contains("示例科技有限公司");
         // 每张表一行数据，清单行数与校验和必须可查
@@ -97,6 +99,37 @@ class BookBackupServiceTest {
         assertThat(entries).containsKey("manifest.json");
         String manifest = new String(entries.get("manifest.json"), StandardCharsets.UTF_8);
         assertThat(manifest).contains(BookBackupService.FORMAT);
+    }
+
+    @Test
+    void exportIncludesAttachmentBytesAndChecksums() throws Exception {
+        byte[] bytes = "invoice-binary".getBytes(StandardCharsets.UTF_8);
+        when(jdbcTemplate.queryForList("SELECT * FROM `voucher_attachment` WHERE book_id = ? AND deleted = 'n'", "book-1"))
+                .thenReturn(List.of(Map.of("id", "attachment", "file_id", "file-1", "book_id", "book-1")));
+        when(jdbcTemplate.queryForList("SELECT * FROM file_storage WHERE id=?", "file-1"))
+                .thenReturn(List.of(Map.of("id", "file-1", "data_stored", bytes, "file_name", "invoice.pdf")));
+        Map<String, byte[]> entries = unzip(service.export("book-1", new UserInfo()).content());
+        assertThat(entries.get("files/0.bin")).isEqualTo(bytes);
+        assertThat(new String(entries.get("manifest.json"), StandardCharsets.UTF_8))
+                .contains(BookBackupService.sha256(bytes), "invoice.pdf", "file-1");
+    }
+
+    @Test
+    void missingAttachmentFailsInsteadOfProducingIncompleteBackup() {
+        when(jdbcTemplate.queryForList("SELECT * FROM `voucher_attachment` WHERE book_id = ? AND deleted = 'n'", "book-1"))
+                .thenReturn(List.of(Map.of("id", "attachment", "file_id", "missing")));
+        assertThatThrownBy(() -> service.export("book-1", new UserInfo())).hasMessageContaining("文件已丢失");
+    }
+
+    @Test
+    void corruptedSharedAttachmentCannotLeakAnotherBooksFile() {
+        when(jdbcTemplate.queryForList("SELECT * FROM `voucher_attachment` WHERE book_id = ? AND deleted = 'n'", "book-1"))
+                .thenReturn(List.of(Map.of("id", "attachment", "file_id", "foreign")));
+        when(jdbcTemplate.queryForList("SELECT * FROM file_storage WHERE id=?", "foreign"))
+                .thenReturn(List.of(Map.of("data_stored", new byte[]{1})));
+        when(jdbcTemplate.queryForList(anyString(), eq("foreign"), eq("foreign")))
+                .thenReturn(List.of(Map.of("book_id", "book-2")));
+        assertThatThrownBy(() -> service.export("book-1", new UserInfo())).hasMessageContaining("跨账套引用");
     }
 
     private Map<String, byte[]> unzip(byte[] zipBytes) throws Exception {

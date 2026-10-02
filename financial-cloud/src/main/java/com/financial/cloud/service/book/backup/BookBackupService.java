@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,7 +27,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -38,7 +41,7 @@ import java.util.zip.ZipOutputStream;
 public class BookBackupService {
 
     public static final String FORMAT = "financial-cloud-book-backup";
-    public static final int FORMAT_VERSION = 1;
+    public static final int FORMAT_VERSION = 2;
     public static final String CONTENT_TYPE = "application/zip";
 
     private static final DateTimeFormatter FILE_TS = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
@@ -52,6 +55,7 @@ public class BookBackupService {
     }
 
     /** 导出当前账套的完整业务备份包。调用方必须为本账套管理员。 */
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public BackupPackage export(String bookId, UserInfo operator) {
         bookService.requireBookAdministrator(operator, bookId);
         return doExport(bookId, operator, "export", "导出账套备份");
@@ -60,6 +64,7 @@ public class BookBackupService {
     /**
      * 系统调度导出：同格式 ZIP，不校验交互式账套管理员会话。
      */
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public BackupPackage exportForSystem(String bookId) {
         UserInfo system = new UserInfo();
         system.setId("scheduled-backup");
@@ -75,6 +80,9 @@ public class BookBackupService {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             ArrayNode tableManifests = MAPPER.createArrayNode();
+            ArrayNode fileManifests = MAPPER.createArrayNode();
+            Set<String> fileIds = new LinkedHashSet<>();
+            BackupArchive archive = new BackupArchive();
             long totalRows = 0;
             byte[] zipBytes;
             try (ZipOutputStream zip = new ZipOutputStream(buffer, StandardCharsets.UTF_8)) {
@@ -82,9 +90,16 @@ public class BookBackupService {
                     byte[] jsonl = exportTable(spec, bookId);
                     int rows = countLines(jsonl);
                     totalRows += rows;
-                    zip.putNextEntry(new ZipEntry("data/" + spec.table() + ".jsonl"));
-                    zip.write(jsonl);
-                    zip.closeEntry();
+                    archive.write(zip, "data/" + spec.table() + ".jsonl", jsonl);
+                    if (spec.table().equals("voucher_attachment") || spec.table().equals("expense_claim_attachment")) {
+                        for (Map<String, Object> row : BackupJsonCodec.decodeRows(jsonl)) {
+                            Object id = row.get("file_id");
+                            if (id == null || String.valueOf(id).isBlank()) {
+                                throw new BusinessException(400, "备份附件缺少文件引用，无法完整导出");
+                            }
+                            fileIds.add(String.valueOf(id));
+                        }
+                    }
 
                     ObjectNode tableNode = MAPPER.createObjectNode();
                     tableNode.put("name", spec.table());
@@ -93,10 +108,34 @@ public class BookBackupService {
                     tableManifests.add(tableNode);
                 }
 
+                for (String fileId : fileIds) {
+                    List<Map<String, Object>> stored = jdbcTemplate.queryForList("SELECT * FROM file_storage WHERE id=?", fileId);
+                    if (stored.size() != 1 || !(stored.get(0).get("data_stored") instanceof byte[] bytes)) {
+                        throw new BusinessException(400, "备份附件文件已丢失，无法完整导出：" + fileId);
+                    }
+                    // A corrupted shared reference must not export another book's confidential attachment.
+                    List<Map<String, Object>> owners = jdbcTemplate.queryForList(
+                            "SELECT book_id FROM voucher_attachment WHERE file_id=? UNION SELECT book_id FROM expense_claim_attachment WHERE file_id=?", fileId, fileId);
+                    if (owners.stream().anyMatch(row -> !bookId.equals(String.valueOf(row.get("book_id"))))) {
+                        throw new BusinessException(400, "备份附件文件存在跨账套引用，无法导出：" + fileId);
+                    }
+                    String entry = "files/" + fileManifests.size() + ".bin";
+                    archive.write(zip, entry, bytes);
+                    Map<String, Object> file = stored.get(0);
+                    ObjectNode node = MAPPER.createObjectNode();
+                    node.put("id", fileId);
+                    node.put("entry", entry);
+                    node.put("size", bytes.length);
+                    node.put("sha256", sha256(bytes));
+                    node.put("fileName", file.get("file_name") == null ? null : String.valueOf(file.get("file_name")));
+                    node.put("contentType", file.get("content_type") == null ? null : String.valueOf(file.get("content_type")));
+                    node.put("category", file.get("category") == null ? null : String.valueOf(file.get("category")));
+                    fileManifests.add(node);
+                }
+
                 ObjectNode manifest = buildManifest(book, tableManifests);
-                zip.putNextEntry(new ZipEntry("manifest.json"));
-                zip.write(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsBytes(manifest));
-                zip.closeEntry();
+                manifest.set("files", fileManifests);
+                archive.write(zip, "manifest.json", MAPPER.writerWithDefaultPrettyPrinter().writeValueAsBytes(manifest));
             }
             zipBytes = buffer.toByteArray();
 

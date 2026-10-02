@@ -183,7 +183,7 @@
                   成员
                 </el-button>
               </el-tooltip>
-              <el-tooltip content="导出账套业务备份包（ZIP）">
+              <el-tooltip content="导出包含凭证、报表及附件文件的备份包（ZIP）">
                 <el-button
                   link
                   type="warning"
@@ -262,7 +262,7 @@
         show-icon
         :title="restoreMode === 'overwrite'
           ? '危险操作：将清空所选账套全部业务数据后灌入备份。覆盖前会自动落盘预备份。封存账套不可覆盖。'
-          : '上传账套备份包（ZIP），将恢复为一个新账套，不会影响现有账套数据。'"
+          : '上传账套备份包（ZIP），将恢复为一个新账套。新版备份包含附件文件；旧版备份需要本实例仍保留源附件，并拥有来源账套管理权限。'"
       />
       <div
         v-if="restoreMode === 'overwrite'"

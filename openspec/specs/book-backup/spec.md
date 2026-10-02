@@ -52,10 +52,10 @@ The system SHALL restore a validated backup as a NEW book (new `book_id`) for th
 - **THEN** no pre-existing book's rows SHALL have been modified or deleted
 
 #### Scenario: Attachment restoration uses independent files
-- **WHEN** a backup contains attachment file references available on the same instance
+- **WHEN** a legacy v1 backup contains attachment file references available on the same instance
 - **THEN** the operator SHALL administer every source book associated with each referenced file before any restore writes
 - **AND** restored attachments SHALL reference independent copies of the file rows, so deleting restored attachments cannot change source files
-- **AND** missing files or unverifiable source ownership SHALL reject restoration; this format does not embed attachment binaries for transfer to another instance
+- **AND** missing files or unverifiable source ownership SHALL reject restoration; legacy v1 does not embed attachment binaries for transfer to another instance
 
 #### Scenario: Missing scope and unknown report references
 - **WHEN** an imported book-scoped row omits book_id or contains an unmapped report header reference

@@ -18,7 +18,9 @@ GROUPS = [
     ("income-golden", ["05-income-statement-golden-dataset.spec.ts"]),
     ("year-end", ["carry-forward-year-end.spec.ts"]),
     ("asset-reference", ["fixed-asset-accounting-reference.spec.ts"]),
-    ("business-regression", ["arap.spec.ts", "arap-writeoff.spec.ts", "payroll-smb-regression.spec.ts", "report-export.spec.ts", "journal.spec.ts", "zz-accounting-flow.spec.ts"]),
+    ("payroll-reference", ["payroll-smb-regression.spec.ts"]),
+    ("portable-backup", ["portable-backup.spec.ts"]),
+    ("business-regression", ["arap.spec.ts", "arap-writeoff.spec.ts", "report-export.spec.ts", "journal.spec.ts", "zz-accounting-flow.spec.ts"]),
     ("guided-delivery", ["guided-accounting-delivery.spec.ts", "balance-sheet-integrity-ui.spec.ts"]),
 ]
 

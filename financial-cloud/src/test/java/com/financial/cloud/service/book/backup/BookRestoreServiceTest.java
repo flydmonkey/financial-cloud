@@ -324,6 +324,76 @@ class BookRestoreServiceTest {
         verify(bookMapper, never()).insert(any(Book.class));
     }
 
+    @Test
+    void portableRestoreUsesPackagedBytesWithoutAnySourceLookup() {
+        byte[] bytes = "portable-invoice".getBytes(StandardCharsets.UTF_8);
+        var result = service.restore(new ByteArrayInputStream(portableZip(bytes, bytes, true)), operator());
+        var inserted = captureInserts();
+        var file = inserted.get("file_storage").get(0);
+        assertThat(file.get("data_stored")).isEqualTo(bytes);
+        assertThat(file.get("content_size")).isEqualTo(bytes.length);
+        assertThat(file.get("file_name")).isEqualTo("invoice.pdf");
+        assertThat(file.get("id")).isNotEqualTo("source-file");
+        var attachment = inserted.get("expense_claim_attachment").get(0);
+        assertThat(attachment.get("file_id")).isEqualTo(file.get("id"));
+        assertThat(attachment.get("book_id")).isEqualTo(result.bookId());
+        verify(jdbcTemplate, never()).queryForList(anyString(), any(Object[].class));
+    }
+
+    @Test
+    void corruptedPortableFileIsRejectedBeforeBookOrFileWrites() {
+        assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(
+                portableZip(new byte[]{1,2}, new byte[]{9,9}, true)), operator())).hasMessageContaining("附件校验失败");
+        verify(bookMapper, never()).insert(any(Book.class));
+        verify(jdbcTemplate, never()).update(anyString(), any(Object[].class));
+    }
+
+    @Test
+    void missingPortableFileIsRejectedBeforeBookCreation() {
+        assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(
+                portableZip(new byte[]{1}, new byte[]{1}, false)), operator())).hasMessageContaining("附件校验失败");
+        verify(bookMapper, never()).insert(any(Book.class));
+    }
+
+    @Test
+    void missingPortableFileDeclarationIsRejected() {
+        var data = new LinkedHashMap<String, List<Map<String, Object>>>();
+        addRow(data, "expense_claim_attachment", orderedMap("id", "att", "file_id", "source-file"));
+        assertThatThrownBy(() -> service.restore(new ByteArrayInputStream(
+                buildZip(data, Map.of(), null, "\"formatVersion\":2,\"files\":[],")), operator()))
+                .hasMessageContaining("缺少包内文件声明");
+        verify(bookMapper, never()).insert(any(Book.class));
+    }
+
+    private byte[] portableZip(byte[] expected, byte[] actual, boolean includeFile) {
+        var data = new LinkedHashMap<String, List<Map<String, Object>>>();
+        addRow(data, "expense_claim", orderedMap("id", "claim", "book_id", "source"));
+        addRow(data, "expense_claim_attachment", orderedMap("id", "att", "book_id", "source",
+                "claim_id", "claim", "file_id", "source-file"));
+        String files = "\"formatVersion\":2,\"files\":[{\"id\":\"source-file\",\"entry\":\"files/0.bin\","
+                + "\"size\":" + expected.length + ",\"sha256\":\"" + BookBackupService.sha256(expected)
+                + "\",\"fileName\":\"invoice.pdf\",\"contentType\":\"application/pdf\",\"category\":\"voucher\"}],";
+        byte[] original = buildZip(data, Map.of(), null, files);
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (ZipOutputStream zip = new ZipOutputStream(out);
+                 ZipInputStream source = new ZipInputStream(new ByteArrayInputStream(original))) {
+                ZipEntry entry;
+                while ((entry = source.getNextEntry()) != null) {
+                    zip.putNextEntry(new ZipEntry(entry.getName()));
+                    zip.write(source.readAllBytes());
+                    zip.closeEntry();
+                }
+                if (includeFile) {
+                    zip.putNextEntry(new ZipEntry("files/0.bin"));
+                    zip.write(actual);
+                    zip.closeEntry();
+                }
+            }
+            return out.toByteArray();
+        } catch (Exception e) { throw new IllegalStateException(e); }
+    }
+
     private UserInfo operator() {
         UserInfo user = new UserInfo();
         user.setId("user-1");

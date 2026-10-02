@@ -30,7 +30,9 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 4194304
+      # Backups include attachments; individual attachment services retain their 10MiB cap.
+      max-file-size: 132MB
+      max-request-size: 136MB
   messages:
     basename: classpath:messages/messages
     encoding: UTF-8

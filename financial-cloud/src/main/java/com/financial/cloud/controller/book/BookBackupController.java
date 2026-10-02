@@ -57,6 +57,7 @@ public class BookBackupController {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(400, "请选择要恢复的备份 ZIP 文件");
         }
+        requirePackageSize(file);
         try (InputStream in = file.getInputStream()) {
             BookRestoreService.RestoreResult result = bookRestoreService.restore(in, userInfo);
             return new Message<>(Message.SUCCESS, "恢复成功", result);
@@ -77,12 +78,19 @@ public class BookBackupController {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(400, "请选择要恢复的备份 ZIP 文件");
         }
+        requirePackageSize(file);
         try (InputStream in = file.getInputStream()) {
             BookRestoreService.OverwriteResult result =
                     bookRestoreService.overwrite(bookId, in, confirmPhrase, userInfo);
             return new Message<>(Message.SUCCESS, "覆盖恢复成功", result);
         } catch (IOException e) {
             throw new BusinessException(400, "备份包读取失败：" + e.getMessage());
+        }
+    }
+
+    private static void requirePackageSize(MultipartFile file) {
+        if (file.getSize() > 132L * 1024 * 1024) {
+            throw new BusinessException(400, "备份 ZIP 超过132MiB上传限制");
         }
     }
 

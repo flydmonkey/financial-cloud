@@ -40,11 +40,23 @@ else:
         rows[0]['file_id'] = payload['fileId']
         entries[name] = ''.join(json.dumps(row) + '\n' for row in rows).encode()
         manifest = json.loads(entries['manifest.json'])
+        if payload.get('legacy'):
+            manifest['formatVersion'] = 1
+            manifest.pop('files', None)
+            entries = {name: data for name, data in entries.items() if not name.startswith('files/')}
         for table in manifest['tables']:
             if table['name'] == 'expense_claim_attachment':
                 table['sha256'] = hashlib.sha256(entries[name]).hexdigest()
         entries['manifest.json'] = json.dumps(manifest).encode()
         with zipfile.ZipFile(output, 'w') as z:
+            for name, data in entries.items():
+                z.writestr(name, data)
+        result = {'file': base64.b64encode(output.getvalue()).decode()}
+    elif payload['mode'] == 'corrupt-binary':
+        name = next(name for name in entries if name.startswith('files/'))
+        content = entries[name]
+        entries[name] = bytes([content[0] ^ 255]) + content[1:]
+        with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as z:
             for name, data in entries.items():
                 z.writestr(name, data)
         result = {'file': base64.b64encode(output.getvalue()).decode()}

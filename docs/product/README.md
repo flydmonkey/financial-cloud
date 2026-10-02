@@ -81,6 +81,8 @@
 
 ## 相关资产
 
+会计试用与交付：[一个月份的平行试账](../testing/accountant-month-pilot.md)、[便携备份恢复](../testing/portable-book-backup.md)。实际会计签字仍待完成。
+
 | 资产 | 路径 |
 |------|------|
 | 仓库 README | [../../README.md](../../README.md) |

@@ -42,6 +42,7 @@ SCHEMA_EXTENSION_SQL = [
     PATCHES / "2026-09-29-fixed-asset-check.sql",
     PATCHES / "2026-09-29-voucher-attachment.sql",
     PATCHES / "2026-09-29-statement-subject-balance-source-nullable.sql",
+    PATCHES / "2026-10-03-payroll-write-scope-index.sql",
 ]
 
 MENU_SEED_SQL = [

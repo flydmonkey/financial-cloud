@@ -10,11 +10,47 @@ import com.financial.cloud.dto.hr.TaxDeductionExportVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Options;
 
 import java.util.List;
 
 @Mapper
 public interface EmployeeSalaryMapper extends BaseMapper<EmployeeSalary> {
+
+    @Select("SELECT id FROM voucher WHERE id = #{voucherId} AND deleted = 'n' FOR UPDATE")
+    @Options(flushCache = Options.FlushCachePolicy.TRUE, useCache = false)
+    String findLiveVoucherIdForUpdate(@Param("voucherId") String voucherId);
+
+    @Select("""
+            SELECT * FROM employee_salary
+            WHERE id = #{id} AND book_id = #{bookId} AND deleted = 'n'
+            FOR UPDATE
+            """)
+    @Options(flushCache = Options.FlushCachePolicy.TRUE, useCache = false)
+    EmployeeSalary selectActiveByIdForUpdate(@Param("bookId") String bookId, @Param("id") String id);
+
+    @Select("""
+            <script>
+            SELECT * FROM employee_salary
+            WHERE book_id = #{bookId} AND deleted = 'n' AND id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+            ORDER BY id
+            FOR UPDATE
+            </script>
+            """)
+    @Options(flushCache = Options.FlushCachePolicy.TRUE, useCache = false)
+    List<EmployeeSalary> selectActiveByIdsForUpdate(@Param("bookId") String bookId,
+            @Param("ids") List<String> ids);
+
+    @Select("""
+            SELECT * FROM employee_salary FORCE INDEX (idx_salary_payroll_scope)
+            WHERE book_id = #{bookId} AND belong_date = #{belongDate} AND deleted = 'n'
+            ORDER BY id
+            FOR UPDATE
+            """)
+    @Options(flushCache = Options.FlushCachePolicy.TRUE, useCache = false)
+    List<EmployeeSalary> selectActiveByMonthForUpdate(@Param("bookId") String bookId,
+            @Param("belongDate") String belongDate);
 
     Page<EmployeeSalary> pageList(Page<?> page, @Param("dto") SalaryDetailPageDto dto);
 
@@ -40,28 +76,34 @@ public interface EmployeeSalaryMapper extends BaseMapper<EmployeeSalary> {
             @Param("belongDate") String belongDate);
 
     @Select("""
-            SELECT accrual_voucher_id FROM employee_salary
-            WHERE book_id = #{bookId}
-              AND employee_id = #{employeeId}
-              AND belong_date = #{belongDate}
-              AND accrual_voucher_id IS NOT NULL AND accrual_voucher_id <> ''
-            ORDER BY created_date DESC
+            SELECT es.accrual_voucher_id FROM employee_salary es FORCE INDEX (idx_salary_payroll_scope)
+            STRAIGHT_JOIN voucher v ON es.accrual_voucher_id = v.id
+            WHERE es.book_id = #{bookId}
+              AND es.employee_id = #{employeeId}
+              AND es.belong_date = #{belongDate}
+              AND es.accrual_voucher_id IS NOT NULL AND es.accrual_voucher_id <> ''
+              AND v.deleted = 'n'
             LIMIT 1
+            FOR UPDATE
             """)
-    String findAnyAccrualVoucherId(@Param("bookId") String bookId,
+    @Options(flushCache = Options.FlushCachePolicy.TRUE, useCache = false)
+    String findAnyLiveAccrualVoucherId(@Param("bookId") String bookId,
             @Param("employeeId") String employeeId,
             @Param("belongDate") String belongDate);
 
     @Select("""
-            SELECT salary_voucher_id FROM employee_salary
-            WHERE book_id = #{bookId}
-              AND employee_id = #{employeeId}
-              AND belong_date = #{belongDate}
-              AND salary_voucher_id IS NOT NULL AND salary_voucher_id <> ''
-            ORDER BY created_date DESC
+            SELECT es.salary_voucher_id FROM employee_salary es FORCE INDEX (idx_salary_payroll_scope)
+            STRAIGHT_JOIN voucher v ON es.salary_voucher_id = v.id
+            WHERE es.book_id = #{bookId}
+              AND es.employee_id = #{employeeId}
+              AND es.belong_date = #{belongDate}
+              AND es.salary_voucher_id IS NOT NULL AND es.salary_voucher_id <> ''
+              AND v.deleted = 'n'
             LIMIT 1
+            FOR UPDATE
             """)
-    String findAnySalaryVoucherId(@Param("bookId") String bookId,
+    @Options(flushCache = Options.FlushCachePolicy.TRUE, useCache = false)
+    String findAnyLiveSalaryVoucherId(@Param("bookId") String bookId,
             @Param("employeeId") String employeeId,
             @Param("belongDate") String belongDate);
 }

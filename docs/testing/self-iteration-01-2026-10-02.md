@@ -2,6 +2,8 @@
 
 日期：2026-10-02。路线见 [产品迭代路径](../product/23-self-iteration-roadmap.md)，本轮 OpenSpec 为 `payroll-voucher-link-integrity`。基线 `9758a9a`，验证对象为其上的未提交工作区改动；本轮未推送、未正式部署。
 
+2026-10-03 状态补记：修复随后已提交为 `4571047d0b836848190e8952785e8590cee606d9` 并归档；已通过 GitHub 原始运行和 job 记录实查完整 [CI #157](https://github.com/flydmonkey/financial-cloud/actions/runs/37029890945)，backend-test、frontend-check 和完整 e2e 均成功。push 事件下 PR 专用 e2e-smoke 按配置跳过。首轮本地原证据保留采集时的工作区身份；此 CI 不代表后来第二、第三轮未提交改动已通过远端验证。
+
 ## 问题与结果
 
 确认并修复三条账务脱节路径：普通编辑把工资凭证关联更新为 null；直接删除明细不检查关联；工资入口在底层凭证删除失败时仍清空关联并返回成功。

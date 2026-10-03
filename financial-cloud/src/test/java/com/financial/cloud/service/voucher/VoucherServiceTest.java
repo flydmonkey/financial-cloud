@@ -1,10 +1,15 @@
 package com.financial.cloud.service.voucher;
 
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.financial.cloud.common.Message;
 import com.financial.cloud.domain.book.Book;
 import com.financial.cloud.domain.idm.UserInfo;
 import com.financial.cloud.domain.voucher.Voucher;
+import com.financial.cloud.domain.voucher.VoucherItem;
 import com.financial.cloud.dto.voucher.VoucherChangeDto;
 import com.financial.cloud.dto.voucher.VoucherItemChangeDto;
 import com.financial.cloud.enums.voucher.VoucherReviewedOnOffEnum;
@@ -22,13 +27,29 @@ import com.financial.cloud.service.book.BookSubjectService;
 import com.financial.cloud.service.config.ConfigSysService;
 import com.financial.cloud.service.statement.StatementSubjectBalanceService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.transaction.IllegalTransactionStateException;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionInterceptor;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,14 +58,21 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -93,6 +121,13 @@ class VoucherServiceTest {
     @BeforeEach
     void wireBaseMapper() {
         ReflectionTestUtils.setField(voucherService, "baseMapper", voucherMapper);
+    }
+
+    @BeforeAll
+    static void initDeleteWrapperCache() {
+        MybatisConfiguration configuration = new MybatisConfiguration();
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(configuration, ""), Voucher.class);
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(configuration, ""), VoucherItem.class);
     }
 
     static VoucherItemChangeDto debitLine(String subjectId, String summary, String amount) {
@@ -542,5 +577,151 @@ class VoucherServiceTest {
 
         Voucher ok = Voucher.builder().id("v4").status(VoucherStatusEnum.DRAFT.getValue()).build();
         assertEquals(null, VoucherService.modifyBlockedReason(ok, true));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void deleteScopesHeaderAndItemsWhileOnlyPayrollRemovalUsesCurrentReads(boolean payroll) {
+        String voucherId = "v-delete";
+        Voucher draft = deletionVoucher(voucherId);
+        when(voucherMapper.selectList(any(Wrapper.class))).thenReturn(List.of(draft));
+        when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn(TERM);
+        when(voucherItemMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+        when(voucherMapper.delete(any(Wrapper.class))).thenReturn(1);
+
+        Message<String> result = deleteThroughEntryPoint(payroll, voucherId);
+
+        assertEquals(Message.SUCCESS, result.getCode());
+        ArgumentCaptor<Wrapper<Voucher>> headers = ArgumentCaptor.forClass(Wrapper.class);
+        ArgumentCaptor<Wrapper<VoucherItem>> items = ArgumentCaptor.forClass(Wrapper.class);
+        var order = inOrder(voucherMapper, voucherItemMapper);
+        order.verify(voucherMapper).selectList(headers.capture());
+        order.verify(voucherItemMapper).selectList(items.capture());
+        order.verify(voucherItemMapper).delete(any(Wrapper.class));
+        order.verify(voucherMapper).delete(any(Wrapper.class));
+        LambdaQueryWrapper<Voucher> headerQuery = (LambdaQueryWrapper<Voucher>) headers.getValue();
+        String headerSql = headerQuery.getSqlSegment();
+        assertTrue(headerSql.contains("book_id"));
+        assertTrue(headerSql.contains("id IN"));
+        assertEquals(payroll, headerSql.endsWith("FOR UPDATE"));
+        assertTrue(headerQuery.getParamNameValuePairs().containsValue(BOOK_ID));
+        assertTrue(headerQuery.getParamNameValuePairs().containsValue(voucherId));
+        LambdaQueryWrapper<VoucherItem> itemQuery = (LambdaQueryWrapper<VoucherItem>) items.getValue();
+        String itemSql = itemQuery.getSqlSegment();
+        assertTrue(itemSql.contains("voucher_id"));
+        assertEquals(payroll, itemSql.endsWith("FOR UPDATE"));
+        assertTrue(itemQuery.getParamNameValuePairs().containsValue(voucherId));
+        if (!payroll) {
+            assertFalse(headerSql.contains("FOR UPDATE"));
+            assertFalse(itemSql.contains("FOR UPDATE"));
+        }
+        verifyNoInteractions(voucherWordMapper);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void missingOrOutOfScopeVoucherCannotDeleteAnyItems(boolean payroll) {
+        when(voucherMapper.selectList(any(Wrapper.class))).thenReturn(List.of());
+
+        Message<String> result = deleteThroughEntryPoint(payroll, "missing-or-foreign");
+
+        assertEquals(Message.FAIL, result.getCode());
+        ArgumentCaptor<Wrapper<Voucher>> capture = ArgumentCaptor.forClass(Wrapper.class);
+        verify(voucherMapper).selectList(capture.capture());
+        LambdaQueryWrapper<Voucher> query = (LambdaQueryWrapper<Voucher>) capture.getValue();
+        assertTrue(query.getSqlSegment().contains("book_id"));
+        assertEquals(payroll, query.getSqlSegment().endsWith("FOR UPDATE"));
+        assertTrue(query.getParamNameValuePairs().containsValue(BOOK_ID));
+        verify(voucherMapper, never()).delete(any(Wrapper.class));
+        verifyNoInteractions(voucherItemMapper, voucherItemAuxiliaryMapper, voucherItemCashFlowMapper,
+                settlementCarryforwardMapper, journalEntryServiceProvider);
+    }
+
+    static Stream<Arguments> removalGuardCases() {
+        return Stream.of(true, false).flatMap(payroll -> Stream.of(
+                Arguments.of(payroll, "posted"),
+                Arguments.of(payroll, "reviewing"),
+                Arguments.of(payroll, "closed")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("removalGuardCases")
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void payrollAndOrdinaryRemovalPreservePostedStatusAndPeriodGuards(boolean payroll, String guard) {
+        Voucher voucher = deletionVoucher("v-guarded");
+        if ("posted".equals(guard)) {
+            voucher.setSenderId("posting-user");
+        } else if ("reviewing".equals(guard)) {
+            voucher.setStatus(VoucherStatusEnum.UNDER_REVIEW.getValue());
+        } else {
+            when(configSysService.getCurrentTerm(BOOK_ID)).thenReturn("2025-02");
+        }
+        when(voucherMapper.selectList(any(Wrapper.class))).thenReturn(List.of(voucher));
+
+        Message<String> result = deleteThroughEntryPoint(payroll, voucher.getId());
+
+        assertEquals(Message.FAIL, result.getCode());
+        String expected = "posted".equals(guard) ? "已过账" :
+                "reviewing".equals(guard) ? "仅暂存或待过账" : "已结账期间";
+        assertTrue(result.getMessage().contains(expected));
+        verify(voucherMapper, never()).delete(any(Wrapper.class));
+        verifyNoInteractions(voucherItemMapper, voucherItemAuxiliaryMapper, voucherItemCashFlowMapper,
+                settlementCarryforwardMapper, journalEntryServiceProvider);
+    }
+
+    @Test
+    void payrollRemovalRequiresCallerTransactionAndOrdinaryRemovalKeepsRequiredPropagation() throws Exception {
+        Transactional payroll = VoucherService.class.getMethod("deletePayrollVoucher", String.class, String.class)
+                .getAnnotation(Transactional.class);
+        Transactional ordinary = VoucherService.class.getMethod("delete", List.class, String.class)
+                .getAnnotation(Transactional.class);
+        assertNotNull(payroll);
+        assertEquals(Propagation.MANDATORY, payroll.propagation());
+        assertNotNull(ordinary);
+        assertEquals(Propagation.REQUIRED, ordinary.propagation());
+
+        ProxyFactory proxy = new ProxyFactory(voucherService);
+        proxy.setProxyTargetClass(true);
+        proxy.addAdvice(new TransactionInterceptor(new NoExistingTransactionManager(),
+                new AnnotationTransactionAttributeSource()));
+        VoucherService transactional = (VoucherService) proxy.getProxy();
+
+        assertThrows(IllegalTransactionStateException.class,
+                () -> transactional.deletePayrollVoucher("v-delete", BOOK_ID));
+        verifyNoInteractions(voucherMapper, voucherItemMapper);
+    }
+
+    private Message<String> deleteThroughEntryPoint(boolean payroll, String id) {
+        return payroll ? voucherService.deletePayrollVoucher(id, BOOK_ID) :
+                voucherService.delete(List.of(id), BOOK_ID);
+    }
+
+    private static Voucher deletionVoucher(String id) {
+        return Voucher.builder().id(id).bookId(BOOK_ID).status(VoucherStatusEnum.DRAFT.getValue())
+                .voucherDate(new GregorianCalendar(2025, Calendar.JANUARY, 15).getTime()).build();
+    }
+
+    private static class NoExistingTransactionManager extends AbstractPlatformTransactionManager {
+        @Override
+        protected Object doGetTransaction() {
+            return new Object();
+        }
+
+        @Override
+        protected void doBegin(Object transaction, TransactionDefinition definition) {
+            throw new AssertionError("MANDATORY payroll removal must not open its own transaction");
+        }
+
+        @Override
+        protected void doCommit(DefaultTransactionStatus status) {
+            throw new AssertionError("No payroll transaction should have been created");
+        }
+
+        @Override
+        protected void doRollback(DefaultTransactionStatus status) {
+            throw new AssertionError("No payroll transaction should have been created");
+        }
     }
 }

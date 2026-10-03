@@ -368,3 +368,114 @@ jobs:
           AI_UI_API: http://localhost:2154
           AI_UI_BASE: http://localhost:3154
           AI_UI_REQUIRE_BOOKS: '0'
+
+  verification-tools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERIFICATION_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install verification dependencies
+        run: python -m pip install 'PyMySQL[rsa]==1.1.2' 'PyYAML==6.0.3'
+      - name: Run evidence tool tests
+        run: python -B tools/run_verification_ci_tests.py --scope evidence --output .e2e-run/verification-tools/evidence
+      - name: Run payroll SQL offline boundary tests
+        run: python -B tools/run_verification_ci_tests.py --scope sql --output .e2e-run/verification-tools/sql
+      - name: Run payroll initializer safety tests
+        run: python -B tools/run_verification_ci_tests.py --scope safety --output .e2e-run/verification-tools/safety
+      - name: Save verification tools evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-tools-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .e2e-run/verification-tools/
+          if-no-files-found: error
+
+  payroll-mysql-it:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FC_DB_HOST: 127.0.0.1
+      FC_DB_PORT: '3307'
+      FC_DB_NAME: financial_cloud_e2e_20261003_it4_ci_${{ github.run_id }}_${{ github.run_attempt }}
+      FC_DB_USER: root
+      FC_DB_PASSWORD: root
+      VERIFICATION_SOURCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    services:
+      mysql:
+        image: mysql:9.4.0-oraclelinux9
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Install payroll integration dependencies
+        run: python -m pip install 'PyMySQL[rsa]==1.1.2'
+      - name: Initialize payroll IT schema
+        id: payroll-schema
+        run: python -B tools/init_payroll_it_schema.py --output .e2e-run/payroll-mysql-it/schema-init.json
+      - name: Verify payroll IT environment
+        run: python -B tools/init_payroll_it_schema.py --observe --output .e2e-run/payroll-mysql-it/database-before.json
+      - name: Prepare payroll transaction evidence
+        id: payroll-evidence
+        run: |
+          python -B tools/verify_payroll_ci_reports.py prepare --report-dir financial-cloud/target/surefire-reports --output .e2e-run/payroll-mysql-it
+          python -B - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          record = json.loads(Path('.e2e-run/payroll-mysql-it/run.json').read_text(encoding='utf-8'))
+          outputs = {
+              'run_nonce': record['runNonce'],
+              'checkout_sha': record['before']['source']['commitSha'],
+              'source_fingerprint': record['before']['source']['fingerprint'],
+          }
+          if any(not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]+', value) for value in outputs.values()):
+              raise SystemExit('Payroll execution identity must consist of hexadecimal values')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              for key, value in outputs.items():
+                  handle.write(f'{key}={value}\n')
+          PY
+      - name: Run payroll MySQL transaction integration
+        id: payroll-tests
+        working-directory: financial-cloud
+        run: |
+          set -o pipefail
+          set +e
+          ./mvnw -B test -Dtest=PayrollTransactionMysqlIT '-Dverification.run.nonce=${{ steps.payroll-evidence.outputs.run_nonce }}' '-Dverification.checkout.sha=${{ steps.payroll-evidence.outputs.checkout_sha }}' '-Dverification.source.fingerprint=${{ steps.payroll-evidence.outputs.source_fingerprint }}' 2>&1 | tee ../.e2e-run/payroll-mysql-it/maven.log
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+      - name: Observe payroll IT cleanup
+        if: always() && steps.payroll-schema.outcome == 'success'
+        run: python -B tools/init_payroll_it_schema.py --observe --output .e2e-run/payroll-mysql-it/database-after.json
+      - name: Validate payroll IT reports
+        if: always() && steps.payroll-evidence.outcome == 'success'
+        run: python -B tools/verify_payroll_ci_reports.py verify --report-dir financial-cloud/target/surefire-reports --output .e2e-run/payroll-mysql-it --command-exit '${{ steps.payroll-tests.outputs.exit_code }}'
+      - name: Save payroll integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: payroll-mysql-it-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .e2e-run/payroll-mysql-it/
+            financial-cloud/target/surefire-reports/
+          if-no-files-found: error

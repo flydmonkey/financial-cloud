@@ -66,6 +66,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.io.IOException;
@@ -105,6 +106,7 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
     private final SettlementCarryforwardMapper settlementCarryforwardMapper;
 
     private final VoucherTemplateService voucherTemplateService;
+    private final PayrollWriteLock payrollWriteLock;
 
     public Message<Page<EmployeeSalary>> pageList(SalaryDetailPageDto dto) {
 
@@ -112,9 +114,10 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
         return Message.ok(employeeSalaryPage);
     }
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Message<String> update(SalaryDetailChangeDto dto) {
-        EmployeeSalary original = requireSalary(dto.getId());
+        payrollWriteLock.lockBook(dto.getBookId());
+        EmployeeSalary original = requireSalary(dto.getBookId(), dto.getId());
         if (SalaryVoucherDedupeRules.hasLinkedVoucher(
                 original.getAccrualVoucherId(), original.getSalaryVoucherId())) {
             return Message.failed(BLOCK_CHANGE_BECAUSE_VOUCHERS);
@@ -124,15 +127,17 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
         return result ? Message.ok("修改成功") : Message.failed("修改失败");
     }
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Message<String> save(SalaryDetailChangeDto dto) {
+        payrollWriteLock.lockBook(dto.getBookId());
         EmployeeSalary employeeSalary = BeanUtil.copyProperties(dto, EmployeeSalary.class);
         boolean result = super.save(employeeSalary);
 
         return result ? Message.ok("新增成功") : Message.failed("新增失败");
     }
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Message<String> delete(ListIdsDto dto) {
+        payrollWriteLock.lockBook(dto.getBookId());
         if (dto.getListIds() == null || dto.getListIds().isEmpty()) {
             return Message.failed("请选择要删除的工资明细");
         }
@@ -140,8 +145,11 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         if (ids.stream().anyMatch(StringUtils::isBlank)) {
             throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
         }
-        List<EmployeeSalary> salaries = super.listByIds(ids);
-        if (salaries.size() != ids.size()) {
+        Collections.sort(ids);
+        List<EmployeeSalary> salaries = employeeSalaryMapper.selectActiveByIdsForUpdate(dto.getBookId(), ids);
+        if (salaries == null || salaries.size() != ids.size()
+                || salaries.stream().anyMatch(salary -> !dto.getBookId().equals(salary.getBookId()))
+                || !new HashSet<>(ids).equals(salaries.stream().map(EmployeeSalary::getId).collect(Collectors.toSet()))) {
             throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
         }
         if (salaries.stream().anyMatch(salary -> SalaryVoucherDedupeRules.hasLinkedVoucher(
@@ -152,9 +160,10 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         return result ? new Message<>(Message.SUCCESS, "删除成功") : new Message<>(Message.FAIL, "删除失败");
     }
 
-    private EmployeeSalary requireSalary(String id) {
-        EmployeeSalary salary = StringUtils.isBlank(id) ? null : super.getById(id);
-        if (salary == null) {
+    private EmployeeSalary requireSalary(String bookId, String id) {
+        EmployeeSalary salary = StringUtils.isBlank(id) ? null
+                : employeeSalaryMapper.selectActiveByIdForUpdate(bookId, id);
+        if (salary == null || !bookId.equals(salary.getBookId())) {
             throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
         }
         return salary;
@@ -413,38 +422,38 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
                 .eq(EmployeeSalary::getBelongDate, YearMonth.parse(belongDate)));
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Message<String> generateVoucher(GenerateVoucherDto dto) {
-        String bookId = dto.getBookId();
-        Book book = bookMapper.selectById(bookId);
         Integer voucherType = dto.getVoucherType();
-        EmployeeSalary salary = super.getById(dto.getId());
+        if (voucherType == null || voucherType < 0 || voucherType > 3) {
+            return Message.failed("不支持的工资凭证类型");
+        }
+        String bookId = dto.getBookId();
+        payrollWriteLock.lockBook(bookId);
+        EmployeeSalary salary = requireSalary(bookId, dto.getId());
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            throw new BusinessException(Message.FAIL, "工资账套不存在或已删除");
+        }
         Employee employee = employeeMapper.selectById(salary.getEmployeeId());
+        if (employee == null) {
+            throw new BusinessException(HrErrorCode.EMPLOYEE_NOT_FOUND);
+        }
         String employeeType = employee != null ? employee.getEmployeeType() : null;
         String tplCode = SalaryVoucherTemplateRules.resolveTemplateCode(employeeType, voucherType);
         if (salary.getBelongDate() != null && StringUtils.isNotBlank(salary.getEmployeeId())) {
             String belongDate = salary.getBelongDate().toString();
             boolean accrualType = voucherType != null && (voucherType == 2 || voucherType == 0);
-            // Prefer the row's own FK first (same transaction visibility), then any peer row.
-            String existingId = accrualType ? salary.getAccrualVoucherId() : salary.getSalaryVoucherId();
-            if (StringUtils.isBlank(existingId)) {
-                existingId = accrualType
-                        ? employeeSalaryMapper.findAnyAccrualVoucherId(bookId, salary.getEmployeeId(), belongDate)
-                        : employeeSalaryMapper.findAnySalaryVoucherId(bookId, salary.getEmployeeId(), belongDate);
-            }
-            if (StringUtils.isNotBlank(existingId) && isLiveVoucher(existingId)) {
+            // Reject an own live link first; a stale link must not hide a live peer.
+            String ownVoucherId = accrualType ? salary.getAccrualVoucherId() : salary.getSalaryVoucherId();
+            if (StringUtils.isNotBlank(ownVoucherId) && isLiveVoucher(ownVoucherId)) {
                 return Message.failed(SalaryVoucherDedupeRules.generateBlockedMessage(employeeType, voucherType));
             }
-            // Stale FK to a soft-deleted voucher: clear so the link cannot mask a later duplicate.
-            if (StringUtils.isNotBlank(existingId) && !isLiveVoucher(existingId)) {
-                LambdaUpdateWrapper<EmployeeSalary> clearStale = Wrappers.lambdaUpdate();
-                if (accrualType) {
-                    clearStale.set(EmployeeSalary::getAccrualVoucherId, null);
-                } else {
-                    clearStale.set(EmployeeSalary::getSalaryVoucherId, null);
-                }
-                clearStale.eq(EmployeeSalary::getId, salary.getId());
-                super.update(clearStale);
+            String livePeerId = accrualType
+                    ? employeeSalaryMapper.findAnyLiveAccrualVoucherId(bookId, salary.getEmployeeId(), belongDate)
+                    : employeeSalaryMapper.findAnyLiveSalaryVoucherId(bookId, salary.getEmployeeId(), belongDate);
+            if (StringUtils.isNotBlank(livePeerId)) {
+                return Message.failed(SalaryVoucherDedupeRules.generateBlockedMessage(employeeType, voucherType));
             }
         }
         
@@ -576,6 +585,7 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
         Message<String> saveResult = voucherService.save(voucherChangeDto);
         if (saveResult.getCode() != Message.SUCCESS) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return saveResult;
         }
 
@@ -585,8 +595,11 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         } else if (voucherType == 1 || voucherType == 3) {
             updateWrapper.set(EmployeeSalary::getSalaryVoucherId, voucherChangeDto.getId());
         }
-        updateWrapper.eq(EmployeeSalary::getId, dto.getId());
-        super.update(updateWrapper);
+        updateWrapper.eq(EmployeeSalary::getId, salary.getId())
+                .eq(EmployeeSalary::getBookId, bookId);
+        if (!super.update(updateWrapper)) {
+            throw new BusinessException(Message.FAIL, "写入工资凭证关联失败，请重试");
+        }
 
         return Message.ok(voucherChangeDto.getId());
     }
@@ -595,8 +608,7 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
         if (StringUtils.isBlank(voucherId)) {
             return false;
         }
-        Voucher voucher = voucherMapper.selectById(voucherId);
-        return voucher != null;
+        return employeeSalaryMapper.findLiveVoucherIdForUpdate(voucherId) != null;
     }
 
     private VoucherItemChangeDto createVoucherItemDto(String bookId,
@@ -641,18 +653,19 @@ public class EmployeeSalaryService extends ServiceImpl<EmployeeSalaryMapper, Emp
 
         return dto;
     }
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
 	public Message<String> deleteVoucher(GenerateVoucherDto dto) {
         Integer voucherType = dto.getVoucherType();
         if (!Objects.equals(voucherType, 2) && !Objects.equals(voucherType, 3)) {
             return Message.failed("不支持的工资凭证类型");
         }
-        EmployeeSalary salary = requireSalary(dto.getId());
+        payrollWriteLock.lockBook(dto.getBookId());
+        EmployeeSalary salary = requireSalary(dto.getBookId(), dto.getId());
         String voucherId = voucherType == 2 ? salary.getAccrualVoucherId() : salary.getSalaryVoucherId();
         if (StringUtils.isBlank(voucherId)) {
             return Message.failed("工资明细未关联该类型的凭证");
         }
-        Message<String> deleteResult = voucherService.delete(List.of(voucherId), salary.getBookId());
+        Message<String> deleteResult = voucherService.deletePayrollVoucher(voucherId, salary.getBookId());
         if (deleteResult.getCode() != Message.SUCCESS) {
             // VoucherService may return a failure after deleting some dependent rows.
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();

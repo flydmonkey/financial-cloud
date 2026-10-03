@@ -70,6 +70,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -1646,6 +1647,15 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
      */
     @Transactional
     public Message<String> delete(List<String> ids, String bookId) {
+        return deleteInternal(ids, bookId, false);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Message<String> deletePayrollVoucher(String id, String bookId) {
+        return deleteInternal(List.of(id), bookId, true);
+    }
+
+    private Message<String> deleteInternal(List<String> ids, String bookId, boolean currentRead) {
         if (ids == null || ids.isEmpty()) {
             return new Message<>(Message.SUCCESS);
         }
@@ -1653,6 +1663,9 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         LambdaQueryWrapper<Voucher> checkLqw = Wrappers.lambdaQuery();
         checkLqw.in(Voucher::getId, ids);
         checkLqw.eq(Voucher::getBookId, bookId);
+        if (currentRead) {
+            checkLqw.last("FOR UPDATE");
+        }
         List<Voucher> toDelete = baseMapper.selectList(checkLqw);
         if (toDelete.size() != ids.size()) {
             return new Message<>(Message.FAIL, "部分凭证不存在");
@@ -1673,9 +1686,12 @@ public class VoucherService extends ServiceImpl<VoucherMapper, Voucher>{
         }
 
         // 删除凭证项和现金流量的关系
-        var voucherItems = voucherItemMapper.selectList(
-                Wrappers.<VoucherItem>lambdaQuery().in(VoucherItem::getVoucherId, ids)
-        );
+        LambdaQueryWrapper<VoucherItem> itemsLqw = Wrappers.<VoucherItem>lambdaQuery()
+                .in(VoucherItem::getVoucherId, ids);
+        if (currentRead) {
+            itemsLqw.last("FOR UPDATE");
+        }
+        var voucherItems = voucherItemMapper.selectList(itemsLqw);
         if (ObjectUtils.isNotEmpty(voucherItems)) {
             var voucherItemIds = voucherItems.stream()
                     .map(VoucherItem::getId)

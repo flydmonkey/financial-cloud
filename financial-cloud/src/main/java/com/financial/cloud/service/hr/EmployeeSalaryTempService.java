@@ -35,6 +35,7 @@ import cn.hutool.core.util.NumberUtil;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -63,6 +64,7 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
     private final ConfigPersonalTaxMapper configPersonalTaxMapper;
     
     private final ConfigSysService configSysService;
+    private final PayrollWriteLock payrollWriteLock;
     public Message<Page<EmployeeSalaryTemp>> pageList(SalaryDetailPageDto dto) {
         dto.setCurrentYearMonth(YearMonth.parse(configSysService.getCurrentTerm(dto.getBookId())));
 
@@ -71,10 +73,15 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
 
         return Message.ok(employeeSalaryTempPage);
     }
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Message<String> createFinalDetail(SalaryDetailPageDto dto) {
-    	dto.setCurrentYearMonth(YearMonth.parse(configSysService.getCurrentTerm(dto.getBookId())));
+        payrollWriteLock.lockBook(dto.getBookId());
+        dto.setCurrentYearMonth(YearMonth.parse(configSysService.getCurrentTerm(dto.getBookId())));
         List<EmployeeSalaryTemp> employeeSalaryTemps = employeeSalaryTempMapper.listCurrentMonth(dto);
+        if (employeeSalaryTemps != null && employeeSalaryTemps.stream().anyMatch(
+                salary -> !dto.getBookId().equals(salary.getBookId()))) {
+            throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
+        }
 
         //忽略字段
         CopyOptions copyOptions = new CopyOptions();
@@ -84,9 +91,14 @@ public class EmployeeSalaryTempService extends ServiceImpl<EmployeeSalaryTempMap
         if (ObjectUtils.isNotEmpty(employeeSalaries)) {
             //删除原先生成的本月数据
             YearMonth lastMonth = dto.getCurrentYearMonth();
-            int linked = employeeSalaryMapper.countActiveRowsWithLinkedVouchers(
+            List<EmployeeSalary> currentSalaries = employeeSalaryMapper.selectActiveByMonthForUpdate(
                     dto.getBookId(), lastMonth.toString());
-            if (SalaryVoucherDedupeRules.shouldBlockPush(linked)) {
+            if (currentSalaries == null || currentSalaries.stream().anyMatch(
+                    salary -> !dto.getBookId().equals(salary.getBookId()))) {
+                throw new BusinessException(HrErrorCode.RECORD_NOT_FOUND);
+            }
+            if (currentSalaries.stream().anyMatch(salary -> SalaryVoucherDedupeRules.hasLinkedVoucher(
+                    salary.getAccrualVoucherId(), salary.getSalaryVoucherId()))) {
                 return Message.failed(SalaryVoucherDedupeRules.BLOCK_PUSH_BECAUSE_VOUCHERS);
             }
             employeeSalaryMapper.delete(Wrappers.<EmployeeSalary>lambdaQuery()

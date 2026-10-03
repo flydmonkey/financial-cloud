@@ -1,0 +1,750 @@
+{
+  "schemaVersion": 1,
+  "id": "jinbooks-release-v1",
+  "version": 2,
+  "groups": [
+    {
+      "name": "independent-reference",
+      "specs": [
+        "independent-accounting-reference.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "independent-accounting-reference.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "independent accountant reference",
+            "December and year-end carry preserve fixed profit and January opening"
+          ]
+        },
+        {
+          "file": "independent-accounting-reference.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "independent accountant reference",
+            "November business entries match fixed balances, profit and cash flow"
+          ]
+        },
+        {
+          "file": "independent-accounting-reference.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "independent accountant reference",
+            "November close, reopen and reclose preserve the independent totals"
+          ]
+        },
+        {
+          "file": "independent-accounting-reference.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "independent accountant reference",
+            "full red reversal preserves original and has zero effect"
+          ]
+        },
+        {
+          "file": "independent-accounting-reference.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "independent accountant reference",
+            "reference setup: November opening bank and capital 100000"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "balance-sheet-golden",
+      "specs": [
+        "04-balance-sheet-golden-dataset.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "BS-B05: imbalance is blocked or reported without changing totals"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "BS-G01: save golden opening balances"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "BS-G02: golden lines match manual calculation and config rules"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "BS-G04: posted inventory purchase updates 存货 and 货币资金"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "BS-G05: posted depreciation updates 固定资产净值"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "BS-G06: carry-forward expense restores trial balance via 未分配利润"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "CF-G01: opening cash flow equals monetary funds"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "CF-G03: purchase payment and inventory indirect adjustment"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "CF-G04: depreciation auto-fills indirect line without moving main table"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "CF-G05: indirect operating net reconciles with direct after carry-forward"
+          ]
+        },
+        {
+          "file": "04-balance-sheet-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "three-statement golden dataset",
+            "login and verify blank book"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "income-golden",
+      "specs": [
+        "05-income-statement-golden-dataset.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "05-income-statement-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "income statement golden dataset",
+            "IS-G00: post golden P&L vouchers"
+          ]
+        },
+        {
+          "file": "05-income-statement-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "income statement golden dataset",
+            "IS-G00: save standard opening balances"
+          ]
+        },
+        {
+          "file": "05-income-statement-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "income statement golden dataset",
+            "IS-G01: formula chain and config rules reconciliation"
+          ]
+        },
+        {
+          "file": "05-income-statement-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "income statement golden dataset",
+            "IS-G02: current period equals year-to-date on first month"
+          ]
+        },
+        {
+          "file": "05-income-statement-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "income statement golden dataset",
+            "IS-R01: carry-forward reconciles 3103 with net profit"
+          ]
+        },
+        {
+          "file": "05-income-statement-golden-dataset.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "income statement golden dataset",
+            "login and verify blank book"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "year-end",
+      "specs": [
+        "carry-forward-year-end.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "carry-forward-year-end.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "year-end carry forward",
+            "TC-SET-013 / IS-R02: qm_jz_bnlr posts and reconciles undistributed profit"
+          ]
+        },
+        {
+          "file": "carry-forward-year-end.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "year-end carry forward",
+            "setup December book and prepare year profit"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "asset-reference",
+      "specs": [
+        "fixed-asset-accounting-reference.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "fixed-asset-accounting-reference.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "asset card generates purchase and exactly 950 depreciation without duplicate accrual"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "payroll-reference",
+      "specs": [
+        "payroll-smb-regression.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "payroll-smb-regression.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "payroll SMB min-loop regression",
+            "employee custom base → preview → push → draft correction → posted integrity → payment export"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "portable-backup",
+      "specs": [
+        "portable-backup.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "portable-backup.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "v2 backup recovers posted accounting and attachment after source file loss"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "business-regression",
+      "specs": [
+        "arap.spec.ts",
+        "arap-writeoff.spec.ts",
+        "report-export.spec.ts",
+        "journal.spec.ts",
+        "zz-accounting-flow.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "arap-writeoff.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "arap writeoff L3",
+            "open-items / confirm validation / aging method"
+          ]
+        },
+        {
+          "file": "arap.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "arap L1+L2",
+            "arap pages open"
+          ]
+        },
+        {
+          "file": "arap.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "arap L1+L2",
+            "balance / aging / verify arap item"
+          ]
+        },
+        {
+          "file": "journal.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "journal module",
+            "journal APIs respond"
+          ]
+        },
+        {
+          "file": "journal.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "journal module",
+            "journal pages open"
+          ]
+        },
+        {
+          "file": "report-export.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "report export",
+            "TC-RPT-007: statement exports return downloadable files"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "UI: voucher and settlement pages render"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "audit voucher"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "balance sheet difference reconciles before checkout"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "balance sheet for closed period"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "carry-forward list loads after checkout"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "draft balanced voucher entry"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "income statement for closed period"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "login and prepare book with voucher review enabled"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "period checkout (期末结账)"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "post voucher (过账)"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "settlement verify (结账试算) passes"
+          ]
+        },
+        {
+          "file": "zz-accounting-flow.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "accounting lifecycle",
+            "submit voucher for audit"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "guided-delivery",
+      "specs": [
+        "guided-accounting-delivery.spec.ts",
+        "balance-sheet-integrity-ui.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "balance-sheet-integrity-ui.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "balance sheet shows actual difference, prints warning and clears stale warnings"
+          ]
+        },
+        {
+          "file": "guided-accounting-delivery.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "December wizard closes to January and delivers December"
+          ]
+        },
+        {
+          "file": "guided-accounting-delivery.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "closing checks explain failures and avoid unknown no-op links"
+          ]
+        },
+        {
+          "file": "guided-accounting-delivery.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "guide limits links to available authorized routes"
+          ]
+        },
+        {
+          "file": "guided-accounting-delivery.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "homepage guide works at desktop and mobile sizes"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "book-isolation",
+      "specs": [
+        "book-isolation.spec.ts"
+      ],
+      "cases": [
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "仅管理 A 的用户不能触发全局备份、覆盖 B 或恢复篡改的 B 附件"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "克隆恢复附件使用独立文件，删除克隆附件不会改变源账套"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "全局产品角色不能通过修改定义改变其他账套权限"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "关联资产、科目及嵌套凭证明细检查归属"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "凭证、资产和期初真实 Excel 只读导入拒绝且没有部分写入"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "凭证及报销专用附件上传下载删除均校验账套"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "原四模块及新增模块拒绝外账套明细"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "只读用户不能修改本账套业务和工资公式或全局税率"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "只读用户不能切换未授权账套或通过旧入口自行提权"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "合法切换和正常明细继续可用"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "同一用户的两个会话保持各自的当前账套"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "同账套工资、账户和期初配置可正常修改"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "外账套修改、删除和账户关联均被拒绝"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "存量流水关联外账套账户时，读取和修改也被拒绝"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "存量附件错误引用 B 文件时，专用下载及删除不能绕过文件归属"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "导出拒绝伪造账套参数，正常文件不包含 B 标记"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "抵扣表真实 Excel 导入仅清理 A，只读用户导入不改变数据"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "撤销授权后原会话不能继续读取账套或刷新令牌"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "期初及报表配置不能修改或搬迁外账套记录"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "模板缺省列表不混入 B，外账套详情及删除被拒绝"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "混合批量请求整笔拒绝，A 和 B 均不改变"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "科目拒绝伪造账套参数，缺省参数只查询当前账套"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "资产真实 Excel 混合类别只写入 A 有效行，B 类别不能被引用"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "通用文件入口不能绕过业务附件归属或删除关联文件"
+          ]
+        },
+        {
+          "file": "book-isolation.spec.ts",
+          "project": "chromium",
+          "titlePath": [
+            "全模块账套隔离",
+            "部门及用户真实 Excel 混合批量、外账套父节点整批拒绝"
+          ]
+        }
+      ]
+    }
+  ],
+  "ci": {
+    "workflow": ".github/workflows/ci.yml",
+    "requiredJobs": [
+      "backend-test",
+      "frontend-check",
+      "e2e",
+      "verification-tools",
+      "payroll-mysql-it"
+    ],
+    "requiredSteps": {
+      "backend-test": [
+        "Run backend unit tests"
+      ],
+      "frontend-check": [
+        "ESLint",
+        "Typecheck",
+        "Unit tests (voucher workspace)",
+        "AI UI regression scripts syntax check"
+      ],
+      "e2e": [
+        "Run balance sheet integrity regression",
+        "Run E2E accounting suite",
+        "Run E2E year-end suite",
+        "Run E2E balance sheet golden suite",
+        "Run E2E income statement golden suite",
+        "Run independent accounting acceptance (no skips or retries)"
+      ],
+      "verification-tools": [
+        "Run evidence tool tests",
+        "Run payroll SQL offline boundary tests",
+        "Run payroll initializer safety tests",
+        "Save verification tools evidence"
+      ],
+      "payroll-mysql-it": [
+        "Initialize payroll IT schema",
+        "Verify payroll IT environment",
+        "Prepare payroll transaction evidence",
+        "Run payroll MySQL transaction integration",
+        "Validate payroll IT reports",
+        "Observe payroll IT cleanup",
+        "Save payroll integration evidence"
+      ]
+    }
+  },
+  "requiredAccountingComparisons": [
+    "openingBalances",
+    "vouchers",
+    "payroll",
+    "fixedAssets",
+    "receivablesPayables",
+    "balancesAndLedger",
+    "balanceSheet",
+    "incomeStatement",
+    "cashFlow",
+    "monthClose",
+    "deliveryAndRestore"
+  ],
+  "requiredRestoreComparisons": [
+    "businessData",
+    "attachments",
+    "ledger",
+    "balanceSheet",
+    "incomeStatement",
+    "cashFlow"
+  ]
+}
